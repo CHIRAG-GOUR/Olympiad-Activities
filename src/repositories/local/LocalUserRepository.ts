@@ -1,0 +1,106 @@
+import { IUserRepository } from "../interfaces/IUserRepository";
+import { UserProfile, UserRole } from "@/lib/auth/rbac";
+
+const LOCAL_STORAGE_KEY = "olympiad_users_repo";
+
+const INITIAL_USERS: UserProfile[] = [
+  {
+    id: "usr_admin_01",
+    name: "Dr. Vikram Sethi",
+    email: "admin@olympiad.org",
+    role: "SUPER_ADMIN",
+    schoolName: "National Olympiad Council",
+    createdAt: "2024-01-01T00:00:00Z",
+  },
+  {
+    id: "usr_teacher_01",
+    name: "Prof. Ananya Sen",
+    email: "ananya.sen@olympiad.org",
+    role: "TEACHER",
+    schoolName: "Delhi Public School, R.K. Puram",
+    createdAt: "2024-02-15T00:00:00Z",
+  },
+  {
+    id: "usr_student_01",
+    name: "Rahul Sharma",
+    email: "rahul.s@student.olympiad.org",
+    role: "STUDENT",
+    schoolName: "Kendriya Vidyalaya No. 1",
+    grade: 6,
+    createdAt: "2024-03-10T00:00:00Z",
+  },
+  {
+    id: "usr_student_02",
+    name: "Ananya Gupta",
+    email: "ananya.g@student.olympiad.org",
+    role: "STUDENT",
+    schoolName: "The Heritage School",
+    grade: 6,
+    createdAt: "2024-03-11T00:00:00Z",
+  },
+];
+
+export class LocalUserRepository implements IUserRepository {
+  private async load(): Promise<UserProfile[]> {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (raw) {
+          return JSON.parse(raw);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    this.persist(INITIAL_USERS);
+    return INITIAL_USERS;
+  }
+
+  private persist(users: UserProfile[]) {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(users));
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  async getUser(id: string): Promise<UserProfile | null> {
+    const users = await this.load();
+    return users.find((u) => u.id === id) || null;
+  }
+
+  async listUsers(role?: UserRole): Promise<UserProfile[]> {
+    const users = await this.load();
+    if (role) {
+      return users.filter((u) => u.role === role);
+    }
+    return users;
+  }
+
+  async saveUser(user: UserProfile): Promise<void> {
+    const users = await this.load();
+    const idx = users.findIndex((u) => u.id === user.id);
+    if (idx >= 0) {
+      users[idx] = user;
+    } else {
+      users.push(user);
+    }
+    this.persist(users);
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const users = await this.load();
+    const filtered = users.filter((u) => u.id !== id);
+    this.persist(filtered);
+  }
+
+  async countUsers(role?: UserRole): Promise<number> {
+    const users = await this.load();
+    if (role) {
+      return users.filter((u) => u.role === role).length;
+    }
+    return users.length;
+  }
+}

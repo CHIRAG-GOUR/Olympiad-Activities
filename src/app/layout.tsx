@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,8 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
-      <body className="bg-olympiad-bg text-olympiad-text min-h-screen">
-        {children}
+      <body className="bg-[#F0F4F8] text-slate-900 min-h-screen">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

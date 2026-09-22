@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, use, useMemo } from "react";
+import React, { useState, useEffect, use, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { OlympiadStore } from "@/services/firebase/firestore";
+import { examRepository, questionRepository, attemptRepository, reportRepository } from "@/repositories";
 import { Exam } from "@/types/exam";
 import { Question } from "@/types/question";
-import { ExamSession, StudentMetadata } from "@/types/session";
-import { ExamAttempt } from "@/types/attempt";
-import { computeExamAttemptScore } from "@/engine/scoring-engine";
+import { StudentMetadata } from "@/types/session";
+import { evaluateAndGenerateFullResult } from "@/engine/scoring-engine";
 import { getClientDeviceInfo } from "@/lib/deviceUtils";
+import { ExamPersistenceService, ExamSessionState } from "@/services/persistence/ExamPersistenceService";
 import { ExamHeader } from "@/components/examination/ExamHeader";
 import { QuestionPalette } from "@/components/examination/QuestionPalette";
 import { ExamNavigation } from "@/components/examination/ExamNavigation";
@@ -25,8 +25,10 @@ import {
   ArrowLeft,
   BookOpen,
   UserCheck,
-  Send,
-  Sparkles,
+  RotateCcw,
+  AlertTriangle,
+  History,
+  Check,
 } from "lucide-react";
 
 export default function ExamSessionContainer({ params }: { params: Promise<{ examId: string }> }) {
@@ -37,8 +39,13 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Crash Recovery State
+  const [incompleteSession, setIncompleteSession] = useState<ExamSessionState | null>(null);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+
   // Candidate Registration State
   const [hasStarted, setHasStarted] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
   const [candidateName, setCandidateName] = useState("");
   const [schoolName, setSchoolName] = useState("");
   const [candidateId, setCandidateId] = useState("");
@@ -46,6 +53,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   // In-Exam NTA State Machine
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [activityStates, setActivityStates] = useState<Record<string, any>>({});
   const [visitedIndices, setVisitedIndices] = useState<Set<number>>(new Set([0]));
   const [markedForReviewIndices, setMarkedForReviewIndices] = useState<Set<number>>(new Set());
   const [timeRemainingSeconds, setTimeRemainingSeconds] = useState(60 * 60);
@@ -55,32 +63,138 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Load Exam and Compiled Questions
+  const currentQuestion = questions[currentIndex];
+  const currentAnswerValue = currentQuestion ? answers[currentQuestion.id] : undefined;
+
+  const sessionRef = useRef<ExamSessionState | null>(null);
+
+  // Load Exam, Questions and check for Incomplete Session
   useEffect(() => {
     async function load() {
-      const [e, qList] = await Promise.all([
-        OlympiadStore.getExamById(resolvedParams.examId),
-        OlympiadStore.getQuestions(),
-      ]);
+      try {
+        const [e, qList, recoverySession] = await Promise.all([
+          examRepository.getExam(resolvedParams.examId),
+          questionRepository.listQuestions(),
+          ExamPersistenceService.getIncompleteSession(resolvedParams.examId),
+        ]);
 
-      if (e) {
-        setExam(e);
-        // Ensure questions are strictly sorted according to exam.questionIds list (1 to 50 in exact order)
-        const compiled = e.questionIds
-          .map((id) => qList.find((q) => q.id === id))
-          .filter((q): q is Question => q !== undefined);
+        if (e) {
+          setExam(e);
+          // Order questions strictly according to exam.questionIds list
+          const compiled = e.questionIds
+            .map((id) => qList.find((q) => q.id === id))
+            .filter((q): q is Question => q !== undefined);
 
-        const finalQuestions = compiled.length > 0 ? compiled : qList.slice(0, e.totalQuestions || 50);
-        setQuestions(finalQuestions);
-        setTimeRemainingSeconds(e.durationMinutes * 60);
+          const finalQuestions = compiled.length > 0 ? compiled : qList.slice(0, e.totalQuestions || 50);
+          setQuestions(finalQuestions);
+          setTimeRemainingSeconds(e.durationMinutes * 60);
+          setCandidateId(`STU-${Math.floor(10000 + Math.random() * 90000)}`);
 
-        // Pre-generate candidate roll ID
-        setCandidateId(`STU-${Math.floor(10000 + Math.random() * 90000)}`);
+          if (recoverySession && recoverySession.status === "in_progress") {
+            setIncompleteSession(recoverySession);
+            setShowRecoveryModal(true);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load exam data:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
   }, [resolvedParams.examId]);
+
+  // Maintain active session ref for beforeunload flushes
+  useEffect(() => {
+    if (!hasStarted || !exam) return;
+
+    const currentQ = questions[currentIndex];
+    const sessionObj: ExamSessionState = {
+      sessionId,
+      examId: exam.id,
+      examTitle: exam.title,
+      studentId: candidateId,
+      studentName: candidateName,
+      schoolName,
+      grade: exam.grade || 6,
+      startedAt: startTime,
+      durationMinutes: exam.durationMinutes,
+      lastSavedAt: new Date().toISOString(),
+      currentQuestionIndex: currentIndex,
+      currentQuestionId: currentQ ? currentQ.id : "",
+      answers: Object.fromEntries(
+        Object.entries(answers).map(([qId, ans]) => [
+          qId,
+          {
+            questionId: qId,
+            answer: ans,
+            activityState: activityStates[qId],
+            lastModifiedAt: new Date().toISOString(),
+          },
+        ])
+      ),
+      activityStates,
+      completedQuestions: Object.keys(answers),
+      visitedQuestions: Array.from(visitedIndices).map((idx) => questions[idx]?.id).filter(Boolean),
+      markedForReview: Array.from(markedForReviewIndices).map((idx) => questions[idx]?.id).filter(Boolean),
+      timeSpentMap,
+      timeRemainingSeconds,
+      totalTimeSeconds: exam.durationMinutes * 60,
+      status: "in_progress",
+      version: (sessionRef.current?.version || 0) + 1,
+    };
+
+    sessionRef.current = sessionObj;
+  }, [
+    hasStarted,
+    exam,
+    sessionId,
+    candidateId,
+    candidateName,
+    schoolName,
+    startTime,
+    currentIndex,
+    answers,
+    activityStates,
+    visitedIndices,
+    markedForReviewIndices,
+    timeSpentMap,
+    timeRemainingSeconds,
+    questions,
+  ]);
+
+  // Exit listeners for best-effort final flush before window closes/refreshes
+  useEffect(() => {
+    if (!hasStarted || !sessionId) return;
+
+    const handleBeforeUnload = () => {
+      if (sessionRef.current) {
+        ExamPersistenceService.saveProgress(sessionRef.current);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden" && sessionRef.current) {
+        ExamPersistenceService.saveProgress(sessionRef.current);
+      }
+    };
+
+    const handlePageHide = () => {
+      if (sessionRef.current) {
+        ExamPersistenceService.saveProgress(sessionRef.current);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [hasStarted, sessionId]);
 
   // Mark current question as visited
   useEffect(() => {
@@ -93,19 +207,21 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
     }
   }, [currentIndex, hasStarted]);
 
-  // Countdown timer effect
+  // Robust Countdown timer with timestamp-based drift recalculation
   useEffect(() => {
-    if (!hasStarted || isSubmitting) return;
+    if (!hasStarted || isSubmitting || !sessionRef.current) return;
 
     const timer = setInterval(() => {
-      setTimeRemainingSeconds((prev) => {
-        if (prev <= 1) {
+      if (sessionRef.current) {
+        const remaining = ExamPersistenceService.calculateTrueRemainingTime(sessionRef.current);
+        setTimeRemainingSeconds(remaining);
+
+        if (remaining <= 0) {
           clearInterval(timer);
           handleFinalSubmit("auto_timeout");
-          return 0;
+          return;
         }
-        return prev - 1;
-      });
+      }
 
       if (questions[currentIndex]) {
         const qId = questions[currentIndex].id;
@@ -136,13 +252,91 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
     );
   }, [currentIndex, sections]);
 
+  // Resume Incomplete Session Action
+  const handleResumeSession = () => {
+    if (!incompleteSession || !exam) return;
+
+    setCandidateName(incompleteSession.studentName);
+    setCandidateId(incompleteSession.studentId);
+    setSchoolName(incompleteSession.schoolName || "");
+    setSessionId(incompleteSession.sessionId);
+    setStartTime(incompleteSession.startedAt);
+
+    // Reconstruct answers map
+    const restoredAnswers: Record<string, any> = {};
+    Object.entries(incompleteSession.answers || {}).forEach(([qId, aState]) => {
+      restoredAnswers[qId] = aState.answer;
+    });
+    setAnswers(restoredAnswers);
+
+    // Reconstruct activity microworld states
+    setActivityStates(incompleteSession.activityStates || {});
+
+    // Reconstruct question index
+    const resumeIdx = Math.min(
+      Math.max(0, incompleteSession.currentQuestionIndex || 0),
+      questions.length - 1
+    );
+    setCurrentIndex(resumeIdx);
+
+    // Reconstruct visited indices
+    const vSet = new Set<number>([resumeIdx]);
+    (incompleteSession.visitedQuestions || []).forEach((qId) => {
+      const idx = questions.findIndex((q) => q.id === qId);
+      if (idx >= 0) vSet.add(idx);
+    });
+    setVisitedIndices(vSet);
+
+    // Reconstruct marked for review
+    const mSet = new Set<number>();
+    (incompleteSession.markedForReview || []).forEach((qId) => {
+      const idx = questions.findIndex((q) => q.id === qId);
+      if (idx >= 0) mSet.add(idx);
+    });
+    setMarkedForReviewIndices(mSet);
+
+    // Restore time spent
+    setTimeSpentMap(incompleteSession.timeSpentMap || {});
+
+    // Recalculate true remaining time
+    const remaining = ExamPersistenceService.calculateTrueRemainingTime(incompleteSession);
+    setTimeRemainingSeconds(remaining);
+
+    setShowRecoveryModal(false);
+    setHasStarted(true);
+  };
+
+  // Start Fresh Attempt Action (Clears Incomplete Session)
+  const handleStartAgain = async () => {
+    if (incompleteSession) {
+      await ExamPersistenceService.clearSession(incompleteSession.sessionId);
+      setIncompleteSession(null);
+    }
+    setShowRecoveryModal(false);
+  };
+
   // Candidate Registration Handler
   const handleStartExam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!candidateName.trim()) return;
+    if (!candidateName.trim() || !exam) return;
 
     const sTime = new Date().toISOString();
     setStartTime(sTime);
+
+    const firstQId = questions[0]?.id || "";
+    const session = await ExamPersistenceService.createSession({
+      examId: exam.id,
+      examTitle: exam.title,
+      studentId: candidateId,
+      studentName: candidateName,
+      schoolName: schoolName || "Olympiad Academy",
+      grade: exam.grade || 6,
+      durationMinutes: exam.durationMinutes,
+      firstQuestionId: firstQId,
+    });
+
+    setSessionId(session.sessionId);
+    sessionRef.current = session;
     setHasStarted(true);
     setVisitedIndices(new Set([0]));
   };
@@ -150,12 +344,15 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   // NTA Action: Save & Next
   const handleSaveAndNext = () => {
     if (!currentQuestion) return;
-    // Remove from marked for review if previously marked
     setMarkedForReviewIndices((prev) => {
       const next = new Set(prev);
       next.delete(currentIndex);
       return next;
     });
+
+    if (sessionRef.current) {
+      ExamPersistenceService.saveProgress(sessionRef.current);
+    }
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -171,18 +368,26 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
       return next;
     });
 
+    if (sessionRef.current) {
+      ExamPersistenceService.saveProgress(sessionRef.current);
+    }
+
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
 
-  // NTA Action: Mark for Review & Next (without necessarily answering)
+  // NTA Action: Mark for Review & Next
   const handleMarkForReviewAndNext = () => {
     setMarkedForReviewIndices((prev) => {
       const next = new Set(prev);
       next.add(currentIndex);
       return next;
     });
+
+    if (sessionRef.current) {
+      ExamPersistenceService.saveProgress(sessionRef.current);
+    }
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -197,21 +402,46 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
       delete next[currentQuestion.id];
       return next;
     });
+    setActivityStates((prev) => {
+      const next = { ...prev };
+      delete next[currentQuestion.id];
+      return next;
+    });
     setMarkedForReviewIndices((prev) => {
       const next = new Set(prev);
       next.delete(currentIndex);
       return next;
     });
+
+    if (sessionId) {
+      ExamPersistenceService.updateAnswer(sessionId, currentQuestion.id, undefined, undefined);
+    }
   };
 
-  // Answer change handler
-  const handleAnswerChange = (val: any) => {
-    if (!currentQuestion) return;
-    setAnswers((prev) => ({
-      ...prev,
-      [currentQuestion.id]: val,
-    }));
-  };
+  // Answer change handler (Debounced & immediate sync)
+  const handleAnswerChange = useCallback(
+    (val: any, actState?: any) => {
+      if (!currentQuestion) return;
+      const qId = currentQuestion.id;
+
+      setAnswers((prev) => ({
+        ...prev,
+        [qId]: val,
+      }));
+
+      if (actState !== undefined) {
+        setActivityStates((prev) => ({
+          ...prev,
+          [qId]: actState,
+        }));
+      }
+
+      if (sessionId) {
+        ExamPersistenceService.updateAnswer(sessionId, qId, val, actState);
+      }
+    },
+    [currentQuestion, sessionId]
+  );
 
   // Final Exam Submission Handler
   const handleFinalSubmit = async (reason: "normal" | "auto_timeout" = "normal") => {
@@ -220,10 +450,6 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
 
     try {
       const endTime = new Date().toISOString();
-      const totalTimeSpentSeconds = Math.max(
-        0,
-        exam.durationMinutes * 60 - timeRemainingSeconds
-      );
 
       const studentMeta: StudentMetadata = {
         name: candidateName || "Candidate",
@@ -233,7 +459,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
         grade: exam.grade,
       };
 
-      const attemptRecord = computeExamAttemptScore({
+      const { attempt, report } = evaluateAndGenerateFullResult({
         exam,
         questions,
         answers,
@@ -245,8 +471,14 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
         submissionType: reason,
       });
 
-      await OlympiadStore.saveAttempt(attemptRecord);
-      router.push(`/results/${attemptRecord.id}`);
+      // Save to Repositories
+      await Promise.all([
+        attemptRepository.saveAttempt(attempt),
+        reportRepository.saveReport(report),
+        sessionId ? ExamPersistenceService.completeExam(sessionId) : Promise.resolve(),
+      ]);
+
+      router.push(`/results/${attempt.id}`);
     } catch (err) {
       console.error("Submission failed:", err);
       setIsSubmitting(false);
@@ -278,6 +510,78 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
           >
             Return to Examination Portal
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // CRASH RECOVERY MODAL (Requirement 7)
+  if (showRecoveryModal && incompleteSession) {
+    const formattedSavedTime = new Date(incompleteSession.lastSavedAt).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const trueRemaining = ExamPersistenceService.calculateTrueRemainingTime(incompleteSession);
+    const mins = Math.floor(trueRemaining / 60);
+    const secs = trueRemaining % 60;
+    const formattedRemaining = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+
+    return (
+      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4 font-sans select-none">
+        <div className="bg-white rounded-2xl border-2 border-[#0B4F8A] max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
+          <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 border-2 border-[#0B4F8A] text-[#0B4F8A] flex items-center justify-center shrink-0">
+              <History className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-900">Resume Examination</h2>
+              <p className="text-xs text-slate-600 font-medium">
+                We found an unfinished examination session.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs text-slate-800">
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="font-bold text-slate-500 uppercase tracking-wider">Candidate:</span>
+              <span className="font-extrabold text-slate-900">{incompleteSession.studentName}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="font-bold text-slate-500 uppercase tracking-wider">Exam:</span>
+              <span className="font-bold text-[#0B4F8A]">{incompleteSession.examTitle}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="font-bold text-slate-500 uppercase tracking-wider">Last Saved:</span>
+              <span className="font-mono font-bold text-slate-900">{formattedSavedTime}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="font-bold text-slate-500 uppercase tracking-wider">Question:</span>
+              <span className="font-bold text-slate-900">
+                {incompleteSession.currentQuestionIndex + 1} of {questions.length}
+              </span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className="font-bold text-slate-500 uppercase tracking-wider">Time Remaining:</span>
+              <span className="font-mono font-black text-amber-700">{formattedRemaining}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleStartAgain}
+              className="flex-1 h-11 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <RotateCcw className="w-4 h-4" /> Start Again
+            </button>
+            <button
+              type="button"
+              onClick={handleResumeSession}
+              className="flex-1 h-11 px-6 bg-[#0B4F8A] hover:bg-[#083863] text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider"
+            >
+              <Check className="w-4 h-4 stroke-[3]" /> Resume Examination
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -347,7 +651,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                   id="c-name"
                   type="text"
                   required
-                  placeholder="e.g. Chirag Sharma"
+                  placeholder="e.g. Rahul Sharma"
                   value={candidateName}
                   onChange={(e) => setCandidateName(e.target.value)}
                   className="w-full h-11 px-3 text-sm bg-white border-2 border-slate-300 rounded-lg text-slate-900 font-bold focus:outline-none focus:border-[#0B4F8A]"
@@ -375,7 +679,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                   <input
                     id="s-name"
                     type="text"
-                    placeholder="e.g. St. Xavier's School"
+                    placeholder="e.g. Kendriya Vidyalaya No. 1"
                     value={schoolName}
                     onChange={(e) => setSchoolName(e.target.value)}
                     className="w-full h-11 px-3 text-sm bg-white border-2 border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#0B4F8A]"
@@ -393,6 +697,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                   <li>Questions are structured strictly into 4 sections (1 to 50 in sequential order).</li>
                   <li>Use <strong>Save & Next</strong> to confirm answers, or <strong>Save & Mark for Review</strong> to flag questions while keeping answers.</li>
                   <li>All interactive simulations feature light-mode manipulatives and deterministic engine evaluation.</li>
+                  <li>Your progress is continuously backed up locally into IndexedDB with instant crash-recovery.</li>
                 </ul>
               </div>
 
@@ -411,9 +716,6 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   }
 
   // SCREEN 2: The Official NTA Digital Examination Paper
-  const currentQuestion = questions[currentIndex];
-  const currentAnswerValue = currentQuestion ? answers[currentQuestion.id] : undefined;
-
   const answeredIndices = new Set(
     questions
       .map((q, idx) => (answers[q.id] !== undefined && answers[q.id] !== null && answers[q.id] !== "" ? idx : -1))
@@ -435,7 +737,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
       {/* Main Examination Workspace */}
       <main className="flex-1 w-full max-w-[1750px] mx-auto px-3 sm:px-5 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-          {/* Left / Center: Question Canvas (8-9 cols on desktop) */}
+          {/* Left / Center: Question Canvas */}
           <div className="lg:col-span-8 xl:col-span-9 bg-white border-2 border-slate-300 rounded-xl shadow-md flex flex-col min-h-[640px] overflow-hidden">
             {/* Section Tabs Bar (NTA Header) */}
             <div className="bg-slate-100 border-b-2 border-slate-300 px-4 py-2 flex items-center gap-2 overflow-x-auto">
@@ -444,7 +746,6 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
               </span>
               {sections.map((sec) => {
                 const isActive = currentSection.id === sec.id;
-                // Count answered in this section
                 const answeredInSection = questions
                   .slice(sec.startIdx, sec.endIdx + 1)
                   .filter((q) => answers[q.id] !== undefined && answers[q.id] !== "").length;
@@ -521,7 +822,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
             />
           </div>
 
-          {/* Right: NTA Question Palette Panel (3-4 cols on desktop) */}
+          {/* Right: NTA Question Palette Panel */}
           <div className="lg:col-span-4 xl:col-span-3 sticky top-16">
             <QuestionPalette
               questions={questions}

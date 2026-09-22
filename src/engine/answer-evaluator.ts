@@ -252,3 +252,68 @@ export function getCorrectAnswerSummary(question: Question): string {
       return "Specified solution";
   }
 }
+
+export function formatStudentAnswerSummary(question: Question, answer: any): string {
+  if (answer === undefined || answer === null || answer === "") {
+    return "Not Attempted";
+  }
+
+  if (question.multipleChoiceConfig) {
+    const optId = String(answer).trim().toUpperCase();
+    const opt = question.multipleChoiceConfig.options.find((o) => o.id === optId);
+    return `Option ${optId}${opt ? `: ${opt.text}` : ""}`;
+  }
+
+  switch (question.questionType) {
+    case "ORDERING":
+      if (Array.isArray(answer)) {
+        if (question.orderingConfig) {
+          const idMap = new Map(question.orderingConfig.items.map((i) => [i.id, i.label]));
+          return answer.map((id) => idMap.get(id) || id).join(" → ");
+        }
+        return answer.join(" → ");
+      }
+      return String(answer);
+
+    case "NUMERIC":
+    case "NUMERIC_TOLERANCE":
+      return `${answer} ${question.numericConfig?.unit || ""}`.trim();
+
+    case "MATCHING":
+      if (Array.isArray(answer)) {
+        if (question.matchingConfig) {
+          const leftMap = new Map(question.matchingConfig.leftItems.map((i) => [i.id, i.text]));
+          const rightMap = new Map(question.matchingConfig.rightItems.map((i) => [i.id, i.text]));
+          return answer
+            .map((p) => `${leftMap.get(p.leftId) || p.leftId} ↔ ${rightMap.get(p.rightId) || p.rightId}`)
+            .join(", ");
+        }
+      }
+      return "Configured pairs";
+
+    case "CLASSIFICATION":
+      if (typeof answer === "object") {
+        return Object.entries(answer)
+          .map(([k, v]) => `${k}: Group ${v}`)
+          .join(", ");
+      }
+      return String(answer);
+
+    case "SEQUENCE":
+      if (question.sequenceConfig) {
+        const match = question.sequenceConfig.options.find((o) => o.id === answer);
+        return match?.value || String(answer);
+      }
+      return String(answer);
+
+    case "SIMULATION":
+      return `${answer} ${question.simulationConfig?.parameterUnit || ""}`.trim();
+
+    default:
+      if (typeof answer === "object") {
+        return JSON.stringify(answer);
+      }
+      return String(answer);
+  }
+}
+

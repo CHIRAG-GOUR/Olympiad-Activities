@@ -15,8 +15,59 @@ export default function LiveMonitorPage() {
 
   const loadSessions = async () => {
     setIsRefreshing(true);
-    const data = await OlympiadStore.getLiveSessions();
-    setSessions(data);
+    const [storedSessions, idbSessions] = await Promise.all([
+      OlympiadStore.getLiveSessions(),
+      (async () => {
+        try {
+          const { idbClient } = await import("@/services/persistence/indexeddb");
+          const { ExamPersistenceService } = await import("@/services/persistence/ExamPersistenceService");
+          const raw = await idbClient.getAll<any>("sessions");
+          return raw.map((s): ExamSession => {
+            const answeredCount = Object.keys(s.answers || {}).length;
+            const progress = Math.round((answeredCount / 50) * 100);
+            const remaining = ExamPersistenceService.calculateTrueRemainingTime(s);
+            return {
+              id: s.sessionId,
+              sessionId: s.sessionId,
+              examId: s.examId,
+              examTitle: s.examTitle,
+              student: {
+                name: s.studentName,
+                studentId: s.studentId,
+                schoolName: s.schoolName,
+                grade: s.grade,
+              },
+              device: {
+                ip: s.lastKnownIp || "127.0.0.1",
+                browser: "Chrome (Candidate PC)",
+                os: "Windows 11",
+                device: "Desktop",
+              },
+              currentQuestionIndex: s.currentQuestionIndex || 0,
+              currentQuestionId: s.currentQuestionId || "",
+              totalQuestions: 50,
+              answeredCount,
+              flaggedCount: (s.markedForReview || []).length,
+              progressPercent: progress,
+              startedAt: new Date(s.startedAt).toLocaleTimeString(),
+              lastActiveAt: new Date(s.lastSavedAt).toLocaleTimeString(),
+              connectionStatus: s.status === "submitted" ? "Completed" : "Connected",
+              timeRemainingSeconds: remaining,
+              isSubmitted: s.status === "submitted",
+            };
+          });
+        } catch {
+          return [];
+        }
+      })(),
+    ]);
+
+    // Merge by sessionId
+    const sessionMap = new Map<string, ExamSession>();
+    storedSessions.forEach((s) => sessionMap.set(s.sessionId, s));
+    idbSessions.forEach((s) => sessionMap.set(s.sessionId, s));
+
+    setSessions(Array.from(sessionMap.values()));
     setLoading(false);
     setIsRefreshing(false);
   };
