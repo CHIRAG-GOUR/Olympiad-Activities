@@ -306,9 +306,10 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Middle: Navigation Links */}
-          <nav className="hidden md:flex items-center gap-7 lg:gap-10">
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
             {[
               { label: "Dashboard", href: "/admin/dashboard", id: "Dashboard" },
+              { label: "50 Activities", href: "/admin/activities", id: "Activities" },
               { label: "Prepare", href: "/admin/exams", id: "Prepare" },
               { label: "Teach", href: "/admin/questions", id: "Teach" },
               { label: "Assess", href: "/admin/results", id: "Assess" },

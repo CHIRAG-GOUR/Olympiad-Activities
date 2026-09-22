@@ -1,7 +1,7 @@
-"use client";
-
-import React from "react";
+import React, { useState } from "react";
 import { Question } from "@/types/question";
+import { getQuestionActivity } from "@/components/activities/ActivityRegistry";
+import { Sparkles, FileText } from "lucide-react";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
 import { OrderingQuestion } from "./OrderingQuestion";
 import { DragDropQuestion } from "./DragDropQuestion";
@@ -28,6 +28,12 @@ export function QuestionRenderer({
   readOnly = false,
   showMetadata = true,
 }: QuestionRendererProps) {
+  const [activeView, setActiveView] = useState<"activity" | "standard">("activity");
+
+  const BespokeActivityComponent =
+    getQuestionActivity(question.id) ||
+    getQuestionActivity(question.questionId);
+
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
       case "EASY":
@@ -201,6 +207,40 @@ export function QuestionRenderer({
         </div>
       )}
 
+      {/* View Switcher if Bespoke Activity Exists */}
+      {BespokeActivityComponent && (
+        <div className="flex items-center justify-between p-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+            <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
+            <span>Interactive Bespoke Activity Available</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveView("activity")}
+              className={`px-3 py-1 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
+                activeView === "activity"
+                  ? "bg-emerald-600 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Interactive Activity
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("standard")}
+              className={`px-3 py-1 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
+                activeView === "standard"
+                  ? "bg-slate-700 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" /> Standard View
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Prominent Question Prompt Text */}
       <div className="space-y-2">
         <h2 className="text-xl lg:text-[24px] font-extrabold text-olympiad-deepBlue leading-snug tracking-tight">
@@ -209,7 +249,19 @@ export function QuestionRenderer({
       </div>
 
       {/* Interactive Core Body */}
-      <div className="pt-2">{renderInteractionBody()}</div>
+      <div className="pt-2">
+        {BespokeActivityComponent && activeView === "activity" ? (
+          <BespokeActivityComponent
+            questionId={question.id || question.questionId}
+            question={question}
+            value={value}
+            onChange={onChange}
+            readOnly={readOnly}
+          />
+        ) : (
+          renderInteractionBody()
+        )}
+      </div>
     </div>
   );
 }

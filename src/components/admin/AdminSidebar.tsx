@@ -17,10 +17,12 @@ import {
   Settings,
   ExternalLink,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "50 Activities Studio", href: "/admin/activities", icon: Sparkles },
   { label: "Exams", href: "/admin/exams", icon: FileCheck2 },
   { label: "Questions", href: "/admin/questions", icon: HelpCircle },
   { label: "Question Bank", href: "/admin/question-bank", icon: Database },
