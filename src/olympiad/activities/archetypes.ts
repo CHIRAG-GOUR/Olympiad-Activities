@@ -1,19 +1,19 @@
 /**
- * Activity Archetypes Library
+ * Activity Archetypes Library — 29 Cognitive Paradigms
  * 
- * A curated collection of activity concepts organized by cognitive domain.
- * These are INSPIRATION — not templates to be blindly applied.
+ * A curated collection of 29 foundational cognitive activity paradigms
+ * derived from elite Olympiad examination patterns.
  * 
- * For every question, the system should:
- * 1. Identify the cognitive skill being tested
- * 2. Find relevant archetypes
- * 3. Combine/modify archetypes to create a UNIQUE experience
- * 4. Never reuse the same archetype + metaphor + interaction within a short sequence
+ * IMPORTANT ARCHITECTURAL RULE:
+ * These are COGNITIVE METAMODELS and INSPIRATIONAL FOUNDATIONS — NEVER templates
+ * to copy-paste. The AI engine must synthesize new, bespoke microworlds for every
+ * unique question based on its specific invariant and cognitive tension.
  */
 
 export interface Archetype {
   id: string;
   name: string;
+  category: "spatial" | "transformation" | "classification" | "navigation" | "construction" | "physics" | "puzzle" | "data" | "measurement" | "achiever" | "everyday";
   description: string;
   cognitiveSkills: string[];
   interactionPattern: string;
@@ -21,126 +21,395 @@ export interface Archetype {
   technology: string[];
   complexity: "low" | "medium" | "high";
   gradeRange: [number, number];
-  estimatedTime: [number, number]; // seconds [min, max]
+  estimatedTimeSeconds: [number, number];
 }
 
-// ─── PHYSICS / MOTION ──────────────────────────────────────
+// ─── THE 29 FOUNDATIONAL COGNITIVE PARADIGMS ────────────────
 
-export const PHYSICS_ARCHETYPES: Archetype[] = [
-  { id: "rocket-launch", name: "Rocket Launch", description: "Student configures launch parameters; rocket trajectory visualizes the mathematical relationship", cognitiveSkills: ["calculation", "comparison", "estimation"], interactionPattern: "slider-adjust → launch → observe", visualMetaphor: "Space launch pad with Earth-to-target trajectory", technology: ["svg", "canvas", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 45] },
-  { id: "slingshot", name: "Slingshot Launcher", description: "Pull-and-release mechanic where force/angle determines trajectory", cognitiveSkills: ["estimation", "comparison"], interactionPattern: "drag-pull → release → trajectory", visualMetaphor: "Mechanical slingshot with target zone", technology: ["svg", "matter-js"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [15, 40] },
-  { id: "cannon-trajectory", name: "Cannon Trajectory", description: "Set angle and power to hit a target — demonstrates projectile math", cognitiveSkills: ["calculation", "angle", "estimation"], interactionPattern: "rotate-cannon → set-power → fire", visualMetaphor: "Castle cannon on cliff aiming at target", technology: ["canvas", "gsap"], complexity: "medium", gradeRange: [6, 8], estimatedTime: [20, 45] },
-  { id: "planet-orbit", name: "Planet Orbit", description: "Adjust orbital parameters to achieve stable orbit or reach destination", cognitiveSkills: ["spatial-reasoning", "calculation"], interactionPattern: "adjust-parameter → observe-orbit", visualMetaphor: "Solar system with orbital paths", technology: ["svg", "canvas"], complexity: "high", gradeRange: [6, 8], estimatedTime: [25, 50] },
-  { id: "train-track", name: "Train Track Switchyard", description: "Switch track junctions to route trains to correct destinations", cognitiveSkills: ["logic", "direction", "sequencing"], interactionPattern: "click-switch → train-moves → destination", visualMetaphor: "Railway junction with multiple tracks", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [15, 35] },
-  { id: "elevator", name: "Elevator Controller", description: "Program elevator stops to satisfy constraints", cognitiveSkills: ["sequencing", "logic", "calculation"], interactionPattern: "select-floors → run-elevator → verify", visualMetaphor: "Building cross-section with elevator shaft", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "balance-beam", name: "Balance Beam", description: "Place weights to achieve equilibrium — represents equations and ratios", cognitiveSkills: ["ratio", "equation", "comparison"], interactionPattern: "drag-weight → beam-tilts → balance", visualMetaphor: "Classical balance scale with weight plates", technology: ["svg", "matter-js"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "pulley-system", name: "Pulley System", description: "Configure pulleys to lift objects — demonstrates mechanical advantage", cognitiveSkills: ["ratio", "multiplication", "logic"], interactionPattern: "add-pulleys → pull-rope → observe-lift", visualMetaphor: "Construction crane with configurable pulleys", technology: ["svg", "canvas"], complexity: "high", gradeRange: [6, 8], estimatedTime: [25, 50] },
-  { id: "gear-mechanism", name: "Gear Mechanism", description: "Connect gears to transmit rotation — demonstrates ratio and direction", cognitiveSkills: ["ratio", "direction", "pattern"], interactionPattern: "place-gears → engage → observe-rotation", visualMetaphor: "Steampunk gear workshop", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [6, 8], estimatedTime: [20, 40] },
-  { id: "pendulum", name: "Pendulum Laboratory", description: "Adjust pendulum length/mass to match timing — demonstrates relationships", cognitiveSkills: ["measurement", "comparison", "estimation"], interactionPattern: "adjust-parameter → release → observe-period", visualMetaphor: "Physics lab with grandfather clock", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [6, 8], estimatedTime: [20, 40] },
-  { id: "water-wheel", name: "Water Wheel", description: "Control water flow to power a water wheel at target speed", cognitiveSkills: ["ratio", "calculation", "estimation"], interactionPattern: "adjust-valve → water-flows → wheel-turns", visualMetaphor: "Mill with water channel and wheel", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [15, 35] },
-  { id: "gravity-drop", name: "Gravity Drop Tower", description: "Drop objects from height — compare fall times/distances", cognitiveSkills: ["comparison", "estimation", "calculation"], interactionPattern: "select-object → drop → observe-fall", visualMetaphor: "Tall tower with measurement markings", technology: ["svg", "gsap"], complexity: "low", gradeRange: [5, 7], estimatedTime: [10, 25] },
+export const THE_29_PARADIGMS: Archetype[] = [
+  {
+    id: "spatial-3d-inspector",
+    name: "3D & Isometric Spatial Inspection",
+    category: "spatial",
+    description: "Rotational inspection table with multi-view camera tracking (Top/Front/Side) to deduce hidden faces or orientations.",
+    cognitiveSkills: ["spatial-reasoning", "3d-rotation", "polyhedral-nets"],
+    interactionPattern: "drag-rotate → camera-inspect → deduce-face",
+    visualMetaphor: "Laboratory examination turntable or orbital asteroid scanner",
+    technology: ["three", "canvas", "svg"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 50],
+  },
+  {
+    id: "state-transformation-circuit",
+    name: "State-Transition & Mutation Machines",
+    category: "transformation",
+    description: "Input elements travel through visible transformation stages where underlying rules alter visual/numeric properties.",
+    cognitiveSkills: ["sequence-rules", "state-mutation", "matrix-logic"],
+    interactionPattern: "slot-input → trigger-cycle → observe-stage-mutation",
+    visualMetaphor: "Alchemical distillation pipeline or logic circuit breadboard",
+    technology: ["svg", "css", "gsap"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "set-filter-scanner",
+    name: "Personnel & Set Exclusion Scanners",
+    category: "classification",
+    description: "Multi-layered optical scanner filtering population datasets via Boolean conditions (AND, OR, NOT).",
+    cognitiveSkills: ["set-theory", "venn-intersection", "exclusion-filtering"],
+    interactionPattern: "toggle-filters → scan-sweep → select-intersection-region",
+    visualMetaphor: "Personnel record database scanner or sonar biosensor",
+    technology: ["svg", "canvas"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [15, 40],
+  },
+  {
+    id: "reconstructed-navigation-map",
+    name: "Reconstructed Vector Navigation",
+    category: "navigation",
+    description: "Step-by-step vector trajectory construction tracking cumulative displacement and relative compass bearings.",
+    cognitiveSkills: ["direction-sense", "vector-displacement", "compass-bearings"],
+    interactionPattern: "input-segments → step-traverse → read-relative-bearing",
+    visualMetaphor: "Expeditionary cartography map or lunar rover trajectory plot",
+    technology: ["svg", "canvas", "framer-motion"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "structural-crane-construction",
+    name: "Structural Assembly & Place-Value Cranes",
+    category: "construction",
+    description: "Heavy-duty structural placement requiring components to be locked into strict hierarchical or positional order.",
+    cognitiveSkills: ["place-value", "hierarchical-ordering", "magnitude-sense"],
+    interactionPattern: "crane-pickup → tier-docking → sequence-lock",
+    visualMetaphor: "Orbital space station docking tower or skyscraper tier crane",
+    technology: ["svg", "css"],
+    complexity: "medium",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 35],
+  },
+  {
+    id: "optical-fluid-reflection",
+    name: "Dynamic Optical Reflection Pools",
+    category: "spatial",
+    description: "Liquid or mirror boundary dynamically generating vertical/horizontal inverted reflections with adjustable waterlines.",
+    cognitiveSkills: ["water-images", "mirror-inversion", "optical-symmetry"],
+    interactionPattern: "drag-waterline → view-wave-inversion → match-reflection",
+    visualMetaphor: "Mercury reflection basin or laser optics mirror array",
+    technology: ["svg", "css"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 30],
+  },
+  {
+    id: "crease-folding-studio",
+    name: "Crease & Transparency Folding Studios",
+    category: "spatial",
+    description: "Interactive sheet boundary folding along custom crease lines with live ghost overlay and alpha-composite punch holes.",
+    cognitiveSkills: ["paper-folding", "transparency-overlap", "bilateral-symmetry"],
+    interactionPattern: "grab-fold-edge → sweep-crease → observe-ghost-composite",
+    visualMetaphor: "Origami engineering draft table or holographic laser folder",
+    technology: ["svg", "canvas"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 40],
+  },
+  {
+    id: "investigation-pinboard",
+    name: "Investigative Evidence Pinboards",
+    category: "puzzle",
+    description: "Node-edge relational network where kinship, connections, and clues are strung together to deduce unknown nodes.",
+    cognitiveSkills: ["blood-relations", "graph-deduction", "transitive-logic"],
+    interactionPattern: "link-nodes → apply-relation-string → deduce-target-link",
+    visualMetaphor: "Forensic detective corkboard with red connective string",
+    technology: ["svg", "canvas"],
+    complexity: "high",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [25, 55],
+  },
+  {
+    id: "geometric-condition-lens",
+    name: "Precision Geometry Condition Scanners",
+    category: "spatial",
+    description: "Virtual optical loupe and coordinate reticle scanning composite geometric figures to verify dot placement constraints.",
+    cognitiveSkills: ["dot-situation", "embedded-figures", "geometric-containment"],
+    interactionPattern: "position-lens → scan-overlap → verify-containment-zones",
+    visualMetaphor: "Microscopic optical comparator or laser inspection reticle",
+    technology: ["svg", "canvas"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "matrix-schedule-planner",
+    name: "Matrix Time Schedulers & Calendars",
+    category: "everyday",
+    description: "Temporal grid engine applying modular arithmetic and conditional rule masks to compute net active time units.",
+    cognitiveSkills: ["calendar-math", "modular-arithmetic", "scheduling-logic"],
+    interactionPattern: "toggle-rule-filters → auto-highlight-active-days → tally-count",
+    visualMetaphor: "Spaceport launch window calendar or dispatch shift matrix",
+    technology: ["svg", "css"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 35],
+  },
+  {
+    id: "mosaic-restoration-table",
+    name: "Mosaic & Geometric Tile Restoration",
+    category: "puzzle",
+    description: "Damaged ornamental tessellation requiring rotation and snap-fitting of missing geometric fragments.",
+    cognitiveSkills: ["pattern-completion", "tessellation", "rotational-fit"],
+    interactionPattern: "select-tile → rotate-orientation → snap-into-void",
+    visualMetaphor: "Archaeological mosaic restoration stage or stained-glass table",
+    technology: ["svg", "canvas"],
+    complexity: "medium",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 35],
+  },
+  {
+    id: "fractional-area-painter",
+    name: "Fractional & Grid Area Painters",
+    category: "data",
+    description: "Interactive surface coating roller displaying live fractional, percentage, and ratio meters during fill operations.",
+    cognitiveSkills: ["fractional-area", "part-to-whole", "grid-shading"],
+    interactionPattern: "drag-paint-roller → fill-cells → monitor-fraction-meter",
+    visualMetaphor: "Photovoltaic solar array energizer or agricultural grid sprayer",
+    technology: ["svg", "canvas"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 30],
+  },
+  {
+    id: "mathematical-tree-cascade",
+    name: "Mathematical Trees & Dependency Cascades",
+    category: "puzzle",
+    description: "Multi-tier branching hierarchy where leaf evaluations cascade upwards through operations to feed root objectives.",
+    cognitiveSkills: ["factor-trees", "dependency-propagation", "prime-decomposition"],
+    interactionPattern: "activate-leaves → propagate-values → solve-missing-junction",
+    visualMetaphor: "Hydroelectric dam valve cascade or cybernetic root mainframe",
+    technology: ["svg", "gsap"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "ballistic-kinematic-railway",
+    name: "Ballistic Kinematics & Synchronizers",
+    category: "physics",
+    description: "Multiple discrete frequency walkers or trajectory rails executing concurrently to reveal mutual periodic convergence.",
+    cognitiveSkills: ["lcm-hcf", "periodic-motion", "synchronization"],
+    interactionPattern: "set-step-frequencies → launch-parallel → observe-coincidence",
+    visualMetaphor: "Synchronized step frequency corridor or celestial orbit transit",
+    technology: ["canvas", "svg"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "equilibrium-torque-balance",
+    name: "Equilibrium & Dynamic Torque Balances",
+    category: "physics",
+    description: "Calibrated lever beam scale calculating live moment arm torque and integer weight differentials.",
+    cognitiveSkills: ["linear-equations", "signed-integers", "moment-equilibrium"],
+    interactionPattern: "load-weights-to-pan → balance-beam-tilts → achieve-level",
+    visualMetaphor: "Ancient brass jeweler's balance or airship center-of-mass trim",
+    technology: ["svg", "canvas", "matter-js"],
+    complexity: "medium",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 40],
+  },
+  {
+    id: "symmetry-axis-sweeper",
+    name: "Symmetry Axis Sweepers",
+    category: "spatial",
+    description: "360-degree rotational optical laser line identifying and snapping to all valid axes of reflectional symmetry.",
+    cognitiveSkills: ["lines-of-symmetry", "rotational-invariance", "geometric-axes"],
+    interactionPattern: "rotate-laser-axis → match-halves → lock-symmetry-line",
+    visualMetaphor: "Gemological laser scanner or optical wafer alignment chamber",
+    technology: ["svg", "canvas"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 35],
+  },
+  {
+    id: "data-turnstile-workshop",
+    name: "Data Flow Turnstiles & Statistical Workshops",
+    category: "data",
+    description: "Dynamic particle emitter translating raw tally frequencies into responsive sector pie and bar flow models.",
+    cognitiveSkills: ["tally-interpretation", "frequency-distributions", "proportions"],
+    interactionPattern: "stream-tally-groups → dynamic-sector-aggregation → compare-sums",
+    visualMetaphor: "Transit station automated passenger turnstile or wildlife telemetry gate",
+    technology: ["svg", "canvas"],
+    complexity: "medium",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [20, 40],
+  },
+  {
+    id: "spatial-decomposition-planner",
+    name: "Spatial Decomposition & Wire Tensioners",
+    category: "measurement",
+    description: "Dissection tool breaking complex irregular stepped/spiral polygons into computable rectangles, or bending perimeter wire.",
+    cognitiveSkills: ["area-decomposition", "perimeter-constraints", "compound-geometry"],
+    interactionPattern: "draw-dissection-rays → calculate-subregions → sum-total",
+    visualMetaphor: "Architectural CNC laser cutter or wire bending jig",
+    technology: ["svg", "canvas"],
+    complexity: "high",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [25, 50],
+  },
+  {
+    id: "mechanical-clockwork-probe",
+    name: "Mechanical Clockwork & Angle Sector Probes",
+    category: "measurement",
+    description: "Geared dual-hand analog clock dial with dynamic angular arc sweep measuring exact acute, obtuse, and reflex degrees.",
+    cognitiveSkills: ["clock-angles", "angular-measure", "elapsed-time"],
+    interactionPattern: "rotate-clock-hands → sweep-angle-arc → verify-angle-classification",
+    visualMetaphor: "Precision horological chronometer or nautical astrolabe",
+    technology: ["svg", "canvas"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 35],
+  },
+  {
+    id: "hydrodynamic-vessel-lab",
+    name: "Hydrodynamic & Volumetric Vessels",
+    category: "physics",
+    description: "Interconnected transparent fluid reservoirs with calibrated height gauges comparing fraction volumes in real time.",
+    cognitiveSkills: ["fraction-comparison", "liquid-volume", "capacitive-ratios"],
+    interactionPattern: "adjust-flow-valves → equalize-fluid-heights → evaluate-volume",
+    visualMetaphor: "Chemical titration manifold or submarine ballast tank controller",
+    technology: ["svg", "css"],
+    complexity: "medium",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 40],
+  },
+  {
+    id: "calculation-factory-pipeline",
+    name: "Industrial Calculation & Operator Pipelines",
+    category: "transformation",
+    description: "Conveyor belt where operand containers pass through redefined operational stations under altered BODMAS rules.",
+    cognitiveSkills: ["operator-substitution", "bodmas-precedence", "symbolic-mapping"],
+    interactionPattern: "insert-operator-chips → run-pipeline → watch-operand-transformation",
+    visualMetaphor: "Pneumatic computation factory or cybernetic decryption pipeline",
+    technology: ["svg", "css", "gsap"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "archaeological-numeral-decoder",
+    name: "Archaeological Numeral Decoders",
+    category: "puzzle",
+    description: "Ancient stone tablet laser scanner translating archaic glyphs and Roman expressions into Arabic equivalents.",
+    cognitiveSkills: ["roman-numerals", "base-systems", "ancient-arithmetic"],
+    interactionPattern: "scan-inscriptions → translate-subtractive-rules → scale-placement",
+    visualMetaphor: "Museum artifact holographic scanner or temple inscription chamber",
+    technology: ["svg", "motion"],
+    complexity: "medium",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [20, 40],
+  },
+  {
+    id: "metrology-conversion-dynamo",
+    name: "Metrology & Unit Conversion Dynamos",
+    category: "measurement",
+    description: "Multi-dial metric/customary gear train translating prefixes ($kilo \\leftrightarrow hecto \\leftrightarrow deci \\leftrightarrow milli$) in real time.",
+    cognitiveSkills: ["unit-conversion", "dimensional-analysis", "scale-factors"],
+    interactionPattern: "shift-prefix-gearbox → observe-dynamometer-translation → match-units",
+    visualMetaphor: "Laboratory calibration dynamometer or pressure gauge manifold",
+    technology: ["svg", "css"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 35],
+  },
+  {
+    id: "sequential-commerce-journey",
+    name: "Sequential Commerce & Expenditure Flows",
+    category: "everyday",
+    description: "Step-by-step passage through sequential expenditure checkpoints with a live wallet ledger tracking fractional decay.",
+    cognitiveSkills: ["fraction-of-remainder", "reverse-unitary-method", "financial-arithmetic"],
+    interactionPattern: "traverse-storefronts → deduct-fractional-shares → deduce-initial-wallet",
+    visualMetaphor: "Mountain expedition supply outpost trail or merchant bazaar",
+    technology: ["svg", "css"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "kinematic-track-race",
+    name: "Kinematic Track Races & Differential Odometers",
+    category: "physics",
+    description: "Simultaneous runners traversing distinct geometric perimeters with live telemetry odometers computing cumulative delta.",
+    cognitiveSkills: ["perimeter-multiplication", "relative-distance", "rate-differentials"],
+    interactionPattern: "start-dual-racers → monitor-lap-telemetry → read-final-gap",
+    visualMetaphor: "Velodrome cycling trial or drone circuit telemetry console",
+    technology: ["svg", "canvas", "framer-motion"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "microclimate-differential-station",
+    name: "Microclimate & Gradient Weather Stations",
+    category: "everyday",
+    description: "Comparative dual-environment probe stations with vertical mercury column thermometers exploring signed temperature spans.",
+    cognitiveSkills: ["integer-subtraction", "temperature-deltas", "zero-origin-scaling"],
+    interactionPattern: "adjust-elevation-probe → measure-thermal-span → calculate-differential",
+    visualMetaphor: "Arctic vs Desert atmospheric telemetry station",
+    technology: ["svg", "css"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 30],
+  },
+  {
+    id: "industrial-packing-tessellation",
+    name: "Industrial Packing & Tessellation Cutters",
+    category: "measurement",
+    description: "Automated sheet cutter computing integer 2D bounding grid yield and container packing without fractional waste.",
+    cognitiveSkills: ["integer-division", "2d-tessellation-packing", "remainder-optimization"],
+    interactionPattern: "configure-cutting-matrix → preview-sheet-yield → count-complete-units",
+    visualMetaphor: "High-speed envelope manufacturing plant or CNC sheet laser cutter",
+    technology: ["canvas", "svg"],
+    complexity: "medium",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [20, 45],
+  },
+  {
+    id: "subzero-integer-shaft",
+    name: "Sub-Zero Integer Shafts & Elevation Trails",
+    category: "physics",
+    description: "Vertical elevator shaft penetrating above and below zero sea level exploring signed integers, successors, and predecessors.",
+    cognitiveSkills: ["signed-integers", "successor-predecessor", "absolute-value"],
+    interactionPattern: "operate-shaft-winch → cross-zero-origin → record-floor-delta",
+    visualMetaphor: "Deep-sea bathysphere research elevator or mining hoist",
+    technology: ["svg", "css"],
+    complexity: "low",
+    gradeRange: [5, 8],
+    estimatedTimeSeconds: [15, 35],
+  },
+  {
+    id: "achiever-multistage-vault",
+    name: "Achiever Multi-Stage Challenge Vaults",
+    category: "achiever",
+    description: "High-order multi-room verification laboratory requiring two-stage hypothesis testing, evidence locking, and compound logic.",
+    cognitiveSkills: ["statement-verification", "compound-reasoning", "multi-step-deduction"],
+    interactionPattern: "test-statement-1 → record-evidence → test-statement-2 → lock-master-key",
+    visualMetaphor: "Quantum containment facility multi-key vault or cyber-forensic terminal",
+    technology: ["svg", "canvas", "framer-motion"],
+    complexity: "high",
+    gradeRange: [6, 8],
+    estimatedTimeSeconds: [30, 60],
+  },
 ];
 
-// ─── MATHEMATICS ───────────────────────────────────────────
-
-export const MATH_ARCHETYPES: Archetype[] = [
-  { id: "number-factory", name: "Number Factory", description: "Numbers flow through a factory pipeline — student operates machines that transform them", cognitiveSkills: ["calculation", "operation", "sequencing"], interactionPattern: "configure-machine → feed-number → observe-output", visualMetaphor: "Industrial factory with conveyor and machines", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "treasure-map", name: "Treasure Map", description: "Follow coordinate/direction clues to find treasure on a map", cognitiveSkills: ["coordinates", "direction", "measurement"], interactionPattern: "plot-coordinates → follow-path → find-treasure", visualMetaphor: "Pirate island map with grid overlay", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 45] },
-  { id: "digital-vault", name: "Digital Vault Lock", description: "Enter the correct combination to unlock a vault — represents numeric answers", cognitiveSkills: ["calculation", "logic", "pattern"], interactionPattern: "rotate-dials → enter-code → vault-opens", visualMetaphor: "Bank vault with combination lock mechanism", technology: ["svg", "gsap"], complexity: "low", gradeRange: [5, 8], estimatedTime: [15, 30] },
-  { id: "balance-scale", name: "Mathematical Balance Scale", description: "Place number tokens on a scale to prove equality or find unknowns", cognitiveSkills: ["equation", "comparison", "algebra"], interactionPattern: "drag-tokens → scale-tilts → find-balance", visualMetaphor: "Classical brass scale with number tokens", technology: ["svg", "matter-js"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [15, 35] },
-  { id: "fraction-tank", name: "Fraction Tank Laboratory", description: "Control valves to fill tanks to exact fractional levels", cognitiveSkills: ["fraction", "ratio", "measurement"], interactionPattern: "adjust-valve → water-fills → match-level", visualMetaphor: "Laboratory with graduated cylinders and pipe valves", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "ratio-mixer", name: "Ratio Mixing Machine", description: "Mix ingredients in correct ratios to produce the target result", cognitiveSkills: ["ratio", "proportion", "fraction"], interactionPattern: "pour-ingredients → mix → compare-result", visualMetaphor: "Chemistry lab with beakers and mixing chamber", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "geometry-architect", name: "Geometry Architect", description: "Construct geometric shapes by placing vertices, lines, or arcs", cognitiveSkills: ["geometry", "spatial-reasoning", "construction"], interactionPattern: "place-points → connect-lines → shape-forms", visualMetaphor: "Architect drafting table with tools", technology: ["svg", "canvas"], complexity: "high", gradeRange: [6, 8], estimatedTime: [25, 50] },
-  { id: "area-painter", name: "Area Painter", description: "Paint tiles to cover an area — calculate total painted area", cognitiveSkills: ["area", "calculation", "spatial-reasoning"], interactionPattern: "click-tiles → area-fills → count-total", visualMetaphor: "Floor tiling workshop with grid", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "perimeter-fence", name: "Perimeter Fence Builder", description: "Build a fence around a property — calculate total fence length", cognitiveSkills: ["perimeter", "measurement", "addition"], interactionPattern: "place-fence-segments → measure-total", visualMetaphor: "Garden with fence posts and rails", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [5, 7], estimatedTime: [15, 35] },
-  { id: "clock-tower", name: "Clock Tower", description: "Set clock hands to a target time — demonstrates time relationships", cognitiveSkills: ["time", "angle", "measurement"], interactionPattern: "drag-hands → set-time → verify", visualMetaphor: "Medieval clock tower with large face", technology: ["svg", "gsap"], complexity: "low", gradeRange: [5, 7], estimatedTime: [10, 25] },
-  { id: "pattern-loom", name: "Pattern Loom", description: "Complete a weaving pattern by identifying the missing sequence element", cognitiveSkills: ["pattern", "sequence", "logic"], interactionPattern: "observe-pattern → select-next → loom-weaves", visualMetaphor: "Weaving loom with colorful thread pattern", technology: ["svg", "css"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [15, 35] },
-  { id: "number-line-explorer", name: "Number Line Explorer", description: "Navigate a number line to find target values or intervals", cognitiveSkills: ["number-sense", "comparison", "estimation"], interactionPattern: "drag-marker → position-on-line → verify", visualMetaphor: "Horizontal ruler with magnifying glass", technology: ["svg", "gsap"], complexity: "low", gradeRange: [5, 7], estimatedTime: [10, 25] },
-  { id: "equation-machine", name: "Equation Machine", description: "Feed operands into a machine that applies operations — find the output or missing operand", cognitiveSkills: ["calculation", "algebra", "logic"], interactionPattern: "insert-number → select-operation → observe-output", visualMetaphor: "Rube Goldberg-style calculation machine", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "shape-cutter", name: "Shape Cutter Workshop", description: "Cut and fold paper/material to create or identify shapes", cognitiveSkills: ["geometry", "symmetry", "spatial-reasoning"], interactionPattern: "draw-cut-line → fold → observe-result", visualMetaphor: "Paper craft workshop with scissors and paper", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-];
-
-// ─── LOGICAL REASONING ─────────────────────────────────────
-
-export const LOGIC_ARCHETYPES: Archetype[] = [
-  { id: "mystery-room", name: "Mystery Room", description: "Investigate clues in a room to deduce the answer", cognitiveSkills: ["deduction", "logic", "observation"], interactionPattern: "explore-room → find-clues → deduce-answer", visualMetaphor: "Detective's study with evidence pinboard", technology: ["svg", "css"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [25, 50] },
-  { id: "robot-path", name: "Robot Path Programmer", description: "Program a robot's movement sequence to reach a target on a grid", cognitiveSkills: ["direction", "sequencing", "logic"], interactionPattern: "queue-commands → run-robot → reach-target", visualMetaphor: "Factory floor grid with robot and destination", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 45] },
-  { id: "shadow-room", name: "Shadow Identification Room", description: "Match objects to their shadows/rotations — tests spatial reasoning", cognitiveSkills: ["spatial-reasoning", "rotation", "matching"], interactionPattern: "rotate-object → compare-shadow → select-match", visualMetaphor: "Dark room with spotlight and shadow screen", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [15, 35] },
-  { id: "mirror-room", name: "Mirror Reflection Room", description: "Manipulate mirrors to complete reflections or navigate light", cognitiveSkills: ["symmetry", "reflection", "spatial-reasoning"], interactionPattern: "rotate-mirror → observe-reflection → match-target", visualMetaphor: "Gallery with adjustable mirrors", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "code-breaker", name: "Code Breaking Console", description: "Decode a pattern or cipher to find the answer", cognitiveSkills: ["pattern", "logic", "deduction"], interactionPattern: "observe-pattern → decode-rule → enter-answer", visualMetaphor: "Spy console with encrypted message display", technology: ["svg", "css"], complexity: "medium", gradeRange: [6, 8], estimatedTime: [20, 45] },
-  { id: "sorting-machine", name: "Sorting Machine", description: "Classify items into categories using a mechanical sorting device", cognitiveSkills: ["classification", "comparison", "logic"], interactionPattern: "drag-items → sorting-bins → machine-sorts", visualMetaphor: "Industrial sorting conveyor with chutes", technology: ["svg", "gsap"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "logic-bridge", name: "Logic Bridge", description: "Build a bridge by answering logic gates correctly to proceed", cognitiveSkills: ["logic", "deduction", "sequencing"], interactionPattern: "answer-gate → bridge-extends → cross-gap", visualMetaphor: "Ravine with retractable bridge segments", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "missing-piece", name: "Missing Piece Machine", description: "Identify the missing element in a pattern grid or sequence machine", cognitiveSkills: ["pattern", "observation", "logic"], interactionPattern: "observe-grid → identify-rule → place-piece", visualMetaphor: "Puzzle assembly machine with one empty slot", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 8], estimatedTime: [15, 30] },
-  { id: "family-tree", name: "Family Tree Investigation", description: "Navigate a family tree to determine relationships", cognitiveSkills: ["relations", "logic", "deduction"], interactionPattern: "read-clues → build-tree → answer-relationship", visualMetaphor: "Detective board with photo connections", technology: ["svg", "css"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "direction-navigator", name: "Direction Navigator", description: "Navigate through a map following direction clues", cognitiveSkills: ["direction", "spatial-reasoning", "sequencing"], interactionPattern: "read-direction → move-marker → reach-destination", visualMetaphor: "Top-down village map with compass rose", technology: ["svg", "gsap"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "venn-sorter", name: "Venn Diagram Sorter", description: "Place items into correct regions of a Venn diagram", cognitiveSkills: ["classification", "set-theory", "logic"], interactionPattern: "drag-items → drop-in-region → verify-placement", visualMetaphor: "Interactive Venn circles with floating item cards", technology: ["svg", "gsap"], complexity: "low", gradeRange: [5, 8], estimatedTime: [15, 30] },
-  { id: "evidence-board", name: "Evidence Board", description: "Connect evidence pieces to reach a logical conclusion", cognitiveSkills: ["deduction", "logic", "analysis"], interactionPattern: "connect-evidence → form-conclusion → verify", visualMetaphor: "Police investigation board with red string", technology: ["svg", "canvas"], complexity: "high", gradeRange: [6, 8], estimatedTime: [25, 50] },
-];
-
-// ─── EVERYDAY MATHEMATICS ──────────────────────────────────
-
-export const EVERYDAY_ARCHETYPES: Archetype[] = [
-  { id: "supermarket", name: "Supermarket Checkout", description: "Calculate totals, change, or discounts at a checkout counter", cognitiveSkills: ["calculation", "money", "percentage"], interactionPattern: "scan-items → calculate-total → pay", visualMetaphor: "Supermarket checkout lane with products", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "restaurant-bill", name: "Restaurant Bill", description: "Split bills, calculate tips, or verify totals", cognitiveSkills: ["calculation", "fraction", "percentage"], interactionPattern: "review-bill → calculate-share → verify", visualMetaphor: "Restaurant table with bill and calculator", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "post-office", name: "Post Office Counter", description: "Weigh parcels and calculate postage — demonstrates weight/cost relationships", cognitiveSkills: ["measurement", "calculation", "ratio"], interactionPattern: "weigh-parcel → select-service → calculate-cost", visualMetaphor: "Post office counter with scale and price chart", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "travel-planner", name: "Travel Planner", description: "Plan a journey — calculate distances, times, and costs", cognitiveSkills: ["calculation", "time", "distance"], interactionPattern: "select-route → calculate-time → plan-journey", visualMetaphor: "Map with routes and vehicle options", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "weather-station", name: "Weather Station", description: "Read thermometers, rain gauges — convert and compare measurements", cognitiveSkills: ["measurement", "comparison", "conversion"], interactionPattern: "read-instrument → record-data → analyze", visualMetaphor: "Weather station with instruments and log book", technology: ["svg", "gsap"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "construction-site", name: "Construction Site Manager", description: "Calculate materials needed for building — area, perimeter, volume", cognitiveSkills: ["area", "perimeter", "calculation"], interactionPattern: "measure-site → calculate-materials → order", visualMetaphor: "Construction site blueprint with measuring tools", technology: ["svg", "canvas"], complexity: "medium", gradeRange: [5, 8], estimatedTime: [20, 40] },
-  { id: "market-stall", name: "Market Stall", description: "Buy/sell items with weight-based pricing — demonstrates unitary method", cognitiveSkills: ["ratio", "calculation", "unitary-method"], interactionPattern: "select-quantity → weigh → calculate-price", visualMetaphor: "Outdoor market stall with hanging scale", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-  { id: "calendar-scheduler", name: "Calendar Scheduler", description: "Plan events on a calendar — calculate durations, days between dates", cognitiveSkills: ["time", "calculation", "calendar"], interactionPattern: "mark-dates → calculate-duration → verify", visualMetaphor: "Desk calendar with sticky notes", technology: ["svg", "css"], complexity: "low", gradeRange: [5, 7], estimatedTime: [15, 30] },
-];
-
-// ─── ACHIEVERS SECTION ─────────────────────────────────────
-
-export const ACHIEVER_ARCHETYPES: Archetype[] = [
-  { id: "multi-stage-lab", name: "Multi-Stage Laboratory", description: "Solve multi-step problems through sequential laboratory experiments", cognitiveSkills: ["multi-step", "analysis", "synthesis"], interactionPattern: "stage-1 → intermediate-result → stage-2 → final", visualMetaphor: "Advanced research laboratory with multiple stations", technology: ["svg", "canvas", "gsap"], complexity: "high", gradeRange: [6, 8], estimatedTime: [30, 60] },
-  { id: "mission-control", name: "Mission Control", description: "Manage multiple variables simultaneously to achieve a complex goal", cognitiveSkills: ["multi-variable", "optimization", "logic"], interactionPattern: "adjust-variables → monitor-systems → achieve-goal", visualMetaphor: "Space mission control room with multiple displays", technology: ["svg", "canvas"], complexity: "high", gradeRange: [6, 8], estimatedTime: [30, 55] },
-  { id: "engineering-challenge", name: "Engineering Challenge", description: "Design and test a solution within constraints — demonstrates engineering thinking", cognitiveSkills: ["optimization", "constraint-satisfaction", "design"], interactionPattern: "design → build → test → iterate", visualMetaphor: "Engineering workshop with testing area", technology: ["svg", "canvas", "matter-js"], complexity: "high", gradeRange: [6, 8], estimatedTime: [30, 60] },
-  { id: "strategy-room", name: "Strategy Room", description: "Analyze multiple data sources to make a strategic decision", cognitiveSkills: ["analysis", "comparison", "deduction"], interactionPattern: "review-data → analyze → decide → verify", visualMetaphor: "War room with maps and data displays", technology: ["svg", "css"], complexity: "high", gradeRange: [6, 8], estimatedTime: [25, 50] },
-  { id: "multi-lock-vault", name: "Multi-Lock Vault", description: "Solve a chain of interconnected puzzles where each unlocks the next", cognitiveSkills: ["multi-step", "logic", "sequencing"], interactionPattern: "solve-lock-1 → reveals-clue → solve-lock-2 → vault-opens", visualMetaphor: "Ancient vault with multiple combination mechanisms", technology: ["svg", "gsap"], complexity: "high", gradeRange: [6, 8], estimatedTime: [30, 55] },
-  { id: "scientific-investigation", name: "Scientific Investigation", description: "Conduct an experiment to discover a principle or verify a hypothesis", cognitiveSkills: ["hypothesis", "experiment", "analysis"], interactionPattern: "form-hypothesis → conduct-experiment → analyze-results", visualMetaphor: "Science lab with equipment and data recorder", technology: ["svg", "canvas"], complexity: "high", gradeRange: [6, 8], estimatedTime: [30, 55] },
-];
-
-// ─── COGNITIVE SKILL → ARCHETYPE MAPPING ───────────────────
-
-export const COGNITIVE_SKILL_MAP: Record<string, string[]> = {
-  "ordering": ["number-factory", "sorting-machine", "elevator", "train-track"],
-  "comparison": ["balance-beam", "balance-scale", "gravity-drop", "weather-station"],
-  "calculation": ["digital-vault", "equation-machine", "supermarket", "number-factory"],
-  "spatial-reasoning": ["shadow-room", "robot-path", "geometry-architect", "mirror-room"],
-  "sequence": ["pattern-loom", "train-track", "number-factory", "code-breaker"],
-  "measurement": ["perimeter-fence", "area-painter", "weather-station", "construction-site"],
-  "symmetry": ["mirror-room", "shape-cutter", "shadow-room"],
-  "direction": ["direction-navigator", "robot-path", "treasure-map"],
-  "pattern": ["pattern-loom", "code-breaker", "missing-piece"],
-  "ratio": ["ratio-mixer", "fraction-tank", "balance-beam", "water-wheel"],
-  "geometry": ["geometry-architect", "area-painter", "perimeter-fence", "shape-cutter"],
-  "logic": ["mystery-room", "logic-bridge", "code-breaker", "evidence-board"],
-  "classification": ["sorting-machine", "venn-sorter"],
-  "fraction": ["fraction-tank", "ratio-mixer", "restaurant-bill"],
-  "time": ["clock-tower", "calendar-scheduler", "travel-planner"],
-  "money": ["supermarket", "market-stall", "restaurant-bill"],
-  "coordinates": ["treasure-map", "geometry-architect"],
-  "relations": ["family-tree", "evidence-board"],
-  "estimation": ["rocket-launch", "slingshot", "number-line-explorer"],
-  "multi-step": ["multi-stage-lab", "multi-lock-vault", "mission-control"],
-};
-
-// ─── ALL ARCHETYPES ────────────────────────────────────────
-
-export const ALL_ARCHETYPES: Archetype[] = [
-  ...PHYSICS_ARCHETYPES,
-  ...MATH_ARCHETYPES,
-  ...LOGIC_ARCHETYPES,
-  ...EVERYDAY_ARCHETYPES,
-  ...ACHIEVER_ARCHETYPES,
-];
-
-export function getArchetypeById(id: string): Archetype | undefined {
-  return ALL_ARCHETYPES.find(a => a.id === id);
+export function getParadigmById(id: string): Archetype | undefined {
+  return THE_29_PARADIGMS.find(p => p.id === id);
 }
 
-export function getArchetypesForSkill(skill: string): Archetype[] {
-  const ids = COGNITIVE_SKILL_MAP[skill] || [];
-  return ids.map(id => ALL_ARCHETYPES.find(a => a.id === id)).filter(Boolean) as Archetype[];
+export function getAllParadigms(): Archetype[] {
+  return [...THE_29_PARADIGMS];
 }

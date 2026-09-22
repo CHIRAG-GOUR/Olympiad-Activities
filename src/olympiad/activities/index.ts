@@ -1,11 +1,12 @@
 /**
- * Olympiad Activities — Barrel Export
+ * Olympiad Activities — Central Barrel Export
  * 
- * Central export point for the entire activity system.
+ * Central import point for the entire Olympiad activity system.
  */
 
-// Core contract
+// Core contract & Schema
 export type {
+  OlympiadActivity,
   ActivityContract,
   ActivityConfig,
   ActivityBlueprintConfig,
@@ -17,7 +18,7 @@ export type {
   ActivityFamily,
 } from "./activity-contract";
 
-// Registry
+// Registry & Anti-Repetition
 export {
   registerActivity,
   isConceptUsed,
@@ -32,21 +33,15 @@ export {
 
 export type { ActivityRegistryEntry } from "./registry";
 
-// Archetypes
+// Archetypes & The 29 Cognitive Paradigms
 export {
-  PHYSICS_ARCHETYPES,
-  MATH_ARCHETYPES,
-  LOGIC_ARCHETYPES,
-  EVERYDAY_ARCHETYPES,
-  ACHIEVER_ARCHETYPES,
-  ALL_ARCHETYPES,
-  COGNITIVE_SKILL_MAP,
-  getArchetypeById,
-  getArchetypesForSkill,
+  THE_29_PARADIGMS,
+  getParadigmById,
+  getAllParadigms,
 } from "./archetypes";
 
 export type { Archetype } from "./archetypes";
 
-// Blueprints
+// Blueprints & Quality Validation
 export { validateBlueprint } from "./blueprints/types";
 export type { ActivityBlueprint, BlueprintValidationResult } from "./blueprints/types";
