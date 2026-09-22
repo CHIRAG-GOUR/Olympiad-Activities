@@ -31,7 +31,7 @@ export function AdminSidebar() {
   const isTeacher = role === "TEACHER";
 
   return (
-    <aside className="w-[260px] bg-[#4D741F] border-r border-[#355415] text-white flex flex-col justify-between flex-shrink-0 h-screen sticky top-0 shadow-lg z-20 font-sans select-none">
+    <aside className="w-[260px] bg-[#4D741F] border-r border-[#355415] text-white flex flex-col justify-between flex-shrink-0 h-dvh shadow-lg z-20 font-sans select-none">
       {/* Header with Official Olympiad Emblem */}
       <div>
         <div className="h-[76px] px-5 border-b border-[#355415]/70 flex items-center gap-3 bg-[#3E5F19]">
@@ -51,7 +51,7 @@ export function AdminSidebar() {
         </div>
 
         {/* Structured Navigation Groups (Requirement 2 & 46) */}
-        <nav className="p-3 space-y-4 overflow-y-auto max-h-[calc(100vh-160px)]">
+        <nav className="p-3 space-y-4 overflow-y-auto max-h-[calc(100dvh-160px)]">
           {/* Main Dashboard */}
           <div>
             <Link

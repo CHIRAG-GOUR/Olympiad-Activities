@@ -107,7 +107,17 @@ export default function LiveMonitorPage() {
     return matchesSearch && matchesExam;
   });
 
-  const uniqueExams = Array.from(new Set(sessions.map((s) => ({ id: s.examId, title: s.examTitle }))));
+  // `new Set` only dedupes by reference, and a fresh {id, title} object literal is a
+  // distinct reference every time even when its contents are identical — so with more than
+  // one session on the same exam this produced multiple entries sharing the same `id`,
+  // which React then rejected as duplicate keys in the <option> list below. Dedupe by
+  // examId through a Map instead.
+  const uniqueExams = Array.from(
+    sessions.reduce((map, s) => {
+      if (!map.has(s.examId)) map.set(s.examId, { id: s.examId, title: s.examTitle });
+      return map;
+    }, new Map<string, { id: string; title: string }>()).values()
+  );
   const activeCount = sessions.filter((s) => s.connectionStatus === "Connected" && !s.isSubmitted).length;
 
   return (
