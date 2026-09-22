@@ -40,18 +40,18 @@ export function IntegerBalanceActivity({
   const currentSum = options.find((o) => o.id === selectedOption)?.sum ?? -3;
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-rose-500/20 border border-rose-400/40 rounded-lg text-rose-400">
             <Scale className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-rose-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-rose-700 flex items-center gap-2">
               Integer Balance Scale (Total &lt; 0) <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Evaluate each integer combination. The scale tilts left for negative net sums.
             </p>
           </div>
@@ -59,11 +59,11 @@ export function IntegerBalanceActivity({
       </div>
 
       {/* Interactive Balance Beam */}
-      <div className="p-6 bg-slate-950/90 border border-slate-800 rounded-xl flex flex-col items-center justify-center">
+      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex flex-col items-center justify-center">
         <div className="w-full max-w-sm h-48 relative flex flex-col items-center justify-center">
           {/* Fulcrum Stand */}
           <div className="w-4 h-24 bg-slate-700 rounded-t absolute bottom-4" />
-          <div className="w-20 h-4 bg-slate-800 border border-slate-600 rounded-full absolute bottom-0" />
+          <div className="w-20 h-4 bg-slate-100 border border-slate-200 border border-slate-600 rounded-full absolute bottom-0" />
 
           {/* Tilting Lever Beam */}
           <div
@@ -74,17 +74,17 @@ export function IntegerBalanceActivity({
           >
             {/* Left Pan (Negative) */}
             <div className="absolute -left-2 -top-12 flex flex-col items-center">
-              <div className="w-16 h-12 bg-rose-950/80 border border-rose-500 rounded-xl flex flex-col items-center justify-center shadow">
-                <span className="text-xs font-mono font-bold text-rose-300">Negative</span>
-                <span className="text-[10px] text-slate-400">Left Tilt</span>
+              <div className="w-16 h-12 bg-rose-50 border border-rose-200/80 border border-rose-500 rounded-xl flex flex-col items-center justify-center shadow">
+                <span className="text-xs font-mono font-bold text-rose-700">Negative</span>
+                <span className="text-[10px] text-slate-600">Left Tilt</span>
               </div>
             </div>
 
             {/* Right Pan (Positive) */}
             <div className="absolute -right-2 -top-12 flex flex-col items-center">
               <div className="w-16 h-12 bg-sky-950/80 border border-sky-500 rounded-xl flex flex-col items-center justify-center shadow">
-                <span className="text-xs font-mono font-bold text-sky-300">Positive</span>
-                <span className="text-[10px] text-slate-400">Right Tilt</span>
+                <span className="text-xs font-mono font-bold text-sky-700">Positive</span>
+                <span className="text-[10px] text-slate-600">Right Tilt</span>
               </div>
             </div>
           </div>
@@ -119,16 +119,16 @@ export function IntegerBalanceActivity({
               onClick={() => handleSelect(opt.id)}
               className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                 isSelected
-                  ? "bg-rose-600/30 border-rose-400 text-rose-200 shadow-lg shadow-rose-500/20 scale-[1.01]"
-                  : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                  ? "bg-rose-600/30 border-rose-400 text-rose-800 shadow-lg shadow-rose-500/20 scale-[1.01]"
+                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
               }`}
             >
               <div>
-                <span className="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-rose-400 mr-2">
+                <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-rose-400 mr-2">
                   Option {opt.id}
                 </span>
                 <span className="font-mono text-base font-black">{opt.expr}</span>
-                <p className="text-[11px] text-slate-400 mt-1 font-normal">{opt.label}</p>
+                <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
               </div>
               {isSelected && <CheckCircle2 className="w-5 h-5 text-rose-400 shrink-0" />}
             </button>

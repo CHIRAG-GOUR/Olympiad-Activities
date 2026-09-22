@@ -55,7 +55,7 @@ export function ReflectionPoolActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-cyan-950 to-slate-900 border border-cyan-800/60 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan-800/40 pb-4">
         <div className="flex items-center gap-3">
@@ -63,10 +63,10 @@ export function ReflectionPoolActivity({
             <Waves className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-cyan-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-cyan-700 flex items-center gap-2">
               Optical Reflection Pool <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Drag the water boundary slider to observe the dynamic vertical reflection of "WELCOME".
             </p>
           </div>
@@ -74,7 +74,7 @@ export function ReflectionPoolActivity({
       </div>
 
       {/* Interactive Water Chamber */}
-      <div className="relative h-64 bg-slate-950/90 border border-cyan-900/60 rounded-xl flex flex-col items-center justify-center overflow-hidden select-none p-4">
+      <div className="relative h-64 bg-slate-50 border border-slate-200 border border-cyan-900/60 rounded-xl flex flex-col items-center justify-center overflow-hidden select-none p-4">
         {/* Above Water: Original Word */}
         <div className="flex-1 flex items-end justify-center pb-3">
           <span className="font-black text-3xl sm:text-4xl tracking-widest text-white drop-shadow">
@@ -85,7 +85,7 @@ export function ReflectionPoolActivity({
         {/* Water Surface Line */}
         <div className="w-full relative flex items-center justify-center my-1">
           <div className="w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#22d3ee]" />
-          <span className="absolute px-2.5 py-0.5 bg-cyan-900/90 border border-cyan-400/50 rounded-full text-[10px] font-mono text-cyan-300">
+          <span className="absolute px-2.5 py-0.5 bg-cyan-900/90 border border-cyan-400/50 rounded-full text-[10px] font-mono text-cyan-700">
             WATERLINE (VERTICAL REFLECTION AXIS)
           </span>
         </div>
@@ -98,7 +98,7 @@ export function ReflectionPoolActivity({
             filter: "blur(0.5px)",
           }}
         >
-          <span className="font-black text-3xl sm:text-4xl tracking-widest text-cyan-300">
+          <span className="font-black text-3xl sm:text-4xl tracking-widest text-cyan-700">
             W E L C O M E
           </span>
         </div>
@@ -109,7 +109,7 @@ export function ReflectionPoolActivity({
 
       {/* Answer Options Grid */}
       <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
           Select the correct water image of "WELCOME":
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -123,18 +123,18 @@ export function ReflectionPoolActivity({
                 onClick={() => handleSelect(opt.id)}
                 className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                   isSelected
-                    ? "bg-cyan-600/30 border-cyan-400 text-cyan-200 shadow-lg shadow-cyan-500/20 scale-[1.01]"
-                    : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                    ? "bg-cyan-600/30 border-cyan-400 text-cyan-800 shadow-lg shadow-cyan-500/20 scale-[1.01]"
+                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
                 }`}
               >
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <span className="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-cyan-400">
+                    <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-cyan-400">
                       Option {opt.id}
                     </span>
                     <span className="font-black text-xl tracking-wider">{opt.text}</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1 font-normal">{opt.desc}</p>
+                  <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.desc}</p>
                 </div>
                 {isSelected && <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />}
               </button>

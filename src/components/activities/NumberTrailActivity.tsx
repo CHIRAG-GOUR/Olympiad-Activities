@@ -36,18 +36,18 @@ export function NumberTrailActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-rose-500/20 border border-rose-400/40 rounded-lg text-rose-400">
             <TrendingDown className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-rose-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-rose-700 flex items-center gap-2">
               Mountain-to-Valley Number Trail <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Arrange the signed integers in descending order (highest altitude peak to lowest valley floor).
             </p>
           </div>
@@ -55,20 +55,20 @@ export function NumberTrailActivity({
       </div>
 
       {/* Altitude Trail Visualizer */}
-      <div className="p-5 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-center overflow-x-auto">
+      <div className="p-5 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center overflow-x-auto">
         <div className="flex items-end gap-3 min-w-[480px]">
           {[
             { val: 34, h: "h-28", bg: "bg-emerald-600", label: "Peak (+34)" },
             { val: 18, h: "h-20", bg: "bg-emerald-700", label: "High (+18)" },
             { val: 0, h: "h-14", bg: "bg-slate-700", label: "Sea Level (0)" },
             { val: -4, h: "h-12", bg: "bg-rose-900", label: "Valley (-4)" },
-            { val: -12, h: "h-16", bg: "bg-rose-950", label: "Trench (-12)" },
-            { val: -25, h: "h-24", bg: "bg-rose-950 border border-rose-500", label: "Abyss (-25)" },
+            { val: -12, h: "h-16", bg: "bg-rose-50 border border-rose-200", label: "Trench (-12)" },
+            { val: -25, h: "h-24", bg: "bg-rose-50 border border-rose-200 border border-rose-500", label: "Abyss (-25)" },
           ].map((node, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <span className="font-black text-xs font-mono text-white">{node.val}</span>
               <div className={`w-full ${node.h} ${node.bg} rounded-t-lg transition-all`} />
-              <span className="text-[9px] font-mono text-slate-400 text-center leading-tight">
+              <span className="text-[9px] font-mono text-slate-600 text-center leading-tight">
                 {node.label}
               </span>
             </div>
@@ -88,16 +88,16 @@ export function NumberTrailActivity({
               onClick={() => handleSelect(opt.seq)}
               className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                 isSelected
-                  ? "bg-rose-600/30 border-rose-400 text-rose-200 shadow-lg shadow-rose-500/20 scale-[1.01]"
-                  : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                  ? "bg-rose-600/30 border-rose-400 text-rose-800 shadow-lg shadow-rose-500/20 scale-[1.01]"
+                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
               }`}
             >
               <div>
-                <span className="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-rose-400 mr-2">
+                <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-rose-400 mr-2">
                   Option {opt.id}
                 </span>
                 <span className="font-mono text-sm font-black tracking-wide">{opt.seq}</span>
-                <p className="text-[11px] text-slate-400 mt-1 font-normal">{opt.label}</p>
+                <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
               </div>
               {isSelected && <CheckCircle2 className="w-5 h-5 text-rose-400 shrink-0" />}
             </button>

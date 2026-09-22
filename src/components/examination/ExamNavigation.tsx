@@ -1,94 +1,100 @@
 "use client";
 
 import React from "react";
-import { ArrowLeft, ArrowRight, Bookmark, RotateCcw, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCcw, Bookmark, CheckCircle2 } from "lucide-react";
 
 interface ExamNavigationProps {
   currentIndex: number;
   totalQuestions: number;
-  isFlagged: boolean;
+  onSaveAndNext: () => void;
+  onSaveAndMarkForReview: () => void;
+  onMarkForReviewAndNext: () => void;
+  onClearResponse: () => void;
   onPrevious: () => void;
   onNext: () => void;
-  onToggleFlag: () => void;
-  onClearAnswer: () => void;
-  onSubmitExam: () => void;
 }
 
 export function ExamNavigation({
   currentIndex,
   totalQuestions,
-  isFlagged,
+  onSaveAndNext,
+  onSaveAndMarkForReview,
+  onMarkForReviewAndNext,
+  onClearResponse,
   onPrevious,
   onNext,
-  onToggleFlag,
-  onClearAnswer,
-  onSubmitExam,
 }: ExamNavigationProps) {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === totalQuestions - 1;
 
   return (
-    <nav aria-label="Examination navigation" className="bg-[#FFFDF5] border-t-2 border-[#FDE68A] sticky bottom-0 z-20 shadow-md">
-      <div className="w-full max-w-[1750px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 min-h-[72px]">
-        {/* Left: Previous & Clear */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+    <nav
+      aria-label="NTA Examination Navigation Bar"
+      className="bg-white border-t-2 border-slate-300 sticky bottom-0 z-30 shadow-lg"
+    >
+      <div className="w-full max-w-[1750px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 min-h-[64px]">
+        {/* Left: Previous & Next Simple Navigation */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onPrevious}
             disabled={isFirst}
-            className="h-[46px] px-5 bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 active:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white rounded-xl text-[14px] font-bold flex items-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed shadow-xs"
+            className="h-[42px] px-4 bg-slate-100 border border-slate-300 text-slate-800 hover:bg-slate-200 active:bg-slate-300 disabled:opacity-40 disabled:hover:bg-slate-100 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
-            <ArrowLeft className="w-4 h-4 text-slate-700" />
-            <span>Previous Question</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>&lt;&lt; Back</span>
           </button>
 
           <button
             type="button"
-            onClick={onClearAnswer}
-            className="h-[46px] px-4 text-slate-600 hover:text-rose-600 hover:bg-rose-50 active:bg-rose-100 rounded-xl text-[13px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            onClick={onNext}
+            disabled={isLast}
+            className="h-[42px] px-4 bg-slate-100 border border-slate-300 text-slate-800 hover:bg-slate-200 active:bg-slate-300 disabled:opacity-40 disabled:hover:bg-slate-100 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
-            <RotateCcw className="w-4 h-4" />
+            <span>Next &gt;&gt;</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Center: Clear Response & Mark for Review Buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onClearResponse}
+            className="h-[42px] px-4 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
             <span>Clear Response</span>
           </button>
-        </div>
 
-        {/* Center: Mark for Review (Warm Amber) */}
-        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={onToggleFlag}
-            className={`h-[46px] px-5 rounded-xl text-[14px] font-bold flex items-center gap-2 border-2 transition-all cursor-pointer shadow-xs ${
-              isFlagged
-                ? "bg-[#FEF3C7] border-[#F59E0B] text-[#92400E] ring-2 ring-[#FEF08A]"
-                : "bg-white border-[#FDE68A] text-slate-800 hover:bg-[#FEFCE8]"
-            }`}
+            onClick={onMarkForReviewAndNext}
+            className="h-[42px] px-4 bg-[#6F42C1] hover:bg-[#5A32A3] active:bg-[#482882] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
-            <Bookmark className={`w-4 h-4 ${isFlagged ? "fill-[#D97706] text-[#D97706]" : "text-[#D97706]"}`} />
-            <span>{isFlagged ? "Marked for Review" : "Mark for Review"}</span>
+            <Bookmark className="w-3.5 h-3.5" />
+            <span>Mark for Review & Next</span>
           </button>
         </div>
 
-        {/* Right: Save & Next / Finish Exam (Academic Gold Primary) */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          {!isLast ? (
-            <button
-              type="button"
-              onClick={onNext}
-              className="w-full sm:w-auto h-[46px] px-8 bg-[#F59E0B] hover:bg-[#D97706] active:bg-[#B45309] text-slate-950 rounded-xl text-[14px] font-extrabold flex items-center justify-center gap-2 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
-            >
-              <span>Save & Next Question</span>
-              <ArrowRight className="w-4 h-4 text-slate-950 stroke-[2.5]" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onSubmitExam}
-              className="w-full sm:w-auto h-[46px] px-8 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-[14px] font-extrabold flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
-            >
-              <Send className="w-4 h-4" />
-              <span>Submit Examination Paper</span>
-            </button>
-          )}
+        {/* Right: Save & Mark for Review & Save & Next (Primary NTA Actions) */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onSaveAndMarkForReview}
+            className="h-[42px] px-5 bg-[#D97706] hover:bg-[#B45309] active:bg-[#92400E] text-white rounded-lg text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+          >
+            <span>Save & Mark for Review</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onSaveAndNext}
+            className="h-[42px] px-6 bg-[#28A745] hover:bg-[#218838] active:bg-[#1E7E34] text-white rounded-lg text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer tracking-wide uppercase"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Save & Next</span>
+          </button>
         </div>
       </div>
     </nav>

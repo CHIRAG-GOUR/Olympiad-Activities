@@ -35,18 +35,18 @@ export function ShapeTransformActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-purple-500/20 border border-purple-400/40 rounded-lg text-purple-400">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-purple-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-purple-700 flex items-center gap-2">
               Shape Transformation Machine
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Figure (i) transforms into (ii). Apply the exact same mutation to Figure (iii).
             </p>
           </div>
@@ -58,49 +58,49 @@ export function ShapeTransformActivity({
             setIsSimulating(true);
             setTimeout(() => setIsSimulating(false), 1200);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-800 hover:bg-purple-700 border border-purple-600 rounded text-xs font-semibold text-purple-200 transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-800 hover:bg-purple-700 border border-purple-600 rounded text-xs font-semibold text-purple-800 transition"
         >
           <Play className="w-3.5 h-3.5" /> Run Machine
         </button>
       </div>
 
       {/* Machine Chamber Visualizer */}
-      <div className="p-6 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-around flex-wrap gap-4">
+      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-around flex-wrap gap-4">
         {/* Stage 1: Figure (i) */}
         <div className="flex flex-col items-center gap-2">
-          <div className="w-20 h-20 bg-slate-900 border border-slate-700 rounded-xl flex items-center justify-center p-2 shadow-inner">
+          <div className="w-20 h-20 bg-white border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center p-2 shadow-inner">
             <svg viewBox="0 0 60 60" className="w-full h-full">
               <polygon points="30,5 55,50 5,50" fill="none" stroke="#38bdf8" strokeWidth="2.5" />
               <circle cx="30" cy="35" r="7" fill="#f43f5e" />
             </svg>
           </div>
-          <span className="text-[11px] font-mono text-slate-400">Figure (i)</span>
+          <span className="text-[11px] font-mono text-slate-600">Figure (i)</span>
         </div>
 
         <ArrowRight className="w-6 h-6 text-purple-400 animate-pulse" />
 
         {/* Stage 2: Figure (ii) Result */}
         <div className="flex flex-col items-center gap-2">
-          <div className="w-20 h-20 bg-slate-900 border border-purple-500/60 rounded-xl flex items-center justify-center p-2 shadow-inner">
+          <div className="w-20 h-20 bg-white border border-slate-200 border border-purple-500/60 rounded-xl flex items-center justify-center p-2 shadow-inner">
             <svg viewBox="0 0 60 60" className="w-full h-full">
               <polygon points="30,55 55,10 5,10" fill="none" stroke="#38bdf8" strokeWidth="2.5" />
               <rect x="23" y="20" width="14" height="14" fill="#f43f5e" />
             </svg>
           </div>
-          <span className="text-[11px] font-mono text-purple-300 font-bold">Figure (ii) (Transformed)</span>
+          <span className="text-[11px] font-mono text-purple-700 font-bold">Figure (ii) (Transformed)</span>
         </div>
 
-        <div className="w-px h-16 bg-slate-800 hidden sm:block" />
+        <div className="w-px h-16 bg-slate-100 border border-slate-200 hidden sm:block" />
 
         {/* Stage 3: Figure (iii) Target Input */}
         <div className="flex flex-col items-center gap-2">
-          <div className="w-20 h-20 bg-slate-900 border border-slate-700 rounded-xl flex items-center justify-center p-2 shadow-inner">
+          <div className="w-20 h-20 bg-white border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center p-2 shadow-inner">
             <svg viewBox="0 0 60 60" className="w-full h-full">
               <rect x="10" y="10" width="40" height="40" rx="4" fill="none" stroke="#34d399" strokeWidth="2.5" />
               <polygon points="30,20 40,40 20,40" fill="#fbbf24" />
             </svg>
           </div>
-          <span className="text-[11px] font-mono text-slate-400">Figure (iii) (Input)</span>
+          <span className="text-[11px] font-mono text-slate-600">Figure (iii) (Input)</span>
         </div>
 
         <ArrowRight className="w-6 h-6 text-emerald-400 animate-pulse" />
@@ -110,11 +110,11 @@ export function ShapeTransformActivity({
           <div
             className={`w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center p-2 transition-all ${
               selectedOption
-                ? "bg-purple-950/40 border-purple-400 shadow-lg shadow-purple-500/20"
-                : "bg-slate-900/60 border-slate-700"
+                ? "bg-purple-50/70 border border-purple-200 border-purple-400 shadow-lg shadow-purple-500/20"
+                : "bg-white border border-slate-200 border-slate-200"
             }`}
           >
-            <span className="font-black text-2xl text-purple-300">
+            <span className="font-black text-2xl text-purple-700">
               {selectedOption ? `Opt ${selectedOption}` : "?"}
             </span>
           </div>
@@ -134,15 +134,15 @@ export function ShapeTransformActivity({
               onClick={() => handleSelect(opt.id)}
               className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                 isSelected
-                  ? "bg-purple-600/30 border-purple-400 text-purple-200 shadow-lg shadow-purple-500/20 scale-[1.02]"
-                  : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                  ? "bg-purple-600/30 border-purple-400 text-purple-800 shadow-lg shadow-purple-500/20 scale-[1.02]"
+                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-base font-black">{opt.label}</span>
                 {isSelected && <CheckCircle2 className="w-4 h-4 text-purple-400" />}
               </div>
-              <span className="text-[10px] text-slate-400 mt-2">{opt.desc}</span>
+              <span className="text-[10px] text-slate-600 mt-2">{opt.desc}</span>
             </button>
           );
         })}

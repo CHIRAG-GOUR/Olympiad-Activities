@@ -35,26 +35,26 @@ export function InspectionDroneActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-purple-500/20 border border-purple-400/40 rounded-lg text-purple-400">
             <Crosshair className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-purple-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-purple-700 flex items-center gap-2">
               Geometry Inspection Drone (Achievers) <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
-              Drone Scanner: Identify total <strong className="text-purple-300">perpendicular line pairs (⊥)</strong> and <strong className="text-purple-300">right angles (90°)</strong>.
+            <p className="text-xs text-slate-600">
+              Drone Scanner: Identify total <strong className="text-purple-700">perpendicular line pairs (⊥)</strong> and <strong className="text-purple-700">right angles (90°)</strong>.
             </p>
           </div>
         </div>
       </div>
 
       {/* Drone Crosshair Geometry Canvas */}
-      <div className="p-6 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-center">
+      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center">
         <svg viewBox="0 0 340 180" className="w-full h-full max-w-sm select-none">
           {/* Engineering Frame Box */}
           <rect x="40" y="20" width="260" height="140" fill="#0f172a" stroke="#818cf8" strokeWidth="2.5" rx="4" />
@@ -93,15 +93,15 @@ export function InspectionDroneActivity({
               onClick={() => handleSelect(opt.val)}
               className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                 isSelected
-                  ? "bg-purple-600/30 border-purple-400 text-purple-200 shadow-lg shadow-purple-500/20 scale-[1.02]"
-                  : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                  ? "bg-purple-600/30 border-purple-400 text-purple-800 shadow-lg shadow-purple-500/20 scale-[1.02]"
+                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xl font-black font-mono">{opt.val}</span>
                 {isSelected && <CheckCircle2 className="w-4 h-4 text-purple-400" />}
               </div>
-              <span className="text-[10px] text-slate-400 mt-2 font-mono">Option {opt.id}</span>
+              <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
             </button>
           );
         })}

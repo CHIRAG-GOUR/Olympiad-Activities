@@ -38,18 +38,18 @@ export function VennScannerActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-sky-500/20 border border-sky-400/40 rounded-lg text-sky-400">
             <Filter className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-sky-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-sky-700 flex items-center gap-2">
               Personnel Classification Scanner <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Filter: <span className="text-emerald-400 font-bold">+SOLDIER</span> +{" "}
               <span className="text-pink-400 font-bold">+FEMALE</span> -{" "}
               <span className="text-amber-400 font-bold">-MARRIED</span>
@@ -59,7 +59,7 @@ export function VennScannerActivity({
       </div>
 
       {/* Interactive Venn Diagram Canvas */}
-      <div className="relative h-72 bg-slate-950/90 border border-slate-800 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      <div className="relative h-72 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 500 320" className="w-full h-full max-w-lg select-none">
           <defs>
             <radialGradient id="targetGlow" cx="50%" cy="50%" r="50%">
@@ -230,15 +230,15 @@ export function VennScannerActivity({
               onClick={() => handleSelect(reg.id)}
               className={`p-3 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                 isSelected
-                  ? "bg-emerald-600/30 border-emerald-400 text-emerald-200 shadow-lg shadow-emerald-500/20 scale-[1.02]"
-                  : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                  ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.02]"
+                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-black">{reg.id}</span>
                 {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
               </div>
-              <span className="text-[11px] text-slate-400 mt-1">{reg.desc}</span>
+              <span className="text-[11px] text-slate-600 mt-1">{reg.desc}</span>
             </button>
           );
         })}

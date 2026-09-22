@@ -40,18 +40,18 @@ export function DivisibilityScannerActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-400">
             <Binary className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-cyan-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-cyan-700 flex items-center gap-2">
               4-Divisibility Scanner <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Rule: A number is divisible by 4 if and only if its <strong className="text-cyan-400">last two digits</strong> form a multiple of 4.
             </p>
           </div>
@@ -63,23 +63,23 @@ export function DivisibilityScannerActivity({
         {options.map((opt) => (
           <div
             key={opt.id}
-            className="p-3 bg-slate-950/90 border border-slate-800 rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-inner"
+            className="p-3 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-inner"
           >
             <span className="text-[10px] font-mono text-slate-500 font-bold">CANDIDATE {opt.id}</span>
             <div className="text-base font-black font-mono">
-              <span className="text-slate-400">{opt.num.slice(0, 3)}</span>
-              <span className="text-cyan-400 bg-cyan-950/60 px-1 py-0.5 rounded border border-cyan-500/40">
+              <span className="text-slate-600">{opt.num.slice(0, 3)}</span>
+              <span className="text-cyan-400 bg-cyan-50 border border-cyan-200 px-1 py-0.5 rounded border border-cyan-500/40">
                 {opt.last2}
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 mt-1 font-mono">{opt.desc}</span>
+            <span className="text-[10px] text-slate-600 mt-1 font-mono">{opt.desc}</span>
           </div>
         ))}
       </div>
 
       {/* Answer Options Grid */}
       <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
           Select which number is completely divisible by 4:
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -93,15 +93,15 @@ export function DivisibilityScannerActivity({
                 onClick={() => handleSelect(opt.num)}
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
-                    ? "bg-cyan-600/30 border-cyan-400 text-cyan-200 shadow-lg shadow-cyan-500/20 scale-[1.02]"
-                    : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                    ? "bg-cyan-600/30 border-cyan-400 text-cyan-800 shadow-lg shadow-cyan-500/20 scale-[1.02]"
+                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-black">{opt.num}</span>
                   {isSelected && <CheckCircle2 className="w-4 h-4 text-cyan-400" />}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-2 font-mono">Option {opt.id}</span>
+                <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
               </button>
             );
           })}

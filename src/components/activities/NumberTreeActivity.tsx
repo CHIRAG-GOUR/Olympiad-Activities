@@ -39,9 +39,9 @@ export function NumberTreeActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-lime-500/20 border border-lime-400/40 rounded-lg text-lime-400">
             <GitBranch className="w-5 h-5" />
@@ -50,7 +50,7 @@ export function NumberTreeActivity({
             <h3 className="font-bold text-lg text-lime-300 flex items-center gap-2">
               Number Tree Laboratory <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Factorization cascade: Each parent node is the product of its two children.
             </p>
           </div>
@@ -58,7 +58,7 @@ export function NumberTreeActivity({
       </div>
 
       {/* Living Tree Visualizer */}
-      <div className="relative h-64 bg-slate-950/90 border border-slate-800 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      <div className="relative h-64 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 380 220" className="w-full h-full max-w-sm select-none">
           {/* Tree Branches */}
           <line x1="190" y1="35" x2="110" y2="90" stroke="#84cc16" strokeWidth="2.5" />
@@ -114,7 +114,7 @@ export function NumberTreeActivity({
 
       {/* Answer Options Grid */}
       <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
           Find the unknown values of x, y, and z in the number tree:
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -129,11 +129,11 @@ export function NumberTreeActivity({
                 className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                   isSelected
                     ? "bg-lime-600/30 border-lime-400 text-lime-200 shadow-lg shadow-lime-500/20 scale-[1.01]"
-                    : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
                 }`}
               >
                 <div>
-                  <span className="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-lime-400 mr-2">
+                  <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-lime-400 mr-2">
                     Option {opt.id}
                   </span>
                   <span className="font-mono text-base tracking-wide">{opt.label}</span>

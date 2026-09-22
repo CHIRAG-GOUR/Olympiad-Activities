@@ -40,18 +40,18 @@ export function FloorPlannerActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-400">
             <Layout className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-cyan-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-cyan-700 flex items-center gap-2">
               Architect's Floor Planner (Area Decomposition) <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Decompose the stepped polygon into 3 rectangular regions: R1 + R2 + R3.
             </p>
           </div>
@@ -59,7 +59,7 @@ export function FloorPlannerActivity({
       </div>
 
       {/* Stepped Blueprint Dissection View */}
-      <div className="p-6 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-center">
+      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center">
         <svg viewBox="0 0 340 180" className="w-full h-full max-w-sm select-none">
           {/* Region 1: 10 x 3 = 30 cm² (Blue) */}
           <rect x="40" y="110" width="260" height="50" fill="#0369a1" fillOpacity="0.4" stroke="#38bdf8" strokeWidth="2" />
@@ -88,7 +88,7 @@ export function FloorPlannerActivity({
 
       {/* Answer Options Grid */}
       <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
           Find the total area of the stepped figure:
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -102,15 +102,15 @@ export function FloorPlannerActivity({
                 onClick={() => handleSelect(opt.val)}
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
-                    ? "bg-cyan-600/30 border-cyan-400 text-cyan-200 shadow-lg shadow-cyan-500/20 scale-[1.02]"
-                    : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                    ? "bg-cyan-600/30 border-cyan-400 text-cyan-800 shadow-lg shadow-cyan-500/20 scale-[1.02]"
+                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-black">{opt.val} cm²</span>
                   {isSelected && <CheckCircle2 className="w-4 h-4 text-cyan-400" />}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-2 font-mono">Option {opt.id}</span>
+                <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
               </button>
             );
           })}

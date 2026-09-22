@@ -37,18 +37,18 @@ export function WireFenceActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-400">
             <Square className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-emerald-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-emerald-700 flex items-center gap-2">
               Wire-to-Fence Workshop <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               A 180m wire forms a rectangle where <strong className="text-emerald-400">Breadth = Length / 2</strong>.
             </p>
           </div>
@@ -56,21 +56,21 @@ export function WireFenceActivity({
       </div>
 
       {/* Bent Wire Geometry Frame */}
-      <div className="p-6 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-center">
+      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-72 h-36 border-4 border-emerald-400 bg-emerald-950/30 rounded-lg relative flex flex-col items-center justify-center shadow-[0_0_15px_#10b98130]">
-            <span className="text-xs font-mono font-bold text-emerald-300">
+          <div className="w-72 h-36 border-4 border-emerald-400 bg-emerald-50 border border-emerald-200/30 rounded-lg relative flex flex-col items-center justify-center shadow-[0_0_15px_#10b98130]">
+            <span className="text-xs font-mono font-bold text-emerald-700">
               Length = 60 m
             </span>
             <span className="font-black text-2xl text-white my-1">
               Area = 1,800 m²
             </span>
-            <span className="text-xs font-mono font-bold text-emerald-300">
+            <span className="text-xs font-mono font-bold text-emerald-700">
               Breadth = 30 m (Half of Length)
             </span>
 
             {/* Corner dimension markers */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 bg-slate-900 border border-slate-700 rounded text-[10px] text-slate-400">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 bg-white border border-slate-200 border border-slate-200 rounded text-[10px] text-slate-600">
               Perimeter = 2 × (60 + 30) = 180 m
             </div>
           </div>
@@ -79,7 +79,7 @@ export function WireFenceActivity({
 
       {/* Answer Options Grid */}
       <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
           Find the area enclosed by the rectangular wire fence:
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -93,15 +93,15 @@ export function WireFenceActivity({
                 onClick={() => handleSelect(opt.val)}
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
-                    ? "bg-emerald-600/30 border-emerald-400 text-emerald-200 shadow-lg shadow-emerald-500/20 scale-[1.02]"
-                    : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                    ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.02]"
+                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-black">{opt.val} m²</span>
                   {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-2 font-mono">Option {opt.id}</span>
+                <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
               </button>
             );
           })}

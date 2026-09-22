@@ -37,18 +37,18 @@ export function PrecisionBalanceActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-sky-500/20 border border-sky-400/40 rounded-lg text-sky-400">
             <Scale className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-sky-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-sky-700 flex items-center gap-2">
               Decimal Precision Balance Lab <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Evaluate and compare the two decimal arithmetic pipelines on the precision scale.
             </p>
           </div>
@@ -56,24 +56,24 @@ export function PrecisionBalanceActivity({
       </div>
 
       {/* Dual Expression Balance Canvas */}
-      <div className="p-6 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-around flex-wrap gap-4">
+      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-around flex-wrap gap-4">
         {/* Left Pan: 304.98 */}
-        <div className="p-4 bg-slate-900 border border-slate-700 rounded-xl text-center space-y-1">
-          <span className="text-xs font-mono text-slate-400 block">Left Expression</span>
-          <span className="text-xs text-slate-300">95.23 + 220.80 - 11.05</span>
-          <div className="font-black text-2xl text-sky-300 mt-2">304.98</div>
+        <div className="p-4 bg-white border border-slate-200 border border-slate-200 rounded-xl text-center space-y-1">
+          <span className="text-xs font-mono text-slate-600 block">Left Expression</span>
+          <span className="text-xs text-slate-700">95.23 + 220.80 - 11.05</span>
+          <div className="font-black text-2xl text-sky-700 mt-2">304.98</div>
         </div>
 
         {/* Center Comparison Sign Badge */}
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center font-black text-3xl text-amber-300 shadow-lg shadow-amber-500/20">
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center font-black text-3xl text-amber-700 shadow-lg shadow-amber-500/20">
           {selectedSign || "?"}
         </div>
 
         {/* Right Pan: 311.49 */}
-        <div className="p-4 bg-slate-900 border border-slate-700 rounded-xl text-center space-y-1">
-          <span className="text-xs font-mono text-slate-400 block">Right Expression</span>
-          <span className="text-xs text-slate-300">350.91 + 18.31 - 57.73</span>
-          <div className="font-black text-2xl text-emerald-300 mt-2">311.49</div>
+        <div className="p-4 bg-white border border-slate-200 border border-slate-200 rounded-xl text-center space-y-1">
+          <span className="text-xs font-mono text-slate-600 block">Right Expression</span>
+          <span className="text-xs text-slate-700">350.91 + 18.31 - 57.73</span>
+          <div className="font-black text-2xl text-emerald-700 mt-2">311.49</div>
         </div>
       </div>
 
@@ -89,15 +89,15 @@ export function PrecisionBalanceActivity({
               onClick={() => handleSelect(opt.sign)}
               className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                 isSelected
-                  ? "bg-sky-600/30 border-sky-400 text-sky-200 shadow-lg shadow-sky-500/20 scale-[1.02]"
-                  : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                  ? "bg-sky-600/30 border-sky-400 text-sky-800 shadow-lg shadow-sky-500/20 scale-[1.02]"
+                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-black">{opt.sign}</span>
                 {isSelected && <CheckCircle2 className="w-4 h-4 text-sky-400" />}
               </div>
-              <span className="text-[10px] text-slate-400 mt-2 font-mono">{opt.label}</span>
+              <span className="text-[10px] text-slate-600 mt-2 font-mono">{opt.label}</span>
             </button>
           );
         })}

@@ -69,18 +69,18 @@ export function DiceLabActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700/60 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-400">
             <RotateCw className="w-5 h-5 animate-spin-slow" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-emerald-300 tracking-wide flex items-center gap-2">
+            <h3 className="font-bold text-lg text-emerald-700 tracking-wide flex items-center gap-2">
               Rotating Dice Laboratory <Sparkles className="w-4 h-4 text-amber-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Drag to rotate the 3D die or switch presets to inspect adjacent faces.
             </p>
           </div>
@@ -91,21 +91,21 @@ export function DiceLabActivity({
           <button
             type="button"
             onClick={() => setPreset("pos1")}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-xs font-semibold text-slate-200 transition"
+            className="px-3 py-1.5 bg-slate-100 border border-slate-200 hover:bg-slate-700 border border-slate-600 rounded text-xs font-semibold text-slate-800 transition"
           >
             Position 1 (3,2,5)
           </button>
           <button
             type="button"
             onClick={() => setPreset("pos2")}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-xs font-semibold text-slate-200 transition"
+            className="px-3 py-1.5 bg-slate-100 border border-slate-200 hover:bg-slate-700 border border-slate-600 rounded text-xs font-semibold text-slate-800 transition"
           >
             Position 2 (1,4,5)
           </button>
           <button
             type="button"
             onClick={() => setPreset("top")}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-xs font-semibold text-slate-200 transition"
+            className="px-3 py-1.5 bg-slate-100 border border-slate-200 hover:bg-slate-700 border border-slate-600 rounded text-xs font-semibold text-slate-800 transition"
           >
             Top View
           </button>
@@ -114,7 +114,7 @@ export function DiceLabActivity({
 
       {/* 3D Interactive Turntable Area */}
       <div
-        className="relative h-64 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none overflow-hidden"
+        className="relative h-64 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none overflow-hidden"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -241,7 +241,7 @@ export function DiceLabActivity({
         </div>
 
         {/* Live Spatial Telemetry Badge */}
-        <div className="absolute bottom-3 left-3 bg-slate-900/90 border border-slate-700/80 px-3 py-1 rounded-md text-[11px] font-mono text-slate-300 flex items-center gap-2 pointer-events-none">
+        <div className="absolute bottom-3 left-3 bg-white border border-slate-200 border border-slate-200/80 px-3 py-1 rounded-md text-[11px] font-mono text-slate-700 flex items-center gap-2 pointer-events-none">
           <Eye className="w-3.5 h-3.5 text-emerald-400" />
           <span>Euler: X={Math.round(rotX)}° Y={Math.round(rotY)}°</span>
         </div>
@@ -249,7 +249,7 @@ export function DiceLabActivity({
 
       {/* Decision Selection Grid */}
       <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
           Select the number that must be at the TOP (opposite to 6):
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -263,12 +263,12 @@ export function DiceLabActivity({
                 onClick={() => handleSelect(opt.val)}
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all flex flex-col items-center justify-center gap-1.5 ${
                   isSelected
-                    ? "bg-emerald-600/30 border-emerald-400 text-emerald-200 shadow-lg shadow-emerald-500/20 scale-[1.02]"
-                    : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                    ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.02]"
+                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
                 }`}
               >
                 <span className="text-2xl font-black">{opt.val}</span>
-                <span className="text-[11px] font-mono text-slate-400">{opt.label}</span>
+                <span className="text-[11px] font-mono text-slate-600">{opt.label}</span>
                 {isSelected && (
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-1" />
                 )}

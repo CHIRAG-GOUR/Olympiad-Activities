@@ -64,18 +64,18 @@ export function TestingLabActivity({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 rounded-xl p-6 text-white shadow-2xl space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-400">
             <FlaskConical className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-cyan-300 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-cyan-700 flex items-center gap-2">
               Divisibility & Prime Testing Station (Q49) <Sparkles className="w-4 h-4 text-cyan-400" />
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Run mathematical tests on all 4 hypotheses to synthesize the boolean sequence.
             </p>
           </div>
@@ -112,10 +112,10 @@ export function TestingLabActivity({
         ].map((item) => (
           <div
             key={item.key}
-            className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+            className="p-4 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div className="space-y-1">
-              <div className="font-semibold text-sm text-slate-200">{item.title}</div>
+              <div className="font-semibold text-sm text-slate-800">{item.title}</div>
               <div className="text-xs font-mono text-cyan-400/90">{item.proof}</div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -125,8 +125,8 @@ export function TestingLabActivity({
                 onClick={() => handleToggle(item.key, "T")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                   toggles[item.key] === "T"
-                    ? "bg-emerald-500/30 text-emerald-300 border-emerald-400 shadow"
-                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                    ? "bg-emerald-500/30 text-emerald-700 border-emerald-400 shadow"
+                    : "bg-white border border-slate-200 border-slate-200 text-slate-600 hover:text-slate-800"
                 }`}
               >
                 T (True)
@@ -137,8 +137,8 @@ export function TestingLabActivity({
                 onClick={() => handleToggle(item.key, "F")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                   toggles[item.key] === "F"
-                    ? "bg-rose-500/30 text-rose-300 border-rose-400 shadow"
-                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
+                    ? "bg-rose-500/30 text-rose-700 border-rose-400 shadow"
+                    : "bg-white border border-slate-200 border-slate-200 text-slate-600 hover:text-slate-800"
                 }`}
               >
                 F (False)
@@ -150,7 +150,7 @@ export function TestingLabActivity({
 
       {/* Answer Options Grid */}
       <div className="space-y-2">
-        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Select Synthesized Sequence:</div>
+        <div className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Select Synthesized Sequence:</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {options.map((opt) => {
             const isSelected = selectedSequence === opt.val || selectedSequence === opt.id;
@@ -162,11 +162,11 @@ export function TestingLabActivity({
                 onClick={() => handleOptionSelect(opt)}
                 className={`p-4 rounded-xl border-2 font-mono font-bold transition-all text-center flex flex-col items-center justify-center gap-2 ${
                   isSelected
-                    ? "bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-lg shadow-cyan-500/20 scale-[1.02]"
-                    : "bg-slate-800/60 border-slate-700/80 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500"
+                    ? "bg-cyan-500/20 border-cyan-400 text-cyan-800 shadow-lg shadow-cyan-500/20 scale-[1.02]"
+                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
                 }`}
               >
-                <span className="w-6 h-6 rounded bg-slate-900 flex items-center justify-center text-xs text-cyan-400 border border-slate-700">
+                <span className="w-6 h-6 rounded bg-white border border-slate-200 flex items-center justify-center text-xs text-cyan-400 border border-slate-200">
                   {opt.id}
                 </span>
                 <span className="text-base">{opt.label}</span>
