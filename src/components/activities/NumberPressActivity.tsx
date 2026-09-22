@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Factory, Sparkles, CheckCircle2 } from "lucide-react";
+import { Factory,  CheckCircle2 } from "lucide-react";
 
 interface NumberPressActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface NumberPressActivityProps {
 export function NumberPressActivity({
   value,
   onChange,
-  readOnly = false,
-}: NumberPressActivityProps) {
+  readOnly = false }: NumberPressActivityProps) {
   // Greatest 6-digit number formed using digits 3, 5, 0, 2, 9 (repeating 9 twice for 6 digits):
   // 995320 -> International System: Nine hundred ninety-five thousand three hundred twenty!
   const [selectedName, setSelectedName] = useState<string>(
@@ -35,7 +34,7 @@ export function NumberPressActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -44,24 +43,24 @@ export function NumberPressActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-indigo-700 flex items-center gap-2">
-              Number Naming Press (International System) <Sparkles className="w-4 h-4 text-amber-400" />
+              Number Naming Press (International System) 
             </h3>
             <p className="text-xs text-slate-600">
-              Form the greatest 6-digit number from digits <strong className="text-white">3, 5, 0, 2, 9</strong> and write its International name.
+              Form the greatest 6-digit number from digits <strong className="text-slate-900">3, 5, 0, 2, 9</strong> and write its International name.
             </p>
           </div>
         </div>
       </div>
 
       {/* Assembly Digit Belt */}
-      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex flex-col items-center justify-center gap-4">
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col items-center justify-center gap-4">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
           {["9", "9", "5", "3", "2", "0"].map((digit, idx) => (
             <div
               key={idx}
               className="w-12 h-14 bg-indigo-50 border border-indigo-200/80 border-2 border-indigo-400 rounded-xl flex flex-col items-center justify-center shadow-lg"
             >
-              <span className="font-black text-2xl text-white">{digit}</span>
+              <span className="font-black text-2xl text-slate-900">{digit}</span>
               <span className="text-[9px] font-mono text-indigo-700">
                 {idx < 3 ? "THOU" : "ONES"}
               </span>
@@ -69,8 +68,8 @@ export function NumberPressActivity({
           ))}
         </div>
 
-        <div className="px-4 py-2 bg-white border border-slate-200 border border-slate-200 rounded-lg font-mono text-sm text-indigo-700">
-          International Number Formatting: <strong className="text-white text-base">995,320</strong>
+        <div className="px-4 py-2 bg-white border border-slate-200 rounded-lg font-mono text-sm text-indigo-700">
+          International Number Formatting: <strong className="text-slate-900 text-base">995,320</strong>
         </div>
       </div>
 
@@ -91,11 +90,11 @@ export function NumberPressActivity({
                 className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                   isSelected
                     ? "bg-indigo-600/30 border-indigo-400 text-indigo-800 shadow-lg shadow-indigo-500/20 scale-[1.01]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div>
-                  <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-indigo-400 mr-2">
+                  <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-indigo-400 mr-2">
                     Option {opt.id}
                   </span>
                   <span className="font-sans text-sm font-black">{opt.name}</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Compass, CheckCircle2, Sparkles, Layers, Ruler } from "lucide-react";
+import { Compass, CheckCircle2,  Layers, Ruler } from "lucide-react";
 
 interface DetectiveCaseFileActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface DetectiveCaseFileActivityProps {
 export function DetectiveCaseFileActivity({
   value,
   onChange,
-  readOnly = false,
-}: DetectiveCaseFileActivityProps) {
+  readOnly = false }: DetectiveCaseFileActivityProps) {
   // Perimeter calculation: p = 66 cm
   // Total rectangle area = 18 x 12 = 216 cm²
   // Shaded area = 54 cm²
@@ -41,16 +40,16 @@ export function DetectiveCaseFileActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-400">
+          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-700">
             <Compass className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-emerald-700 flex items-center gap-2">
-              Composite CAD Blueprint Laboratory (Q50) <Sparkles className="w-4 h-4 text-emerald-400" />
+              Composite CAD Blueprint Laboratory (Q50) 
             </h3>
             <p className="text-xs text-slate-600">
               Calculate the total boundary perimeter (p) and the remaining unshaded area (q) of the composite geometry.
@@ -86,22 +85,22 @@ export function DetectiveCaseFileActivity({
       </div>
 
       {/* Interactive Blueprint Schematic */}
-      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
         {/* Visual Schematic Box */}
-        <div className="relative border-2 border-dashed border-emerald-500/40 rounded-xl p-6 bg-emerald-50/50 border border-emerald-200 flex flex-col items-center justify-center min-h-[180px] font-mono text-center">
-          <div className="absolute top-2 left-3 text-[10px] text-emerald-400 font-bold uppercase tracking-widest">
+        <div className="relative border-2 border-dashed border-emerald-500/40 rounded-xl p-4 bg-emerald-50/50 border border-emerald-200 flex flex-col items-center justify-center min-h-[180px] font-mono text-center">
+          <div className="absolute top-2 left-3 text-[10px] text-emerald-700 font-bold uppercase tracking-widest">
             CAD Dimension Overlay: 18cm &times; 12cm
           </div>
           {activeLayer === "perimeter" ? (
             <div className="space-y-2">
-              <div className="text-3xl font-black text-emerald-400">p = 66 cm</div>
+              <div className="text-3xl font-black text-emerald-700">p = 66 cm</div>
               <div className="text-xs text-slate-700">
                 Sum of all outer segments around the composite boundary
               </div>
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="text-3xl font-black text-cyan-400">q = 162 cm²</div>
+              <div className="text-3xl font-black text-cyan-800">q = 162 cm²</div>
               <div className="text-xs text-slate-700">
                 Total (216 cm²) &minus; Shaded (54 cm²) = 162 cm²
               </div>
@@ -111,13 +110,13 @@ export function DetectiveCaseFileActivity({
 
         {/* Breakdown Card */}
         <div className="space-y-3 font-mono text-xs text-slate-700">
-          <div className="p-3 bg-white border border-slate-200 border border-slate-200 rounded-lg space-y-1">
-            <span className="text-emerald-400 font-bold">1. Calculated Perimeter (p):</span>
-            <div className="text-slate-600">Outer boundaries sum = <span className="text-white font-bold">66 cm</span></div>
+          <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-1">
+            <span className="text-emerald-700 font-bold">1. Calculated Perimeter (p):</span>
+            <div className="text-slate-600">Outer boundaries sum = <span className="text-slate-900 font-bold">66 cm</span></div>
           </div>
-          <div className="p-3 bg-white border border-slate-200 border border-slate-200 rounded-lg space-y-1">
-            <span className="text-cyan-400 font-bold">2. Calculated Unshaded Area (q):</span>
-            <div className="text-slate-600">Area = 216 &minus; 54 = <span className="text-white font-bold">162 cm²</span></div>
+          <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-1">
+            <span className="text-cyan-800 font-bold">2. Calculated Unshaded Area (q):</span>
+            <div className="text-slate-600">Area = 216 &minus; 54 = <span className="text-slate-900 font-bold">162 cm²</span></div>
           </div>
         </div>
       </div>
@@ -137,16 +136,16 @@ export function DetectiveCaseFileActivity({
                 className={`p-4 rounded-xl border-2 font-mono font-bold transition-all text-left flex items-center justify-between gap-3 ${
                   isSelected
                     ? "bg-emerald-500/20 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.01]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-emerald-400 border border-slate-200">
+                  <span className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-emerald-700 border border-slate-200">
                     {opt.id}
                   </span>
                   <span className="text-sm font-sans">{opt.label}</span>
                 </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />}
               </button>
             );
           })}

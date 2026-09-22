@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { GitCommit, Sparkles, CheckCircle2 } from "lucide-react";
+import { GitCommit,  CheckCircle2 } from "lucide-react";
 
 interface TrackInspectorActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface TrackInspectorActivityProps {
 export function TrackInspectorActivity({
   value,
   onChange,
-  readOnly = false,
-}: TrackInspectorActivityProps) {
+  readOnly = false }: TrackInspectorActivityProps) {
   // Question: In the given track network, how many pairs of intersecting lines and parallel lines are present?
   // Answer: 6 pairs of intersecting lines and 2 pairs of parallel lines.
   const [selectedAnswer, setSelectedAnswer] = useState<string>(
@@ -35,16 +34,16 @@ export function TrackInspectorActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-400">
+          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-700">
             <GitCommit className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-emerald-700 flex items-center gap-2">
-              Railway Track Inspector <Sparkles className="w-4 h-4 text-amber-400" />
+              Railway Track Inspector 
             </h3>
             <p className="text-xs text-slate-600">
               Inspect the geometric track grid to tally intersecting line pairs vs parallel pairs.
@@ -54,7 +53,7 @@ export function TrackInspectorActivity({
       </div>
 
       {/* Interactive Track Network Canvas */}
-      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center">
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center">
         <svg viewBox="0 0 340 180" className="w-full h-full max-w-sm select-none">
           {/* Parallel Horizontal Tracks (Line L1 & Line L2) */}
           <line x1="30" y1="50" x2="310" y2="50" stroke="#38bdf8" strokeWidth="3" />
@@ -88,12 +87,12 @@ export function TrackInspectorActivity({
               className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                 isSelected
                   ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.02]"
-                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                  : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xl font-black">{opt.val}</span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-700" />}
               </div>
               <span className="text-[10px] text-slate-600 mt-2 font-mono">{opt.label}</span>
             </button>

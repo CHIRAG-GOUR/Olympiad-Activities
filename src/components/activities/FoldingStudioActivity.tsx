@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FoldVertical, Sparkles, CheckCircle2, Eye, RotateCcw } from "lucide-react";
+import { FoldVertical,  CheckCircle2, Eye, RotateCcw } from "lucide-react";
 
 interface FoldingStudioActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface FoldingStudioActivityProps {
 export function FoldingStudioActivity({
   value,
   onChange,
-  readOnly = false,
-}: FoldingStudioActivityProps) {
+  readOnly = false }: FoldingStudioActivityProps) {
   const options = [
     {
       id: "A",
@@ -22,32 +21,28 @@ export function FoldingStudioActivity({
       desc: "Triangle flips horizontally and overlaps circle on right half",
       isCorrect: true,
       triScaleX: -1,
-      triShiftX: 200,
-    },
+      triShiftX: 200 },
     {
       id: "B",
       label: "Figure B",
       desc: "Triangle inverted vertically",
       isCorrect: false,
       triScaleX: 1,
-      triShiftX: 200,
-    },
+      triShiftX: 200 },
     {
       id: "C",
       label: "Figure C",
       desc: "Circle transferred to left half",
       isCorrect: false,
       triScaleX: -1,
-      triShiftX: 0,
-    },
+      triShiftX: 0 },
     {
       id: "D",
       label: "Figure D",
       desc: "No overlap or transformation",
       isCorrect: false,
       triScaleX: 1,
-      triShiftX: 0,
-    },
+      triShiftX: 0 },
   ];
 
   const initialOpt = options.find((o) => o.id === value) || options[0];
@@ -73,7 +68,7 @@ export function FoldingStudioActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -82,7 +77,7 @@ export function FoldingStudioActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Transparent Sheet Folding Studio <Sparkles className="w-4 h-4 text-amber-500" />
+              Transparent Sheet Folding Studio 
             </h3>
             <p className="text-xs text-slate-600">
               Drag the fold slider or click an option to simulate folding along the dotted crease line.
@@ -142,8 +137,7 @@ export function FoldingStudioActivity({
               transformOrigin: "180px 100px",
               transform: `scaleX(${1 - (foldProgress / 100) * 2})`,
               opacity: foldProgress > 70 ? 0.35 : 1,
-              transition: "transform 0.2s ease-out",
-            }}
+              transition: "transform 0.2s ease-out" }}
           >
             <polygon
               points="90,50 140,150 60,150"

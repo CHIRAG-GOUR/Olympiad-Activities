@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Calendar, CheckCircle2, Sparkles, Building } from "lucide-react";
+import { Calendar, CheckCircle2,  Building } from "lucide-react";
 
 interface CalendarPlannerActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface CalendarPlannerActivityProps {
 export function CalendarPlannerActivity({
   value,
   onChange,
-  readOnly = false,
-}: CalendarPlannerActivityProps) {
+  readOnly = false }: CalendarPlannerActivityProps) {
   const [selectedCount, setSelectedCount] = useState<string>(
     value ? String(value) : ""
   );
@@ -50,7 +49,7 @@ export function CalendarPlannerActivity({
   });
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -59,21 +58,21 @@ export function CalendarPlannerActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-blue-300 flex items-center gap-2">
-              Office Schedule Planner (February 28 Days) <Sparkles className="w-4 h-4 text-amber-400" />
+              Office Schedule Planner (February 28 Days) 
             </h3>
             <p className="text-xs text-slate-600">
-              Holidays: All <span className="text-rose-400 font-bold">Sundays (4,11,18,25)</span> +{" "}
-              <span className="text-amber-400 font-bold">Multiples of 5 (5,10,15,20,25)</span>.
+              Holidays: All <span className="text-rose-700 font-bold">Sundays (4,11,18,25)</span> +{" "}
+              <span className="text-amber-800 font-bold">Multiples of 5 (5,10,15,20,25)</span>.
             </p>
           </div>
         </div>
       </div>
 
       {/* Interactive Calendar Matrix */}
-      <div className="p-4 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl">
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
         {/* Days of week header */}
         <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-mono font-bold text-slate-600 mb-2 border-b border-slate-200 pb-2">
-          <span className="text-rose-400">SUN</span>
+          <span className="text-rose-700">SUN</span>
           <span>MON</span>
           <span>TUE</span>
           <span>WED</span>
@@ -115,13 +114,13 @@ export function CalendarPlannerActivity({
         {/* Schedule Tally Legend */}
         <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-200 text-xs font-mono">
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-rose-400">
+            <span className="flex items-center gap-1.5 text-rose-700">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> 4 Sundays
             </span>
-            <span className="flex items-center gap-1.5 text-amber-400">
+            <span className="flex items-center gap-1.5 text-amber-800">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 4 Other Multiples of 5
             </span>
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+            <span className="flex items-center gap-1.5 text-emerald-700 font-bold">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> 20 Working Days
             </span>
           </div>
@@ -145,7 +144,7 @@ export function CalendarPlannerActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-blue-600/30 border-blue-400 text-blue-200 shadow-lg shadow-blue-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">

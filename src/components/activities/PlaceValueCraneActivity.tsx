@@ -13,8 +13,7 @@ interface PlaceValueCraneActivityProps {
 export function PlaceValueCraneActivity({
   value,
   onChange,
-  readOnly = false,
-}: PlaceValueCraneActivityProps) {
+  readOnly = false }: PlaceValueCraneActivityProps) {
   // Initial scrambled order or user provided order
   const initialItems = [
     { id: "1", label: "Hundreds (10²)", power: 2 },
@@ -55,7 +54,7 @@ export function PlaceValueCraneActivity({
     items.map((i) => i.id).join(",") === "2,3,1,4,5";
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -75,7 +74,7 @@ export function PlaceValueCraneActivity({
         <button
           type="button"
           onClick={handleReset}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-200 hover:bg-slate-700 border border-slate-200 rounded text-xs font-semibold text-slate-700 transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-200 hover:bg-slate-100 border border-slate-200 rounded text-xs font-semibold text-slate-700 transition"
         >
           <RotateCcw className="w-3.5 h-3.5" /> Reset Tower
         </button>
@@ -93,7 +92,7 @@ export function PlaceValueCraneActivity({
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-lg bg-white border border-slate-200 border border-slate-200 flex items-center justify-center font-mono font-bold text-sm text-yellow-400">
+              <span className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-mono font-bold text-sm text-yellow-400">
                 {idx + 1}
               </span>
               <div>
@@ -109,7 +108,7 @@ export function PlaceValueCraneActivity({
                   type="button"
                   disabled={idx === 0}
                   onClick={() => moveItem(idx, "up")}
-                  className="p-2 rounded bg-white border border-slate-200 hover:bg-slate-700 disabled:opacity-30 border border-slate-200 text-slate-700 transition"
+                  className="p-2 rounded bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-30 border border-slate-200 text-slate-700 transition"
                   title="Move Up"
                 >
                   <MoveUp className="w-4 h-4" />
@@ -118,7 +117,7 @@ export function PlaceValueCraneActivity({
                   type="button"
                   disabled={idx === items.length - 1}
                   onClick={() => moveItem(idx, "down")}
-                  className="p-2 rounded bg-white border border-slate-200 hover:bg-slate-700 disabled:opacity-30 border border-slate-200 text-slate-700 transition"
+                  className="p-2 rounded bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-30 border border-slate-200 text-slate-700 transition"
                   title="Move Down"
                 >
                   <MoveDown className="w-4 h-4" />
@@ -130,9 +129,9 @@ export function PlaceValueCraneActivity({
       </div>
 
       {/* Live Tower Status Indicator */}
-      <div className="p-3 bg-slate-50 border border-slate-200 border border-slate-200 rounded-lg text-center flex items-center justify-center gap-2 text-xs font-mono">
+      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-center flex items-center justify-center gap-2 text-xs font-mono">
         {isAscendingCorrect ? (
-          <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+          <span className="text-emerald-700 font-bold flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4" /> Ascending Tower Verified: 2 → 3 → 1 → 4 → 5 (Option C)
           </span>
         ) : (

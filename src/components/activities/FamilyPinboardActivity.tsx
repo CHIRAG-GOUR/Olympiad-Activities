@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Users, GitFork, CheckCircle2, Sparkles, Heart } from "lucide-react";
+import { Users, GitFork, CheckCircle2,  Heart } from "lucide-react";
 
 interface FamilyPinboardActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface FamilyPinboardActivityProps {
 export function FamilyPinboardActivity({
   value,
   onChange,
-  readOnly = false,
-}: FamilyPinboardActivityProps) {
+  readOnly = false }: FamilyPinboardActivityProps) {
   const [selectedRelation, setSelectedRelation] = useState<string>(
     value ? String(value) : ""
   );
@@ -39,16 +38,16 @@ export function FamilyPinboardActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-rose-500/20 border border-rose-400/40 rounded-lg text-rose-400">
+          <div className="p-2.5 bg-rose-500/20 border border-rose-400/40 rounded-lg text-rose-700">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-rose-700 flex items-center gap-2">
-              Family Investigation Board <Sparkles className="w-4 h-4 text-amber-400" />
+              Family Investigation Board 
             </h3>
             <p className="text-xs text-slate-600">
               Trace the genealogical connection between W and V through Father X.
@@ -58,7 +57,7 @@ export function FamilyPinboardActivity({
       </div>
 
       {/* Interactive Detective Corkboard Tree */}
-      <div className="relative h-64 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      <div className="relative h-64 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 460 220" className="w-full h-full max-w-lg select-none">
           {/* Generation 1: W (Sister) <-> X (Father) */}
           {/* Horizontal Sibling Line */}
@@ -132,12 +131,12 @@ export function FamilyPinboardActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-rose-600/30 border-rose-400 text-rose-800 shadow-lg shadow-rose-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-black">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-rose-400" />}
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-rose-700" />}
                 </div>
                 <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
               </button>

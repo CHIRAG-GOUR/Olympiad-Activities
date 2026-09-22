@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Wrench, Play, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
+import { Wrench, Play, CheckCircle2,  ArrowRight } from "lucide-react";
 
 interface OperatorFactoryActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface OperatorFactoryActivityProps {
 export function OperatorFactoryActivity({
   value,
   onChange,
-  readOnly = false,
-}: OperatorFactoryActivityProps) {
+  readOnly = false }: OperatorFactoryActivityProps) {
   const [selectedResult, setSelectedResult] = useState<string>(
     value ? String(value) : ""
   );
@@ -43,30 +42,30 @@ export function OperatorFactoryActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-400">
+          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-800">
             <Wrench className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-amber-700 flex items-center gap-2">
-              Mathematical Operator Factory <Sparkles className="w-4 h-4 text-amber-400" />
+              Mathematical Operator Factory 
             </h3>
             <p className="text-xs text-slate-600">
-              Substitution Pipeline: <span className="text-amber-400">[+] → [÷]</span>,{" "}
-              <span className="text-amber-400">[×] → [-]</span>,{" "}
-              <span className="text-amber-400">[÷] → [+]</span>
+              Substitution Pipeline: <span className="text-amber-800">[+] → [÷]</span>,{" "}
+              <span className="text-amber-800">[×] → [-]</span>,{" "}
+              <span className="text-amber-800">[÷] → [+]</span>
             </p>
           </div>
         </div>
       </div>
 
       {/* Assembly Line Calculation Pipeline */}
-      <div className="p-5 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
+      <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
         <div className="flex items-center justify-center min-w-[500px] gap-3 text-lg font-mono">
-          <div className="px-4 py-3 bg-white border border-slate-200 border border-slate-200 rounded-xl font-black text-2xl text-white">
+          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
             510
           </div>
           <div className="flex flex-col items-center">
@@ -75,7 +74,7 @@ export function OperatorFactoryActivity({
               ÷
             </span>
           </div>
-          <div className="px-4 py-3 bg-white border border-slate-200 border border-slate-200 rounded-xl font-black text-2xl text-white">
+          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
             17
           </div>
           <div className="flex flex-col items-center">
@@ -84,7 +83,7 @@ export function OperatorFactoryActivity({
               -
             </span>
           </div>
-          <div className="px-4 py-3 bg-white border border-slate-200 border border-slate-200 rounded-xl font-black text-2xl text-white">
+          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
             15
           </div>
           <div className="flex flex-col items-center">
@@ -93,10 +92,10 @@ export function OperatorFactoryActivity({
               +
             </span>
           </div>
-          <div className="px-4 py-3 bg-white border border-slate-200 border border-slate-200 rounded-xl font-black text-2xl text-white">
+          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
             2
           </div>
-          <ArrowRight className="w-5 h-5 text-amber-400 mx-2" />
+          <ArrowRight className="w-5 h-5 text-amber-800 mx-2" />
           <div className="px-4 py-3 bg-amber-50 border border-amber-200 border-2 border-amber-400 rounded-xl font-black text-2xl text-amber-800">
             {selectedResult || "?"}
           </div>
@@ -120,12 +119,12 @@ export function OperatorFactoryActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-amber-600/30 border-amber-400 text-amber-800 shadow-lg shadow-amber-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-black">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-400" />}
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-800" />}
                 </div>
                 <span className="text-[10px] text-slate-600 mt-2 font-mono">{opt.label}</span>
               </button>

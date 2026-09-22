@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { BookOpen, Sparkles, CheckCircle2 } from "lucide-react";
+import { BookOpen,  CheckCircle2 } from "lucide-react";
 
 interface TrafficControlActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface TrafficControlActivityProps {
 export function TrafficControlActivity({
   value,
   onChange,
-  readOnly = false,
-}: TrafficControlActivityProps) {
+  readOnly = false }: TrafficControlActivityProps) {
   // Library Tally Visitors:
   // Mon: 25, Tue: 20, Wed: 35, Thu: 15, Fri: 30, Sat: 40, Sun: 45 (Total = 210)
   // Compare: Mon + Wed + Thu = 25 + 35 + 15 = 75 visitors
@@ -38,7 +37,7 @@ export function TrafficControlActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -47,7 +46,7 @@ export function TrafficControlActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-blue-300 flex items-center gap-2">
-              Library Traffic Control Room <Sparkles className="w-4 h-4 text-amber-400" />
+              Library Traffic Control Room 
             </h3>
             <p className="text-xs text-slate-600">
               Tally Telemetry: Compare (Mon + Wed + Thu) against (Sat + Sun).
@@ -60,7 +59,7 @@ export function TrafficControlActivity({
       <div className="grid grid-cols-2 gap-4">
         {/* Weekday Cluster (Mon + Wed + Thu) */}
         <div className="p-4 bg-slate-50 border border-slate-200 border border-sky-500/40 rounded-xl space-y-2">
-          <span className="text-xs font-mono font-bold text-sky-400 block">
+          <span className="text-xs font-mono font-bold text-sky-800 block">
             WEEKDAY SUM (Mon + Wed + Thu)
           </span>
           <div className="text-xs text-slate-700 space-y-1 font-mono">
@@ -75,7 +74,7 @@ export function TrafficControlActivity({
 
         {/* Weekend Cluster (Sat + Sun) */}
         <div className="p-4 bg-slate-50 border border-slate-200 border border-emerald-500/40 rounded-xl space-y-2">
-          <span className="text-xs font-mono font-bold text-emerald-400 block">
+          <span className="text-xs font-mono font-bold text-emerald-700 block">
             WEEKEND SUM (Sat + Sun)
           </span>
           <div className="text-xs text-slate-700 space-y-1 font-mono">
@@ -105,7 +104,7 @@ export function TrafficControlActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-blue-600/30 border-blue-400 text-blue-200 shadow-lg shadow-blue-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">

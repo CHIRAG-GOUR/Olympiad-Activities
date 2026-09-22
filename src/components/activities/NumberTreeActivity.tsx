@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { GitBranch, Sparkles, CheckCircle2 } from "lucide-react";
+import { GitBranch,  CheckCircle2 } from "lucide-react";
 
 interface NumberTreeActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface NumberTreeActivityProps {
 export function NumberTreeActivity({
   value,
   onChange,
-  readOnly = false,
-}: NumberTreeActivityProps) {
+  readOnly = false }: NumberTreeActivityProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string>(
     value ? String(value) : ""
   );
@@ -39,7 +38,7 @@ export function NumberTreeActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -48,7 +47,7 @@ export function NumberTreeActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-lime-300 flex items-center gap-2">
-              Number Tree Laboratory <Sparkles className="w-4 h-4 text-amber-400" />
+              Number Tree Laboratory 
             </h3>
             <p className="text-xs text-slate-600">
               Factorization cascade: Each parent node is the product of its two children.
@@ -58,7 +57,7 @@ export function NumberTreeActivity({
       </div>
 
       {/* Living Tree Visualizer */}
-      <div className="relative h-64 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      <div className="relative h-64 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 380 220" className="w-full h-full max-w-sm select-none">
           {/* Tree Branches */}
           <line x1="190" y1="35" x2="110" y2="90" stroke="#84cc16" strokeWidth="2.5" />
@@ -129,11 +128,11 @@ export function NumberTreeActivity({
                 className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                   isSelected
                     ? "bg-lime-600/30 border-lime-400 text-lime-200 shadow-lg shadow-lime-500/20 scale-[1.01]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div>
-                  <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-lime-400 mr-2">
+                  <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-lime-400 mr-2">
                     Option {opt.id}
                   </span>
                   <span className="font-mono text-base tracking-wide">{opt.label}</span>

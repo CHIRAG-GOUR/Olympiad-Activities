@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Crosshair, Sparkles, CheckCircle2 } from "lucide-react";
+import { Crosshair,  CheckCircle2 } from "lucide-react";
 
 interface InspectionDroneActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface InspectionDroneActivityProps {
 export function InspectionDroneActivity({
   value,
   onChange,
-  readOnly = false,
-}: InspectionDroneActivityProps) {
+  readOnly = false }: InspectionDroneActivityProps) {
   const options = [
     {
       id: "A",
@@ -23,8 +22,7 @@ export function InspectionDroneActivity({
       angles: 16,
       label: "8 Pairs (⊥), 16 Right Angles (90°)",
       desc: "4 outer corners + 4 central intersections = 8 pairs & 16 right angles",
-      isCorrect: true,
-    },
+      isCorrect: true },
     {
       id: "B",
       val: "6, 12",
@@ -32,8 +30,7 @@ export function InspectionDroneActivity({
       angles: 12,
       label: "6 Pairs, 12 Right Angles",
       desc: "Incomplete count",
-      isCorrect: false,
-    },
+      isCorrect: false },
     {
       id: "C",
       val: "8, 12",
@@ -41,8 +38,7 @@ export function InspectionDroneActivity({
       angles: 12,
       label: "8 Pairs, 12 Right Angles",
       desc: "Angle count mismatch",
-      isCorrect: false,
-    },
+      isCorrect: false },
     {
       id: "D",
       val: "10, 20",
@@ -50,8 +46,7 @@ export function InspectionDroneActivity({
       angles: 20,
       label: "10 Pairs, 20 Right Angles",
       desc: "Overcounted elements",
-      isCorrect: false,
-    },
+      isCorrect: false },
   ];
 
   const initialOpt = options.find((o) => o.id === value || o.val === value) || options[0];
@@ -66,7 +61,7 @@ export function InspectionDroneActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -75,7 +70,7 @@ export function InspectionDroneActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Geometry Inspection Drone (Achievers) <Sparkles className="w-4 h-4 text-amber-500" />
+              Geometry Inspection Drone (Achievers) 
             </h3>
             <p className="text-xs text-slate-600">
               Drone Scanner: Inspect <strong className="text-purple-700">perpendicular line pairs (⊥)</strong> and <strong className="text-purple-700">right angles (90°)</strong>.
@@ -89,7 +84,7 @@ export function InspectionDroneActivity({
       </div>
 
       {/* Drone Crosshair Geometry Canvas */}
-      <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center">
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center">
         <svg viewBox="0 0 340 180" className="w-full h-full max-w-sm select-none">
           {/* Engineering Frame Box */}
           <rect x="40" y="20" width="260" height="140" fill="#ffffff" stroke="#6366f1" strokeWidth="2.5" rx="6" />

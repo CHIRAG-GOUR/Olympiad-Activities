@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Split, Sparkles, CheckCircle2 } from "lucide-react";
+import { Split,  CheckCircle2 } from "lucide-react";
 
 interface SymmetryStudioActivityProps {
   questionId: string;
@@ -13,37 +13,32 @@ interface SymmetryStudioActivityProps {
 export function SymmetryStudioActivity({
   value,
   onChange,
-  readOnly = false,
-}: SymmetryStudioActivityProps) {
+  readOnly = false }: SymmetryStudioActivityProps) {
   const options = [
     {
       id: "A",
       label: "P, Q and R only",
       figures: ["P", "Q", "R"],
       desc: "Hexagon (6), Square (4), Equilateral Triangle (3) > 2 lines",
-      isCorrect: true,
-    },
+      isCorrect: true },
     {
       id: "B",
       label: "P and Q only",
       figures: ["P", "Q"],
       desc: "Leaves out Equilateral Triangle (3 lines)",
-      isCorrect: false,
-    },
+      isCorrect: false },
     {
       id: "C",
       label: "P, Q, R and S",
       figures: ["P", "Q", "R", "S"],
       desc: "Rectangle (S) has only 2 lines (not > 2)",
-      isCorrect: false,
-    },
+      isCorrect: false },
     {
       id: "D",
       label: "Q and S only",
       figures: ["Q", "S"],
       desc: "Incorrect subset",
-      isCorrect: false,
-    },
+      isCorrect: false },
   ];
 
   const initialOpt = options.find((o) => o.id === value) || options[0];
@@ -58,7 +53,7 @@ export function SymmetryStudioActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -67,7 +62,7 @@ export function SymmetryStudioActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Symmetry Mirror Studio <Sparkles className="w-4 h-4 text-amber-500" />
+              Symmetry Mirror Studio 
             </h3>
             <p className="text-xs text-slate-600">
               Inspect lines of reflectional symmetry. Condition: Figures with <strong className="text-sky-700">&gt; 2 lines of symmetry</strong>.

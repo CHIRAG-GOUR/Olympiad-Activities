@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Waves, Sparkles, CheckCircle2, Eye } from "lucide-react";
+import { Waves,  CheckCircle2, Eye } from "lucide-react";
 
 interface ReflectionPoolActivityProps {
   questionId: string;
@@ -13,37 +13,32 @@ interface ReflectionPoolActivityProps {
 export function ReflectionPoolActivity({
   value,
   onChange,
-  readOnly = false,
-}: ReflectionPoolActivityProps) {
+  readOnly = false }: ReflectionPoolActivityProps) {
   const options = [
     {
       id: "A",
       text: "M E ⅃ C O W E",
       desc: "Correct vertical reflection for all characters",
       reflectedString: "M E ⅃ C O W E",
-      isCorrect: true,
-    },
+      isCorrect: true },
     {
       id: "B",
       text: "M E L C O W E",
       desc: "Letter L is incorrectly un-inverted",
       reflectedString: "M E L C O W E",
-      isCorrect: false,
-    },
+      isCorrect: false },
     {
       id: "C",
       text: "W E ⅃ C O M E",
       desc: "Letters W and M are not inverted vertically",
       reflectedString: "W E ⅃ C O M E",
-      isCorrect: false,
-    },
+      isCorrect: false },
     {
       id: "D",
       text: "E M O C L E W",
       desc: "Reversed horizontally like a horizontal mirror",
       reflectedString: "E M O C L E W",
-      isCorrect: false,
-    },
+      isCorrect: false },
   ];
 
   const initialOpt = options.find((o) => o.id === value) || options[0];
@@ -58,7 +53,7 @@ export function ReflectionPoolActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -67,7 +62,7 @@ export function ReflectionPoolActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Optical Reflection Pool Laboratory <Sparkles className="w-4 h-4 text-cyan-500" />
+              Optical Reflection Pool Laboratory 
             </h3>
             <p className="text-xs text-slate-600">
               Inspect the vertical water reflection of the word "WELCOME" across the horizontal waterline.

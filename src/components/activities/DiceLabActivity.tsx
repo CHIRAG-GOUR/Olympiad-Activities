@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { RotateCw, CheckCircle2, Eye, Sparkles } from "lucide-react";
+import { RotateCw, CheckCircle2, Eye } from "lucide-react";
 
 interface DiceLabActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface DiceLabActivityProps {
 export function DiceLabActivity({
   value,
   onChange,
-  readOnly = false,
-}: DiceLabActivityProps) {
+  readOnly = false }: DiceLabActivityProps) {
   // Rotational angles for 3D examination
   const [rotX, setRotX] = useState(-25);
   const [rotY, setRotY] = useState(45);
@@ -28,24 +27,21 @@ export function DiceLabActivity({
       label: "Face 3",
       rotX: 0,
       rotY: -90,
-      desc: "Adjacent face on right",
-    },
+      desc: "Adjacent face on right" },
     {
       id: "B",
       val: "2",
       label: "Face 2",
       rotX: -90,
       rotY: 0,
-      desc: "Adjacent face on bottom",
-    },
+      desc: "Adjacent face on bottom" },
     {
       id: "C",
       val: "4",
       label: "Face 4",
       rotX: 0,
       rotY: 90,
-      desc: "Adjacent face on left",
-    },
+      desc: "Adjacent face on left" },
     {
       id: "D",
       val: "5",
@@ -53,8 +49,7 @@ export function DiceLabActivity({
       rotX: 20,
       rotY: 0,
       desc: "Opposite to Bottom Face 6",
-      isCorrect: true,
-    },
+      isCorrect: true },
   ];
 
   const initialOpt = options.find((o) => o.id === value || o.val === value) || options[3];
@@ -101,7 +96,7 @@ export function DiceLabActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header Banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -110,7 +105,7 @@ export function DiceLabActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 tracking-wide flex items-center gap-2">
-              Rotating 3D Dice Laboratory <Sparkles className="w-4 h-4 text-amber-500" />
+              Rotating 3D Dice Laboratory 
             </h3>
             <p className="text-xs text-slate-600">
               Drag to inspect all faces in real-time or select an option to automatically orient the die.
@@ -158,8 +153,7 @@ export function DiceLabActivity({
           className="absolute inset-0 opacity-10 pointer-events-none"
           style={{
             backgroundImage: "radial-gradient(circle at center, #0B4F8A 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-          }}
+            backgroundSize: "20px 20px" }}
         />
 
         {/* 3D Die Container with smooth transition */}
@@ -167,8 +161,7 @@ export function DiceLabActivity({
           className="relative w-28 h-28 transition-transform duration-300 ease-out"
           style={{
             transformStyle: "preserve-3d",
-            transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
-          }}
+            transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)` }}
         >
           {/* Face 5 - Front */}
           <div

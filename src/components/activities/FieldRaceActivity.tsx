@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Flag, Sparkles, CheckCircle2, Play } from "lucide-react";
+import { Flag,  CheckCircle2, Play } from "lucide-react";
 
 interface FieldRaceActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface FieldRaceActivityProps {
 export function FieldRaceActivity({
   value,
   onChange,
-  readOnly = false,
-}: FieldRaceActivityProps) {
+  readOnly = false }: FieldRaceActivityProps) {
   // Rashi runs around a rectangular park: 52 m long, 30 m wide.
   // Perimeter of Rashi's park = 2 * (52 + 30) = 2 * 82 = 164 m.
   // Rashi completes 5 rounds = 5 * 164 m = 820 m.
@@ -41,16 +40,16 @@ export function FieldRaceActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-400">
+          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-700">
             <Flag className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-emerald-700 flex items-center gap-2">
-              Olympiad Field Race Telemetry <Sparkles className="w-4 h-4 text-amber-400" />
+              Olympiad Field Race Telemetry 
             </h3>
             <p className="text-xs text-slate-600">
               Rashi (5 rounds of 52m×30m) vs Kirti (7 rounds of 65m square).
@@ -64,7 +63,7 @@ export function FieldRaceActivity({
         {/* Rashi's Telemetry */}
         <div className="p-4 bg-slate-50 border border-slate-200 border border-sky-500/40 rounded-xl space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-sky-400">RASHI (5 LAPS)</span>
+            <span className="text-xs font-mono font-bold text-sky-800">RASHI (5 LAPS)</span>
             <span className="text-[10px] text-slate-600 font-mono">Rect: 52m × 30m</span>
           </div>
           <div className="text-xs text-slate-700 font-mono">
@@ -78,7 +77,7 @@ export function FieldRaceActivity({
         {/* Kirti's Telemetry */}
         <div className="p-4 bg-slate-50 border border-slate-200 border border-emerald-500/40 rounded-xl space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-emerald-400">KIRTI (7 LAPS)</span>
+            <span className="text-xs font-mono font-bold text-emerald-700">KIRTI (7 LAPS)</span>
             <span className="text-[10px] text-slate-600 font-mono">Square: 65m side</span>
           </div>
           <div className="text-xs text-slate-700 font-mono">
@@ -91,8 +90,8 @@ export function FieldRaceActivity({
       </div>
 
       {/* Comparison Delta Banner */}
-      <div className="p-3 bg-white border border-slate-200 border border-slate-200 rounded-lg text-center font-mono text-xs text-slate-700">
-        Distance Differential = 1,820 m - 820 m = <strong className="text-emerald-400 text-sm">1,000 m (Kirti covers more)</strong>
+      <div className="p-3 bg-white border border-slate-200 rounded-lg text-center font-mono text-xs text-slate-700">
+        Distance Differential = 1,820 m - 820 m = <strong className="text-emerald-700 text-sm">1,000 m (Kirti covers more)</strong>
       </div>
 
       {/* Answer Options Grid */}
@@ -108,17 +107,17 @@ export function FieldRaceActivity({
               className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                 isSelected
                   ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.01]"
-                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                  : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
               }`}
             >
               <div>
-                <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-emerald-400 mr-2">
+                <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-emerald-700 mr-2">
                   Option {opt.id}
                 </span>
                 <span className="font-mono text-base font-black">{opt.val}</span>
                 <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
               </div>
-              {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />}
+              {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />}
             </button>
           );
         })}

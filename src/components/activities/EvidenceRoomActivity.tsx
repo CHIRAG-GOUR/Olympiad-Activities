@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, ShieldAlert, CheckCircle2, XCircle, Sparkles, Scale } from "lucide-react";
+import { Search, ShieldAlert, CheckCircle2, XCircle,  Scale } from "lucide-react";
 
 interface EvidenceRoomActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface EvidenceRoomActivityProps {
 export function EvidenceRoomActivity({
   value,
   onChange,
-  readOnly = false,
-}: EvidenceRoomActivityProps) {
+  readOnly = false }: EvidenceRoomActivityProps) {
   // Statement-I: In the word CREATIVE, the fraction of vowels plus alphabets made of straight lines evaluates to 4/8.
   // Letters: C, R, E, A, T, I, V, E (Total = 8)
   // Vowels: E, A, I, E = 4/8 (or Straight lines: E, A, T, I, V, E)
@@ -44,16 +43,16 @@ export function EvidenceRoomActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-400">
+          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-800">
             <Scale className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-amber-700 flex items-center gap-2">
-              Mathematical Truth Evidence Chamber (Q48) <Sparkles className="w-4 h-4 text-amber-400" />
+              Mathematical Truth Evidence Chamber (Q48) 
             </h3>
             <p className="text-xs text-slate-600">
               Conduct forensic mathematical verification on both statements to establish the ultimate verdict.
@@ -92,15 +91,15 @@ export function EvidenceRoomActivity({
 
       {/* Lab Workstation */}
       {activeTab === "st1" ? (
-        <div className="p-5 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl space-y-4">
+        <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-amber-400 font-bold uppercase">Statement I Analysis</span>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full border border-emerald-500/30">
+            <span className="text-xs font-mono text-amber-800 font-bold uppercase">Statement I Analysis</span>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full border border-emerald-500/30">
               <CheckCircle2 className="w-3.5 h-3.5" /> Verdict: TRUE (Verified)
             </div>
           </div>
           <p className="text-sm text-slate-700">
-            Word: <strong className="text-white font-mono tracking-widest bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">C R E A T I V E</strong> (8 letters)
+            Word: <strong className="text-slate-900 font-mono tracking-widest bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">C R E A T I V E</strong> (8 letters)
           </p>
           <div className="grid grid-cols-8 gap-2 text-center font-mono">
             {[
@@ -127,23 +126,23 @@ export function EvidenceRoomActivity({
             ))}
           </div>
           <div className="text-xs text-slate-600 bg-white border border-slate-200 p-3 rounded-lg border border-slate-200">
-            Vowels = E, A, I, E (Count = 4). Fraction of vowels = <span className="text-emerald-400 font-bold">4 / 8</span>. Statement I is <span className="text-emerald-700 font-bold">TRUE</span>.
+            Vowels = E, A, I, E (Count = 4). Fraction of vowels = <span className="text-emerald-700 font-bold">4 / 8</span>. Statement I is <span className="text-emerald-700 font-bold">TRUE</span>.
           </div>
         </div>
       ) : (
-        <div className="p-5 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl space-y-4">
+        <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-amber-400 font-bold uppercase">Statement II Ratio Calculation</span>
-            <div className="flex items-center gap-1.5 text-xs text-rose-400 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full border border-rose-500/30">
+            <span className="text-xs font-mono text-amber-800 font-bold uppercase">Statement II Ratio Calculation</span>
+            <div className="flex items-center gap-1.5 text-xs text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full border border-rose-500/30">
               <XCircle className="w-3.5 h-3.5" /> Verdict: FALSE (Calculation Mismatch)
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-white border border-slate-200 border border-slate-200 rounded-xl space-y-2">
+            <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
               <div className="text-xs text-slate-600 font-mono">Statement claims:</div>
               <div className="text-sm font-mono text-rose-700">p = 81, q = 105, p + q = 186</div>
             </div>
-            <div className="p-4 bg-white border border-slate-200 border border-slate-200 rounded-xl space-y-2">
+            <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
               <div className="text-xs text-slate-600 font-mono">Actual Mathematics:</div>
               <div className="text-sm font-mono text-emerald-700">
                 7/9 = p/729 &rArr; p = 7 &times; 81 = <strong className="text-amber-700">567</strong> &ne; 81
@@ -171,16 +170,16 @@ export function EvidenceRoomActivity({
                 className={`p-4 rounded-xl border-2 font-medium transition-all text-left flex items-center justify-between gap-3 ${
                   isSelected
                     ? "bg-amber-500/20 border-amber-400 text-amber-800 shadow-lg shadow-amber-500/20 scale-[1.01]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-amber-400 border border-slate-200">
+                  <span className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center font-bold text-amber-800 border border-slate-200">
                     {opt.id}
                   </span>
                   <span className="text-sm">{opt.label}</span>
                 </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />}
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-amber-800 shrink-0" />}
               </button>
             );
           })}

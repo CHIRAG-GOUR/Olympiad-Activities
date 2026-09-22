@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FlaskConical, CheckCircle2, Sparkles, AlertCircle } from "lucide-react";
+import { FlaskConical, CheckCircle2,  AlertCircle } from "lucide-react";
 
 interface TestingLabActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface TestingLabActivityProps {
 export function TestingLabActivity({
   value,
   onChange,
-  readOnly = false,
-}: TestingLabActivityProps) {
+  readOnly = false }: TestingLabActivityProps) {
   // Statements:
   // (i) 705830 is divisible by both 2 and 5 => T (ends in 0)
   // (ii) Number of common prime factors of 150 & 275 is 5 => F (only 1 common prime factor, which is 5)
@@ -30,8 +29,7 @@ export function TestingLabActivity({
     i: "T",
     ii: "F",
     iii: "T",
-    iv: "F",
-  });
+    iv: "F" });
 
   const options = [
     { id: "A", val: "T, T, F, F", label: "T, T, F, F" },
@@ -64,16 +62,16 @@ export function TestingLabActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-400">
+          <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-800">
             <FlaskConical className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-cyan-700 flex items-center gap-2">
-              Divisibility & Prime Testing Station (Q49) <Sparkles className="w-4 h-4 text-cyan-400" />
+              Divisibility & Prime Testing Station (Q49) 
             </h3>
             <p className="text-xs text-slate-600">
               Run mathematical tests on all 4 hypotheses to synthesize the boolean sequence.
@@ -89,34 +87,30 @@ export function TestingLabActivity({
             key: "i",
             title: "(i) 705830 is divisible by both 2 and 5",
             proof: "Ends in 0 → Divisible by 10 → Divisible by both 2 & 5",
-            expected: "T",
-          },
+            expected: "T" },
           {
             key: "ii",
             title: "(ii) Number of common prime factors of 150 & 275 is 5",
             proof: "150 = 2×3×5² ; 275 = 5²×11 → Common prime factor is {5}. Count = 1 (NOT 5!)",
-            expected: "F",
-          },
+            expected: "F" },
           {
             key: "iii",
             title: "(iii) If 2579x is divisible by 8, then x can be 2",
             proof: "Test last 3 digits: 792 ÷ 8 = 99 (Exact whole number!)",
-            expected: "T",
-          },
+            expected: "T" },
           {
             key: "iv",
             title: "(iv) If a number is prime, then it is always odd",
             proof: "Counterexample: Number 2 is an EVEN prime number",
-            expected: "F",
-          },
+            expected: "F" },
         ].map((item) => (
           <div
             key={item.key}
-            className="p-4 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+            className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div className="space-y-1">
               <div className="font-semibold text-sm text-slate-800">{item.title}</div>
-              <div className="text-xs font-mono text-cyan-400/90">{item.proof}</div>
+              <div className="text-xs font-mono text-cyan-800/90">{item.proof}</div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -163,10 +157,10 @@ export function TestingLabActivity({
                 className={`p-4 rounded-xl border-2 font-mono font-bold transition-all text-center flex flex-col items-center justify-center gap-2 ${
                   isSelected
                     ? "bg-cyan-500/20 border-cyan-400 text-cyan-800 shadow-lg shadow-cyan-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
-                <span className="w-6 h-6 rounded bg-white border border-slate-200 flex items-center justify-center text-xs text-cyan-400 border border-slate-200">
+                <span className="w-6 h-6 rounded bg-white border border-slate-200 flex items-center justify-center text-xs text-cyan-800 border border-slate-200">
                   {opt.id}
                 </span>
                 <span className="text-base">{opt.label}</span>

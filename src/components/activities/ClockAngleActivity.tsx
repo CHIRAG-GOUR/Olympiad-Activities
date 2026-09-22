@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Clock, Sparkles, CheckCircle2, RotateCw } from "lucide-react";
+import { Clock,  CheckCircle2, RotateCw } from "lucide-react";
 
 interface ClockAngleActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface ClockAngleActivityProps {
 export function ClockAngleActivity({
   value,
   onChange,
-  readOnly = false,
-}: ClockAngleActivityProps) {
+  readOnly = false }: ClockAngleActivityProps) {
   const options = [
     {
       id: "A",
@@ -24,8 +23,7 @@ export function ClockAngleActivity({
       angleDiff: 100,
       type: "Obtuse Angle (100°)",
       desc: "Smallest angle between hands = 240° - 140° = 100°",
-      isObtuse: true,
-    },
+      isObtuse: true },
     {
       id: "B",
       time: "3:00",
@@ -34,8 +32,7 @@ export function ClockAngleActivity({
       angleDiff: 90,
       type: "Right Angle (90°)",
       desc: "Exact perpendicular right angle",
-      isObtuse: false,
-    },
+      isObtuse: false },
     {
       id: "C",
       time: "2:00",
@@ -44,8 +41,7 @@ export function ClockAngleActivity({
       angleDiff: 60,
       type: "Acute Angle (60°)",
       desc: "Angle < 90°",
-      isObtuse: false,
-    },
+      isObtuse: false },
     {
       id: "D",
       time: "6:00",
@@ -54,8 +50,7 @@ export function ClockAngleActivity({
       angleDiff: 180,
       type: "Straight Angle (180°)",
       desc: "Hands in a straight continuous line",
-      isObtuse: false,
-    },
+      isObtuse: false },
   ];
 
   const initialOpt =
@@ -81,7 +76,7 @@ export function ClockAngleActivity({
   const my = 100 + 68 * Math.sin(minRad);
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -90,7 +85,7 @@ export function ClockAngleActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Clock Tower Interactive Laboratory <Sparkles className="w-4 h-4 text-amber-500" />
+              Clock Tower Interactive Laboratory 
             </h3>
             <p className="text-xs text-slate-600">
               Select or test clock configurations to inspect the angle formed between hands.
@@ -104,7 +99,7 @@ export function ClockAngleActivity({
       </div>
 
       {/* Dynamic Geared Clock Simulator */}
-      <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-8 flex-wrap">
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-8 flex-wrap">
         <div className="relative cursor-pointer select-none">
           <svg viewBox="0 0 200 200" className="w-52 h-52">
             {/* Dial Background */}

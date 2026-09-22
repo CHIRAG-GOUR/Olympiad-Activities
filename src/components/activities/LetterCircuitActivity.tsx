@@ -13,8 +13,7 @@ interface LetterCircuitActivityProps {
 export function LetterCircuitActivity({
   value,
   onChange,
-  readOnly = false,
-}: LetterCircuitActivityProps) {
+  readOnly = false }: LetterCircuitActivityProps) {
   const [selectedLetter, setSelectedLetter] = useState<string>(value ? String(value) : "");
   const [activeCell, setActiveCell] = useState<{ r: number; c: number } | null>(null);
 
@@ -32,7 +31,7 @@ export function LetterCircuitActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-indigo-700/40 pb-4">
         <div className="flex items-center gap-3">
@@ -51,7 +50,7 @@ export function LetterCircuitActivity({
       </div>
 
       {/* Circuit Board 3x3 Grid */}
-      <div className="relative p-6 bg-slate-50 border border-slate-200 border border-indigo-900/80 rounded-xl overflow-hidden shadow-inner flex flex-col items-center justify-center">
+      <div className="relative p-4 bg-slate-50 border border-slate-200 border border-indigo-900/80 rounded-xl overflow-hidden shadow-inner flex flex-col items-center justify-center">
         {/* Circuit Trace Glow Effects */}
         <div className="absolute inset-x-8 top-1/3 h-0.5 bg-indigo-500/30 blur-[1px]" />
         <div className="absolute inset-x-8 top-2/3 h-0.5 bg-indigo-500/30 blur-[1px]" />
@@ -59,7 +58,7 @@ export function LetterCircuitActivity({
         <div className="absolute inset-y-8 right-1/3 w-0.5 bg-indigo-500/30 blur-[1px]" />
 
         {/* 3x3 Matrix Nodes */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-6 z-10">
+        <div className="grid grid-cols-3 gap-4 sm:gap-4 z-10">
           {/* Row 1 */}
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white border border-slate-200 border-2 border-indigo-500/50 rounded-xl flex flex-col items-center justify-center shadow-lg">
             <span className="font-black text-2xl text-indigo-700">U</span>
@@ -102,7 +101,7 @@ export function LetterCircuitActivity({
             }`}
           >
             <span className="font-black text-3xl">{selectedLetter || "?"}</span>
-            <span className="text-[9px] font-mono text-amber-400/80">TARGET CELL</span>
+            <span className="text-[9px] font-mono text-amber-800/80">TARGET CELL</span>
           </div>
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white border border-slate-200 border-2 border-indigo-500/50 rounded-xl flex flex-col items-center justify-center shadow-lg">
             <span className="font-black text-2xl text-indigo-700">Q</span>
@@ -114,7 +113,7 @@ export function LetterCircuitActivity({
       {/* Letter Selector Bus */}
       <div className="space-y-3">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block flex items-center gap-2">
-          <Zap className="w-4 h-4 text-amber-400" /> Plug in the Missing Bus Component:
+          <Zap className="w-4 h-4 text-amber-800" /> Plug in the Missing Bus Component:
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {candidates.map((cand) => {
@@ -128,12 +127,12 @@ export function LetterCircuitActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-indigo-600/30 border-indigo-400 text-indigo-800 shadow-lg shadow-indigo-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-2xl font-black">{cand.val}</span>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-white border border-slate-200 border border-slate-200 text-slate-600">
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
                     Opt {cand.id}
                   </span>
                 </div>

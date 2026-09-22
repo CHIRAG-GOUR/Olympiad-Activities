@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Question } from "@/types/question";
 import { getQuestionActivity } from "@/components/activities/ActivityRegistry";
-import { Sparkles, FileText } from "lucide-react";
+import { FileText, Layers } from "lucide-react";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
 import { OrderingQuestion } from "./OrderingQuestion";
 import { DragDropQuestion } from "./DragDropQuestion";
@@ -19,6 +19,8 @@ interface QuestionRendererProps {
   onChange: (val: any) => void;
   readOnly?: boolean;
   showMetadata?: boolean;
+  activeView?: "activity" | "standard";
+  onToggleView?: (view: "activity" | "standard") => void;
 }
 
 export function QuestionRenderer({
@@ -27,8 +29,12 @@ export function QuestionRenderer({
   onChange,
   readOnly = false,
   showMetadata = true,
+  activeView: controlledActiveView,
+  onToggleView,
 }: QuestionRendererProps) {
-  const [activeView, setActiveView] = useState<"activity" | "standard">("activity");
+  const [internalActiveView, setInternalActiveView] = useState<"activity" | "standard">("activity");
+  const activeView = controlledActiveView !== undefined ? controlledActiveView : internalActiveView;
+  const handleToggle = onToggleView || setInternalActiveView;
 
   const BespokeActivityComponent =
     getQuestionActivity(question.id) ||
@@ -164,7 +170,7 @@ export function QuestionRenderer({
           );
         }
         return (
-          <div className="p-6 bg-olympiad-bg border border-olympiad-border rounded text-[14px] text-olympiad-text">
+          <div className="p-4 bg-[#F6F9F1] border border-[#DDE4D7] rounded-xl text-xs text-[#172033]">
             Interactive engine renderer for {question.questionType} is active.
           </div>
         );
@@ -172,84 +178,78 @@ export function QuestionRenderer({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Question Header & Meta Bar */}
+    <div className="space-y-3.5">
+      {/* Optional Top Meta Bar (when showMetadata is enabled) */}
       {showMetadata && (
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-olympiad-border">
-          <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#DDE4D7]">
+          <div className="flex items-center gap-2 flex-wrap">
             {question.section && (
-              <span className="px-3 py-1 bg-olympiad-deepBlue text-white font-bold text-[12px] uppercase tracking-wider rounded">
+              <span className="px-2.5 py-0.5 bg-[#4D741F] text-white font-bold text-[11px] uppercase tracking-wider rounded-md">
                 {question.section}
               </span>
             )}
             <span
-              className={`px-3 py-1 font-extrabold text-[12px] uppercase tracking-wide rounded border ${getDifficultyColor(
+              className={`px-2.5 py-0.5 font-extrabold text-[11px] uppercase tracking-wide rounded-md border ${getDifficultyColor(
                 question.difficulty
               )}`}
             >
               {question.difficulty}
             </span>
-            <span className="text-olympiad-textMuted font-mono font-bold text-[13px]">
+            <span className="text-[#667085] font-mono font-bold text-xs">
               #{question.questionId}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-[13px] font-mono font-bold">
-            <span className="px-2.5 py-0.5 bg-olympiad-blueLight text-olympiad-deepBlue rounded border border-olympiad-academicBlue/30">
+          <div className="flex items-center gap-3 text-xs font-mono font-bold">
+            <span className="px-2 py-0.5 bg-[#EEF5E7] text-[#355415] rounded-md border border-[#DDE4D7]">
               +{question.marks} {question.marks === 1 ? "Mark" : "Marks"}
             </span>
             {question.negativeMarks > 0 && (
-              <span className="px-2.5 py-0.5 bg-olympiad-redLight text-olympiad-red rounded border border-olympiad-red/30">
+              <span className="px-2 py-0.5 bg-rose-50 text-rose-700 rounded-md border border-rose-200">
                 -{question.negativeMarks} Negative
               </span>
+            )}
+
+            {/* Compact view toggle placed near right & negative */}
+            {BespokeActivityComponent && (
+              <div className="flex items-center gap-0.5 bg-[#F6F9F1] p-0.5 rounded-lg border border-[#DDE4D7] font-sans">
+                <button
+                  type="button"
+                  onClick={() => handleToggle("activity")}
+                  className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all ${
+                    activeView === "activity"
+                      ? "bg-[#4D741F] text-white shadow-xs"
+                      : "text-[#667085] hover:text-[#172033]"
+                  }`}
+                >
+                  Interactive
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggle("standard")}
+                  className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all ${
+                    activeView === "standard"
+                      ? "bg-slate-700 text-white shadow-xs"
+                      : "text-[#667085] hover:text-[#172033]"
+                  }`}
+                >
+                  Standard
+                </button>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* View Switcher if Bespoke Activity Exists */}
-      {BespokeActivityComponent && (
-        <div className="flex items-center justify-between p-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
-            <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
-            <span>Interactive Bespoke Activity Available</span>
-          </div>
-          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
-            <button
-              type="button"
-              onClick={() => setActiveView("activity")}
-              className={`px-3 py-1 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
-                activeView === "activity"
-                  ? "bg-emerald-600 text-white shadow"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" /> Interactive Activity
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView("standard")}
-              className={`px-3 py-1 text-xs font-bold rounded transition-all flex items-center gap-1.5 ${
-                activeView === "standard"
-                  ? "bg-slate-700 text-white shadow"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" /> Standard View
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Prominent Question Prompt Text */}
-      <div className="space-y-2">
-        <h2 className="text-xl lg:text-[24px] font-extrabold text-olympiad-deepBlue leading-snug tracking-tight">
+      {/* Prominent, Large Question Prompt Text */}
+      <div className="space-y-1">
+        <h2 className="text-xl sm:text-2xl lg:text-[26px] font-extrabold text-[#172033] leading-snug tracking-tight">
           {question.questionText}
         </h2>
       </div>
 
       {/* Interactive Core Body */}
-      <div className="pt-2">
+      <div className="pt-1">
         {BespokeActivityComponent && activeView === "activity" ? (
           <BespokeActivityComponent
             questionId={question.id || question.questionId}

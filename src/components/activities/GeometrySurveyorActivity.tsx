@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Compass, Sparkles, CheckCircle2 } from "lucide-react";
+import { Compass,  CheckCircle2 } from "lucide-react";
 
 interface GeometrySurveyorActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface GeometrySurveyorActivityProps {
 export function GeometrySurveyorActivity({
   value,
   onChange,
-  readOnly = false,
-}: GeometrySurveyorActivityProps) {
+  readOnly = false }: GeometrySurveyorActivityProps) {
   // Count line segments in the given figure:
   // Points: A, B, C, D on main horizontal line + intersecting verticals and diagonals
   // Total line segments = 15 distinct line segments.
@@ -36,16 +35,16 @@ export function GeometrySurveyorActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-400">
+          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-700">
             <Compass className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-emerald-700 flex items-center gap-2">
-              Geometry Surveyor <Sparkles className="w-4 h-4 text-amber-400" />
+              Geometry Surveyor 
             </h3>
             <p className="text-xs text-slate-600">
               Survey and count all distinct straight line segments bounded by vertices.
@@ -55,7 +54,7 @@ export function GeometrySurveyorActivity({
       </div>
 
       {/* Interactive Surveyor Canvas */}
-      <div className="relative h-64 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      <div className="relative h-64 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 380 200" className="w-full h-full max-w-sm select-none">
           {/* Main Horizontal Baseline */}
           <line x1="40" y1="140" x2="340" y2="140" stroke="#38bdf8" strokeWidth="3" />
@@ -88,7 +87,7 @@ export function GeometrySurveyorActivity({
           <text x="335" y="160" fill="#94a3b8" fontSize="11" fontWeight="bold">E</text>
         </svg>
 
-        <div className="absolute bottom-3 left-3 bg-white border border-slate-200 border border-slate-200/80 px-2.5 py-1 rounded text-[11px] font-mono text-emerald-400">
+        <div className="absolute bottom-3 left-3 bg-white border border-slate-200/80 px-2.5 py-1 rounded text-[11px] font-mono text-emerald-700">
           SURVEY: 15 DISTINCT LINE SEGMENTS
         </div>
       </div>
@@ -106,12 +105,12 @@ export function GeometrySurveyorActivity({
               className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                 isSelected
                   ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.02]"
-                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                  : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-black">{opt.val}</span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-700" />}
               </div>
               <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
             </button>

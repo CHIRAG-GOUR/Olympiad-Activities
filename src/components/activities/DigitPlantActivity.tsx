@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Cpu, Sparkles, CheckCircle2 } from "lucide-react";
+import { Cpu,  CheckCircle2 } from "lucide-react";
 
 interface DigitPlantActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface DigitPlantActivityProps {
 export function DigitPlantActivity({
   value,
   onChange,
-  readOnly = false,
-}: DigitPlantActivityProps) {
+  readOnly = false }: DigitPlantActivityProps) {
   // Digits: 1, 4, 0, 6, 8 (Form 6-digit numbers by repeating greatest/smallest digits):
   // Greatest 6-digit number: 886410 (repeat 8 twice)
   // Smallest 6-digit number: 100468 (repeat 0 twice, cannot start with 0)
@@ -37,7 +36,7 @@ export function DigitPlantActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -46,10 +45,10 @@ export function DigitPlantActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-indigo-700 flex items-center gap-2">
-              Digit Manufacturing Plant <Sparkles className="w-4 h-4 text-amber-400" />
+              Digit Manufacturing Plant 
             </h3>
             <p className="text-xs text-slate-600">
-              Compute the difference between the Greatest (886410) and Smallest (100468) 6-digit numbers formed from <strong className="text-white">1, 4, 0, 6, 8</strong>.
+              Compute the difference between the Greatest (886410) and Smallest (100468) 6-digit numbers formed from <strong className="text-slate-900">1, 4, 0, 6, 8</strong>.
             </p>
           </div>
         </div>
@@ -61,15 +60,15 @@ export function DigitPlantActivity({
           <span className="text-xs font-mono font-bold text-indigo-400 block">
             GREATEST 6-DIGIT ASSEMBLY
           </span>
-          <div className="font-black text-2xl text-white font-mono">8,86,410</div>
+          <div className="font-black text-2xl text-slate-900 font-mono">8,86,410</div>
           <span className="text-[10px] text-slate-600 font-mono">Repeats largest digit 8</span>
         </div>
 
         <div className="p-4 bg-slate-50 border border-slate-200 border border-sky-500/40 rounded-xl space-y-2">
-          <span className="text-xs font-mono font-bold text-sky-400 block">
+          <span className="text-xs font-mono font-bold text-sky-800 block">
             SMALLEST 6-DIGIT ASSEMBLY
           </span>
-          <div className="font-black text-2xl text-white font-mono">1,00,468</div>
+          <div className="font-black text-2xl text-slate-900 font-mono">1,00,468</div>
           <span className="text-[10px] text-slate-600 font-mono">Starts with 1, repeats 0</span>
         </div>
       </div>
@@ -91,7 +90,7 @@ export function DigitPlantActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-indigo-600/30 border-indigo-400 text-indigo-800 shadow-lg shadow-indigo-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">

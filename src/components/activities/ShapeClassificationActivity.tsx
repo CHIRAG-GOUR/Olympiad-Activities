@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Boxes, CheckCircle2, Sparkles, Filter } from "lucide-react";
+import { Boxes, CheckCircle2,  Filter } from "lucide-react";
 
 interface ShapeClassificationActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface ShapeClassificationActivityProps {
 export function ShapeClassificationActivity({
   value,
   onChange,
-  readOnly = false,
-}: ShapeClassificationActivityProps) {
+  readOnly = false }: ShapeClassificationActivityProps) {
   // 9 Figures grouping based on boundaries:
   // Class 1 (Pure Curves: 1, 7, 9 - Oval, Crescent, Drop)
   // Class 2 (Pure Straight Polygons: 2, 3, 5 - Triangle, Quad, Pentagon)
@@ -28,10 +27,8 @@ export function ShapeClassificationActivity({
       groups: {
         "1": "C1", "7": "C1", "8": "C1",
         "2": "C2", "3": "C2", "5": "C2",
-        "4": "C3", "6": "C3", "9": "C3",
-      },
-      isCorrect: false,
-    },
+        "4": "C3", "6": "C3", "9": "C3" },
+      isCorrect: false },
     {
       id: "B",
       val: "1, 7, 9 ; 2, 3, 5 ; 4, 6, 8",
@@ -39,11 +36,9 @@ export function ShapeClassificationActivity({
       groups: {
         "1": "C1", "7": "C1", "9": "C1",
         "2": "C2", "3": "C2", "5": "C2",
-        "4": "C3", "6": "C3", "8": "C3",
-      },
+        "4": "C3", "6": "C3", "8": "C3" },
       isCorrect: true,
-      desc: "Pure Curves (1,7,9) • Pure Polygons (2,3,5) • Mixed (4,6,8)",
-    },
+      desc: "Pure Curves (1,7,9) • Pure Polygons (2,3,5) • Mixed (4,6,8)" },
     {
       id: "C",
       val: "1, 7, 9 ; 2, 3, 6 ; 4, 5, 8",
@@ -51,10 +46,8 @@ export function ShapeClassificationActivity({
       groups: {
         "1": "C1", "7": "C1", "9": "C1",
         "2": "C2", "3": "C2", "6": "C2",
-        "4": "C3", "5": "C3", "8": "C3",
-      },
-      isCorrect: false,
-    },
+        "4": "C3", "5": "C3", "8": "C3" },
+      isCorrect: false },
     {
       id: "D",
       val: "1, 2, 3 ; 4, 5, 6 ; 7, 8, 9",
@@ -62,10 +55,8 @@ export function ShapeClassificationActivity({
       groups: {
         "1": "C1", "2": "C1", "3": "C1",
         "4": "C2", "5": "C2", "6": "C2",
-        "7": "C3", "8": "C3", "9": "C3",
-      },
-      isCorrect: false,
-    },
+        "7": "C3", "8": "C3", "9": "C3" },
+      isCorrect: false },
   ];
 
   const initialOpt = options.find((o) => o.id === value || o.val === value) || options[1];
@@ -92,7 +83,7 @@ export function ShapeClassificationActivity({
   ];
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -101,7 +92,7 @@ export function ShapeClassificationActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Shape Classification Observatory <Sparkles className="w-4 h-4 text-amber-500" />
+              Shape Classification Observatory 
             </h3>
             <p className="text-xs text-slate-600">
               Classify the 9 geometric figures into 3 distinct classes based on boundary curvature.

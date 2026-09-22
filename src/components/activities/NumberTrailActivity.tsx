@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { TrendingDown, Sparkles, CheckCircle2 } from "lucide-react";
+import { TrendingDown,  CheckCircle2 } from "lucide-react";
 
 interface NumberTrailActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface NumberTrailActivityProps {
 export function NumberTrailActivity({
   value,
   onChange,
-  readOnly = false,
-}: NumberTrailActivityProps) {
+  readOnly = false }: NumberTrailActivityProps) {
   // Descending Integer Sequence (Greatest to Least):
   // Given integers: 18, -25, 0, -12, 34, -4
   // Descending Order: 34 > 18 > 0 > -4 > -12 > -25
@@ -36,16 +35,16 @@ export function NumberTrailActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-rose-500/20 border border-rose-400/40 rounded-lg text-rose-400">
+          <div className="p-2.5 bg-rose-500/20 border border-rose-400/40 rounded-lg text-rose-700">
             <TrendingDown className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-rose-700 flex items-center gap-2">
-              Mountain-to-Valley Number Trail <Sparkles className="w-4 h-4 text-amber-400" />
+              Mountain-to-Valley Number Trail 
             </h3>
             <p className="text-xs text-slate-600">
               Arrange the signed integers in descending order (highest altitude peak to lowest valley floor).
@@ -55,7 +54,7 @@ export function NumberTrailActivity({
       </div>
 
       {/* Altitude Trail Visualizer */}
-      <div className="p-5 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl flex items-center justify-center overflow-x-auto">
+      <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center overflow-x-auto">
         <div className="flex items-end gap-3 min-w-[480px]">
           {[
             { val: 34, h: "h-28", bg: "bg-emerald-600", label: "Peak (+34)" },
@@ -66,7 +65,7 @@ export function NumberTrailActivity({
             { val: -25, h: "h-24", bg: "bg-rose-50 border border-rose-200 border border-rose-500", label: "Abyss (-25)" },
           ].map((node, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <span className="font-black text-xs font-mono text-white">{node.val}</span>
+              <span className="font-black text-xs font-mono text-slate-900">{node.val}</span>
               <div className={`w-full ${node.h} ${node.bg} rounded-t-lg transition-all`} />
               <span className="text-[9px] font-mono text-slate-600 text-center leading-tight">
                 {node.label}
@@ -89,17 +88,17 @@ export function NumberTrailActivity({
               className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                 isSelected
                   ? "bg-rose-600/30 border-rose-400 text-rose-800 shadow-lg shadow-rose-500/20 scale-[1.01]"
-                  : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                  : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
               }`}
             >
               <div>
-                <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-rose-400 mr-2">
+                <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-rose-700 mr-2">
                   Option {opt.id}
                 </span>
                 <span className="font-mono text-sm font-black tracking-wide">{opt.seq}</span>
                 <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
               </div>
-              {isSelected && <CheckCircle2 className="w-5 h-5 text-rose-400 shrink-0" />}
+              {isSelected && <CheckCircle2 className="w-5 h-5 text-rose-700 shrink-0" />}
             </button>
           );
         })}

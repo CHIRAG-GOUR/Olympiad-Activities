@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { RefreshCw, ArrowRight, CheckCircle2, Sparkles, Droplets } from "lucide-react";
+import { RefreshCw, ArrowRight, CheckCircle2,  Droplets } from "lucide-react";
 
 interface TransformationLabActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface TransformationLabActivityProps {
 export function TransformationLabActivity({
   value,
   onChange,
-  readOnly = false,
-}: TransformationLabActivityProps) {
+  readOnly = false }: TransformationLabActivityProps) {
   const [selectedWord, setSelectedWord] = useState<string>(value ? String(value) : "");
 
   // Substitution chain:
@@ -42,16 +41,16 @@ export function TransformationLabActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-400">
+          <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-800">
             <RefreshCw className="w-5 h-5 animate-spin-slow" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-cyan-700 flex items-center gap-2">
-              Word Transformation Laboratory <Sparkles className="w-4 h-4 text-amber-400" />
+              Word Transformation Laboratory 
             </h3>
             <p className="text-xs text-slate-600">
               Follow the substitution pipeline: Identify what a thirsty person will drink (Water → ?).
@@ -61,7 +60,7 @@ export function TransformationLabActivity({
       </div>
 
       {/* Interactive Mutation Pipeline Conveyor */}
-      <div className="p-6 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
         <div className="flex items-center justify-between min-w-[500px] gap-2">
           {chain.map((step, idx) => (
             <React.Fragment key={step.from}>
@@ -73,7 +72,7 @@ export function TransformationLabActivity({
                 }`}
               >
                 <span className="text-2xl mb-1">{step.icon}</span>
-                <span className="font-extrabold text-sm text-white">{step.from}</span>
+                <span className="font-extrabold text-sm text-slate-900">{step.from}</span>
                 <span className="text-[10px] font-mono text-slate-600">is called</span>
                 <span
                   className={`font-black text-sm mt-0.5 ${
@@ -94,8 +93,8 @@ export function TransformationLabActivity({
 
       {/* Target Clue & Selection Grid */}
       <div className="space-y-3">
-        <div className="p-3.5 bg-white border border-slate-200 border border-slate-200 rounded-xl flex items-center gap-3">
-          <Droplets className="w-5 h-5 text-cyan-400" />
+        <div className="p-3.5 bg-white border border-slate-200 rounded-xl flex items-center gap-3">
+          <Droplets className="w-5 h-5 text-cyan-800" />
           <p className="text-xs text-slate-700">
             A thirsty person drinks <strong className="text-cyan-700 font-bold">Water</strong>.
             Under this code, what is Water called?
@@ -114,12 +113,12 @@ export function TransformationLabActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-cyan-600/30 border-cyan-400 text-cyan-800 shadow-lg shadow-cyan-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-black">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-cyan-400" />}
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-cyan-800" />}
                 </div>
                 <span className="text-[10px] text-slate-600 mt-2">Option {opt.id}</span>
               </button>

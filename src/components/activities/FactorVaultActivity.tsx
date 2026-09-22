@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { KeyRound, Sparkles, CheckCircle2 } from "lucide-react";
+import { KeyRound,  CheckCircle2 } from "lucide-react";
 
 interface FactorVaultActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface FactorVaultActivityProps {
 export function FactorVaultActivity({
   value,
   onChange,
-  readOnly = false,
-}: FactorVaultActivityProps) {
+  readOnly = false }: FactorVaultActivityProps) {
   // Factors of 32: 1, 2, 4, 8, 16, 32
   // Factors of 48: 1, 2, 3, 4, 6, 8, 12, 16, 24, 48
   // Common Factors of 32 and 48: 1, 2, 4, 8, 16
@@ -36,16 +35,16 @@ export function FactorVaultActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-400">
+          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-800">
             <KeyRound className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-amber-700 flex items-center gap-2">
-              Factor Lock Vault (32 & 48) <Sparkles className="w-4 h-4 text-amber-400" />
+              Factor Lock Vault (32 & 48) 
             </h3>
             <p className="text-xs text-slate-600">
               Extract all shared common factor keys that unlock both Vault 32 and Vault 48 simultaneously.
@@ -57,7 +56,7 @@ export function FactorVaultActivity({
       {/* Dual Vault Panels */}
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-slate-50 border border-slate-200 border border-amber-500/40 rounded-xl space-y-2">
-          <span className="text-xs font-mono font-bold text-amber-400 block">
+          <span className="text-xs font-mono font-bold text-amber-800 block">
             VAULT 32 FACTORS
           </span>
           <div className="text-xs font-mono text-slate-700">
@@ -66,7 +65,7 @@ export function FactorVaultActivity({
         </div>
 
         <div className="p-4 bg-slate-50 border border-slate-200 border border-amber-500/40 rounded-xl space-y-2">
-          <span className="text-xs font-mono font-bold text-amber-400 block">
+          <span className="text-xs font-mono font-bold text-amber-800 block">
             VAULT 48 FACTORS
           </span>
           <div className="text-xs font-mono text-slate-700">
@@ -92,17 +91,17 @@ export function FactorVaultActivity({
                 className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
                   isSelected
                     ? "bg-amber-600/30 border-amber-400 text-amber-800 shadow-lg shadow-amber-500/20 scale-[1.01]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div>
-                  <span className="px-2 py-0.5 bg-white border border-slate-200 border border-slate-200 rounded text-xs font-mono text-amber-400 mr-2">
+                  <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-amber-800 mr-2">
                     Option {opt.id}
                   </span>
                   <span className="font-mono text-base font-black">{opt.val}</span>
                   <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
                 </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />}
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-amber-800 shrink-0" />}
               </button>
             );
           })}

@@ -13,8 +13,7 @@ interface ExplorerNavActivityProps {
 export function ExplorerNavActivity({
   value,
   onChange,
-  readOnly = false,
-}: ExplorerNavActivityProps) {
+  readOnly = false }: ExplorerNavActivityProps) {
   const [currentStep, setCurrentStep] = useState(4); // default completed view
   const [selectedDirection, setSelectedDirection] = useState<string>(
     value ? String(value) : ""
@@ -42,11 +41,11 @@ export function ExplorerNavActivity({
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-400">
+          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-800">
             <Compass className="w-5 h-5" />
           </div>
           <div>
@@ -64,17 +63,17 @@ export function ExplorerNavActivity({
           <button
             type="button"
             onClick={() => setCurrentStep((prev) => (prev > 1 ? prev - 1 : 1))}
-            className="px-2.5 py-1 bg-slate-100 border border-slate-200 hover:bg-slate-700 border border-slate-200 rounded text-xs"
+            className="px-2.5 py-1 bg-slate-100 border border-slate-200 hover:bg-slate-100 border border-slate-200 rounded text-xs"
           >
             Previous
           </button>
-          <span className="text-xs font-mono text-amber-400 font-bold px-2">
+          <span className="text-xs font-mono text-amber-800 font-bold px-2">
             Step {currentStep} of 4
           </span>
           <button
             type="button"
             onClick={() => setCurrentStep((prev) => (prev < 4 ? prev + 1 : 4))}
-            className="px-2.5 py-1 bg-slate-100 border border-slate-200 hover:bg-slate-700 border border-slate-200 rounded text-xs"
+            className="px-2.5 py-1 bg-slate-100 border border-slate-200 hover:bg-slate-100 border border-slate-200 rounded text-xs"
           >
             Next Step
           </button>
@@ -82,7 +81,7 @@ export function ExplorerNavActivity({
       </div>
 
       {/* Interactive Cartography Map Canvas */}
-      <div className="relative h-72 bg-slate-50 border border-slate-200 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      <div className="relative h-72 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
         {/* Radar concentric circles */}
         <svg viewBox="0 0 400 260" className="w-full h-full max-w-md select-none">
           {/* Compass grid lines */}
@@ -164,8 +163,8 @@ export function ExplorerNavActivity({
         </svg>
 
         {/* Live Vector Telemetry */}
-        <div className="absolute bottom-3 left-3 bg-white border border-slate-200 border border-slate-200/80 px-3 py-1 rounded text-[11px] font-mono text-slate-700">
-          Displacement: -95m West, +40m North → <span className="text-amber-400 font-bold">North-West</span>
+        <div className="absolute bottom-3 left-3 bg-white border border-slate-200/80 px-3 py-1 rounded text-[11px] font-mono text-slate-700">
+          Displacement: -95m West, +40m North → <span className="text-amber-800 font-bold">North-West</span>
         </div>
       </div>
 
@@ -189,12 +188,12 @@ export function ExplorerNavActivity({
                 className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
                   isSelected
                     ? "bg-amber-500/20 border-amber-400 text-amber-800 shadow-lg shadow-amber-500/20 scale-[1.02]"
-                    : "bg-slate-50 border border-slate-200 border-slate-200/80 text-slate-700 hover:bg-slate-700/60 hover:border-slate-500"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-base font-black">{dir.val}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-400" />}
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-800" />}
                 </div>
                 <span className="text-[10px] text-slate-600 font-mono mt-2">Option {dir.id}</span>
               </button>

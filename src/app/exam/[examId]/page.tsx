@@ -14,6 +14,7 @@ import { ExamHeader } from "@/components/examination/ExamHeader";
 import { QuestionPalette } from "@/components/examination/QuestionPalette";
 import { ExamNavigation } from "@/components/examination/ExamNavigation";
 import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
+import { hasBespokeActivity } from "@/components/activities/ActivityRegistry";
 import {
   Clock,
   Award,
@@ -62,6 +63,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [questionView, setQuestionView] = useState<"activity" | "standard">("activity");
 
   const currentQuestion = questions[currentIndex];
   const currentAnswerValue = currentQuestion ? answers[currentQuestion.id] : undefined;
@@ -251,6 +253,10 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
       sections[0]
     );
   }, [currentIndex, sections]);
+
+  useEffect(() => {
+    setQuestionView("activity");
+  }, [currentIndex]);
 
   // Resume Incomplete Session Action
   const handleResumeSession = () => {
@@ -775,27 +781,55 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
             </div>
 
             {/* Question Info Bar */}
-            <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-700">
+            <div className="px-5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-700">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-black text-[#0B4F8A]">
+                <span className="text-sm font-black text-[#4D741F]">
                   Question No. {currentIndex + 1}
                 </span>
                 <span className="text-slate-400">|</span>
                 <span className="text-slate-600 font-semibold">{currentSection.title}</span>
               </div>
 
-              <div className="flex items-center gap-3 font-mono">
+              <div className="flex items-center gap-2.5 font-mono">
                 <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                   Right: +{currentQuestion?.marks || 1}.00
                 </span>
                 <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                   Negative: -{currentQuestion?.negativeMarks || 0}.00
                 </span>
+
+                {/* View Switcher Toggle placed right here next to Right and Negative */}
+                {currentQuestion && (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
+                  <div className="flex items-center gap-0.5 bg-[#EEF5E7] p-0.5 rounded-lg border border-[#DDE4D7] font-sans ml-1">
+                    <button
+                      type="button"
+                      onClick={() => setQuestionView("activity")}
+                      className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
+                        questionView === "activity"
+                          ? "bg-[#4D741F] text-white shadow-xs"
+                          : "text-[#355415] hover:bg-[#DDE4D7]"
+                      }`}
+                    >
+                      Interactive
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuestionView("standard")}
+                      className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
+                        questionView === "standard"
+                          ? "bg-slate-700 text-white shadow-xs"
+                          : "text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      Standard
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Question Content Body */}
-            <div className="p-6 flex-1 space-y-6">
+            <div className="p-4 sm:p-5 flex-1 space-y-4">
               {currentQuestion ? (
                 <QuestionRenderer
                   question={currentQuestion}
@@ -803,6 +837,8 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                   onChange={handleAnswerChange}
                   readOnly={false}
                   showMetadata={false}
+                  activeView={questionView}
+                  onToggleView={setQuestionView}
                 />
               ) : (
                 <div className="p-8 text-center text-slate-400">Question not loaded.</div>

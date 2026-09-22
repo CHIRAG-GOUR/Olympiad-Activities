@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Paintbrush, Sparkles, CheckCircle2, RotateCcw } from "lucide-react";
+import { Paintbrush,  CheckCircle2, RotateCcw } from "lucide-react";
 
 interface TilePainterActivityProps {
   questionId: string;
@@ -13,8 +13,7 @@ interface TilePainterActivityProps {
 export function TilePainterActivity({
   value,
   onChange,
-  readOnly = false,
-}: TilePainterActivityProps) {
+  readOnly = false }: TilePainterActivityProps) {
   // Total 28 diamond units. Unshaded must be 3/7 of total:
   // Unshaded = (3/7) * 28 = 12 diamonds unshaded
   // Shaded = 28 - 12 = 16 diamonds shaded!
@@ -68,7 +67,7 @@ export function TilePainterActivity({
   const isTargetAchieved = unshadedCount === 12 && shadedCount === 16;
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 text-slate-900 shadow-sm space-y-6">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
@@ -77,7 +76,7 @@ export function TilePainterActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Geometric Tessellation Diamond Painter <Sparkles className="w-4 h-4 text-amber-500" />
+              Geometric Tessellation Diamond Painter 
             </h3>
             <p className="text-xs text-slate-600">
               Click individual diamonds to shade/unshade, or select an option to batch paint the grid.
@@ -95,7 +94,7 @@ export function TilePainterActivity({
       </div>
 
       {/* Interactive 28-Diamond Tessellation Canvas */}
-      <div className="p-6 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center">
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center">
         <div className="grid grid-cols-7 gap-2.5 sm:gap-3.5 select-none py-3">
           {Array.from({ length: totalTiles }, (_, i) => {
             const isShaded = shadedIndices.has(i);
@@ -112,7 +111,7 @@ export function TilePainterActivity({
                 }`}
                 title={`Diamond #${i + 1}: ${isShaded ? "Shaded" : "Unshaded"}`}
               >
-                <span className="transform -rotate-45 text-[10px] font-mono font-bold text-white">
+                <span className="transform -rotate-45 text-[10px] font-mono font-bold text-slate-900">
                   {isShaded ? "✓" : ""}
                 </span>
               </button>
@@ -121,7 +120,7 @@ export function TilePainterActivity({
         </div>
 
         {/* Live Fraction Telemetry Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-200 text-xs font-mono w-full">
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-4 pt-4 border-t border-slate-200 text-xs font-mono w-full">
           <div>
             Shaded Diamonds: <strong className="text-emerald-700 text-sm">{shadedCount}</strong> / 28
           </div>
