@@ -8,23 +8,36 @@ import { ExamAttempt } from "@/types/attempt";
 import { Question } from "@/types/question";
 import { UserProfile } from "@/lib/auth/rbac";
 import { useAuth } from "@/context/AuthContext";
+import { hasBespokeActivity } from "@/components/activities/ActivityRegistry";
 import {
   FileCheck2,
   Users,
   GraduationCap,
   Award,
-  BookOpen,
   Activity,
   ArrowRight,
   PlusCircle,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  HelpCircle,
+  Gamepad2,
+  Target,
   FileText,
-  Layers,
   ChevronRight,
 } from "lucide-react";
+
+interface RawSession {
+  sessionId: string;
+  examId: string;
+  status: string;
+}
+
+interface ExamStats {
+  completed: number;
+  inProgress: number;
+  notStarted: number;
+  avgScore: number | null;
+  passRate: number | null;
+}
+
+const EMPTY_STATS: ExamStats = { completed: 0, inProgress: 0, notStarted: 0, avgScore: null, passRate: null };
 
 export default function AdminDashboardPage() {
   const { role, user, switchRole } = useAuth();
@@ -33,13 +46,15 @@ export default function AdminDashboardPage() {
   const [attempts, setAttempts] = useState<ExamAttempt[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [activeSessionsCount, setActiveSessionsCount] = useState(0);
+  const [sessions, setSessions] = useState<RawSession[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
-        const [exList, attList, qList, uList, liveSess] = await Promise.all([
+        const [exList, attList, qList, uList, liveSessions] = await Promise.all([
           examRepository.listExams(),
           attemptRepository.listAttempts(),
           questionRepository.listQuestions(),
@@ -47,38 +62,124 @@ export default function AdminDashboardPage() {
           (async () => {
             try {
               const { idbClient } = await import("@/services/persistence/indexeddb");
-              const sess = await idbClient.getAll<any>("sessions");
-              return sess.filter((s) => s.status === "in_progress").length;
+              return await idbClient.getAll<RawSession>("sessions");
             } catch {
-              return 0;
+              return [] as RawSession[];
             }
           })(),
         ]);
+        if (cancelled) return;
         setExams(exList);
         setAttempts(attList);
         setQuestions(qList);
         setUsers(uList);
-        setActiveSessionsCount(liveSess);
+        setSessions(liveSessions);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Real Counts (Requirements 9, 43 - Zero Mock Data)
-  const studentUsers = users.filter((u) => u.role === "STUDENT");
-  const teacherUsers = users.filter((u) => u.role === "TEACHER");
-  
+  const studentUsers = useMemo(() => users.filter((u) => u.role === "STUDENT"), [users]);
+  const teacherUsers = useMemo(() => users.filter((u) => u.role === "TEACHER"), [users]);
+
   // Total real student count = registered student profiles + distinct students with attempts
-  const distinctAttemptStudentIds = new Set(attempts.map((a) => a.student?.studentId).filter(Boolean));
+  const distinctAttemptStudentIds = useMemo(
+    () => new Set(attempts.map((a) => a.student?.studentId).filter(Boolean)),
+    [attempts]
+  );
   const totalStudents = Math.max(studentUsers.length, distinctAttemptStudentIds.size);
   const totalTeachers = teacherUsers.length;
   const activeExamsCount = exams.filter((e) => e.status !== "Archived").length;
   const completedAttemptsCount = attempts.length;
   const totalQuestionsCount = questions.length;
+
+  // Sessions currently in progress, grouped per exam — each exam's card must reflect ITS
+  // OWN candidates, not the site-wide total (the previous dashboard showed the same
+  // global in-progress count on every exam's row regardless of which exam it belonged to).
+  const inProgressByExam = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of sessions) {
+      if (s.status !== "in_progress") continue;
+      map.set(s.examId, (map.get(s.examId) || 0) + 1);
+    }
+    return map;
+  }, [sessions]);
+  const activeSessionsCount = useMemo(
+    () => sessions.filter((s) => s.status === "in_progress").length,
+    [sessions]
+  );
+
+  // Per-exam completion, live participation, average score and pass rate — the numbers a
+  // teacher actually needs when deciding whether a specific paper is ready/performing,
+  // rather than one aggregate figure blended across every exam in the system.
+  const examStats = useMemo(() => {
+    const map = new Map<string, ExamStats>();
+    for (const exam of exams) {
+      const examAttempts = attempts.filter((a) => a.examId === exam.id);
+      const completed = examAttempts.length;
+      const inProgress = inProgressByExam.get(exam.id) || 0;
+      const notStarted = Math.max(0, totalStudents - (completed + inProgress));
+      const avgScore =
+        completed > 0
+          ? Math.round(examAttempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / completed)
+          : null;
+      const passRate =
+        completed > 0
+          ? Math.round((examAttempts.filter((a) => a.isPassed).length / completed) * 100)
+          : null;
+      map.set(exam.id, { completed, inProgress, notStarted, avgScore, passRate });
+    }
+    return map;
+  }, [exams, attempts, inProgressByExam, totalStudents]);
+
+  // Interactive activity coverage across the question bank actually wired into exams —
+  // directly reflects whether the papers being conducted have a genuine manipulable
+  // activity behind each question, or are still falling back to the standard renderer.
+  const activityCoverage = useMemo(() => {
+    if (questions.length === 0) return { withActivity: 0, total: 0, percent: 0 };
+    const withActivity = questions.filter(
+      (q) => hasBespokeActivity(q.id) || hasBespokeActivity(q.questionId)
+    ).length;
+    return {
+      withActivity,
+      total: questions.length,
+      percent: Math.round((withActivity / questions.length) * 100),
+    };
+  }, [questions]);
+
+  // Section-wise performance aggregated from every graded attempt's sectionScores — a
+  // curriculum-level read on which part of the syllabus candidates are actually
+  // struggling with, computed from whatever sections the conducted exams define (not a
+  // hardcoded list), so it generalizes to new exams with different sections.
+  const sectionPerformance = useMemo(() => {
+    const agg = new Map<string, { correct: number; total: number; marksAwarded: number; maxMarks: number }>();
+    for (const att of attempts) {
+      for (const s of att.sectionScores || []) {
+        const cur = agg.get(s.sectionTitle) || { correct: 0, total: 0, marksAwarded: 0, maxMarks: 0 };
+        cur.correct += s.questionsCorrect;
+        cur.total += s.questionsTotal;
+        cur.marksAwarded += s.marksAwarded;
+        cur.maxMarks += s.maxMarks;
+        agg.set(s.sectionTitle, cur);
+      }
+    }
+    return Array.from(agg.entries())
+      .map(([title, d]) => ({
+        title,
+        accuracy: d.total > 0 ? Math.round((d.correct / d.total) * 100) : 0,
+        marksAwarded: d.marksAwarded,
+        maxMarks: d.maxMarks,
+      }))
+      .sort((a, b) => b.maxMarks - a.maxMarks);
+  }, [attempts]);
 
   // Header texts based on role (Requirement 8)
   const headerTitle =
@@ -144,7 +245,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="p-6 sm:p-8 space-y-8 flex-1">
-        
+
         {/* 2. TOP SUMMARY METRICS BLOCKS (Requirements 9, 10 - Real Data Only) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Card 1: Registered Students */}
@@ -202,7 +303,7 @@ export default function AdminDashboardPage() {
                 {activeExamsCount}
               </div>
               <div className="text-[11px] text-[#667085] font-semibold mt-1">
-                Published & scheduled
+                {activeSessionsCount > 0 ? `${activeSessionsCount} candidates live now` : "Published & scheduled"}
               </div>
             </div>
           </div>
@@ -227,22 +328,22 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Card 5: Questions in Repository */}
+          {/* Card 5: Interactive Activity Coverage */}
           <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-3 col-span-2 sm:col-span-1">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#667085]">
-                Questions in Bank
+                Activities Ready
               </span>
               <div className="w-8 h-8 rounded-xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center">
-                <BookOpen className="w-4 h-4" />
+                <Gamepad2 className="w-4 h-4" />
               </div>
             </div>
             <div>
               <div className="text-3xl font-black font-mono text-[#5F8A28] tracking-tight">
-                {totalQuestionsCount}
+                {activityCoverage.withActivity}/{activityCoverage.total || totalQuestionsCount}
               </div>
               <div className="text-[11px] text-[#667085] font-semibold mt-1">
-                Interactive questions
+                {activityCoverage.percent}% questions with a live interaction
               </div>
             </div>
           </div>
@@ -250,14 +351,14 @@ export default function AdminDashboardPage() {
 
         {/* 3. TWO-COLUMN DASHBOARD (Requirements 11, 12, 13) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Left Column: Examination Activity (7 cols) */}
           <div className="lg:col-span-7 bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-6 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-[#DDE4D7] pb-4">
               <div>
                 <h2 className="text-base font-extrabold text-[#172033]">Examination Activity</h2>
                 <p className="text-xs text-[#667085] font-medium mt-0.5">
-                  Live status across published examination papers
+                  Live status, average score and pass rate — per examination paper
                 </p>
               </div>
               <Link
@@ -276,30 +377,39 @@ export default function AdminDashboardPage() {
             ) : (
               <div className="space-y-4">
                 {exams.map((exam) => {
-                  const examAttempts = attempts.filter((a) => a.examId === exam.id);
-                  const completed = examAttempts.length;
-                  const inProgress = activeSessionsCount;
-                  const notStarted = Math.max(0, totalStudents - (completed + inProgress));
-                  const total = completed + inProgress + notStarted || 1;
+                  const stats = examStats.get(exam.id) || EMPTY_STATS;
+                  const total = stats.completed + stats.inProgress + stats.notStarted || 1;
 
-                  const completedPercent = Math.round((completed / total) * 100);
-                  const inProgressPercent = Math.round((inProgress / total) * 100);
+                  const completedPercent = Math.round((stats.completed / total) * 100);
+                  const inProgressPercent = Math.round((stats.inProgress / total) * 100);
 
                   return (
                     <div
                       key={exam.id}
                       className="p-4 rounded-xl border border-[#DDE4D7] bg-[#F6F9F1]/40 space-y-3"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div>
                           <div className="text-sm font-extrabold text-[#172033]">{exam.title}</div>
                           <div className="text-xs text-[#667085] font-medium">
-                            Class {exam.grade} • {exam.questionIds.length || 50} Questions • {exam.durationMinutes} Mins
+                            Class {exam.grade} • {exam.questionIds.length || totalQuestionsCount} Questions • {exam.durationMinutes} Mins
                           </div>
                         </div>
-                        <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-md bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7]">
-                          Active
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {stats.avgScore !== null && (
+                            <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-md bg-white text-[#355415] border border-[#DDE4D7] font-mono">
+                              Avg {stats.avgScore}%
+                            </span>
+                          )}
+                          {stats.passRate !== null && (
+                            <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-md bg-white text-[#0B4F8A] border border-[#DDE4D7] font-mono">
+                              Pass {stats.passRate}%
+                            </span>
+                          )}
+                          <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-md bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7]">
+                            {exam.status || "Active"}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Multi-segment Progress bar */}
@@ -308,27 +418,27 @@ export default function AdminDashboardPage() {
                           <div
                             className="bg-[#4D741F] h-full transition-all"
                             style={{ width: `${completedPercent}%` }}
-                            title={`Completed: ${completed}`}
+                            title={`Completed: ${stats.completed}`}
                           />
                           <div
                             className="bg-[#5F8A28] h-full opacity-70 transition-all"
                             style={{ width: `${inProgressPercent}%` }}
-                            title={`In Progress: ${inProgress}`}
+                            title={`In Progress: ${stats.inProgress}`}
                           />
                         </div>
 
-                        <div className="flex items-center justify-between text-xs font-semibold text-[#667085] pt-1">
+                        <div className="flex items-center justify-between text-xs font-semibold text-[#667085] pt-1 flex-wrap gap-1.5">
                           <div className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-[#4D741F]" />
-                            <span>Completed: <strong className="text-[#172033]">{completed}</strong></span>
+                            <span>Completed: <strong className="text-[#172033]">{stats.completed}</strong></span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-[#5F8A28]" />
-                            <span>In Progress: <strong className="text-[#172033]">{inProgress}</strong></span>
+                            <span>In Progress: <strong className="text-[#172033]">{stats.inProgress}</strong></span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-[#DDE4D7]" />
-                            <span>Not Started: <strong className="text-[#172033]">{notStarted}</strong></span>
+                            <span>Not Started: <strong className="text-[#172033]">{stats.notStarted}</strong></span>
                           </div>
                         </div>
                       </div>
@@ -402,7 +512,58 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* 4. RECENT EXAMINATIONS TABLE (Requirement 14) */}
+        {/* 4. SECTION-WISE PERFORMANCE — curriculum-level read on conducted exams */}
+        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#DDE4D7] pb-4">
+            <div>
+              <h2 className="text-base font-extrabold text-[#172033] flex items-center gap-2">
+                <Target className="w-4 h-4 text-[#4D741F]" />
+                Section-Wise Performance
+              </h2>
+              <p className="text-xs text-[#667085] font-medium mt-0.5">
+                Average accuracy per syllabus section, aggregated across every graded attempt
+              </p>
+            </div>
+            <Link
+              href="/admin/analytics"
+              className="text-xs font-bold text-[#4D741F] hover:underline flex items-center gap-1"
+            >
+              <span>Full analytics</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {sectionPerformance.length === 0 ? (
+            <div className="py-8 text-center text-xs text-[#667085]">
+              Section-wise breakdown appears here once candidates start submitting exams.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {sectionPerformance.map((sec) => (
+                <div key={sec.title} className="p-4 rounded-xl border border-[#DDE4D7] bg-[#F6F9F1]/40 space-y-2">
+                  <div className="text-xs font-extrabold text-[#172033] leading-tight">{sec.title}</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl font-black font-mono text-[#4D741F]">{sec.accuracy}%</span>
+                    <span className="text-[10px] text-[#667085] font-semibold">accuracy</span>
+                  </div>
+                  <div className="h-2 bg-[#E5EBE0] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        sec.accuracy >= 75 ? "bg-[#4D741F]" : sec.accuracy >= 50 ? "bg-[#D97706]" : "bg-[#DC3545]"
+                      }`}
+                      style={{ width: `${sec.accuracy}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-[#667085] font-mono font-semibold">
+                    {sec.marksAwarded}/{sec.maxMarks} marks scored
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 5. RECENT EXAMINATIONS TABLE (Requirement 14) */}
         <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-[#DDE4D7] pb-4">
             <div>
@@ -429,6 +590,8 @@ export default function AdminDashboardPage() {
                   <th className="p-3.5 text-center">Class</th>
                   <th className="p-3.5 text-center">Questions</th>
                   <th className="p-3.5 text-center">Duration</th>
+                  <th className="p-3.5 text-center">Completed</th>
+                  <th className="p-3.5 text-center">Avg Score</th>
                   <th className="p-3.5 text-center">Status</th>
                   <th className="p-3.5 text-right">Actions</th>
                 </tr>
@@ -436,40 +599,47 @@ export default function AdminDashboardPage() {
               <tbody className="divide-y divide-[#DDE4D7] text-[#172033]">
                 {exams.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-[#667085] font-medium">
+                    <td colSpan={9} className="p-8 text-center text-[#667085] font-medium">
                       No examinations created yet. Create your first Olympiad examination to get started.
                     </td>
                   </tr>
                 ) : (
-                  exams.map((ex) => (
-                    <tr key={ex.id} className="hover:bg-[#F6F9F1]/60">
-                      <td className="p-3.5 font-extrabold text-[#172033]">{ex.title}</td>
-                      <td className="p-3.5 font-mono text-[#4D741F] font-bold">{ex.code}</td>
-                      <td className="p-3.5 text-center font-bold">Class {ex.grade}</td>
-                      <td className="p-3.5 text-center font-mono">{ex.questionIds.length || 50}</td>
-                      <td className="p-3.5 text-center font-mono">{ex.durationMinutes} min</td>
-                      <td className="p-3.5 text-center">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7]">
-                          {ex.status || "Active"}
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <Link
-                          href={`/exam/${ex.id}`}
-                          className="px-3 py-1.5 bg-[#4D741F] hover:bg-[#355415] text-white rounded-lg text-xs font-bold transition-all inline-block shadow-xs"
-                        >
-                          Launch Exam
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
+                  exams.map((ex) => {
+                    const stats = examStats.get(ex.id) || EMPTY_STATS;
+                    return (
+                      <tr key={ex.id} className="hover:bg-[#F6F9F1]/60">
+                        <td className="p-3.5 font-extrabold text-[#172033]">{ex.title}</td>
+                        <td className="p-3.5 font-mono text-[#4D741F] font-bold">{ex.code}</td>
+                        <td className="p-3.5 text-center font-bold">Class {ex.grade}</td>
+                        <td className="p-3.5 text-center font-mono">{ex.questionIds.length || totalQuestionsCount}</td>
+                        <td className="p-3.5 text-center font-mono">{ex.durationMinutes} min</td>
+                        <td className="p-3.5 text-center font-mono">{stats.completed}</td>
+                        <td className="p-3.5 text-center font-mono font-bold text-[#355415]">
+                          {stats.avgScore !== null ? `${stats.avgScore}%` : "—"}
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7]">
+                            {ex.status || "Active"}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <Link
+                            href={`/exam/${ex.id}`}
+                            className="px-3 py-1.5 bg-[#4D741F] hover:bg-[#355415] text-white rounded-lg text-xs font-bold transition-all inline-block shadow-xs"
+                          >
+                            Launch Exam
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* 5. RECENT RESULTS TABLE (Requirements 15, 16 - Zero Mock Candidates) */}
+        {/* 6. RECENT RESULTS TABLE (Requirements 15, 16 - Zero Mock Candidates) */}
         <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-[#DDE4D7] pb-4">
             <div>

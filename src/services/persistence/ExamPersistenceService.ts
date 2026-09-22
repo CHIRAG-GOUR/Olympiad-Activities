@@ -1,6 +1,7 @@
 "use client";
 
 import { idbClient } from "./indexeddb";
+import type { DeviceInfo } from "@/types/session";
 
 export interface AnswerState {
   questionId: string;
@@ -21,6 +22,9 @@ export interface ExamSessionState {
   studentName: string;
   schoolName?: string;
   grade?: number | string;
+  /** Captured once at session start, so the live-monitor can show the candidate's
+   * actual browser/OS/device instead of a placeholder while the exam is in progress. */
+  device?: DeviceInfo;
   startedAt: string; // ISO timestamp
   durationMinutes: number;
   lastSavedAt: string;

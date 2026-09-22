@@ -41,22 +41,33 @@ const INITIAL_USERS: UserProfile[] = [
 ];
 
 export class LocalUserRepository implements IUserRepository {
+  // Every read used to re-parse the full localStorage blob from scratch, even though
+  // this repository is a singleton queried from most admin pages on every mount. Cache
+  // it in memory the same way LocalExamRepository/LocalQuestionRepository already do.
+  private inMemory: UserProfile[] | null = null;
+
   private async load(): Promise<UserProfile[]> {
+    if (this.inMemory) return this.inMemory;
+
     if (typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (raw) {
-          return JSON.parse(raw);
+          this.inMemory = JSON.parse(raw);
+          return this.inMemory!;
         }
       } catch {
         // ignore
       }
     }
-    this.persist(INITIAL_USERS);
-    return INITIAL_USERS;
+
+    this.inMemory = [...INITIAL_USERS];
+    this.persist(this.inMemory);
+    return this.inMemory;
   }
 
   private persist(users: UserProfile[]) {
+    this.inMemory = users;
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(users));

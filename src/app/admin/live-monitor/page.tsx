@@ -3,15 +3,29 @@
 import React, { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { OlympiadStore } from "@/services/firebase/firestore";
+import { examRepository } from "@/repositories";
 import { ExamSession } from "@/types/session";
 import { Activity, RefreshCw, Search, Users, Wifi, Clock, ShieldCheck } from "lucide-react";
 
 export default function LiveMonitorPage() {
   const [sessions, setSessions] = useState<ExamSession[]>([]);
+  const [questionCountByExam, setQuestionCountByExam] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filterExam, setFilterExam] = useState("all");
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Each conducted exam can have a different paper length, so the "question X of Y" and
+  // progress bar must read the actual exam's question count rather than an assumed 50.
+  useEffect(() => {
+    examRepository.listExams().then((exams) => {
+      const map: Record<string, number> = {};
+      exams.forEach((e) => {
+        map[e.id] = e.questionIds.length || e.totalQuestions || 50;
+      });
+      setQuestionCountByExam(map);
+    });
+  }, []);
 
   const loadSessions = async () => {
     setIsRefreshing(true);
@@ -24,8 +38,18 @@ export default function LiveMonitorPage() {
           const raw = await idbClient.getAll<any>("sessions");
           return raw.map((s): ExamSession => {
             const answeredCount = Object.keys(s.answers || {}).length;
-            const progress = Math.round((answeredCount / 50) * 100);
+            const totalQuestions = questionCountByExam[s.examId] || 50;
+            const progress = Math.round((answeredCount / totalQuestions) * 100);
             const remaining = ExamPersistenceService.calculateTrueRemainingTime(s);
+            // The candidate's real browser/OS/device is captured client-side when their
+            // exam session starts (see ExamSessionState.device); fall back to a plainly
+            // labelled placeholder only for sessions saved before that was tracked.
+            const device = s.device || {
+              ip: "—",
+              browser: "Unknown (legacy session)",
+              os: "Unknown",
+              device: "Desktop",
+            };
             return {
               id: s.sessionId,
               sessionId: s.sessionId,
@@ -37,15 +61,10 @@ export default function LiveMonitorPage() {
                 schoolName: s.schoolName,
                 grade: s.grade,
               },
-              device: {
-                ip: s.lastKnownIp || "127.0.0.1",
-                browser: "Chrome (Candidate PC)",
-                os: "Windows 11",
-                device: "Desktop",
-              },
+              device,
               currentQuestionIndex: s.currentQuestionIndex || 0,
               currentQuestionId: s.currentQuestionId || "",
-              totalQuestions: 50,
+              totalQuestions,
               answeredCount,
               flaggedCount: (s.markedForReview || []).length,
               progressPercent: progress,
@@ -76,7 +95,8 @@ export default function LiveMonitorPage() {
     loadSessions();
     const interval = setInterval(loadSessions, 10000);
     return () => clearInterval(interval);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionCountByExam]);
 
   const filteredSessions = sessions.filter((s) => {
     const matchesSearch =

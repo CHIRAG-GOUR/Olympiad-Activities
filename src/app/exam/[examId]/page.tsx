@@ -65,6 +65,12 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [questionView, setQuestionView] = useState<"activity" | "standard">("activity");
 
+  // Captured once per browser session (stable identity for the whole attempt), so the
+  // live-monitor can show the candidate's real browser/OS/device while the exam is still
+  // in progress instead of a generic placeholder, and the final attempt record reuses the
+  // exact same reading rather than re-detecting it (and re-rolling the mock subnet IP).
+  const [deviceInfo] = useState(() => getClientDeviceInfo());
+
   const currentQuestion = questions[currentIndex];
   const currentAnswerValue = currentQuestion ? answers[currentQuestion.id] : undefined;
 
@@ -119,6 +125,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
       studentName: candidateName,
       schoolName,
       grade: exam.grade || 6,
+      device: deviceInfo,
       startedAt: startTime,
       durationMinutes: exam.durationMinutes,
       lastSavedAt: new Date().toISOString(),
@@ -154,6 +161,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
     candidateId,
     candidateName,
     schoolName,
+    deviceInfo,
     startTime,
     currentIndex,
     answers,
@@ -491,7 +499,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
         answers,
         timeSpentMap,
         student: studentMeta,
-        device: getClientDeviceInfo(),
+        device: deviceInfo,
         startedAt: startTime || new Date().toISOString(),
         submittedAt: endTime,
         submissionType: reason,
