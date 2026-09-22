@@ -1,103 +1,173 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
-import { ExamSession } from "@/types/session";
-import { Users, Search, Laptop, Smartphone, Tablet } from "lucide-react";
+import Link from "next/link";
+import { userRepository, attemptRepository } from "@/repositories";
+import { UserProfile } from "@/lib/auth/rbac";
+import { ExamAttempt } from "@/types/attempt";
+import {
+  GraduationCap,
+  Search,
+  Award,
+  BookOpen,
+  CheckCircle2,
+  FileText,
+  Clock,
+  ArrowRight,
+} from "lucide-react";
 
 export default function StudentsDirectoryPage() {
-  const [sessions, setSessions] = useState<ExamSession[]>([]);
+  const [students, setStudents] = useState<UserProfile[]>([]);
+  const [attempts, setAttempts] = useState<ExamAttempt[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const data = await OlympiadStore.getLiveSessions();
-      setSessions(data);
+      try {
+        const [uList, attList] = await Promise.all([
+          userRepository.listUsers(),
+          attemptRepository.listAttempts(),
+        ]);
+        setStudents(uList.filter((u) => u.role === "STUDENT"));
+        setAttempts(attList);
+      } catch (err) {
+        console.error("Failed to load students:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
 
-  const filtered = sessions.filter(
+  const filtered = students.filter(
     (s) =>
-      s.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.student.schoolName || "").toLowerCase().includes(searchTerm.toLowerCase())
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
-    <div className="flex-1 flex flex-col w-full min-w-0 bg-[#F4F7EE]">
-      <AdminHeader
-        title="Candidate & Student Session Directory"
-        subtitle="Historical and active Olympiad examination candidates, student metadata, and device profiles"
-      />
+    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+      {/* 1. Header (Requirement 8) */}
+      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+            <span>Candidate Directory</span>
+            <span className="text-[#667085]">•</span>
+            <span>Student Management</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+            Registered Candidates
+          </h1>
+          <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
+            Olympiad student roster, registered classes, and completed examination history.
+          </p>
+        </div>
 
-      <div className="p-6 md:p-8 space-y-6 w-full max-w-[1750px] min-w-0">
-        {/* Search & Statistics Bar */}
-        <div className="bg-white border-2 border-[#D4E0C2] rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/admin/live-monitor"
+            className="h-9 px-3.5 bg-white border border-[#DDE4D7] hover:bg-[#EEF5E7] text-[#355415] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+          >
+            <span>Live Monitor</span>
+          </Link>
+        </div>
+      </div>
+
+      <div className="p-6 sm:p-8 space-y-6 flex-1">
+        
+        {/* 2. Search Toolbar */}
+        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative flex-1 w-full min-w-[260px]">
+            <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search by student name, candidate ID, or school..."
+              placeholder="Search students by name, roll ID, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[46px] pl-10 pr-4 text-[14px] bg-[#F4F7EE] border border-[#D4E0C2] rounded-xl focus:bg-white focus:outline-none focus:border-[#547322] text-slate-900 font-bold placeholder:text-slate-400 transition-all"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#4D741F] focus:bg-white"
             />
           </div>
-          <span className="text-[13px] text-[#547322] font-extrabold font-mono bg-[#F4F7EE] px-3.5 py-1.5 rounded-xl border border-[#D4E0C2]">
-            {filtered.length} Candidates Enrolled
+
+          <span className="text-xs font-bold text-[#667085] px-2">
+            Showing <strong className="text-[#4D741F]">{filtered.length}</strong> candidates
           </span>
         </div>
 
-        {/* Full-width Candidate Table */}
-        <div className="bg-white border-2 border-[#D4E0C2] rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-[14px] border-collapse">
-              <thead>
-                <tr className="bg-[#F4F7EE] border-b border-[#D4E0C2] text-slate-600 font-extrabold text-[12px] uppercase tracking-wider">
-                  <th className="py-4 px-6">Candidate Name</th>
-                  <th className="py-4 px-6">Roll ID</th>
-                  <th className="py-4 px-6">School / Institute</th>
-                  <th className="py-4 px-6">Enrolled Examination</th>
-                  <th className="py-4 px-6">Device Profile</th>
-                  <th className="py-4 px-6">IP Subnet</th>
-                  <th className="py-4 px-6">Connection Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#D4E0C2]">
-                {filtered.length === 0 ? (
+        {/* 3. Students Table */}
+        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl shadow-xs overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="py-16 px-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center mx-auto border border-[#DDE4D7]">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-extrabold text-[#172033]">No Registered Candidates Found</h3>
+                <p className="text-xs text-[#667085] max-w-md mx-auto">
+                  Student candidate records will appear here as they register and participate in Olympiad examinations.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-semibold">
+                <thead className="bg-[#F6F9F1] text-[#667085] border-b border-[#DDE4D7] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-[14px] text-slate-500 font-medium">
-                      No candidate sessions or student registrations found. When students take an examination, their profiles and live diagnostics will appear here.
-                    </td>
+                    <th className="p-4">Candidate Name</th>
+                    <th className="p-4">Roll / Student ID</th>
+                    <th className="p-4 text-center">Class</th>
+                    <th className="p-4">Email</th>
+                    <th className="p-4 text-center">Exams Completed</th>
+                    <th className="p-4 text-center">Status</th>
+                    <th className="p-4 text-right">Actions</th>
                   </tr>
-                ) : (
-                  filtered.map((s) => (
-                    <tr key={s.id} className="hover:bg-[#F4F7EE]/60 transition-colors h-[72px]">
-                      <td className="py-4 px-6 font-extrabold text-slate-900 text-[15px]">{s.student.name}</td>
-                      <td className="py-4 px-6 font-mono font-extrabold text-[#3E5519] text-[13px]">
-                        {s.student.studentId}
-                      </td>
-                      <td className="py-4 px-6 text-slate-700 font-medium">{s.student.schoolName || "Self Registered"}</td>
-                      <td className="py-4 px-6 text-slate-900 font-bold">{s.examTitle}</td>
-                      <td className="py-4 px-6 text-slate-500 font-mono text-[12px] font-bold">
-                        {s.device.device} • {s.device.os}
-                      </td>
-                      <td className="py-4 px-6 font-mono text-slate-500 text-[13px]">{s.device.ip}</td>
-                      <td className="py-4 px-6">
-                        <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg font-extrabold text-[12px] inline-flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                          {s.connectionStatus}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[#DDE4D7] text-[#172033]">
+                  {filtered.map((s) => {
+                    const studentAttempts = attempts.filter((a) => a.student?.studentId === s.id);
+                    return (
+                      <tr key={s.id} className="hover:bg-[#F6F9F1]/60 transition-colors">
+                        <td className="p-4">
+                          <div className="font-extrabold text-sm text-[#172033]">{s.name}</div>
+                          <div className="text-[10px] text-[#667085]">Olympiad Scholar</div>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-mono font-bold text-[#4D741F] bg-[#EEF5E7] px-2 py-0.5 rounded-md border border-[#DDE4D7]">
+                            {s.id}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center font-bold">
+                          Class {s.grade || 6}
+                        </td>
+                        <td className="p-4 text-[#667085]">
+                          {s.email || "student@olympiad.org"}
+                        </td>
+                        <td className="p-4 text-center font-mono font-bold text-[#355415]">
+                          {studentAttempts.length}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7]">
+                            Verified
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <Link
+                            href="/admin/results"
+                            className="px-3 py-1.5 bg-[#EEF5E7] hover:bg-[#DDE4D7] text-[#355415] rounded-lg text-xs font-bold transition-all inline-block"
+                          >
+                            View Scores
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
+
       </div>
     </div>
   );

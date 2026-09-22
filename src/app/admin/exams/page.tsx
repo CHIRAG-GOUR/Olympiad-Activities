@@ -2,10 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
+import { examRepository } from "@/repositories";
 import { Exam } from "@/types/exam";
-import { Plus, Search, Calendar, Clock, Award, Users, CheckCircle, Play, ExternalLink } from "lucide-react";
+import {
+  FileCheck2,
+  Plus,
+  Search,
+  Clock,
+  Award,
+  Users,
+  Play,
+  Settings,
+  ChevronRight,
+  HelpCircle,
+  FileText,
+} from "lucide-react";
 
 export default function ExamsListPage() {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -14,9 +25,14 @@ export default function ExamsListPage() {
 
   useEffect(() => {
     async function load() {
-      const data = await OlympiadStore.getExams();
-      setExams(data);
-      setLoading(false);
+      try {
+        const data = await examRepository.listExams();
+        setExams(data);
+      } catch (err) {
+        console.error("Failed to load exams:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
@@ -29,119 +45,138 @@ export default function ExamsListPage() {
   );
 
   return (
-    <div className="flex-1 flex flex-col w-full min-w-0">
-      <AdminHeader
-        title="Olympiad Examinations Catalogue"
-        subtitle="Schedule, configure, author, and deploy digital Olympiad test papers"
-        actionButton={{
-          label: "Create New Exam",
-          href: "/admin/exams/new",
-        }}
-      />
+    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+      {/* 1. Header (Requirement 8) */}
+      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+            <span>Examination Operations</span>
+            <span className="text-[#667085]">•</span>
+            <span>Test Management</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+            All Examinations
+          </h1>
+          <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
+            Schedule, configure, author, and deploy digital Olympiad examination papers for students.
+          </p>
+        </div>
 
-      <div className="p-6 md:p-8 space-y-6 w-full min-w-0">
-        {/* Search & Filter Bar */}
-        <div className="bg-white border-2 border-[#D4E0C2] rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/admin/exams/new"
+            className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Examination</span>
+          </Link>
+        </div>
+      </div>
+
+      <div className="p-6 sm:p-8 space-y-6 flex-1">
+        
+        {/* 2. Search & Overview */}
+        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative flex-1 w-full min-w-[260px]">
+            <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search examinations by title, code or subject..."
+              placeholder="Search examinations by title, code, or subject..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[46px] pl-10 pr-4 text-[14px] bg-[#F4F7EE] border border-[#D4E0C2] rounded-xl focus:bg-white focus:outline-none focus:border-[#547322] focus:ring-2 focus:ring-[#D4E0C2] text-slate-900 font-bold placeholder:text-slate-400 transition-all"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#4D741F] focus:bg-white"
             />
           </div>
 
-          <span className="text-[13px] text-[#547322] font-extrabold font-mono bg-[#F4F7EE] px-3 py-1.5 rounded-xl border border-[#D4E0C2]">
-            {filtered.length} {filtered.length === 1 ? "Examination" : "Examinations"} Configured
+          <span className="text-xs font-bold text-[#667085] px-2">
+            Showing <strong className="text-[#4D741F]">{filtered.length}</strong> examinations
           </span>
         </div>
 
-        {/* Exams Grid */}
+        {/* 3. Examination Cards Grid */}
         {filtered.length === 0 ? (
-          <div className="bg-white border-2 border-[#D4E0C2] rounded-2xl p-10 lg:p-14 text-center space-y-4 shadow-sm">
-            <div className="w-12 h-12 bg-[#F4F7EE] text-[#547322] rounded-xl flex items-center justify-center mx-auto border border-[#D4E0C2]">
-              <Award className="w-6 h-6" />
+          <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-16 text-center space-y-4 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center mx-auto border border-[#DDE4D7]">
+              <FileCheck2 className="w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-slate-900">
+            <div className="space-y-1">
+              <h3 className="text-base font-extrabold text-[#172033]">
                 {exams.length === 0 ? "No Examinations Published Yet" : "No Matching Examinations"}
               </h3>
-              <p className="text-[14px] text-slate-600 max-w-md mx-auto mt-1 font-medium">
+              <p className="text-xs text-[#667085] max-w-sm mx-auto">
                 {exams.length === 0
-                  ? "Create and schedule your first digital Olympiad examination paper for students and candidates."
-                  : "No examination matches your current search keyword."}
+                  ? "Create your first digital Olympiad examination paper from questions in the Question Bank."
+                  : "No examination matches your current search query."}
               </p>
             </div>
             {exams.length === 0 && (
               <div className="pt-2">
                 <Link
                   href="/admin/exams/new"
-                  className="h-[44px] px-6 bg-[#547322] hover:bg-[#435C1B] text-white rounded-xl text-[14px] font-extrabold inline-flex items-center gap-2 shadow-md transition-colors"
+                  className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold shadow-xs inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Create First Examination</span>
+                  <span>Create Examination</span>
                 </Link>
               </div>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {filtered.map((exam) => (
               <div
                 key={exam.id}
-                className="bg-white border-2 border-[#D4E0C2] rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-[#547322] transition-all space-y-5"
+                className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-[#4D741F] transition-all space-y-4"
               >
-                <div className="space-y-3.5">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-extrabold text-[12px] bg-[#0B4F8A] text-white px-2.5 py-1 rounded-lg">
+                    <span className="font-mono font-extrabold text-[11px] text-[#4D741F] bg-[#EEF5E7] px-2 py-0.5 rounded-md border border-[#DDE4D7]">
                       {exam.code}
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-[12px] font-bold">
-                      ● {exam.status}
+                    <span className="px-2 py-0.5 rounded-md bg-[#F6F9F1] text-[#355415] border border-[#DDE4D7] text-[10px] font-extrabold uppercase">
+                      ● {exam.status || "Active"}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-[18px] font-extrabold text-slate-900 leading-snug">{exam.title}</h3>
+                    <h3 className="text-sm font-extrabold text-[#172033] leading-snug">{exam.title}</h3>
                     {exam.subtitle && (
-                      <p className="text-[13px] text-[#B45309] mt-0.5 font-bold">{exam.subtitle}</p>
+                      <p className="text-[11px] text-[#4D741F] mt-0.5 font-bold">{exam.subtitle}</p>
                     )}
                   </div>
 
-                  <p className="text-[13px] text-slate-600 leading-relaxed line-clamp-2 font-medium">
-                    {exam.description}
+                  <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium">
+                    {exam.description || "Official Olympiad digital examination."}
                   </p>
 
-                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#D4E0C2] text-[12px] text-slate-600">
+                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#DDE4D7] text-xs text-[#667085]">
                     <div className="flex items-center gap-1.5 font-bold">
-                      <Clock className="w-4 h-4 text-[#547322]" />
+                      <Clock className="w-3.5 h-3.5 text-[#4D741F]" />
                       <span>{exam.durationMinutes} mins</span>
                     </div>
                     <div className="flex items-center gap-1.5 font-bold">
-                      <Award className="w-4 h-4 text-[#D97706]" />
-                      <span>{exam.totalMarks} Marks</span>
+                      <Award className="w-3.5 h-3.5 text-[#5F8A28]" />
+                      <span>{exam.totalMarks || 60} Marks</span>
                     </div>
                     <div className="flex items-center gap-1.5 font-bold">
-                      <Users className="w-4 h-4 text-slate-800" />
-                      <span>{exam.participantCount || 0} Students</span>
+                      <FileText className="w-3.5 h-3.5 text-[#172033]" />
+                      <span>{exam.questionIds.length || 50} Qs</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-[#D4E0C2] flex items-center justify-between gap-3">
+                <div className="pt-3 border-t border-[#DDE4D7] flex items-center justify-between gap-2">
                   <Link
                     href={`/exam/${exam.id}`}
-                    className="h-[40px] px-3.5 text-[13px] font-bold text-[#92400E] bg-[#FEF3C7] hover:bg-[#FDE68A] border border-[#FDE68A] rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
+                    className="h-9 px-3 text-xs font-bold text-[#355415] bg-[#EEF5E7] hover:bg-[#DDE4D7] rounded-xl flex items-center gap-1.5 transition-all"
                   >
-                    <Play className="w-4 h-4 fill-[#D97706] text-[#D97706]" />
+                    <Play className="w-3.5 h-3.5 fill-[#355415] text-[#355415]" />
                     <span>Launch Exam</span>
                   </Link>
 
                   <Link
                     href={`/admin/exams/${exam.id}`}
-                    className="h-[40px] px-4 bg-[#547322] hover:bg-[#435C1B] text-white rounded-xl text-[13px] font-extrabold flex items-center justify-center transition-colors shadow-sm"
+                    className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
                   >
                     Manage
                   </Link>
@@ -150,6 +185,7 @@ export default function ExamsListPage() {
             ))}
           </div>
         )}
+
       </div>
     </div>
   );

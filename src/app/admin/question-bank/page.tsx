@@ -1,248 +1,456 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
-import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
-import { Question } from "@/types/question";
-import { Search, Database, Eye, Plus, Copy, Filter, X, Check } from "lucide-react";
+import { questionRepository } from "@/repositories";
+import { Question, QuestionType } from "@/types/question";
+import {
+  Database,
+  Search,
+  ChevronRight,
+  ChevronDown,
+  Folder,
+  FolderOpen,
+  BookOpen,
+  Plus,
+  Layers,
+  Award,
+  CheckCircle2,
+  FileText,
+  Copy,
+  Check,
+  Eye,
+  ArrowRight,
+} from "lucide-react";
+
+interface TreeNode {
+  id: string;
+  name: string;
+  count: number;
+  children?: {
+    [key: string]: {
+      name: string;
+      count: number;
+      topics: {
+        [key: string]: {
+          name: string;
+          count: number;
+          questions: Question[];
+        };
+      };
+    };
+  };
+}
 
 export default function QuestionBankPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("all");
-  const [selectedType, setSelectedType] = useState("all");
-  const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
+  const [selectedClass, setSelectedClass] = useState<string>("all");
+  const [selectedTopic, setSelectedTopic] = useState<string>("all");
+  const [openSubjects, setOpenSubjects] = useState<Record<string, boolean>>({
+    Mathematics: true,
+    Science: true,
+    "Logical Reasoning": true,
+  });
+  const [openClasses, setOpenClasses] = useState<Record<string, boolean>>({
+    "Mathematics-Class 6": true,
+    "Science-Class 6": true,
+    "Logical Reasoning-Class 6": true,
+  });
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const data = await OlympiadStore.getQuestions();
-      setQuestions(data);
+      try {
+        const list = await questionRepository.listQuestions();
+        setQuestions(list);
+      } catch (err) {
+        console.error("Failed to load question bank:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
 
+  // Build hierarchical Subject -> Class -> Topic tree
+  const treeData = useMemo(() => {
+    const map: Record<
+      string,
+      {
+        name: string;
+        count: number;
+        classes: Record<
+          string,
+          {
+            name: string;
+            count: number;
+            topics: Record<
+              string,
+              {
+                name: string;
+                count: number;
+                questions: Question[];
+              }
+            >;
+          }
+        >;
+      }
+    > = {
+      Mathematics: { name: "Mathematics", count: 0, classes: {} },
+      Science: { name: "Science", count: 0, classes: {} },
+      "Logical Reasoning": { name: "Logical Reasoning", count: 0, classes: {} },
+    };
+
+    questions.forEach((q) => {
+      const subj = q.subjectName || (q.section?.includes("Reasoning") ? "Logical Reasoning" : "Mathematics");
+      const grade = `Class ${q.grade || 6}`;
+      const topic = q.topic || "General Concepts";
+
+      if (!map[subj]) {
+        map[subj] = { name: subj, count: 0, classes: {} };
+      }
+      map[subj].count++;
+
+      if (!map[subj].classes[grade]) {
+        map[subj].classes[grade] = { name: grade, count: 0, topics: {} };
+      }
+      map[subj].classes[grade].count++;
+
+      if (!map[subj].classes[grade].topics[topic]) {
+        map[subj].classes[grade].topics[topic] = { name: topic, count: 0, questions: [] };
+      }
+      map[subj].classes[grade].topics[topic].count++;
+      map[subj].classes[grade].topics[topic].questions.push(q);
+    });
+
+    return map;
+  }, [questions]);
+
+  // Filtered Question list
+  const filteredQuestions = useMemo(() => {
+    return questions.filter((q) => {
+      const subj = q.subjectName || (q.section?.includes("Reasoning") ? "Logical Reasoning" : "Mathematics");
+      const grade = `Class ${q.grade || 6}`;
+      const topic = q.topic || "";
+
+      const matchesSearch =
+        q.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        q.questionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        topic.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesSubj = selectedSubject === "all" || subj === selectedSubject;
+      const matchesClass = selectedClass === "all" || grade === selectedClass;
+      const matchesTopic = selectedTopic === "all" || topic === selectedTopic;
+
+      return matchesSearch && matchesSubj && matchesClass && matchesTopic;
+    });
+  }, [questions, searchTerm, selectedSubject, selectedClass, selectedTopic]);
+
+  const toggleSubject = (subjName: string) => {
+    setOpenSubjects((prev) => ({ ...prev, [subjName]: !prev[subjName] }));
+  };
+
+  const toggleClass = (classKey: string) => {
+    setOpenClasses((prev) => ({ ...prev, [classKey]: !prev[classKey] }));
+  };
+
   const handleDuplicate = async (q: Question) => {
-    const dup: Question = {
+    const copy: Question = {
       ...q,
       id: `q_${Date.now()}`,
       questionId: `${q.questionId}-COPY`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    await OlympiadStore.saveQuestion(dup);
-    setQuestions([dup, ...questions]);
-    setCopiedId(dup.id);
+    await questionRepository.saveQuestion(copy);
+    setQuestions((prev) => [copy, ...prev]);
+    setCopiedId(copy.id);
     setTimeout(() => setCopiedId(null), 2500);
   };
 
-  const filtered = questions.filter((q) => {
-    const matchesSearch =
-      q.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.questionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.topic.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSub = selectedSubject === "all" || q.subjectId === selectedSubject;
-    const matchesType = selectedType === "all" || q.questionType === selectedType;
-    return matchesSearch && matchesSub && matchesType;
-  });
-
   return (
-    <div className="flex-1 flex flex-col w-full bg-[#F4F7EE]">
-      <AdminHeader
-        title="Reusable Olympiad Question Bank"
-        subtitle="Curated library of standardized interactive questions for exam compilation"
-        actionButton={{
-          label: "+ New Question",
-          href: "/admin/questions/new",
-        }}
-      />
+    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+      {/* 1. Header (Requirement 27) */}
+      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+            <span>Standardized Curriculum Library</span>
+            <span className="text-[#667085]">•</span>
+            <span>Question Bank</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+            Question Bank
+          </h1>
+          <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
+            Curated taxonomy and hierarchical collection of interactive Olympiad questions used to compile examination papers.
+          </p>
+        </div>
 
-      <div className="p-6 lg:p-8 space-y-6 max-w-[1750px]">
-        {/* Controls */}
-        <div className="bg-white border-2 border-[#D4E0C2] rounded-2xl p-5 shadow-sm flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[260px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/admin/exams/new"
+            className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Compile New Exam</span>
+          </Link>
+        </div>
+      </div>
+
+      <div className="p-6 sm:p-8 space-y-6 flex-1">
+        
+        {/* 2. Top Search & Active Filter Strip */}
+        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative flex-1 w-full min-w-[260px]">
+            <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search question bank by keyword or code..."
+              placeholder="Search question bank by keyword, concept, or code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-[44px] pl-10 pr-4 text-[13px] bg-[#F4F7EE] border border-[#D4E0C2] rounded-xl focus:bg-white focus:outline-none focus:border-[#547322] font-bold text-slate-900 placeholder:text-slate-400"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#4D741F] focus:bg-white"
             />
           </div>
 
-          <select
-            value={selectedSubject}
-            onChange={(e) => setSelectedSubject(e.target.value)}
-            className="h-[44px] px-4 text-[13px] font-bold bg-[#F4F7EE] border border-[#D4E0C2] rounded-xl text-[#3E5519] focus:bg-white focus:outline-none focus:border-[#547322] cursor-pointer"
-          >
-            <option value="all">All Subjects</option>
-            <option value="sub_math">Mathematics</option>
-            <option value="sub_science">Science</option>
-            <option value="sub_reasoning">Logical Reasoning</option>
-          </select>
-
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="h-[44px] px-4 text-[13px] font-bold bg-[#F4F7EE] border border-[#D4E0C2] rounded-xl text-[#3E5519] focus:bg-white focus:outline-none focus:border-[#547322] cursor-pointer"
-          >
-            <option value="all">All Interaction Types</option>
-            <option value="ORDERING">Ordering</option>
-            <option value="DRAG_DROP">Drag & Drop</option>
-            <option value="NUMERIC">Numeric</option>
-            <option value="MATCHING">Matching</option>
-            <option value="CLASSIFICATION">Classification</option>
-            <option value="HOTSPOT">Hotspot</option>
-            <option value="SIMULATION">Simulation</option>
-          </select>
+          <div className="flex items-center gap-2">
+            {(selectedSubject !== "all" || selectedClass !== "all" || selectedTopic !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSubject("all");
+                  setSelectedClass("all");
+                  setSelectedTopic("all");
+                }}
+                className="h-9 px-3 bg-[#EEF5E7] hover:bg-[#DDE4D7] text-[#355415] rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Reset Filter
+              </button>
+            )}
+            <span className="text-xs font-bold text-[#667085] px-2">
+              Showing <strong className="text-[#4D741F]">{filteredQuestions.length}</strong> questions
+            </span>
+          </div>
         </div>
 
-        {/* Question Bank Grid */}
-        {filtered.length === 0 ? (
-          <div className="bg-white border-2 border-[#D4E0C2] rounded-2xl p-10 lg:p-14 text-center space-y-4 shadow-sm">
-            <div className="w-12 h-12 bg-[#F4F7EE] text-[#547322] rounded-xl flex items-center justify-center mx-auto border border-[#D4E0C2]">
-              <Database className="w-6 h-6" />
+        {/* 3. Main Tree / Grid Layout (Requirement 27) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Column: Hierarchical Taxonomy Tree (4 cols) */}
+          <div className="lg:col-span-4 bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-5 shadow-xs space-y-4">
+            <div className="border-b border-[#DDE4D7] pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-[#4D741F]" />
+                <h2 className="text-sm font-extrabold text-[#172033]">Curriculum Tree</h2>
+              </div>
+              <span className="text-[11px] font-mono font-bold text-[#667085]">
+                {questions.length} Total Questions
+              </span>
             </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-slate-900">
-                {questions.length === 0 ? "Question Bank is Empty" : "No Matching Questions in Bank"}
-              </h3>
-              <p className="text-[14px] text-slate-600 max-w-md mx-auto mt-1 font-medium">
-                {questions.length === 0
-                  ? "Author questions or import spreadsheets to build your curated question repository."
-                  : "No question matches your filter criteria."}
-              </p>
+
+            <div className="space-y-2 text-xs font-semibold overflow-y-auto max-h-[600px] pr-1">
+              {Object.entries(treeData).map(([subjName, subjObj]) => {
+                const isSubjOpen = openSubjects[subjName] !== false;
+                const isSubjSelected = selectedSubject === subjName && selectedTopic === "all";
+
+                return (
+                  <div key={subjName} className="space-y-1">
+                    {/* Subject Row */}
+                    <div
+                      onClick={() => {
+                        toggleSubject(subjName);
+                        setSelectedSubject(selectedSubject === subjName ? "all" : subjName);
+                        setSelectedTopic("all");
+                      }}
+                      className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all ${
+                        isSubjSelected
+                          ? "bg-[#EEF5E7] text-[#355415] font-extrabold border border-[#DDE4D7]"
+                          : "hover:bg-[#F6F9F1] text-[#172033]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {isSubjOpen ? (
+                          <ChevronDown className="w-3.5 h-3.5 text-[#4D741F]" />
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5 text-[#667085]" />
+                        )}
+                        <Folder className="w-4 h-4 text-[#4D741F]" />
+                        <span>{subjName}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-[#F6F9F1] text-[10px] font-mono font-bold text-[#667085] border border-[#DDE4D7]">
+                        {subjObj.count}
+                      </span>
+                    </div>
+
+                    {/* Classes under Subject */}
+                    {isSubjOpen && (
+                      <div className="pl-6 space-y-1 border-l-2 border-[#DDE4D7] ml-3.5">
+                        {Object.entries(subjObj.classes).map(([className, classObj]) => {
+                          const classKey = `${subjName}-${className}`;
+                          const isClassOpen = openClasses[classKey] !== false;
+                          const isClassSelected =
+                            selectedSubject === subjName &&
+                            selectedClass === className &&
+                            selectedTopic === "all";
+
+                          return (
+                            <div key={className} className="space-y-1">
+                              {/* Class Row */}
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleClass(classKey);
+                                  setSelectedSubject(subjName);
+                                  setSelectedClass(className);
+                                  setSelectedTopic("all");
+                                }}
+                                className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-all ${
+                                  isClassSelected
+                                    ? "bg-[#EEF5E7] text-[#355415] font-extrabold"
+                                    : "hover:bg-[#F6F9F1] text-[#172033]"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {isClassOpen ? (
+                                    <ChevronDown className="w-3 h-3 text-[#4D741F]" />
+                                  ) : (
+                                    <ChevronRight className="w-3 h-3 text-[#667085]" />
+                                  )}
+                                  <BookOpen className="w-3.5 h-3.5 text-[#5F8A28]" />
+                                  <span>{className}</span>
+                                </div>
+                                <span className="text-[10px] font-mono text-[#667085]">
+                                  {classObj.count}
+                                </span>
+                              </div>
+
+                              {/* Topics under Class */}
+                              {isClassOpen && (
+                                <div className="pl-5 space-y-0.5 border-l border-[#DDE4D7] ml-2.5">
+                                  {Object.entries(classObj.topics).map(([topicName, topicObj]) => {
+                                    const isTopicSelected =
+                                      selectedSubject === subjName &&
+                                      selectedClass === className &&
+                                      selectedTopic === topicName;
+
+                                    return (
+                                      <div
+                                        key={topicName}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedSubject(subjName);
+                                          setSelectedClass(className);
+                                          setSelectedTopic(topicName);
+                                        }}
+                                        className={`flex items-center justify-between py-1 px-2 rounded-md cursor-pointer text-[11px] transition-all ${
+                                          isTopicSelected
+                                            ? "bg-[#4D741F] text-white font-bold shadow-xs"
+                                            : "hover:bg-[#F6F9F1] text-[#667085] hover:text-[#172033]"
+                                        }`}
+                                      >
+                                        <span className="truncate pr-1">• {topicName}</span>
+                                        <span className="font-mono text-[10px] shrink-0">
+                                          {topicObj.count}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            {questions.length === 0 && (
-              <div className="pt-2 flex items-center justify-center gap-3">
-                <Link
-                  href="/admin/questions/new"
-                  className="h-[42px] px-5 bg-[#547322] hover:bg-[#435C1B] text-white rounded-xl text-[14px] font-extrabold inline-flex items-center gap-2 shadow-xs transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Author New Question</span>
-                </Link>
-                <Link
-                  href="/admin/imports"
-                  className="h-[42px] px-5 bg-[#F4F7EE] border border-[#D4E0C2] hover:bg-[#EBF1E4] text-[#3E5519] rounded-xl text-[14px] font-bold inline-flex items-center gap-2 transition-colors"
-                >
-                  <span>Import Spreadsheet</span>
-                </Link>
+          </div>
+
+          {/* Right Column: Question Cards Collection (8 cols) */}
+          <div className="lg:col-span-8 space-y-4">
+            {filteredQuestions.length === 0 ? (
+              <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center mx-auto border border-[#DDE4D7]">
+                  <Database className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-extrabold text-[#172033]">No Questions in Selected Node</h3>
+                <p className="text-xs text-[#667085] max-w-sm mx-auto">
+                  Try selecting a different topic or resetting filters to explore the Olympiad question bank.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredQuestions.map((q) => (
+                  <div
+                    key={q.id}
+                    className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-[#4D741F] transition-all space-y-4"
+                  >
+                    <div className="space-y-2.5">
+                      {/* Card Header: Code + Interaction Type */}
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-extrabold text-[11px] text-[#4D741F] bg-[#EEF5E7] px-2 py-0.5 rounded-md border border-[#DDE4D7]">
+                          {q.questionId}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-[#F6F9F1] text-[#355415] border border-[#DDE4D7]">
+                          {q.questionType}
+                        </span>
+                      </div>
+
+                      {/* Question Text */}
+                      <h4 className="text-xs font-bold text-[#172033] leading-snug line-clamp-3">
+                        {q.questionText}
+                      </h4>
+
+                      {/* Topic & Chapter metadata */}
+                      <div className="text-[11px] text-[#667085] font-semibold space-y-0.5 pt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#355415] font-bold">{q.topic}</span>
+                          <span className="font-mono text-[10px] text-[#4D741F] font-black">+{q.marks || 1} Mark</span>
+                        </div>
+                        {q.chapter && <div className="text-[10px] text-[#667085]">{q.chapter}</div>}
+                      </div>
+                    </div>
+
+                    {/* Card Actions */}
+                    <div className="pt-3 border-t border-[#DDE4D7] flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => handleDuplicate(q)}
+                        className="text-[11px] font-bold text-[#667085] hover:text-[#355415] flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        {copiedId === q.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="text-emerald-700 font-bold">Duplicated!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Duplicate</span>
+                          </>
+                        )}
+                      </button>
+
+                      <Link
+                        href={`/admin/questions/${q.id}`}
+                        className="px-3 py-1.5 bg-[#EEF5E7] hover:bg-[#DDE4D7] text-[#355415] rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Interactive Test</span>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {filtered.map((q) => (
-              <div
-                key={q.id}
-                className="bg-white border-2 border-[#D4E0C2] rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-[#547322] transition-colors space-y-4"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-extrabold text-[13px] text-[#3E5519] bg-[#F4F7EE] px-2.5 py-1 rounded-lg border border-[#D4E0C2]">
-                        {q.questionId}
-                      </span>
-                      <span className="text-[11px] font-extrabold text-[#92400E] bg-[#FEF3C7] px-2.5 py-0.5 rounded-lg border border-[#FDE68A]">
-                        {q.questionType}
-                      </span>
-                    </div>
-                    <span className="text-[14px] font-extrabold text-[#547322] font-mono">
-                      +{q.marks} {q.marks === 1 ? "Mark" : "Marks"}
-                    </span>
-                  </div>
+        </div>
 
-                  <h3 className="text-[15px] font-extrabold text-slate-900 line-clamp-2 leading-snug">{q.questionText}</h3>
-                  <div className="text-[13px] text-slate-500 flex items-center gap-2 font-semibold">
-                    <span className="text-[#547322] font-bold">{q.subjectName}</span>
-                    {q.chapter && (
-                      <>
-                        <span>•</span>
-                        <span>{q.chapter}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-[#D4E0C2] flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewQuestion(q)}
-                    className="text-[13px] font-extrabold text-[#547322] hover:text-[#3E5519] flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Eye className="w-4 h-4 text-[#547322]" /> Interactive Preview
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleDuplicate(q)}
-                      className="h-[36px] px-3 bg-[#F4F7EE] hover:bg-[#EBF1E4] text-slate-700 hover:text-slate-950 rounded-xl border border-[#D4E0C2] text-[12px] font-extrabold flex items-center gap-1 cursor-pointer"
-                      title="Duplicate into Bank"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Duplicate</span>
-                    </button>
-                    <Link
-                      href={`/admin/questions/${q.id}`}
-                      className="h-[36px] px-4 bg-[#547322] hover:bg-[#435C1B] text-white rounded-xl text-[12px] font-extrabold flex items-center justify-center transition-colors shadow-xs"
-                    >
-                      Edit
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Interactive Preview Modal */}
-        {previewQuestion && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl border-2 border-[#D4E0C2] shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#D4E0C2]">
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900">
-                    Question Preview: {previewQuestion.questionId}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-bold">
-                    {previewQuestion.subjectName} • {previewQuestion.questionType}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPreviewQuestion(null)}
-                  className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-[#F4F7EE] rounded-lg cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="p-5 bg-[#FAF7ED] rounded-xl border-2 border-[#FDE68A]">
-                <QuestionRenderer
-                  question={previewQuestion}
-                  value={null}
-                  onChange={() => {}}
-                  readOnly={false}
-                />
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setPreviewQuestion(null)}
-                  className="h-[40px] px-5 bg-[#547322] hover:bg-[#435C1B] text-white text-[13px] font-extrabold rounded-xl cursor-pointer"
-                >
-                  Close Preview
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -212,10 +212,16 @@ export default function ImportsPage() {
       return;
     }
 
-    for (const q of validQuestions) {
-      await OlympiadStore.saveQuestion(q);
+    try {
+      const { questionRepository } = await import("@/repositories");
+      for (const q of validQuestions) {
+        await questionRepository.saveQuestion(q);
+      }
+      setPublishedCount(validQuestions.length);
+    } catch (err) {
+      console.error("Failed to publish imported questions:", err);
+      alert("Failed to publish questions.");
     }
-    setPublishedCount(validQuestions.length);
   };
 
   const validCount = parsedResults.filter((r) => r.isValid).length;
