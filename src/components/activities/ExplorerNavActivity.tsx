@@ -1,205 +1,201 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Compass, CheckCircle2, Navigation } from "lucide-react";
+import React from "react";
+import { Compass } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps, optionLabel } from "./kit";
 
-interface ExplorerNavActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q4 — Explorer route builder.
+ *
+ * The student actually walks the route: for each leg they set a heading on the compass
+ * pad and the explorer marches that distance across the map. The final displacement is
+ * measured off the map and mapped to the compass option it points at.
+ */
+
+type Heading = "N" | "E" | "S" | "W";
+interface NavState {
+  legs: (Heading | null)[];
 }
 
-export function ExplorerNavActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: ExplorerNavActivityProps) {
-  const [currentStep, setCurrentStep] = useState(4); // default completed view
-  const options = [
-    { id: "A", val: "North-West", label: "North-West (NW)", angle: -45, desc: "Displacement: -95m West, +40m North", isCorrect: true },
-    { id: "B", val: "South-East", label: "South-East (SE)", angle: 135, desc: "+95m East, -40m South", isCorrect: false },
-    { id: "C", val: "South", label: "South (S)", angle: 180, desc: "Direct downward vector", isCorrect: false },
-    { id: "D", val: "North-East", label: "North-East (NE)", angle: 45, desc: "+95m East, +40m North", isCorrect: false },
-  ];
+const LEGS = [70, 70, 30, 25];
+const VEC: Record<Heading, [number, number]> = { N: [0, 1], E: [1, 0], S: [0, -1], W: [-1, 0] };
 
-  const [selectedId, setSelectedId] = useState<string>(
-    value ? (options.find((o) => o.id === value || o.val === value)?.id || "A") : ""
-  );
+const COMPASS: { name: string; deg: number }[] = [
+  { name: "North", deg: 0 },
+  { name: "North-East", deg: 45 },
+  { name: "East", deg: 90 },
+  { name: "South-East", deg: 135 },
+  { name: "South", deg: 180 },
+  { name: "South-West", deg: 225 },
+  { name: "West", deg: 270 },
+  { name: "North-West", deg: 315 },
+];
 
-  useEffect(() => {
-    if (value) {
-      const match = options.find((o) => o.id === value || o.val === value);
-      if (match) setSelectedId(match.id);
+function bearingName(dx: number, dy: number) {
+  if (dx === 0 && dy === 0) return { name: "Back at start", deg: null as number | null };
+  const deg = (((Math.atan2(dx, dy) * 180) / Math.PI) + 360) % 360;
+  let best = COMPASS[0];
+  let bestDiff = 999;
+  for (const c of COMPASS) {
+    const d = Math.min(Math.abs(c.deg - deg), 360 - Math.abs(c.deg - deg));
+    if (d < bestDiff) {
+      bestDiff = d;
+      best = c;
     }
-  }, [value]);
+  }
+  return { name: best.name, deg };
+}
 
-  const handleSelect = (opt: typeof options[0]) => {
-    if (readOnly) return;
-    setSelectedId(opt.id);
-    onChange(opt.id);
-  };
+export function ExplorerNavActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<NavState>) {
+  const engine = useActivityEngine<NavState, string>({
+    initialState: { legs: [null, null, null, null] },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      if (s.legs.some((l) => l === null)) return undefined;
+      let x = 0;
+      let y = 0;
+      s.legs.forEach((h, i) => {
+        const [vx, vy] = VEC[h as Heading];
+        x += vx * LEGS[i];
+        y += vy * LEGS[i];
+      });
+      const { name, deg } = bearingName(x, y);
+      const opts = question?.multipleChoiceConfig?.options || [];
+      // Exact compass-name match first, otherwise the closest compass option
+      const exact = opts.find((o) => o.text.trim().toLowerCase().startsWith(name.toLowerCase()));
+      if (exact) return exact.id;
+      if (deg === null) return undefined;
+      let best: string | undefined;
+      let bestDiff = 999;
+      for (const o of opts) {
+        const c = COMPASS.find((cc) => o.text.trim().toLowerCase().startsWith(cc.name.toLowerCase()));
+        if (!c) continue;
+        const d = Math.min(Math.abs(c.deg - deg), 360 - Math.abs(c.deg - deg));
+        if (d < bestDiff) {
+          bestDiff = d;
+          best = o.id;
+        }
+      }
+      return best;
+    },
+  });
 
-  const selectedOpt = options.find((o) => o.id === selectedId);
+  // Walk the route that has been set so far
+  const path: { x: number; y: number }[] = [{ x: 0, y: 0 }];
+  engine.state.legs.forEach((h, i) => {
+    if (!h) return;
+    const p = path[path.length - 1];
+    const [vx, vy] = VEC[h];
+    path.push({ x: p.x + vx * LEGS[i], y: p.y + vy * LEGS[i] });
+  });
+  const end = path[path.length - 1];
+  const complete = engine.state.legs.every(Boolean);
+  const bearing = bearingName(end.x, end.y);
+
+  // Map projection
+  const pad = 26;
+  const W = 320;
+  const H = 240;
+  const xs = path.map((p) => p.x).concat(0);
+  const ys = path.map((p) => p.y).concat(0);
+  const spanX = Math.max(60, Math.max(...xs) - Math.min(...xs));
+  const spanY = Math.max(60, Math.max(...ys) - Math.min(...ys));
+  const scale = Math.min((W - pad * 2) / spanX, (H - pad * 2) / spanY);
+  const ox = W / 2 - ((Math.max(...xs) + Math.min(...xs)) / 2) * scale;
+  const oy = H / 2 + ((Math.max(...ys) + Math.min(...ys)) / 2) * scale;
+  const px = (p: { x: number; y: number }) => ({ x: ox + p.x * scale, y: oy - p.y * scale });
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Compass className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Explorer Navigation Mission
-            </h3>
-            <p className="text-xs text-slate-600">
-              Click Rajesh's destination or the compass directions on the map to choose the bearing.
-            </p>
-          </div>
-        </div>
+    <ActivityShell
+      icon={Compass}
+      title="Explorer Route Plotter"
+      howTo="Set the heading for each leg of the walk. The explorer marches that distance on the map, and the final displacement from the start decides your compass answer."
+      answerText={complete ? bearing.name : undefined}
+      mappedTo={optionLabel(question, engine.answer)}
+      pendingHint={`Set the heading for leg ${engine.state.legs.findIndex((l) => !l) + 1} of 4.`}
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_230px]">
+        <Stage label="Survey map">
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+            <defs>
+              <pattern id="nav-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M20 0 L0 0 0 20" fill="none" stroke="#e2e8f0" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width={W} height={H} fill="url(#nav-grid)" />
 
-        {/* Playback step controller */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setCurrentStep((prev) => (prev > 1 ? prev - 1 : 1))}
-            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-xs font-semibold text-slate-700 cursor-pointer"
-          >
-            Prev Step
-          </button>
-          <span className="text-xs font-mono text-emerald-800 font-bold px-2">
-            Step {currentStep} of 4
-          </span>
-          <button
-            type="button"
-            onClick={() => setCurrentStep((prev) => (prev < 4 ? prev + 1 : 4))}
-            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-xs font-semibold text-slate-700 cursor-pointer"
-          >
-            Next Step
-          </button>
-        </div>
-      </div>
+            {path.length > 1 && (
+              <polyline
+                points={path.map((p) => { const q = px(p); return `${q.x},${q.y}`; }).join(" ")}
+                fill="none"
+                stroke="#0284c7"
+                strokeWidth={3}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            )}
+            {complete && (
+              <line x1={px(path[0]).x} y1={px(path[0]).y} x2={px(end).x} y2={px(end).y} stroke="#059669" strokeWidth={2.5} strokeDasharray="6 4" />
+            )}
+            <circle cx={px(path[0]).x} cy={px(path[0]).y} r={6} fill="#0f172a" />
+            <text x={px(path[0]).x + 9} y={px(path[0]).y - 7} fontSize={10} fontWeight="bold" fill="#0f172a">Start</text>
+            <circle cx={px(end).x} cy={px(end).y} r={7} fill="#059669" stroke="#fff" strokeWidth={2} />
+            <text x={px(end).x + 10} y={px(end).y + 4} fontSize={10} fontWeight="bold" fill="#065f46">Rajesh</text>
 
-      {/* Interactive Cartography Map Canvas */}
-      <div className="relative h-72 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 400 260" className="w-full h-full max-w-md select-none">
-          {/* Compass grid lines */}
-          <line x1="200" y1="20" x2="200" y2="240" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
-          <line x1="40" y1="140" x2="360" y2="140" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
-          <circle cx="200" cy="140" r="100" fill="none" stroke="#e2e8f0" strokeWidth="1.5" />
-          <circle cx="200" cy="140" r="60" fill="none" stroke="#e2e8f0" strokeWidth="1.5" />
-
-          {/* Compass Cardinal Points */}
-          <text x="200" y="24" textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="bold">N</text>
-          <text x="200" y="252" textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="bold">S</text>
-          <text x="375" y="144" textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="bold">E</text>
-          <text x="25" y="144" textAnchor="middle" fill="#64748b" fontSize="12" fontWeight="bold">W</text>
-
-          {/* Interactive Quadrant Click Zones */}
-          {/* North-West Quadrant (Target Zone) */}
-          <g className="cursor-pointer" onClick={() => handleSelect(options[0])}>
-            <rect x="50" y="30" width="140" height="100" fill={selectedId === "A" ? "#d1fae5" : "transparent"} opacity="0.4" rx="8" />
-            <text x="110" y="60" textAnchor="middle" fill="#059669" fontSize="11" fontWeight="bold">NW ZONE (A)</text>
-          </g>
-
-          {/* North-East Quadrant */}
-          <g className="cursor-pointer" onClick={() => handleSelect(options[3])}>
-            <rect x="210" y="30" width="140" height="100" fill={selectedId === "D" ? "#d1fae5" : "transparent"} opacity="0.4" rx="8" />
-            <text x="280" y="60" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="bold">NE ZONE (D)</text>
-          </g>
-
-          {/* South-East Quadrant */}
-          <g className="cursor-pointer" onClick={() => handleSelect(options[1])}>
-            <rect x="210" y="150" width="140" height="90" fill={selectedId === "B" ? "#d1fae5" : "transparent"} opacity="0.4" rx="8" />
-            <text x="280" y="210" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="bold">SE ZONE (B)</text>
-          </g>
-
-          {/* South Zone */}
-          <g className="cursor-pointer" onClick={() => handleSelect(options[2])}>
-            <rect x="150" y="190" width="100" height="60" fill={selectedId === "C" ? "#d1fae5" : "transparent"} opacity="0.4" rx="8" />
-            <text x="200" y="235" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="bold">S ZONE (C)</text>
-          </g>
-
-          {/* Start Point (200, 180) */}
-          <circle cx="200" cy="180" r="7" fill="#059669" stroke="#ffffff" strokeWidth="2" />
-          <text x="214" y="185" fill="#059669" fontSize="11" fontWeight="bold">START (0,0)</text>
-
-          {/* Segment 1: 70m North -> (200, 110) */}
-          {currentStep >= 1 && (
-            <path d="M 200 180 L 200 110" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
-          )}
-
-          {/* Segment 2: 70m West -> (130, 110) */}
-          {currentStep >= 2 && (
-            <path d="M 200 110 L 130 110" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
-          )}
-
-          {/* Segment 3: 30m South -> (130, 140) */}
-          {currentStep >= 3 && (
-            <path d="M 130 110 L 130 140" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
-          )}
-
-          {/* Segment 4: 25m West -> (105, 140) */}
-          {currentStep >= 4 && (
-            <path d="M 130 140 L 105 140" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
-          )}
-
-          {/* Final Position & Relative Vector Needle */}
-          {currentStep >= 4 && (
-            <g className="cursor-pointer" onClick={() => handleSelect(options[0])}>
-              {/* Direct bearing line from start to finish */}
-              <line x1="200" y1="180" x2="105" y2="140" stroke="#e11d48" strokeWidth="2.5" strokeDasharray="4 4" />
-              <circle cx="105" cy="140" r="9" fill="#e11d48" stroke="#ffffff" strokeWidth="2" className="animate-pulse" />
-              <text x="50" y="130" fill="#e11d48" fontSize="12" fontWeight="bold">
-                RAJESH (NW) ✓
-              </text>
+            <g transform="translate(288,30)">
+              <circle r={17} fill="white" stroke="#cbd5e1" strokeWidth={1.5} />
+              <text y={-5} textAnchor="middle" fontSize={9} fontWeight="bold" fill="#0f172a">N</text>
+              <path d="M0 6 L0 -2" stroke="#e11d48" strokeWidth={2} />
             </g>
-          )}
-        </svg>
+          </svg>
+        </Stage>
 
-        {/* Live Vector Telemetry */}
-        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs border border-slate-200 px-3 py-1 rounded-lg text-[11px] font-mono text-slate-700 shadow-xs">
-          Displacement: -95m West, +40m North → <span className="text-emerald-700 font-bold">North-West (Opt A)</span>
-        </div>
-      </div>
-
-      {/* Direction Selection Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          What is Rajesh's final direction with respect to START?
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {options.map((dir) => {
-            const isSelected = selectedId === dir.id;
+        <div className="space-y-2">
+          {LEGS.map((dist, i) => {
+            const enabled = i === 0 || !!engine.state.legs[i - 1];
             return (
-              <button
-                key={dir.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(dir)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {dir.id}
-                    </span>
-                    <span className="text-base font-black">{dir.val}</span>
-                  </div>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              <div key={i} className={`rounded-xl border-2 p-2 ${enabled ? "border-slate-200 bg-white" : "border-slate-100 bg-slate-50 opacity-60"}`}>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Leg {i + 1} — walk {dist} m
                 </div>
-                <span className="text-[11px] text-slate-500 font-medium mt-2 line-clamp-1">{dir.desc}</span>
-              </button>
+                <div className="grid grid-cols-4 gap-1">
+                  {(["N", "E", "S", "W"] as Heading[]).map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      disabled={engine.readOnly || !enabled}
+                      onClick={() =>
+                        engine.update((s) => {
+                          const legs = s.legs.slice();
+                          legs[i] = h;
+                          return { legs };
+                        })
+                      }
+                      className={`h-10 rounded-lg border-2 text-xs font-black transition ${
+                        engine.state.legs[i] === h
+                          ? "bg-emerald-600 border-emerald-700 text-white"
+                          : "bg-white border-slate-200 text-slate-600 hover:border-emerald-400"
+                      }`}
+                    >
+                      {h}
+                    </button>
+                  ))}
+                </div>
+              </div>
             );
           })}
+          <ReadOut
+            label="Displacement"
+            value={`${Math.abs(end.x)} m ${end.x < 0 ? "W" : end.x > 0 ? "E" : ""} · ${Math.abs(end.y)} m ${end.y < 0 ? "S" : end.y > 0 ? "N" : ""}`}
+            tone={complete ? "emerald" : "slate"}
+          />
         </div>
       </div>
-    </div>
+    </ActivityShell>
   );
 }

@@ -1,148 +1,163 @@
 "use client";
 
-import React, { useState } from "react";
-import { Cpu, CheckCircle2, Calculator, ArrowRight } from "lucide-react";
+import React from "react";
+import { Sprout } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface DigitPlantActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q37 — Digit planting beds.
+ *
+ * The student plants digit tiles into two six-slot beds to build the greatest and the
+ * smallest number. The plant adds whatever the student actually built, and that sum is
+ * the answer.
+ */
+
+interface PlantState {
+  greatest: (number | null)[];
+  smallest: (number | null)[];
+  armed: number | null;
 }
 
-export function DigitPlantActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: DigitPlantActivityProps) {
-  // Question 37: Rekha formed greatest 6-digit number (886410) and smallest 6-digit number (100468) using digits 1, 4, 0, 6, 8.
-  // Calculate their sum: 886410 + 100468 = 986878 (Option B)
+const DIGITS = [1, 4, 0, 6, 8];
 
-  const options = [
-    { id: "A", val: "875680", num: 875680, label: "8,75,680", desc: "Calculation deviation" },
-    { id: "B", val: "986878", num: 986878, label: "9,86,878 (886410 + 100468)", desc: "Exact arithmetic sum", isCorrect: true },
-    { id: "C", val: "928170", num: 928170, label: "9,28,170", desc: "Carry error" },
-    { id: "D", val: "756868", num: 756868, label: "7,56,868", desc: "Subtractive difference instead of sum" },
-  ];
+export function DigitPlantActivity({ value, activityState, onChange, readOnly }: ActivityComponentProps<PlantState>) {
+  const engine = useActivityEngine<PlantState, number>({
+    initialState: { greatest: Array(6).fill(null), smallest: Array(6).fill(null), armed: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      if (s.greatest.some((d) => d === null) || s.smallest.some((d) => d === null)) return undefined;
+      const g = Number(s.greatest.join(""));
+      const m = Number(s.smallest.join(""));
+      if (g < 100000 || m < 100000) return undefined; // both must be genuine 6-digit numbers
+      return g + m;
+    },
+  });
 
-  const getInitial = () => {
-    if (!value) return "B";
-    const str = String(value).trim();
-    const found = options.find((o) => o.id === str || o.val === str || String(o.num) === str);
-    return found ? found.id : "B";
+  const slotRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+  const [ghost, setGhost] = React.useState<{ d: number; x: number; y: number } | null>(null);
+
+  const slotAt = (x: number, y: number) => {
+    for (const k of Object.keys(slotRefs.current)) {
+      const el = slotRefs.current[k];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return k;
+    }
+    return null;
   };
 
-  const [selectedId, setSelectedId] = useState<string>(getInitial());
-  const activeOpt = options.find((o) => o.id === selectedId) || options[1];
+  const plant = (slotKey: string, digit: number | null) => {
+    const [bed, idxStr] = slotKey.split(":");
+    const idx = Number(idxStr);
+    engine.update((s) => {
+      const next = (bed === "g" ? s.greatest : s.smallest).slice();
+      next[idx] = digit;
+      return bed === "g" ? { ...s, greatest: next, armed: null } : { ...s, smallest: next, armed: null };
+    });
+  };
 
-  const handleSelect = (optId: string) => {
-    if (readOnly) return;
-    setSelectedId(optId);
-    onChange(optId);
+  const { start } = usePointerDrag<number>({
+    disabled: engine.readOnly,
+    onStart: (p, d) => setGhost({ d, x: p.x, y: p.y }),
+    onMove: (p, d) => setGhost({ d, x: p.x, y: p.y }),
+    onEnd: (p, d) => {
+      setGhost(null);
+      const slot = slotAt(p.x, p.y);
+      if (slot) plant(slot, d);
+    },
+  });
+
+  const Bed = ({ bed, label }: { bed: "g" | "s"; label: string }) => {
+    const row = bed === "g" ? engine.state.greatest : engine.state.smallest;
+    const num = row.every((d) => d !== null) ? Number(row.join("")) : null;
+    return (
+      <div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">{label}</div>
+        <div className="flex gap-1">
+          {row.map((d, i) => (
+            <div
+              key={i}
+              ref={(el) => {
+                slotRefs.current[`${bed}:${i}`] = el;
+              }}
+              onClick={() => {
+                if (engine.readOnly) return;
+                if (engine.state.armed !== null) plant(`${bed}:${i}`, engine.state.armed);
+                else if (d !== null) plant(`${bed}:${i}`, null);
+              }}
+              className={`flex-1 aspect-[3/4] max-w-[46px] rounded-lg border-2 grid place-items-center font-mono text-xl font-black transition ${
+                d === null
+                  ? engine.state.armed !== null
+                    ? "border-emerald-500 border-dashed bg-emerald-50 cursor-pointer text-emerald-500"
+                    : "border-dashed border-slate-300 bg-white text-slate-300"
+                  : "border-emerald-500 bg-emerald-50 text-emerald-800 cursor-pointer"
+              }`}
+            >
+              {d ?? "·"}
+            </div>
+          ))}
+        </div>
+        <div className="mt-1 font-mono text-sm font-black text-slate-700">
+          {num !== null ? num.toLocaleString("en-IN") : "incomplete"}
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-700">
-            <Cpu className="w-5 h-5" />
+    <ActivityShell
+      icon={Sprout}
+      title="Digit Planting Beds"
+      howTo="Drag digits into the two beds (or tap a digit, then a slot) to plant the greatest and the smallest six-digit numbers. The plant adds the two numbers you built."
+      answerText={engine.answer !== undefined ? String(engine.answer) : undefined}
+      mappedTo={engine.answer !== undefined ? "sum of your two numbers" : undefined}
+      pendingHint="Fill all six slots in both beds with genuine six-digit numbers."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_190px]">
+        <Stage label="Planting beds — digits 1, 4, 0, 6, 8 (one digit may be repeated)">
+          <div className="space-y-3">
+            <Bed bed="g" label="Greatest six-digit number" />
+            <Bed bed="s" label="Smallest six-digit number" />
           </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Digit Manufacturing Plant (Q37)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Form greatest & smallest 6-digit numbers from digits <span className="font-mono font-bold text-slate-900">[1, 4, 0, 6, 8]</span> and calculate their <strong className="text-indigo-700">total sum</strong>.
-            </p>
-          </div>
-        </div>
+        </Stage>
 
-        <div className="text-xs font-mono font-bold bg-indigo-50 text-indigo-900 px-3 py-1.5 rounded-lg border border-indigo-300">
-          Synthesized Sum: <span className="text-indigo-700 font-black">{activeOpt.val}</span>
-        </div>
-      </div>
-
-      {/* Interactive Assembly Conveyor */}
-      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-        {/* Greatest Number Assembler */}
-        <div
-          onClick={() => handleSelect("B")}
-          className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1.5 cursor-pointer hover:border-indigo-400 transition-all shadow-sm"
-        >
-          <div className="text-[10px] font-mono font-bold text-indigo-700 uppercase">
-            GREATEST 6-DIGIT ASSEMBLY
-          </div>
-          <div className="text-2xl font-black text-slate-900 font-mono">8,86,410</div>
-          <div className="text-[11px] text-slate-500">
-            Repeats highest digit 8 in Lakhs & Ten-Thousands place
-          </div>
-        </div>
-
-        {/* Smallest Number Assembler */}
-        <div
-          onClick={() => handleSelect("B")}
-          className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1.5 cursor-pointer hover:border-indigo-400 transition-all shadow-sm"
-        >
-          <div className="text-[10px] font-mono font-bold text-sky-700 uppercase">
-            SMALLEST 6-DIGIT ASSEMBLY
-          </div>
-          <div className="text-2xl font-black text-slate-900 font-mono">1,00,468</div>
-          <div className="text-[11px] text-slate-500">
-            Starts with 1 (cannot start with 0) and repeats 0
-          </div>
-        </div>
-
-        {/* Total Sum Calculator Result */}
-        <div
-          onClick={() => handleSelect("B")}
-          className="p-3.5 bg-indigo-50 border-2 border-indigo-500 rounded-xl space-y-1.5 cursor-pointer shadow-md"
-        >
-          <div className="flex items-center justify-between text-[10px] font-mono font-bold text-indigo-900 uppercase">
-            <span>SYNTHESIZED TOTAL SUM</span>
-            <Calculator className="w-4 h-4 text-indigo-700" />
-          </div>
-          <div className="text-2xl font-black text-indigo-950 font-mono">9,86,878</div>
-          <div className="text-[11px] text-emerald-700 font-mono font-bold">
-            886410 + 100468 = 986878
-          </div>
-        </div>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-          Select Verified Sum of Both 6-Digit Numbers:
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
+        <div className="space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Digit seeds</div>
+          <div className="grid grid-cols-5 gap-1.5">
+            {DIGITS.map((d) => (
               <button
-                key={opt.id}
+                key={d}
                 type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-indigo-50 border-indigo-600 text-indigo-950 shadow-sm ring-1 ring-indigo-400"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
+                disabled={engine.readOnly}
+                onPointerDown={(e) => start(e, d)}
+                onClick={() => engine.update((s) => ({ ...s, armed: s.armed === d ? null : d }))}
+                className={`h-11 rounded-lg border-2 font-mono text-lg font-black transition ${
+                  engine.state.armed === d ? "bg-emerald-600 border-emerald-700 text-white" : "bg-white border-slate-200 text-slate-800 hover:border-emerald-400"
+                } ${engine.readOnly ? "" : "cursor-grab active:cursor-grabbing"}`}
+                style={{ touchAction: "none" }}
               >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-xl font-black font-mono">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-                </div>
-                <div className="mt-1">
-                  <div className="text-[10px] text-slate-500 font-mono">Option {opt.id}</div>
-                  <div className="text-[10px] text-slate-400 truncate">{opt.desc}</div>
-                </div>
+                {d}
               </button>
-            );
-          })}
+            ))}
+          </div>
+          <ReadOut label="Sum" value={engine.answer?.toLocaleString("en-IN") ?? "—"} tone={engine.answer !== undefined ? "emerald" : "slate"} />
+          <p className="text-[10px] text-slate-500 leading-snug">
+            Tap a planted digit to lift it out again.
+          </p>
         </div>
       </div>
-    </div>
+
+      {ghost && (
+        <div className="pointer-events-none fixed z-50 w-10 h-10 grid place-items-center rounded-lg border-2 border-emerald-600 bg-white font-mono text-lg font-black text-emerald-700 shadow-lg" style={{ left: ghost.x - 20, top: ghost.y - 20 }}>
+          {ghost.d}
+        </div>
+      )}
+    </ActivityShell>
   );
 }

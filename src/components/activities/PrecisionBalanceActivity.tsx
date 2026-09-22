@@ -1,132 +1,111 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Scale, CheckCircle2 } from "lucide-react";
+import React from "react";
+import { Scale } from "lucide-react";
+import { ActivityShell, ReadOut, DropBuckets, useActivityEngine, ActivityComponentProps, optionLabel } from "./kit";
 
-interface PrecisionBalanceActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q30 — Decimal balance beam.
+ *
+ * The student loads every decimal block onto a pan. The beam tilts from the real sums, and
+ * the comparison symbol the beam settles on is mapped onto the matching option.
+ */
+
+interface BalanceState {
+  assignment: Record<string, string>;
 }
 
-export function PrecisionBalanceActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: PrecisionBalanceActivityProps) {
-  const options = [
-    { id: "A", sign: ">", label: "> (Left is greater)", isCorrect: false },
-    { id: "B", sign: "=", label: "= (Both are equal)", isCorrect: false },
-    { id: "C", sign: "<", label: "< (LHS 304.98 < RHS 311.49)", isCorrect: true },
-    { id: "D", sign: "Can't be determined", label: "Can't be determined", isCorrect: false },
-  ];
+const BLOCKS = [
+  { id: "l1", v: 95.23 },
+  { id: "l2", v: 220.8 },
+  { id: "l3", v: -11.05 },
+  { id: "r1", v: 350.91 },
+  { id: "r2", v: 18.31 },
+  { id: "r3", v: -57.73 },
+];
 
-  const [selectedId, setSelectedId] = useState<string>(
-    value ? (options.find((o) => o.id === value || o.sign === value)?.id || "C") : ""
-  );
+export function PrecisionBalanceActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<BalanceState>) {
+  const engine = useActivityEngine<BalanceState, string>({
+    initialState: { assignment: {} },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      if (Object.keys(s.assignment).length !== BLOCKS.length) return undefined;
+      const sum = (pan: string) =>
+        BLOCKS.filter((b) => s.assignment[b.id] === pan).reduce((t, b) => t + b.v, 0);
+      const diff = Number((sum("lhs") - sum("rhs")).toFixed(2));
+      const symbol = diff > 0 ? ">" : diff < 0 ? "<" : "=";
+      return question?.multipleChoiceConfig?.options.find((o) => o.text.trim().startsWith(symbol))?.id;
+    },
+  });
 
-  useEffect(() => {
-    if (value) {
-      const match = options.find((o) => o.id === value || o.sign === value);
-      if (match) setSelectedId(match.id);
-    }
-  }, [value]);
-
-  const handleSelect = (opt: typeof options[0]) => {
-    if (readOnly) return;
-    setSelectedId(opt.id);
-    onChange(opt.id);
-  };
-
-  const selectedOpt = options.find((o) => o.id === selectedId);
+  const sum = (pan: string) =>
+    Number(BLOCKS.filter((b) => engine.state.assignment[b.id] === pan).reduce((t, b) => t + b.v, 0).toFixed(2));
+  const lhs = sum("lhs");
+  const rhs = sum("rhs");
+  const loaded = Object.keys(engine.state.assignment).length === BLOCKS.length;
+  const tilt = loaded ? Math.max(-11, Math.min(11, (lhs - rhs) / 2)) : 0;
+  const symbol = !loaded ? "?" : lhs > rhs ? ">" : lhs < rhs ? "<" : "=";
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Scale className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Decimal Precision Balance Lab
-            </h3>
-            <p className="text-xs text-slate-600">
-              Evaluate and compare the two decimal pipelines: LHS (304.98) vs RHS (311.49).
-            </p>
-          </div>
+    <ActivityShell
+      icon={Scale}
+      title="Decimal Balance Beam"
+      howTo="Load every decimal block onto the left or right pan. The beam tilts from the real totals, and the comparison symbol it settles on is your answer."
+      answerText={loaded ? `LHS ${symbol} RHS` : undefined}
+      mappedTo={optionLabel(question, engine.answer)}
+      pendingHint={`Load all ${BLOCKS.length} blocks — ${Object.keys(engine.state.assignment).length} placed.`}
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="mb-3 rounded-2xl border-2 border-slate-200 bg-slate-50 p-3">
+        <svg viewBox="0 0 320 140" className="w-full max-w-[420px] mx-auto">
+          <polygon points="160,120 140,138 180,138" fill="#475569" />
+          <line x1={160} y1={40} x2={160} y2={120} stroke="#475569" strokeWidth={5} />
+          <g transform={`rotate(${tilt} 160 40)`}>
+            <line x1={40} y1={40} x2={280} y2={40} stroke="#0f172a" strokeWidth={6} strokeLinecap="round" />
+            <line x1={70} y1={40} x2={70} y2={72} stroke="#94a3b8" strokeWidth={2.5} />
+            <line x1={250} y1={40} x2={250} y2={72} stroke="#94a3b8" strokeWidth={2.5} />
+            <rect x={28} y={72} width={84} height={26} rx={5} fill="#d1fae5" stroke="#059669" strokeWidth={2.5} />
+            <text x={70} y={89} textAnchor="middle" fontSize={12} fontWeight="bold" fill="#065f46" fontFamily="monospace">
+              {lhs.toFixed(2)}
+            </text>
+            <rect x={208} y={72} width={84} height={26} rx={5} fill="#e0f2fe" stroke="#0284c7" strokeWidth={2.5} />
+            <text x={250} y={89} textAnchor="middle" fontSize={12} fontWeight="bold" fill="#075985" fontFamily="monospace">
+              {rhs.toFixed(2)}
+            </text>
+          </g>
+          <text x={160} y={22} textAnchor="middle" fontSize={22} fontWeight="bold" fill={loaded ? "#059669" : "#cbd5e1"}>
+            {symbol}
+          </text>
+        </svg>
+        <div className="flex justify-center gap-3 mt-1">
+          <ReadOut label="Left pan" value={lhs.toFixed(2)} tone="emerald" />
+          <ReadOut label="Right pan" value={rhs.toFixed(2)} tone="sky" />
         </div>
       </div>
 
-      {/* Dual Expression Balance Canvas (Interactive) */}
-      <div
-        onClick={() => handleSelect(options[2])}
-        className="p-5 bg-slate-50 border-2 border-slate-200 hover:border-emerald-400 rounded-2xl flex items-center justify-around flex-wrap gap-4 cursor-pointer transition-all shadow-xs"
-        title="Click to select comparison '<' (Option C)"
-      >
-        {/* Left Pan: 304.98 */}
-        <div className="p-4 bg-white border-2 border-slate-200 rounded-xl text-center space-y-1 shadow-xs">
-          <span className="text-[11px] font-mono text-slate-500 block uppercase font-bold">LHS Expression</span>
-          <span className="text-xs text-slate-600 font-mono">95.23 + 220.80 − 11.05</span>
-          <div className="font-black text-2xl text-slate-900 mt-1">304.98</div>
-        </div>
-
-        {/* Center Comparison Sign Badge */}
-        <div
-          className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center font-black text-3xl shadow-xs transition-all ${
-            selectedId === "C"
-              ? "bg-emerald-50 border-emerald-600 text-emerald-800 scale-110"
-              : "bg-white border-slate-300 text-slate-700 hover:border-emerald-500"
-          }`}
-        >
-          {selectedOpt ? selectedOpt.sign : "<"}
-        </div>
-
-        {/* Right Pan: 311.49 */}
-        <div className="p-4 bg-white border-2 border-slate-200 rounded-xl text-center space-y-1 shadow-xs">
-          <span className="text-[11px] font-mono text-slate-500 block uppercase font-bold">RHS Expression</span>
-          <span className="text-xs text-slate-600 font-mono">350.91 + 18.31 − 57.73</span>
-          <div className="font-black text-2xl text-emerald-700 mt-1">311.49</div>
-        </div>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select the correct comparison symbol:
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {opt.id}
-                    </span>
-                    <span className="text-2xl font-black">{opt.sign}</span>
-                  </div>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                </div>
-                <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+      <DropBuckets
+        columns={3}
+        trayLabel="Drag every decimal block onto a pan"
+        items={BLOCKS.map((b) => ({ id: b.id, text: b.v.toFixed(2) }))}
+        buckets={[
+          { id: "lhs", title: "Left pan (LHS)" },
+          { id: "rhs", title: "Right pan (RHS)" },
+        ]}
+        assignment={engine.state.assignment}
+        onAssign={(itemId, bucketId) =>
+          engine.update((s) => {
+            const assignment = { ...s.assignment };
+            if (bucketId) assignment[itemId] = bucketId;
+            else delete assignment[itemId];
+            return { assignment };
+          })
+        }
+        readOnly={engine.readOnly}
+      />
+    </ActivityShell>
   );
 }

@@ -1,161 +1,112 @@
 "use client";
 
-import React, { useState } from "react";
-import { Scale, CheckCircle2, Crosshair, ShieldCheck } from "lucide-react";
+import React from "react";
+import { Scale3d } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, ValueSlider, useActivityEngine, ActivityComponentProps } from "./kit";
 
-interface InspectionDroneActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q47 — Fulcrum torque simulator.
+ *
+ * The student loads the right arm and releases the beam. The tilt is computed from real
+ * torques, and the load actually released on the beam is the answer.
+ */
+
+interface TorqueState {
+  load: number;
+  released: number | null;
 }
 
-export function InspectionDroneActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: InspectionDroneActivityProps) {
-  // Question 47: Fulcrum Torque Balance:
-  // Left arm: 18 N at 2.0 m -> Left Torque = 18 × 2 = 36 N·m
-  // Right arm: Distance = 3.0 m
-  // Counterweight required: W × 3.0 = 36 => W = 12 kg (Option B)
+const LEFT_FORCE = 18;
+const LEFT_ARM = 2;
+const RIGHT_ARM = 3;
 
-  const options = [
-    { id: "A", val: "8 kg", mass: 8, torque: 24, tilt: -12, label: "8 kg (Right Torque = 24 N·m)", desc: "Left heavy - scale tilts down on left" },
-    { id: "B", val: "12 kg (36 N·m equilibrium)", mass: 12, torque: 36, tilt: 0, label: "12 kg (36 N·m equilibrium)", desc: "Exact torque balance: 18 × 2 = 12 × 3 = 36 N·m", isCorrect: true },
-    { id: "C", val: "15 kg", mass: 15, torque: 45, tilt: 10, label: "15 kg (Right Torque = 45 N·m)", desc: "Right heavy - tilts right" },
-    { id: "D", val: "18 kg", mass: 18, torque: 54, tilt: 16, label: "18 kg (Right Torque = 54 N·m)", desc: "Heavy right tilt overload" },
-  ];
+export function InspectionDroneActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<TorqueState>) {
+  const cfg = question?.simulationConfig;
 
-  const getInitial = () => {
-    if (!value) return "B";
-    const str = String(value).trim();
-    const found = options.find((o) => o.id === str || o.val === str || String(o.mass) === str);
-    return found ? found.id : "B";
-  };
+  const engine = useActivityEngine<TorqueState, number>({
+    initialState: { load: cfg?.defaultVal ?? 6, released: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => s.released ?? undefined,
+  });
 
-  const [selectedId, setSelectedId] = useState<string>(getInitial());
-  const activeOpt = options.find((o) => o.id === selectedId) || options[1];
-
-  const handleSelect = (opt: typeof options[0]) => {
-    if (readOnly) return;
-    setSelectedId(opt.id);
-    onChange(opt.id);
-  };
+  const s = engine.state;
+  const leftTorque = LEFT_FORCE * LEFT_ARM;
+  const rightTorque = (s.released ?? s.load) * RIGHT_ARM;
+  const tilt = s.released === null ? 0 : Math.max(-14, Math.min(14, (leftTorque - rightTorque) / 4));
+  const balanced = s.released !== null && leftTorque === rightTorque;
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-purple-50 border border-purple-200 rounded-xl text-purple-700">
-            <Scale className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Fulcrum Torque Equilibrium Simulator (Q47)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Left load: <strong className="text-slate-900">18 N at 2.0 m (36 N·m)</strong>. Adjust right counterweight at 3.0 m to achieve exact horizontal 0° balance.
-            </p>
-          </div>
-        </div>
+    <ActivityShell
+      icon={Scale3d}
+      title="Fulcrum Torque Simulator"
+      howTo="Set the counterweight on the right arm, then release the beam. The tilt comes from the real torques — the load you release is submitted as your answer."
+      answerText={s.released !== null ? String(s.released) : undefined}
+      mappedTo={s.released !== null ? `right torque ${rightTorque} N·m vs left ${leftTorque} N·m` : undefined}
+      pendingHint="Set a counterweight and press Release beam."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+      tools={
+        <button
+          type="button"
+          disabled={engine.readOnly}
+          onClick={() => engine.patch({ released: s.load })}
+          className="px-4 min-h-[44px] sm:min-h-0 sm:py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black"
+        >
+          Release beam
+        </button>
+      }
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
+        <Stage label="Torque bench">
+          <svg viewBox="0 0 340 170" className="w-full max-w-[440px] mx-auto">
+            <polygon points="170,132 148,152 192,152" fill="#475569" />
+            <line x1={170} y1={52} x2={170} y2={132} stroke="#475569" strokeWidth={5} />
 
-        <div className="text-xs font-mono font-bold bg-purple-50 text-purple-900 px-3 py-1.5 rounded-lg border border-purple-300">
-          Equilibrium State: {activeOpt.tilt === 0 ? "🎯 0.0° PERFECT LEVEL" : `${activeOpt.tilt > 0 ? "+" : ""}${activeOpt.tilt}° TILT`}
-        </div>
-      </div>
+            <g transform={`rotate(${tilt} 170 52)`}>
+              <line x1={50} y1={52} x2={290} y2={52} stroke="#0f172a" strokeWidth={7} strokeLinecap="round" />
+              {/* left load 18 N at 2.0 m */}
+              <line x1={90} y1={52} x2={90} y2={80} stroke="#94a3b8" strokeWidth={2.5} />
+              <rect x={66} y={80} width={48} height={30} rx={4} fill="#e0f2fe" stroke="#0284c7" strokeWidth={2.5} />
+              <text x={90} y={100} textAnchor="middle" fontSize={12} fontWeight="bold" fill="#075985" fontFamily="monospace">
+                18 N
+              </text>
+              {/* right counterweight at 3.0 m */}
+              <line x1={260} y1={52} x2={260} y2={80} stroke="#94a3b8" strokeWidth={2.5} />
+              <rect x={232} y={80} width={56} height={30} rx={4} fill={balanced ? "#d1fae5" : "#fef3c7"} stroke={balanced ? "#059669" : "#d97706"} strokeWidth={2.5} />
+              <text x={260} y={100} textAnchor="middle" fontSize={12} fontWeight="bold" fill={balanced ? "#065f46" : "#92400e"} fontFamily="monospace">
+                {s.released ?? s.load} N
+              </text>
+            </g>
 
-      {/* Interactive Fulcrum Seesaw Canvas */}
-      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center">
-        <svg viewBox="0 0 380 160" className="w-full h-full max-w-md select-none">
-          {/* Fulcrum Triangle Base */}
-          <polygon points="190,110 175,145 205,145" fill="#64748b" stroke="#334155" strokeWidth="2" />
-          <rect x="150" y="145" width="80" height="8" fill="#94a3b8" rx="2" />
-          <circle cx="190" cy="110" r="5" fill="#0f172a" />
+            <text x={90} y={26} textAnchor="middle" fontSize={9} fill="#64748b" fontFamily="monospace">2.0 m arm</text>
+            <text x={260} y={26} textAnchor="middle" fontSize={9} fill="#64748b" fontFamily="monospace">3.0 m arm</text>
+            {s.released !== null && (
+              <text x={170} y={168} textAnchor="middle" fontSize={11} fontWeight="bold" fill={balanced ? "#059669" : "#b45309"}>
+                {balanced ? "Beam level at 0° — equilibrium" : `Beam tilts ${tilt > 0 ? "left" : "right"}`}
+              </text>
+            )}
+          </svg>
+        </Stage>
 
-          {/* Rotating Seesaw Beam with tilt angle */}
-          <g transform={`rotate(${activeOpt.tilt}, 190, 110)`} className="transition-transform duration-300 ease-out">
-            {/* Beam Bar */}
-            <rect x="50" y="106" width="280" height="8" fill="#475569" stroke="#1e293b" strokeWidth="1.5" rx="3" />
-
-            {/* Left Pan & Load: 18 N at 2.0 m */}
-            <line x1="90" y1="110" x2="90" y2="80" stroke="#64748b" strokeWidth="2" />
-            <rect x="65" y="55" width="50" height="25" fill="#ecfdf5" stroke="#059669" strokeWidth="2" rx="4" />
-            <text x="90" y="71" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#065f46" fontFamily="monospace">
-              18 N (2m)
-            </text>
-
-            {/* Right Pan & Load: Counterweight at 3.0 m */}
-            <line x1="310" y1="110" x2="310" y2="80" stroke="#64748b" strokeWidth="2" />
-            <rect
-              x="280"
-              y={55 - (activeOpt.mass - 8) * 1.5}
-              width="60"
-              height={25 + (activeOpt.mass - 8) * 1.5}
-              fill={activeOpt.tilt === 0 ? "#f5f3ff" : "#fef2f2"}
-              stroke={activeOpt.tilt === 0 ? "#7c3aed" : "#ef4444"}
-              strokeWidth="2"
-              rx="4"
-            />
-            <text
-              x="310"
-              y="71"
-              textAnchor="middle"
-              fontSize="10"
-              fontWeight="bold"
-              fill={activeOpt.tilt === 0 ? "#6d28d9" : "#b91c1c"}
-              fontFamily="monospace"
-            >
-              {activeOpt.mass} kg (3m)
-            </text>
-          </g>
-
-          {/* Digital Torque Readout Overlay */}
-          <text x="90" y="152" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#059669" fontFamily="monospace">
-            Left: 36 N·m
-          </text>
-          <text x="310" y="152" textAnchor="middle" fontSize="10" fontWeight="bold" fill={activeOpt.tilt === 0 ? "#7c3aed" : "#ef4444"} fontFamily="monospace">
-            Right: {activeOpt.torque} N·m
-          </text>
-        </svg>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-          Select Verified Counterweight Mass:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between gap-3 cursor-pointer ${
-                  isSelected
-                    ? "bg-purple-50 border-purple-600 text-purple-950 shadow-sm ring-1 ring-purple-400"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700 shrink-0">
-                    {opt.id}
-                  </span>
-                  <div>
-                    <div className="text-sm font-black font-mono">{opt.val}</div>
-                    <div className="text-[11px] text-slate-500 font-sans font-normal mt-0.5">{opt.desc}</div>
-                  </div>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </button>
-            );
-          })}
+        <div className="space-y-3">
+          <ValueSlider
+            label={cfg?.parameterName ?? "Right counterweight"}
+            value={s.load}
+            min={cfg?.minVal ?? 2}
+            max={cfg?.maxVal ?? 24}
+            step={cfg?.step ?? 1}
+            unit={cfg?.parameterUnit ?? "kg (N)"}
+            onChange={(v) => engine.update((st) => ({ ...st, load: v }))}
+            readOnly={engine.readOnly}
+          />
+          <ReadOut label="Left torque" value={`${leftTorque} N·m`} tone="sky" />
+          <ReadOut label="Right torque" value={`${(s.released ?? s.load) * RIGHT_ARM} N·m`} tone={balanced ? "emerald" : "slate"} />
+          <ReadOut label="Load released" value={s.released ?? "—"} tone={s.released !== null ? "emerald" : "slate"} />
         </div>
       </div>
-    </div>
+    </ActivityShell>
   );
 }

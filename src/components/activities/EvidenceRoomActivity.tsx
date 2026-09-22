@@ -1,208 +1,146 @@
 "use client";
 
-import React, { useState } from "react";
-import { Search, ShieldAlert, CheckCircle2, XCircle, Scale, ShieldCheck } from "lucide-react";
+import React from "react";
+import { FileSearch } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, DropBuckets, Stepper, useActivityEngine, ActivityComponentProps } from "./kit";
 
-interface EvidenceRoomActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q48 — Evidence room.
+ *
+ * Two benches let the student actually test each statement: a letter tagger for the word
+ * CREATIVE and a ratio scaler for 7/9. They then file each statement card in the True or
+ * False drawer, and that filing is the classification answer.
+ */
+
+interface EvidenceState {
+  vowels: string[];
+  straight: string[];
+  p: number;
+  assignment: Record<string, string>;
 }
 
-export function EvidenceRoomActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: EvidenceRoomActivityProps) {
-  // Question 48:
-  // Statement-I: In the word CREATIVE, the fraction of vowels plus alphabets made of straight lines evaluates to 4/8. (TRUE)
-  // Statement-II: If 7/9 = p/729 = q/135, then p = 81, q = 105, and p + q = 186.
-  // Solving: p = (7 * 729)/9 = 7 * 81 = 567 (NOT 81!). Thus Statement-II is FALSE.
-  // Correct Option: Statement-I is true but Statement-II is false (Option C)
+const WORD = "CREATIVE".split("");
 
-  const options = [
-    { id: "A", label: "Both Statement-I and Statement-II are true.", isCorrect: false },
-    { id: "B", label: "Both Statement-I and Statement-II are false.", isCorrect: false },
-    { id: "C", label: "Statement-I is true but Statement-II is false.", isCorrect: true },
-    { id: "D", label: "Statement-I is false but Statement-II is true.", isCorrect: false },
-  ];
+export function EvidenceRoomActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<EvidenceState>) {
+  const cfg = question?.classificationConfig;
 
-  const getInitial = () => {
-    if (!value) return "C";
-    const str = String(value).trim();
-    const found = options.find((o) => o.id === str || o.label === str);
-    return found ? found.id : "C";
-  };
+  const engine = useActivityEngine<EvidenceState, Record<string, string>>({
+    initialState: { vowels: [], straight: [], p: 81, assignment: {} },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    deriveStateFromValue: (v) =>
+      v && typeof v === "object" ? { vowels: [], straight: [], p: 81, assignment: v } : undefined,
+    resolve: (s) => (cfg && Object.keys(s.assignment).length === cfg.items.length ? s.assignment : undefined),
+  });
 
-  const [selectedId, setSelectedId] = useState<string>(getInitial());
-  const [activeTab, setActiveTab] = useState<"st1" | "st2">("st1");
+  const s = engine.state;
+  const tag = (list: "vowels" | "straight", key: string) =>
+    engine.update((st) => {
+      const next = new Set(st[list]);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return { ...st, [list]: Array.from(next) };
+    });
 
-  const handleSelect = (optId: string) => {
-    if (readOnly) return;
-    setSelectedId(optId);
-    onChange(optId);
-  };
+  const tagged = new Set([...s.vowels, ...s.straight]).size;
+  const q = Math.round((7 / 9) * 135);
+  const scaledCorrect = s.p === (7 / 9) * 729;
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
-            <Scale className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Mathematical Truth Evidence Chamber (Q48)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Conduct forensic mathematical verification on both statements to establish the ultimate verified verdict.
-            </p>
-          </div>
-        </div>
-
-        <div className="text-xs font-mono font-bold bg-amber-50 text-amber-900 px-3 py-1.5 rounded-lg border border-amber-300">
-          Verdict: <span className="text-emerald-700 font-black">Option C (St-I TRUE, St-II FALSE)</span>
-        </div>
-      </div>
-
-      {/* Verification Station Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 pb-2">
-        <button
-          type="button"
-          onClick={() => setActiveTab("st1")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === "st1"
-              ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-sm"
-              : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
-          }`}
-        >
-          <Search className="w-4 h-4 text-amber-700" /> Statement I Evidence
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-black">
-            TRUE
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("st2")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === "st2"
-              ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-sm"
-              : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4 text-amber-700" /> Statement II Evidence
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300 font-black">
-            FALSE
-          </span>
-        </button>
-      </div>
-
-      {/* Forensic Proof Inspection Box */}
-      {activeTab === "st1" ? (
-        <div
-          onClick={() => handleSelect("C")}
-          className="p-4 bg-slate-50 border-2 border-slate-200 rounded-xl space-y-3 cursor-pointer hover:border-amber-400 transition-all shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-amber-900 font-bold uppercase">Statement I Proof</span>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300 font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Verdict: TRUE (Verified)
-            </div>
-          </div>
-          <p className="text-xs text-slate-700">
-            Word: <strong className="text-slate-900 font-mono tracking-widest bg-white border border-slate-200 px-2 py-0.5 rounded">C R E A T I V E</strong> (8 letters)
+    <ActivityShell
+      icon={FileSearch}
+      title="Evidence Room"
+      howTo="Test both statements on the benches below, then drag each statement card into the True or False drawer. Your filing is the answer."
+      answerText={engine.answer ? "Both statements filed" : undefined}
+      mappedTo={engine.answer ? "Filing submitted as arranged" : undefined}
+      pendingHint={`${Object.keys(s.assignment).length} of ${cfg?.items.length ?? 2} statements filed.`}
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-2 mb-3">
+        <Stage label="Bench I — the word CREATIVE">
+          <p className="text-[10px] text-slate-500 mb-2">
+            Tap a letter once to tag it a vowel, and use the lower row to tag letters drawn only with
+            straight lines.
           </p>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 text-center font-mono">
-            {[
-              { letter: "C", vowel: false },
-              { letter: "R", vowel: false },
-              { letter: "E", vowel: true },
-              { letter: "A", vowel: true },
-              { letter: "T", vowel: false },
-              { letter: "I", vowel: true },
-              { letter: "V", vowel: false },
-              { letter: "E", vowel: true },
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className={`p-2 rounded-lg border text-sm font-bold ${
-                  item.vowel
-                    ? "bg-emerald-50 border-emerald-400 text-emerald-900"
-                    : "bg-white border-slate-200 text-slate-500"
+          <div className="flex gap-1 mb-1.5">
+            {WORD.map((ch, i) => (
+              <button
+                key={`v${i}`}
+                type="button"
+                disabled={engine.readOnly}
+                onClick={() => tag("vowels", `${i}`)}
+                className={`flex-1 h-10 rounded-lg border-2 font-black text-sm transition ${
+                  s.vowels.includes(`${i}`) ? "bg-sky-100 border-sky-500 text-sky-800" : "bg-white border-slate-200 text-slate-700"
                 }`}
               >
-                <div className="text-lg">{item.letter}</div>
-                <div className="text-[10px]">{item.vowel ? "Vowel" : "Cons."}</div>
-              </div>
+                {ch}
+              </button>
             ))}
           </div>
-          <div className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
-            Vowels = E, A, I, E (Count = 4). Fraction of vowels = <span className="text-emerald-700 font-bold font-mono">4 / 8</span>. Statement I is <span className="text-emerald-700 font-bold">TRUE</span>.
-          </div>
-        </div>
-      ) : (
-        <div
-          onClick={() => handleSelect("C")}
-          className="p-4 bg-slate-50 border-2 border-slate-200 rounded-xl space-y-3 cursor-pointer hover:border-amber-400 transition-all shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-amber-900 font-bold uppercase">Statement II Ratio Calculation</span>
-            <div className="flex items-center gap-1.5 text-xs text-rose-800 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-300 font-bold">
-              <XCircle className="w-3.5 h-3.5 text-rose-600" /> Verdict: FALSE (Calculation Mismatch)
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-              <div className="text-[11px] text-slate-500 font-mono">Statement claims:</div>
-              <div className="text-sm font-mono text-rose-700 font-bold">p = 81, q = 105, p + q = 186</div>
-            </div>
-            <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-              <div className="text-[11px] text-slate-500 font-mono">Actual Mathematics:</div>
-              <div className="text-sm font-mono text-emerald-700 font-bold">
-                7/9 = p/729 &rArr; p = 7 &times; 81 = <span className="text-amber-800 font-black">567</span> &ne; 81
-              </div>
-            </div>
-          </div>
-          <div className="text-xs text-rose-800 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
-            Since <span className="font-mono font-bold">p = 567</span> (not 81), Statement II is factually and mathematically <span className="font-bold underline">FALSE</span>.
-          </div>
-        </div>
-      )}
-
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-          Select Verified Statement Finding:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
+          <div className="flex gap-1">
+            {WORD.map((_ch, i) => (
               <button
-                key={opt.id}
+                key={`s${i}`}
                 type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between gap-3 cursor-pointer ${
-                  isSelected
-                    ? "bg-amber-50 border-amber-600 text-amber-950 shadow-sm ring-1 ring-amber-400"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
+                disabled={engine.readOnly}
+                onClick={() => tag("straight", `${i}`)}
+                className={`flex-1 h-7 rounded border-2 text-[9px] font-black transition ${
+                  s.straight.includes(`${i}`) ? "bg-amber-100 border-amber-500 text-amber-800" : "bg-white border-slate-200 text-slate-400"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700 shrink-0">
-                    {opt.id}
-                  </span>
-                  <div className="text-xs font-bold">{opt.label}</div>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
+                line
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <ReadOut label="Vowels" value={s.vowels.length} tone="sky" />
+            <ReadOut label="Straight-line letters" value={s.straight.length} />
+            <ReadOut label="Fraction" value={`${tagged}/8`} tone={tagged === 4 ? "emerald" : "slate"} />
+          </div>
+        </Stage>
+
+        <Stage label="Bench II — scale the ratio 7 / 9">
+          <div className="flex items-center justify-center gap-3 font-mono text-lg font-black text-slate-800">
+            <span>7/9</span>
+            <span className="text-slate-400">=</span>
+            <span className={scaledCorrect ? "text-emerald-700" : "text-rose-600"}>{s.p}/729</span>
+            <span className="text-slate-400">=</span>
+            <span>{q}/135</span>
+          </div>
+          <div className="mt-3">
+            <Stepper label="Set p" value={s.p} min={0} max={729} step={1} onChange={(v) => engine.patch({ p: v })} readOnly={engine.readOnly} />
+          </div>
+          <div className="mt-2 text-[11px] font-bold text-center">
+            {scaledCorrect ? (
+              <span className="text-emerald-700">
+                7 × 81 = {s.p}. Then p + q = {s.p + q}.
+              </span>
+            ) : (
+              <span className="text-slate-500">729 ÷ 9 = 81, so p must be 7 × 81.</span>
+            )}
+          </div>
+        </Stage>
       </div>
-    </div>
+
+      <DropBuckets
+        columns={2}
+        trayLabel={cfg?.instruction || "File each statement"}
+        items={(cfg?.items || []).map((i) => ({ id: i.id, text: i.text.replace(/\s*\(.*\)$/, "") }))}
+        buckets={(cfg?.categories || []).map((c) => ({ id: c.id, title: c.title }))}
+        assignment={s.assignment}
+        onAssign={(itemId, bucketId) =>
+          engine.update((st) => {
+            const assignment = { ...st.assignment };
+            if (bucketId) assignment[itemId] = bucketId;
+            else delete assignment[itemId];
+            return { ...st, assignment };
+          })
+        }
+        readOnly={engine.readOnly}
+      />
+    </ActivityShell>
   );
 }

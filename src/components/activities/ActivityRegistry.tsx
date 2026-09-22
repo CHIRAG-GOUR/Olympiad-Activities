@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Question } from "@/types/question";
+import type { ActivityComponentType } from "./kit/types";
 
 // 50 Bespoke Interactive Olympiad Activities
 import { DiceLabActivity } from "./DiceLabActivity";
@@ -58,15 +58,7 @@ import { EvidenceRoomActivity } from "./EvidenceRoomActivity";
 import { TestingLabActivity } from "./TestingLabActivity";
 import { DetectiveCaseFileActivity } from "./DetectiveCaseFileActivity";
 
-export interface ActivityComponentProps {
-  questionId: string;
-  question?: Question;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
-}
-
-export type ActivityComponentType = React.ComponentType<ActivityComponentProps>;
+export type { ActivityComponentProps, ActivityComponentType } from "./kit/types";
 
 // Mapping for standard IMO Class 6 Set B question IDs and Codes
 const ACTIVITY_MAP: Record<string, ActivityComponentType> = {
