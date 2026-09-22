@@ -56,13 +56,20 @@ export function useActivityEngine<S, A = unknown>(
     return initialRef.current;
   });
 
+  // Always-current mirror of `state`, so `update` can read/write it synchronously without
+  // going through a setState updater callback (see below for why that matters).
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
   // Rehydrate when an externally restored microworld state arrives (crash recovery, resume),
   // and rewind to pristine when the session clears this question's response.
   const lastExternal = useRef(activityState);
   useEffect(() => {
     if (activityState === lastExternal.current) return;
     lastExternal.current = activityState;
-    setState(activityState === undefined || activityState === null ? initialRef.current : activityState);
+    const next = activityState === undefined || activityState === null ? initialRef.current : activityState;
+    stateRef.current = next;
+    setState(next);
   }, [activityState]);
 
   const answer = useMemo(() => resolveRef.current(state), [state]);
@@ -70,12 +77,17 @@ export function useActivityEngine<S, A = unknown>(
   const update = useCallback(
     (next: S | ((prev: S) => S)) => {
       if (readOnly) return;
-      setState((prev) => {
-        const value = typeof next === "function" ? (next as (p: S) => S)(prev) : next;
-        const resolved = resolveRef.current(value);
-        onChangeRef.current(resolved, value);
-        return value;
-      });
+      // Resolve the next value and notify the parent (onChange -> the exam page's
+      // setAnswers) here, in the plain function body — not inside the setState updater.
+      // React invokes updater functions during its render/work phase, so calling a
+      // different component's setState from in there triggers "Cannot update a
+      // component while rendering a different component". Computing the value from
+      // `stateRef` up front keeps this a single, ordinary state update.
+      const value = typeof next === "function" ? (next as (p: S) => S)(stateRef.current) : next;
+      stateRef.current = value;
+      const resolved = resolveRef.current(value);
+      setState(value);
+      onChangeRef.current(resolved, value);
     },
     [readOnly]
   );
@@ -87,11 +99,15 @@ export function useActivityEngine<S, A = unknown>(
 
   const reset = useCallback(() => {
     if (readOnly) return;
+    stateRef.current = initialRef.current;
     setState(initialRef.current);
     onChangeRef.current(undefined, undefined);
   }, [readOnly]);
 
-  const restoreState = useCallback((next: S) => setState(next), []);
+  const restoreState = useCallback((next: S) => {
+    stateRef.current = next;
+    setState(next);
+  }, []);
 
   return {
     state,

@@ -198,6 +198,26 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
     };
   }, [hasStarted, sessionId]);
 
+  // Heartbeat autosave: commits the session to storage on a fixed cadence,
+  // independent of the per-answer debounce. A continuous interaction (e.g. dragging a
+  // simulation for several seconds) keeps re-arming that debounce timer, so without this
+  // a crash mid-drag could lose more than the debounce window. This guarantees progress
+  // is durably written at least every few seconds no matter what the student is doing,
+  // and complements (does not replace) the unload/visibility flushes above.
+  useEffect(() => {
+    if (!hasStarted || !sessionId) return;
+
+    const heartbeat = setInterval(() => {
+      if (sessionRef.current) {
+        ExamPersistenceService.saveProgress(sessionRef.current).catch(() => {
+          // best-effort; localStorage mirror inside the persistence layer still applies
+        });
+      }
+    }, 4000);
+
+    return () => clearInterval(heartbeat);
+  }, [hasStarted, sessionId]);
+
   // Mark current question as visited
   useEffect(() => {
     if (hasStarted) {
@@ -729,8 +749,8 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   );
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] flex flex-col justify-between select-none font-sans">
-      {/* Official Top Header Bar */}
+    <div className="h-dvh w-full bg-[#F0F4F8] flex flex-col overflow-hidden select-none font-sans">
+      {/* Official Top Header Bar (fixed height, never scrolls away) */}
       <ExamHeader
         olympiadTitle={exam.title}
         examCode={exam.code}
@@ -740,142 +760,149 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
         isSaving={isSaving}
       />
 
-      {/* Main Examination Workspace */}
-      <main className="flex-1 w-full max-w-[1750px] mx-auto px-3 sm:px-5 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-          {/* Left / Center: Question Canvas */}
-          <div className="lg:col-span-8 xl:col-span-9 bg-white border-2 border-slate-300 rounded-xl shadow-md flex flex-col min-h-[640px] overflow-hidden">
-            {/* Section Tabs Bar (NTA Header) */}
-            <div className="bg-slate-100 border-b-2 border-slate-300 px-4 py-2 flex items-center gap-2 overflow-x-auto">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0 mr-2">
-                Sections:
-              </span>
-              {sections.map((sec) => {
-                const isActive = currentSection.id === sec.id;
-                const answeredInSection = questions
-                  .slice(sec.startIdx, sec.endIdx + 1)
-                  .filter((q) => answers[q.id] !== undefined && answers[q.id] !== "").length;
+      {/* Main Examination Workspace — the only region that scrolls, so the
+          navigation bar below it is always on-screen without any scrolling. */}
+      <main className="flex-1 min-h-0 overflow-y-auto">
+        <div className="w-full max-w-[1750px] mx-auto px-3 sm:px-5 py-3 sm:py-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            {/* Left / Center: Question Canvas */}
+            <div className="lg:col-span-8 xl:col-span-9 bg-white border-2 border-slate-300 rounded-xl shadow-md flex flex-col overflow-hidden">
+              {/* Section Tabs Bar (NTA Header) */}
+              <div className="bg-slate-100 border-b-2 border-slate-300 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0 mr-2">
+                  Sections:
+                </span>
+                {sections.map((sec) => {
+                  const isActive = currentSection.id === sec.id;
+                  const answeredInSection = questions
+                    .slice(sec.startIdx, sec.endIdx + 1)
+                    .filter((q) => answers[q.id] !== undefined && answers[q.id] !== "").length;
 
-                return (
-                  <button
-                    key={sec.id}
-                    type="button"
-                    onClick={() => setCurrentIndex(sec.startIdx)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all shrink-0 flex items-center gap-1.5 cursor-pointer border ${
-                      isActive
-                        ? "bg-[#0B4F8A] text-white border-[#083863] shadow-xs"
-                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-200"
-                    }`}
-                  >
-                    <span>{sec.title}</span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                        isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                  return (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      onClick={() => setCurrentIndex(sec.startIdx)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all shrink-0 flex items-center gap-1.5 cursor-pointer border ${
+                        isActive
+                          ? "bg-[#0B4F8A] text-white border-[#083863] shadow-xs"
+                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-200"
                       }`}
                     >
-                      {answeredInSection}/{sec.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Question Info Bar */}
-            <div className="px-5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-700">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-black text-[#4D741F]">
-                  Question No. {currentIndex + 1}
-                </span>
-                <span className="text-slate-400">|</span>
-                <span className="text-slate-600 font-semibold">{currentSection.title}</span>
+                      <span>{sec.title}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                          isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {answeredInSection}/{sec.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="flex items-center gap-2.5 font-mono">
-                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Right: +{currentQuestion?.marks || 1}.00
-                </span>
-                <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                  Negative: -{currentQuestion?.negativeMarks || 0}.00
-                </span>
+              {/* Question Info Bar */}
+              <div className="px-3 sm:px-5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-700">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-[#4D741F]">
+                    Question No. {currentIndex + 1}
+                  </span>
+                  <span className="text-slate-400">|</span>
+                  <span className="text-slate-600 font-semibold">{currentSection.title}</span>
+                </div>
 
-                {/* View Switcher Toggle placed right here next to Right and Negative */}
-                {currentQuestion && (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
-                  <div className="flex items-center gap-0.5 bg-[#EEF5E7] p-0.5 rounded-lg border border-[#DDE4D7] font-sans ml-1">
-                    <button
-                      type="button"
-                      onClick={() => setQuestionView("activity")}
-                      className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
-                        questionView === "activity"
-                          ? "bg-[#4D741F] text-white shadow-xs"
-                          : "text-[#355415] hover:bg-[#DDE4D7]"
-                      }`}
-                    >
-                      Interactive
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setQuestionView("standard")}
-                      className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
-                        questionView === "standard"
-                          ? "bg-slate-700 text-white shadow-xs"
-                          : "text-slate-600 hover:bg-slate-200"
-                      }`}
-                    >
-                      Standard
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2.5 font-mono">
+                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Right: +{currentQuestion?.marks || 1}.00
+                  </span>
+                  <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    Negative: -{currentQuestion?.negativeMarks || 0}.00
+                  </span>
+
+                  {/* View Switcher Toggle placed right here next to Right and Negative */}
+                  {currentQuestion && (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
+                    <div className="flex items-center gap-0.5 bg-[#EEF5E7] p-0.5 rounded-lg border border-[#DDE4D7] font-sans ml-1">
+                      <button
+                        type="button"
+                        onClick={() => setQuestionView("activity")}
+                        className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
+                          questionView === "activity"
+                            ? "bg-[#4D741F] text-white shadow-xs"
+                            : "text-[#355415] hover:bg-[#DDE4D7]"
+                        }`}
+                      >
+                        Interactive
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setQuestionView("standard")}
+                        className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
+                          questionView === "standard"
+                            ? "bg-slate-700 text-white shadow-xs"
+                            : "text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        Standard
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Question Content Body */}
+              <div className="p-4 sm:p-5 flex-1 space-y-4">
+                {currentQuestion ? (
+                  <QuestionRenderer
+                    question={currentQuestion}
+                    value={currentAnswerValue}
+                    activityState={activityStates[currentQuestion.id]}
+                    onChange={handleAnswerChange}
+                    readOnly={false}
+                    showMetadata={false}
+                    activeView={questionView}
+                    onToggleView={setQuestionView}
+                  />
+                ) : (
+                  <div className="p-8 text-center text-slate-400">Question not loaded.</div>
                 )}
               </div>
             </div>
 
-            {/* Question Content Body */}
-            <div className="p-4 sm:p-5 flex-1 space-y-4">
-              {currentQuestion ? (
-                <QuestionRenderer
-                  question={currentQuestion}
-                  value={currentAnswerValue}
-                  activityState={activityStates[currentQuestion.id]}
-                  onChange={handleAnswerChange}
-                  readOnly={false}
-                  showMetadata={false}
-                  activeView={questionView}
-                  onToggleView={setQuestionView}
-                />
-              ) : (
-                <div className="p-8 text-center text-slate-400">Question not loaded.</div>
-              )}
+            {/* Right: NTA Question Palette Panel */}
+            <div className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-0">
+              <QuestionPalette
+                questions={questions}
+                currentIndex={currentIndex}
+                visitedIndices={visitedIndices}
+                answeredIndices={answeredIndices}
+                markedForReviewIndices={markedForReviewIndices}
+                activeSectionId={currentSection.id}
+                onSelectIndex={(idx) => setCurrentIndex(idx)}
+                onSubmitExam={() => setShowConfirmModal(true)}
+                candidateName={candidateName}
+                candidateId={candidateId}
+              />
             </div>
-
-            {/* NTA Navigation Actions Bar */}
-            <ExamNavigation
-              currentIndex={currentIndex}
-              totalQuestions={questions.length}
-              onSaveAndNext={handleSaveAndNext}
-              onSaveAndMarkForReview={handleSaveAndMarkForReview}
-              onMarkForReviewAndNext={handleMarkForReviewAndNext}
-              onClearResponse={handleClearResponse}
-              onPrevious={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-              onNext={() => setCurrentIndex(Math.min(questions.length - 1, currentIndex + 1))}
-            />
-          </div>
-
-          {/* Right: NTA Question Palette Panel */}
-          <div className="lg:col-span-4 xl:col-span-3 sticky top-16">
-            <QuestionPalette
-              questions={questions}
-              currentIndex={currentIndex}
-              visitedIndices={visitedIndices}
-              answeredIndices={answeredIndices}
-              markedForReviewIndices={markedForReviewIndices}
-              activeSectionId={currentSection.id}
-              onSelectIndex={(idx) => setCurrentIndex(idx)}
-              onSubmitExam={() => setShowConfirmModal(true)}
-              candidateName={candidateName}
-              candidateId={candidateId}
-            />
           </div>
         </div>
       </main>
+
+      {/* NTA Navigation Actions Bar — pinned to the bottom of the viewport as a
+          permanent flex child (not just "sticky"), so Save & Next and the other
+          per-question actions are always visible without scrolling, on any
+          screen size. */}
+      <ExamNavigation
+        currentIndex={currentIndex}
+        totalQuestions={questions.length}
+        onSaveAndNext={handleSaveAndNext}
+        onSaveAndMarkForReview={handleSaveAndMarkForReview}
+        onMarkForReviewAndNext={handleMarkForReviewAndNext}
+        onClearResponse={handleClearResponse}
+        onPrevious={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+        onNext={() => setCurrentIndex(Math.min(questions.length - 1, currentIndex + 1))}
+        onSubmitExam={() => setShowConfirmModal(true)}
+      />
 
       {/* Official NTA Final Submission Confirmation Summary Dialog */}
       {showConfirmModal && (

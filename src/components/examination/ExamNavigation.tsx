@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowLeft, ArrowRight, RotateCcw, Bookmark, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCcw, Bookmark, CheckCircle2, Send } from "lucide-react";
 
 interface ExamNavigationProps {
   currentIndex: number;
@@ -12,6 +12,9 @@ interface ExamNavigationProps {
   onClearResponse: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  /** Opens the final submission confirmation — kept reachable here too, so
+   * finishing the paper never requires scrolling to find it. */
+  onSubmitExam?: () => void;
 }
 
 export function ExamNavigation({
@@ -23,6 +26,7 @@ export function ExamNavigation({
   onClearResponse,
   onPrevious,
   onNext,
+  onSubmitExam,
 }: ExamNavigationProps) {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === totalQuestions - 1;
@@ -30,9 +34,9 @@ export function ExamNavigation({
   return (
     <nav
       aria-label="NTA Examination Navigation Bar"
-      className="bg-white border-t-2 border-slate-300 sticky bottom-0 z-30 shadow-lg"
+      className="shrink-0 bg-white border-t-2 border-slate-300 z-30 shadow-lg"
     >
-      <div className="w-full max-w-[1750px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 min-h-[64px]">
+      <div className="w-full max-w-[1750px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2 sm:gap-3 min-h-[64px]">
         {/* Left: Previous & Next Simple Navigation */}
         <div className="flex items-center gap-2">
           <button
@@ -95,6 +99,17 @@ export function ExamNavigation({
             <CheckCircle2 className="w-4 h-4" />
             <span>Save & Next</span>
           </button>
+
+          {onSubmitExam && (
+            <button
+              type="button"
+              onClick={onSubmitExam}
+              className="h-[42px] px-5 bg-[#0B4F8A] hover:bg-[#083863] active:bg-[#062644] text-white rounded-lg text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer tracking-wide uppercase"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Submit Paper</span>
+            </button>
+          )}
         </div>
       </div>
     </nav>

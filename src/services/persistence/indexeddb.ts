@@ -94,6 +94,14 @@ class IndexedDBClient {
   }
 
   async put<T>(storeName: keyof DBStores, value: T): Promise<void> {
+    // Exam sessions are the crash-recovery critical record: mirror every write into
+    // localStorage synchronously (in addition to IndexedDB), so recovery survives an
+    // IndexedDB outage/wipe even when the async IDB write itself succeeded fine. This
+    // is a redundant backup, not a replacement — cheap because session records are small.
+    if (storeName === "sessions") {
+      this.fallbackPut(storeName, value);
+    }
+
     try {
       const db = await this.getDB();
       return new Promise((resolve, reject) => {
@@ -123,7 +131,7 @@ class IndexedDBClient {
       });
     } catch (err) {
       console.warn(`[IDB] GetAll failed for store ${storeName}:`, err);
-      return [];
+      return this.fallbackGetAll<T>(storeName);
     }
   }
 
@@ -153,6 +161,28 @@ class IndexedDBClient {
     } catch {
       return null;
     }
+  }
+
+  private fallbackGetAll<T>(storeName: keyof DBStores): T[] {
+    if (typeof window === "undefined") return [];
+    const prefix = `idb_fb_${storeName}_`;
+    const out: T[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(prefix)) continue;
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        try {
+          out.push(JSON.parse(raw));
+        } catch {
+          // skip corrupted entry
+        }
+      }
+    } catch {
+      // localStorage unavailable
+    }
+    return out;
   }
 
   private fallbackPut<T>(storeName: keyof DBStores, value: any): void {

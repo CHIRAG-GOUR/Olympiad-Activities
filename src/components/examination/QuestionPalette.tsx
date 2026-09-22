@@ -141,7 +141,7 @@ export function QuestionPalette({
           <span className="text-[#0B4F8A] font-mono">Q. {currentIndex + 1} Active</span>
         </div>
 
-        <div className="max-h-[300px] overflow-y-auto pr-1">
+        <div className="max-h-[clamp(220px,40vh,460px)] overflow-y-auto pr-1">
           <div className="grid grid-cols-5 gap-2">
             {questions.map((q, idx) => {
               const isCurrent = idx === currentIndex;
