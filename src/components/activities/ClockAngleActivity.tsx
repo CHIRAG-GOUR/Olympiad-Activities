@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Clock,  CheckCircle2, RotateCw } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Clock, CheckCircle2 } from "lucide-react";
 
 interface ClockAngleActivityProps {
   questionId: string;
@@ -13,191 +13,106 @@ interface ClockAngleActivityProps {
 export function ClockAngleActivity({
   value,
   onChange,
-  readOnly = false }: ClockAngleActivityProps) {
+  readOnly = false,
+}: ClockAngleActivityProps) {
   const options = [
-    {
-      id: "A",
-      time: "4:40",
-      hourAngle: 140,
-      minAngle: 240,
-      angleDiff: 100,
-      type: "Obtuse Angle (100°)",
-      desc: "Smallest angle between hands = 240° - 140° = 100°",
-      isObtuse: true },
-    {
-      id: "B",
-      time: "3:00",
-      hourAngle: 90,
-      minAngle: 0,
-      angleDiff: 90,
-      type: "Right Angle (90°)",
-      desc: "Exact perpendicular right angle",
-      isObtuse: false },
-    {
-      id: "C",
-      time: "2:00",
-      hourAngle: 60,
-      minAngle: 0,
-      angleDiff: 60,
-      type: "Acute Angle (60°)",
-      desc: "Angle < 90°",
-      isObtuse: false },
-    {
-      id: "D",
-      time: "6:00",
-      hourAngle: 180,
-      minAngle: 0,
-      angleDiff: 180,
-      type: "Straight Angle (180°)",
-      desc: "Hands in a straight continuous line",
-      isObtuse: false },
+    { id: "A", val: "4:00", label: "Clock A (4:00 = 120° Obtuse)", isCorrect: false },
+    { id: "B", val: "7:00", label: "Clock B (7:00 = 150° Obtuse)", isCorrect: false },
+    { id: "C", val: "8:00", label: "Clock C (8:00 = 120° Obtuse)", isCorrect: false },
+    { id: "D", val: "All of these", label: "All of these (4:00, 7:00, 8:00 are all obtuse angles > 90°)", isCorrect: true },
   ];
 
-  const initialOpt =
-    options.find((o) => o.id === value || o.time === value) || options[0];
+  const [selectedId, setSelectedId] = useState<string>(
+    value ? (options.find((o) => o.id === value || o.val === value)?.id || "D") : ""
+  );
 
-  const [selectedId, setSelectedId] = useState<string>(initialOpt.id);
+  useEffect(() => {
+    if (value) {
+      const match = options.find((o) => o.id === value || o.val === value);
+      if (match) setSelectedId(match.id);
+    }
+  }, [value]);
 
-  const activeOpt = options.find((o) => o.id === selectedId) || options[0];
-
-  const handleSelect = (optId: string) => {
+  const handleSelect = (opt: typeof options[0]) => {
     if (readOnly) return;
-    setSelectedId(optId);
-    onChange(optId);
+    setSelectedId(opt.id);
+    onChange(opt.id);
   };
 
-  // Convert angles to radian cartesian endpoints
-  const hourRad = ((activeOpt.hourAngle - 90) * Math.PI) / 180;
-  const hx = 100 + 46 * Math.cos(hourRad);
-  const hy = 100 + 46 * Math.sin(hourRad);
-
-  const minRad = ((activeOpt.minAngle - 90) * Math.PI) / 180;
-  const mx = 100 + 68 * Math.cos(minRad);
-  const my = 100 + 68 * Math.sin(minRad);
+  const clocks = [
+    { name: "Clock A", time: "4:00", angle: "120°", type: "Obtuse", hourDeg: 120, minDeg: 0 },
+    { name: "Clock B", time: "7:00", angle: "150°", type: "Obtuse", hourDeg: 210, minDeg: 0 },
+    { name: "Clock C", time: "8:00", angle: "120°", type: "Obtuse", hourDeg: 240, minDeg: 0 },
+  ];
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700">
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
             <Clock className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Clock Tower Interactive Laboratory 
+              Clock Angle Laboratory (Obtuse Hands)
             </h3>
             <p className="text-xs text-slate-600">
-              Select or test clock configurations to inspect the angle formed between hands.
+              Inspect the smaller angle between hour & minute hands for 4:00 (120°), 7:00 (150°), and 8:00 (120°).
             </p>
           </div>
         </div>
+      </div>
 
-        <div className="text-xs font-mono font-bold bg-amber-50 text-amber-900 px-3 py-1.5 rounded-lg border border-amber-200">
-          Target: Obtuse Angle (90° &lt; &theta; &lt; 180°)
+      {/* 3 Interactive Clocks Display */}
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {clocks.map((c, i) => {
+            const hAngle = ((c.hourDeg - 90) * Math.PI) / 180;
+            const hx = 60 + 26 * Math.cos(hAngle);
+            const hy = 60 + 26 * Math.sin(hAngle);
+
+            return (
+              <div
+                key={c.name}
+                onClick={() => handleSelect(options[3])}
+                className="p-3 bg-white border-2 border-slate-200 hover:border-emerald-500 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all shadow-xs"
+              >
+                <svg viewBox="0 0 120 120" className="w-28 h-28">
+                  <circle cx="60" cy="60" r="50" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
+                  {/* Minute hand pointing to 12 (top) */}
+                  <line x1="60" y1="60" x2="60" y2="22" stroke="#0284c7" strokeWidth="3" strokeLinecap="round" />
+                  {/* Hour hand */}
+                  <line x1="60" y1="60" x2={hx} y2={hy} stroke="#e11d48" strokeWidth="3.5" strokeLinecap="round" />
+                  <circle cx="60" cy="60" r="4" fill="#0f172a" />
+                  {/* Hour numbers */}
+                  <text x="60" y="19" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">12</text>
+                  <text x="101" y="63" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">3</text>
+                  <text x="60" y="105" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">6</text>
+                  <text x="19" y="63" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#64748b">9</text>
+                </svg>
+                <span className="font-black text-sm text-slate-900 mt-1">{c.name} ({c.time})</span>
+                <span className="text-[11px] font-mono font-bold text-emerald-700">{c.angle} ({c.type})</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Global Confirmation Banner */}
+        <div
+          onClick={() => handleSelect(options[3])}
+          className="mt-3 p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-center text-xs font-mono font-bold text-emerald-900 cursor-pointer hover:bg-emerald-100 transition-colors"
+        >
+          ✓ All 3 Clocks (4:00, 7:00, 8:00) form obtuse angles &gt; 90°. (Click to Select Option D) ★
         </div>
       </div>
 
-      {/* Dynamic Geared Clock Simulator */}
-      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-8 flex-wrap">
-        <div className="relative cursor-pointer select-none">
-          <svg viewBox="0 0 200 200" className="w-52 h-52">
-            {/* Dial Background */}
-            <circle cx="100" cy="100" r="90" fill="#ffffff" stroke="#cbd5e1" strokeWidth="3" />
-            <circle cx="100" cy="100" r="85" fill="#f8fafc" />
-
-            {/* Hour Numbers */}
-            {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((h, i) => {
-              const angle = (i * 30 * Math.PI) / 180;
-              const x = 100 + 70 * Math.sin(angle);
-              const y = 100 - 70 * Math.cos(angle);
-              return (
-                <text
-                  key={h}
-                  x={x}
-                  y={y + 4}
-                  textAnchor="middle"
-                  fill="#475569"
-                  fontSize="12"
-                  fontWeight="bold"
-                  fontFamily="sans-serif"
-                >
-                  {h}
-                </text>
-              );
-            })}
-
-            {/* Angle Sector Arc */}
-            <path
-              d={`M 100 100 L ${hx} ${hy} A 45 45 0 0 ${activeOpt.hourAngle > activeOpt.minAngle ? 0 : 1} ${mx} ${my} Z`}
-              fill={activeOpt.isObtuse ? "#f59e0b" : "#38bdf8"}
-              fillOpacity="0.25"
-              stroke={activeOpt.isObtuse ? "#d97706" : "#0284c7"}
-              strokeWidth="1.5"
-            />
-
-            {/* Minute Hand (Sky Blue) */}
-            <line
-              x1="100"
-              y1="100"
-              x2={mx}
-              y2={my}
-              stroke="#0284c7"
-              strokeWidth="4"
-              strokeLinecap="round"
-              className="transition-all duration-300"
-            />
-
-            {/* Hour Hand (Amber) */}
-            <line
-              x1="100"
-              y1="100"
-              x2={hx}
-              y2={hy}
-              stroke="#d97706"
-              strokeWidth="5.5"
-              strokeLinecap="round"
-              className="transition-all duration-300"
-            />
-
-            {/* Center Cap */}
-            <circle cx="100" cy="100" r="6" fill="#0f172a" />
-          </svg>
-        </div>
-
-        {/* Live Mathematical Angle Telemetry */}
-        <div className="space-y-3 font-mono text-xs max-w-xs">
-          <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-            <span className="text-slate-500 font-bold block">Current Simulation State:</span>
-            <div className="text-2xl font-black text-slate-900 font-sans">{activeOpt.time}</div>
-            <div className="text-slate-600 font-mono">
-              Hour: <strong className="text-amber-700">{activeOpt.hourAngle}°</strong> | Minute:{" "}
-              <strong className="text-sky-700">{activeOpt.minAngle}°</strong>
-            </div>
-          </div>
-
-          <div
-            className={`p-3 rounded-xl border font-bold ${
-              activeOpt.isObtuse
-                ? "bg-emerald-50 border-emerald-300 text-emerald-900"
-                : "bg-slate-100 border-slate-300 text-slate-700"
-            }`}
-          >
-            <div className="text-sm font-black flex items-center justify-between">
-              <span>Angle: {activeOpt.angleDiff}°</span>
-              <span>{activeOpt.type}</span>
-            </div>
-            <p className="text-[11px] font-sans font-normal mt-1">{activeOpt.desc}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Interactive Options Selector Grid */}
+      {/* Answer Options Grid */}
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select Option to Synchronize Clock Hands:
+          Which of the clocks form an obtuse angle between hands?
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((opt) => {
             const isSelected = selectedId === opt.id;
             return (
@@ -205,23 +120,22 @@ export function ClockAngleActivity({
                 key={opt.id}
                 type="button"
                 disabled={readOnly}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
+                onClick={() => handleSelect(opt)}
+                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
                   isSelected
-                    ? "bg-amber-50 border-amber-500 text-amber-950 shadow-md shadow-amber-500/10 scale-[1.02]"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
+                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div>
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
                       {opt.id}
                     </span>
-                    <span className="text-lg font-black font-mono">{opt.time}</span>
+                    <span className="text-base font-black">{opt.label}</span>
                   </div>
-                  {isSelected && <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />}
                 </div>
-                <span className="text-[11px] text-slate-500 mt-2 font-mono">{opt.type}</span>
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
               </button>
             );
           })}

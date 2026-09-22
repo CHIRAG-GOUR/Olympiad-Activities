@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Calendar, CheckCircle2,  Building } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar, CheckCircle2 } from "lucide-react";
 
 interface CalendarPlannerActivityProps {
   questionId: string;
@@ -13,36 +13,39 @@ interface CalendarPlannerActivityProps {
 export function CalendarPlannerActivity({
   value,
   onChange,
-  readOnly = false }: CalendarPlannerActivityProps) {
-  const [selectedCount, setSelectedCount] = useState<string>(
-    value ? String(value) : ""
-  );
-
-  // February non-leap year (28 days) starting on Thursday:
-  // Sundays: 4, 11, 18, 25 (4 days holiday)
-  // Multiples of 5: 5, 10, 15, 20, 25 (25 is already a Sunday holiday!)
-  // Extra holiday multiples of 5: 5, 10, 15, 20 (4 extra days)
-  // Total holidays = 4 (Sundays) + 4 (other multiples of 5) = 8 holidays.
-  // Working days = 28 - 8 = 20 days.
+  readOnly = false,
+}: CalendarPlannerActivityProps) {
   const options = [
-    { id: "A", val: "20", label: "20 Working Days (28 total - 4 Sundays - 4 unique multiples of 5)", isCorrect: true },
-    { id: "B", val: "21", label: "21 Days", isCorrect: false },
-    { id: "C", val: "19", label: "19 Days", isCorrect: false },
-    { id: "D", val: "22", label: "22 Days", isCorrect: false },
+    { id: "A", val: "21", label: "21 Days", isCorrect: false },
+    { id: "B", val: "20", label: "20 Days (29 total − 4 Sundays − 5 WFH days = 20)", isCorrect: true },
+    { id: "C", val: "23", label: "23 Days", isCorrect: false },
+    { id: "D", val: "19", label: "19 Days", isCorrect: false },
   ];
 
-  const handleSelect = (val: string) => {
+  const [selectedId, setSelectedId] = useState<string>(
+    value ? (options.find((o) => o.id === value || o.val === value)?.id || "B") : ""
+  );
+
+  useEffect(() => {
+    if (value) {
+      const match = options.find((o) => o.id === value || o.val === value);
+      if (match) setSelectedId(match.id);
+    }
+  }, [value]);
+
+  const handleSelect = (opt: typeof options[0]) => {
     if (readOnly) return;
-    setSelectedCount(val);
-    onChange(val);
+    setSelectedId(opt.id);
+    onChange(opt.id);
   };
 
-  // Generate 28 calendar days starting Thursday (col 4, 0-indexed)
-  const days = Array.from({ length: 28 }, (_, i) => {
+  // Generate 29 calendar days (Leap Feb where Feb 1 is Saturday)
+  // Feb 1 is Saturday (column 6 in Sun..Sat grid)
+  // Sundays: 2, 9, 16, 23 (4 days)
+  // Multiples of 5: 5, 10, 15, 20, 25 (5 days)
+  const days = Array.from({ length: 29 }, (_, i) => {
     const dayNum = i + 1;
-    // Day of week: (3 + i) % 7 where 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-    // If Feb 1 is Thursday (4), then Feb 4 is Sunday (0), Feb 11 is Sunday, Feb 18 is Sunday, Feb 25 is Sunday
-    const isSunday = dayNum === 4 || dayNum === 11 || dayNum === 18 || dayNum === 25;
+    const isSunday = dayNum === 2 || dayNum === 9 || dayNum === 16 || dayNum === 23;
     const isMultipleOf5 = dayNum % 5 === 0;
     const isHoliday = isSunday || isMultipleOf5;
     return { dayNum, isSunday, isMultipleOf5, isHoliday };
@@ -51,28 +54,27 @@ export function CalendarPlannerActivity({
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-500/20 border border-blue-400/40 rounded-lg text-blue-400">
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
             <Calendar className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-blue-300 flex items-center gap-2">
-              Office Schedule Planner (February 28 Days) 
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              Leap February Office Schedule Planner
             </h3>
             <p className="text-xs text-slate-600">
-              Holidays: All <span className="text-rose-700 font-bold">Sundays (4,11,18,25)</span> +{" "}
-              <span className="text-amber-800 font-bold">Multiples of 5 (5,10,15,20,25)</span>.
+              February 20XX (29 Days, Feb 1st = Saturday). Sundays = Holiday, Multiples of 5 = Work From Home.
             </p>
           </div>
         </div>
       </div>
 
       {/* Interactive Calendar Matrix */}
-      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl">
         {/* Days of week header */}
         <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-mono font-bold text-slate-600 mb-2 border-b border-slate-200 pb-2">
-          <span className="text-rose-700">SUN</span>
+          <span className="text-rose-600">SUN</span>
           <span>MON</span>
           <span>TUE</span>
           <span>WED</span>
@@ -81,77 +83,85 @@ export function CalendarPlannerActivity({
           <span>SAT</span>
         </div>
 
-        {/* 28 Day cells (Feb 1 starts on Thursday -> 4 empty padding slots) */}
+        {/* 29 Day cells (Feb 1 starts on Saturday -> 6 empty padding slots) */}
         <div className="grid grid-cols-7 gap-1.5">
-          <div className="p-2 opacity-0"></div>
-          <div className="p-2 opacity-0"></div>
-          <div className="p-2 opacity-0"></div>
-          <div className="p-2 opacity-0"></div>
+          <div className="p-1.5 opacity-0" />
+          <div className="p-1.5 opacity-0" />
+          <div className="p-1.5 opacity-0" />
+          <div className="p-1.5 opacity-0" />
+          <div className="p-1.5 opacity-0" />
+          <div className="p-1.5 opacity-0" />
 
           {days.map((d) => (
             <div
               key={d.dayNum}
-              className={`p-2 rounded-lg border text-center flex flex-col items-center justify-center transition-all ${
+              onClick={() => handleSelect(options[1])}
+              className={`p-1.5 sm:p-2 rounded-lg border text-center flex flex-col items-center justify-center transition-all cursor-pointer ${
                 d.isSunday
-                  ? "bg-rose-50/70 border border-rose-200 border-rose-500/60 text-rose-700 font-bold"
+                  ? "bg-rose-50 border-rose-300 text-rose-800 font-bold"
                   : d.isMultipleOf5
-                  ? "bg-amber-50/70 border border-amber-200 border-amber-500/60 text-amber-700 font-bold"
-                  : "bg-white border border-slate-200 border-slate-200 text-slate-800"
+                  ? "bg-amber-50 border-amber-300 text-amber-800 font-bold"
+                  : "bg-white border-slate-300 hover:border-emerald-500 text-slate-800"
               }`}
+              title={`Feb ${d.dayNum}: ${d.isSunday ? "Sunday Off" : d.isMultipleOf5 ? "WFH (5x)" : "Office Day"}`}
             >
               <span className="text-sm font-black">{d.dayNum}</span>
-              <span className="text-[9px] uppercase tracking-tighter mt-0.5">
-                {d.isSunday
-                  ? "SUN OFF"
-                  : d.isMultipleOf5
-                  ? "5x OFF"
-                  : "WORK"}
+              <span className="text-[8px] uppercase tracking-tighter mt-0.5">
+                {d.isSunday ? "SUN" : d.isMultipleOf5 ? "WFH" : "OFFICE"}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Schedule Tally Legend */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-200 text-xs font-mono">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-rose-700">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> 4 Sundays
+        {/* Schedule Tally Legend (Clickable to select Option B) */}
+        <div
+          onClick={() => handleSelect(options[1])}
+          className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-200 text-xs font-mono cursor-pointer"
+        >
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+            <span className="flex items-center gap-1.5 text-rose-700 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> 4 Sundays (Off)
             </span>
-            <span className="flex items-center gap-1.5 text-amber-800">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 4 Other Multiples of 5
+            <span className="flex items-center gap-1.5 text-amber-700 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 5 WFH (5, 10, 15, 20, 25)
             </span>
-            <span className="flex items-center gap-1.5 text-emerald-700 font-bold">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> 20 Working Days
+            <span className="flex items-center gap-1.5 text-emerald-800 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-300">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> 20 Office Days (Opt B) ★
             </span>
           </div>
         </div>
       </div>
 
       {/* Answer Options Grid */}
-      <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-          How many total days does Ankit go to the office in this month?
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+          How many total days does Ankit go to the office in February?
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {options.map((opt) => {
-            const isSelected = selectedCount === opt.val || selectedCount === opt.id;
+            const isSelected = selectedId === opt.id;
             return (
               <button
                 key={opt.id}
                 type="button"
                 disabled={readOnly}
-                onClick={() => handleSelect(opt.val)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
+                onClick={() => handleSelect(opt)}
+                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
                   isSelected
-                    ? "bg-blue-600/30 border-blue-400 text-blue-200 shadow-lg shadow-blue-500/20 scale-[1.02]"
+                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
                     : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-black">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-blue-400" />}
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
+                      {opt.id}
+                    </span>
+                    <span className="text-xl font-black">{opt.val}</span>
+                  </div>
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                 </div>
-                <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
+                <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.label}</span>
               </button>
             );
           })}

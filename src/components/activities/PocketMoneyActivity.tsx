@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShoppingBag,  CheckCircle2, Wallet } from "lucide-react";
+import { Package, CheckCircle2, Scale, Truck } from "lucide-react";
 
 interface PocketMoneyActivityProps {
   questionId: string;
@@ -13,121 +13,138 @@ interface PocketMoneyActivityProps {
 export function PocketMoneyActivity({
   value,
   onChange,
-  readOnly = false }: PocketMoneyActivityProps) {
-  // Karan's pocket money problem:
-  // Starts with X.
-  // Shop 1 (Shoes): Spends 1/2 of X -> Remainder = X/2
-  // Shop 2 (Books): Spends 1/2 of remainder = (X/2)/2 = X/4 -> Remainder = X/4
-  // Shop 3 (Furniture/Toys): Spends 1/2 of remainder = (X/4)/2 = X/8 -> Remainder = X/8
-  // Final remaining amount = ₹350
-  // Therefore: X / 8 = ₹350 -> X = 350 * 8 = ₹2,800!
-  const [selectedTotal, setSelectedTotal] = useState<string>(
-    value ? String(value) : ""
-  );
+  readOnly = false,
+}: PocketMoneyActivityProps) {
+  // Question 36: If 12 cartons of mathematics textbooks weigh 180 kg, how many such identical cartons are needed to pack 225 kg of books?
+  // 1 carton weight = 180 / 12 = 15 kg
+  // Total cartons for 225 kg = 225 / 15 = 15 cartons (Option B)
 
   const options = [
-    { id: "A", val: "₹2,800", num: 2800, label: "₹2,800 (350 × 2 × 2 × 2 = ₹2,800)", isCorrect: true },
-    { id: "B", val: "₹2,400", num: 2400, label: "₹2,400", isCorrect: false },
-    { id: "C", val: "₹3,200", num: 3200, label: "₹3,200", isCorrect: false },
-    { id: "D", val: "₹1,400", num: 1400, label: "₹1,400", isCorrect: false },
+    { id: "A", val: "14", num: 14, totalKg: 210, label: "14 Cartons (210 kg)", isCorrect: false },
+    { id: "B", val: "15", num: 15, totalKg: 225, label: "15 Cartons (225 kg - EXACT MATCH)", isCorrect: true },
+    { id: "C", val: "16", num: 16, totalKg: 240, label: "16 Cartons (240 kg)", isCorrect: false },
+    { id: "D", val: "18", num: 18, totalKg: 270, label: "18 Cartons (270 kg)", isCorrect: false },
   ];
 
-  const handleSelect = (val: string) => {
+  const getInitial = () => {
+    if (!value) return "B";
+    const str = String(value).trim();
+    const found = options.find((o) => o.id === str || o.val === str || String(o.num) === str);
+    return found ? found.id : "B";
+  };
+
+  const [selectedId, setSelectedId] = useState<string>(getInitial());
+  const activeOpt = options.find((o) => o.id === selectedId) || options[1];
+
+  const handleSelect = (optId: string) => {
     if (readOnly) return;
-    setSelectedTotal(val);
-    onChange(val);
+    setSelectedId(optId);
+    onChange(optId);
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-4">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-700">
-            <ShoppingBag className="w-5 h-5" />
+          <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-700">
+            <Truck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-emerald-700 flex items-center gap-2">
-              Pocket Money Shopping Day 
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              Textbook Logistics & Packing Warehouse (Q36)
             </h3>
             <p className="text-xs text-slate-600">
-              Karan spends <strong className="text-emerald-700">half of the remaining money</strong> at 3 consecutive shops, leaving ₹350.
+              Unitary Method: 12 cartons weigh 180 kg (15 kg/carton). Calculate cartons needed for <strong className="text-indigo-700">225 kg</strong>.
             </p>
           </div>
         </div>
+
+        <div className="text-xs font-mono font-bold bg-indigo-50 text-indigo-900 px-3 py-1.5 rounded-lg border border-indigo-300">
+          Scale Reading: <span className="text-indigo-700 font-black">{activeOpt.totalKg} kg ({activeOpt.num} Cartons)</span>
+        </div>
       </div>
 
-      {/* Sequential Shopping Street Canvas */}
-      <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
-        <div className="flex items-center justify-between min-w-[520px] gap-3">
-          {/* Start: Initial Wallet */}
-          <div className="p-3.5 bg-white border border-slate-200 rounded-xl flex flex-col items-center">
-            <Wallet className="w-6 h-6 text-amber-800 mb-1" />
-            <span className="text-[10px] font-mono text-slate-600">START WALLET</span>
-            <span className="font-black text-sm text-amber-700">Total X</span>
+      {/* Interactive Warehouse Pallet Canvas */}
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Step 1: Unit Rate Box */}
+        <div
+          onClick={() => handleSelect("B")}
+          className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-2 cursor-pointer hover:border-indigo-400 transition-all shadow-sm"
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-500">
+            <span>1. UNIT CARTON RATE</span>
+            <Scale className="w-4 h-4 text-indigo-600" />
           </div>
-
-          <span className="text-slate-600 font-bold">→</span>
-
-          {/* Shop 1: Shoes (-1/2) */}
-          <div className="p-3 bg-white border border-slate-200 rounded-xl text-center">
-            <span className="text-xs font-bold text-slate-800">1. Shoe Store</span>
-            <span className="text-[10px] text-rose-700 block">-1/2 (Spend ₹1,400)</span>
-            <span className="text-[11px] font-mono text-slate-600">Leaves ₹1,400</span>
+          <div className="text-2xl font-black text-slate-900 font-mono">15 kg / carton</div>
+          <div className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-200">
+            180 kg ÷ 12 cartons = <span className="font-bold text-indigo-700">15 kg</span> per carton
           </div>
+        </div>
 
-          <span className="text-slate-600 font-bold">→</span>
-
-          {/* Shop 2: Books (-1/2 of remainder) */}
-          <div className="p-3 bg-white border border-slate-200 rounded-xl text-center">
-            <span className="text-xs font-bold text-slate-800">2. Book Store</span>
-            <span className="text-[10px] text-rose-700 block">-1/2 (Spend ₹700)</span>
-            <span className="text-[11px] font-mono text-slate-600">Leaves ₹700</span>
+        {/* Step 2: Target Weight */}
+        <div
+          onClick={() => handleSelect("B")}
+          className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-2 cursor-pointer hover:border-indigo-400 transition-all shadow-sm"
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-500">
+            <span>2. TARGET SHIPMENT</span>
+            <Package className="w-4 h-4 text-indigo-600" />
           </div>
-
-          <span className="text-slate-600 font-bold">→</span>
-
-          {/* Shop 3: Toys (-1/2 of remainder) */}
-          <div className="p-3 bg-white border border-slate-200 rounded-xl text-center">
-            <span className="text-xs font-bold text-slate-800">3. Toy Store</span>
-            <span className="text-[10px] text-rose-700 block">-1/2 (Spend ₹350)</span>
-            <span className="text-[11px] font-mono text-slate-600">Leaves ₹350</span>
+          <div className="text-2xl font-black text-indigo-700 font-mono">225 kg Books</div>
+          <div className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-200">
+            Shipment quota required by exam specification
           </div>
+        </div>
 
-          <span className="text-slate-600 font-bold">→</span>
-
-          {/* Final Leftover */}
-          <div className="p-3.5 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex flex-col items-center">
-            <span className="text-[10px] font-mono text-emerald-700 font-bold">REMAINING</span>
-            <span className="font-black text-base text-slate-900">₹350</span>
+        {/* Step 3: Resulting Pallet */}
+        <div
+          onClick={() => handleSelect("B")}
+          className="p-3.5 bg-indigo-50 border-2 border-indigo-500 rounded-xl space-y-2 cursor-pointer shadow-md"
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-indigo-800">
+            <span>3. CARTONS REQUIRED</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="text-3xl font-black text-indigo-950 font-mono">15 Cartons</div>
+          <div className="text-xs text-indigo-900 font-mono font-semibold bg-white/80 p-2 rounded border border-indigo-200">
+            225 kg ÷ 15 kg/carton = <span className="text-emerald-700 font-bold">15 Cartons</span>
           </div>
         </div>
       </div>
 
       {/* Answer Options Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {options.map((opt) => {
-          const isSelected = selectedTotal === opt.val || selectedTotal === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={readOnly}
-              onClick={() => handleSelect(opt.val)}
-              className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
-                isSelected
-                  ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.02]"
-                  : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-black">{opt.val}</span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-700" />}
-              </div>
-              <span className="text-[10px] text-slate-600 mt-2 font-mono">Option {opt.id}</span>
-            </button>
-          );
-        })}
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
+          Select Required Number of Cartons:
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {options.map((opt) => {
+            const isSelected = selectedId === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                disabled={readOnly}
+                onClick={() => handleSelect(opt.id)}
+                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
+                  isSelected
+                    ? "bg-indigo-50 border-indigo-600 text-indigo-950 shadow-sm ring-1 ring-indigo-400"
+                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-2xl font-black font-mono">{opt.val}</span>
+                  {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
+                </div>
+                <div className="mt-1">
+                  <div className="text-[10px] text-slate-500 font-mono">Option {opt.id} ({opt.totalKg} kg)</div>
+                  <div className="text-[10px] text-slate-400 truncate">{opt.label}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

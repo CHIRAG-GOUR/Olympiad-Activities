@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Train,  CheckCircle2, ArrowRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Train, CheckCircle2 } from "lucide-react";
 
 interface RoundingRailwayActivityProps {
   questionId: string;
@@ -13,112 +13,132 @@ interface RoundingRailwayActivityProps {
 export function RoundingRailwayActivity({
   value,
   onChange,
-  readOnly = false }: RoundingRailwayActivityProps) {
-  // Rounding 5,78,634 to the nearest thousand:
-  // Hundreds digit is 6 (>= 5) -> rounds UP to 5,79,000!
-  const [selectedStation, setSelectedStation] = useState<string>(
-    value ? String(value) : ""
-  );
-
+  readOnly = false,
+}: RoundingRailwayActivityProps) {
   const options = [
-    { id: "A", val: "5,79,000", label: "5,79,000 (Rounds UP since hundreds digit is 6 ≥ 5)", isCorrect: true },
-    { id: "B", val: "5,78,000", label: "5,78,000 (Rounds down)", isCorrect: false },
-    { id: "C", val: "5,80,000", label: "5,80,000 (Rounded to nearest ten-thousand)", isCorrect: false },
-    { id: "D", val: "5,78,600", label: "5,78,600 (Rounded to nearest hundred)", isCorrect: false },
+    { id: "A", val: "360000", label: "3,60,000", isCorrect: false },
+    { id: "B", val: "354000", label: "3,54,000 (7,90,000 − 4,36,000 = 3,54,000)", isCorrect: true },
+    { id: "C", val: "352000", label: "3,52,000", isCorrect: false },
+    { id: "D", val: "362000", label: "3,62,000", isCorrect: false },
   ];
 
-  const handleSelect = (val: string) => {
+  const [selectedId, setSelectedId] = useState<string>(
+    value ? (options.find((o) => o.id === value || o.val === value)?.id || "B") : ""
+  );
+
+  useEffect(() => {
+    if (value) {
+      const match = options.find((o) => o.id === value || o.val === value);
+      if (match) setSelectedId(match.id);
+    }
+  }, [value]);
+
+  const handleSelect = (opt: typeof options[0]) => {
     if (readOnly) return;
-    setSelectedStation(val);
-    onChange(val);
+    setSelectedId(opt.id);
+    onChange(opt.id);
   };
+
+  const selectedOpt = options.find((o) => o.id === selectedId);
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-800">
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
             <Train className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-amber-700 flex items-center gap-2">
-              Rounding Railway (Nearest 1,000) 
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              Rounding Railway Yard (Nearest 1,000)
             </h3>
             <p className="text-xs text-slate-600">
-              The train is loaded with <strong className="text-slate-900 font-mono">5,78,634</strong>. Switch the track to its nearest thousand station.
+              Round <strong className="text-slate-900 font-mono">7,89,562</strong> → 7,90,000 and <strong className="text-slate-900 font-mono">4,35,821</strong> → 4,36,000. Calculate their estimated difference.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Railway Number Line Track */}
-      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col items-center justify-center">
-        <div className="w-full max-w-lg relative py-8">
-          {/* Main Track Line */}
-          <div className="h-3 bg-slate-100 border border-slate-200 border-y border-slate-200 w-full relative flex items-center justify-between px-2">
-            {/* Midpoint 5,78,500 marker */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-4 flex flex-col items-center">
-              <span className="text-[10px] font-mono text-slate-600">Midpoint: 5,78,500</span>
-              <div className="w-0.5 h-6 bg-amber-500" />
+      {/* Railway Number Line Track (Interactive Canvas) */}
+      <div className="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center">
+        <div className="w-full max-w-lg relative py-6">
+          {/* Dual Trains Telemetry */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div
+              onClick={() => handleSelect(options[1])}
+              className="p-3 bg-white border-2 border-slate-200 hover:border-emerald-400 rounded-xl text-center cursor-pointer transition-all shadow-xs"
+            >
+              <span className="text-[11px] font-mono text-slate-500 uppercase block font-bold">Train 1 (Load A)</span>
+              <span className="text-sm font-black text-slate-900">7,89,562</span>
+              <div className="text-xs font-mono font-bold text-emerald-700 mt-1">
+                ≈ 7,90,000 (Rounds Up)
+              </div>
             </div>
 
-            {/* Train Position: 5,78,634 (at ~63% position) */}
             <div
-              className="absolute left-[63%] -translate-x-1/2 -top-8 flex flex-col items-center transition-all animate-bounce"
+              onClick={() => handleSelect(options[1])}
+              className="p-3 bg-white border-2 border-slate-200 hover:border-emerald-400 rounded-xl text-center cursor-pointer transition-all shadow-xs"
             >
-              <div className="px-2.5 py-1 bg-amber-500 border border-amber-300 rounded-md text-[11px] font-black text-slate-950 shadow-lg flex items-center gap-1">
-                🚂 5,78,634
+              <span className="text-[11px] font-mono text-slate-500 uppercase block font-bold">Train 2 (Load B)</span>
+              <span className="text-sm font-black text-slate-900">4,35,821</span>
+              <div className="text-xs font-mono font-bold text-emerald-700 mt-1">
+                ≈ 4,36,000 (Rounds Up)
               </div>
-              <div className="w-2 h-2 bg-amber-400 transform rotate-45 -mt-1" />
+            </div>
+          </div>
+
+          {/* Main Track Line with Switch */}
+          <div
+            onClick={() => handleSelect(options[1])}
+            className="h-4 bg-slate-200 rounded-full w-full relative flex items-center justify-between px-3 cursor-pointer shadow-inner"
+          >
+            <div className="absolute left-[50%] -translate-x-1/2 -top-7 flex flex-col items-center">
+              <div className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-black shadow-xs flex items-center gap-1.5 animate-bounce">
+                🚂 Difference: 3,54,000
+              </div>
+              <div className="w-2 h-2 bg-emerald-600 transform rotate-45 -mt-1" />
             </div>
           </div>
 
           {/* Station Platforms */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex flex-col items-start">
-              <span className="text-xs font-mono font-bold text-slate-600">Station A</span>
-              <span className="font-black text-base text-slate-800">5,78,000</span>
-              <span className="text-[10px] text-slate-500 font-mono">(Distance: 634)</span>
-            </div>
-
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-mono font-bold text-emerald-700">Station B (Nearest)</span>
-              <span className="font-black text-base text-emerald-700">5,79,000</span>
-              <span className="text-[10px] text-emerald-700/80 font-mono">(Distance: 366 ← Closer!)</span>
-            </div>
+          <div className="flex items-center justify-between mt-3 text-xs font-mono">
+            <span className="text-slate-500">7,90,000 (Minuend)</span>
+            <span className="text-emerald-700 font-bold">− 4,36,000 (Subtrahend)</span>
           </div>
         </div>
       </div>
 
       {/* Destination Stations Grid */}
-      <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-          Select the rounded number at the nearest thousand station:
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+          Select Estimated Difference at Junction:
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((opt) => {
-            const isSelected = selectedStation === opt.val || selectedStation === opt.id;
+            const isSelected = selectedId === opt.id;
             return (
               <button
                 key={opt.id}
                 type="button"
                 disabled={readOnly}
-                onClick={() => handleSelect(opt.val)}
-                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
+                onClick={() => handleSelect(opt)}
+                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
                   isSelected
-                    ? "bg-amber-600/30 border-amber-400 text-amber-800 shadow-lg shadow-amber-500/20 scale-[1.01]"
+                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
                     : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div>
-                  <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-amber-800 mr-2">
-                    Option {opt.id}
-                  </span>
-                  <span className="font-mono text-lg font-black">{opt.val}</span>
-                  <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
+                      {opt.id}
+                    </span>
+                    <span className="font-mono text-lg font-black">{opt.val}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1 font-medium">{opt.label}</p>
                 </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-amber-800 shrink-0" />}
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
               </button>
             );
           })}

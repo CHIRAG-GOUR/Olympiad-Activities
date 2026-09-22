@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Wrench, Play, CheckCircle2,  ArrowRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Wrench, CheckCircle2, ArrowRight } from "lucide-react";
 
 interface OperatorFactoryActivityProps {
   questionId: string;
@@ -13,120 +13,135 @@ interface OperatorFactoryActivityProps {
 export function OperatorFactoryActivity({
   value,
   onChange,
-  readOnly = false }: OperatorFactoryActivityProps) {
-  const [selectedResult, setSelectedResult] = useState<string>(
-    value ? String(value) : ""
-  );
-
-  // Expression: 510 + 17 x 15 / 2
-  // Operator Mappings:
-  // '+' means '/' (divide)
-  // 'x' means '-' (subtract)
-  // '/' means '+' (add)
-  // '-' means 'x' (multiply)
-  // Transformed Expression: 510 ÷ 17 - 15 + 2
-  // Step 1: 510 ÷ 17 = 30
-  // Step 2: 30 - 15 = 15
-  // Step 3: 15 + 2 = 17
+  readOnly = false,
+}: OperatorFactoryActivityProps) {
   const options = [
-    { id: "A", val: "17", label: "17 (30 - 15 + 2 = 17)", isCorrect: true },
-    { id: "B", val: "24", label: "24", isCorrect: false },
-    { id: "C", val: "32", label: "32", isCorrect: false },
-    { id: "D", val: "45", label: "45", isCorrect: false },
+    { id: "A", val: "60", label: "60", isCorrect: false },
+    { id: "B", val: "0", label: "0 (510 ÷ 17 − 15 × 2 = 30 − 30 = 0)", isCorrect: true },
+    { id: "C", val: "30", label: "30", isCorrect: false },
+    { id: "D", val: "12", label: "12", isCorrect: false },
   ];
 
-  const handleSelect = (val: string) => {
+  const [selectedId, setSelectedId] = useState<string>(
+    value ? (options.find((o) => o.id === value || o.val === value)?.id || "B") : ""
+  );
+
+  useEffect(() => {
+    if (value) {
+      const match = options.find((o) => o.id === value || o.val === value);
+      if (match) setSelectedId(match.id);
+    }
+  }, [value]);
+
+  const handleSelect = (opt: typeof options[0]) => {
     if (readOnly) return;
-    setSelectedResult(val);
-    onChange(val);
+    setSelectedId(opt.id);
+    onChange(opt.id);
   };
+
+  const selectedOpt = options.find((o) => o.id === selectedId);
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-lg text-amber-800">
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
             <Wrench className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-amber-700 flex items-center gap-2">
-              Mathematical Operator Factory 
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              Mathematical Operator Factory
             </h3>
             <p className="text-xs text-slate-600">
-              Substitution Pipeline: <span className="text-amber-800">[+] → [÷]</span>,{" "}
-              <span className="text-amber-800">[×] → [-]</span>,{" "}
-              <span className="text-amber-800">[÷] → [+]</span>
+              Substitution Pipeline: <span className="text-emerald-700 font-bold">[+] → [÷]</span>,{" "}
+              <span className="text-emerald-700 font-bold">[×] → [−]</span>,{" "}
+              <span className="text-emerald-700 font-bold">[÷] → [×]</span>
             </p>
           </div>
         </div>
       </div>
 
-      {/* Assembly Line Calculation Pipeline */}
-      <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
-        <div className="flex items-center justify-center min-w-[500px] gap-3 text-lg font-mono">
-          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
+      {/* Assembly Line Calculation Pipeline (Interactive on-canvas elements) */}
+      <div className="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl overflow-x-auto shadow-xs">
+        <div className="flex items-center justify-center min-w-[520px] gap-3 text-lg font-mono">
+          <div className="px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-2xl text-slate-900 shadow-xs">
             510
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-xs text-slate-500 line-through">+</span>
-            <span className="px-2.5 py-1 bg-amber-500/20 border border-amber-400/60 rounded text-amber-700 font-black">
+            <span className="text-xs text-slate-400 line-through">+</span>
+            <span className="px-3 py-1 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 font-black">
               ÷
             </span>
           </div>
-          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
+          <div className="px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-2xl text-slate-900 shadow-xs">
             17
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-xs text-slate-500 line-through">×</span>
-            <span className="px-2.5 py-1 bg-amber-500/20 border border-amber-400/60 rounded text-amber-700 font-black">
-              -
+            <span className="text-xs text-slate-400 line-through">×</span>
+            <span className="px-3 py-1 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 font-black">
+              −
             </span>
           </div>
-          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
+          <div className="px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-2xl text-slate-900 shadow-xs">
             15
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-xs text-slate-500 line-through">÷</span>
-            <span className="px-2.5 py-1 bg-amber-500/20 border border-amber-400/60 rounded text-amber-700 font-black">
-              +
+            <span className="text-xs text-slate-400 line-through">÷</span>
+            <span className="px-3 py-1 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 font-black">
+              ×
             </span>
           </div>
-          <div className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-black text-2xl text-slate-900">
+          <div className="px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-2xl text-slate-900 shadow-xs">
             2
           </div>
-          <ArrowRight className="w-5 h-5 text-amber-800 mx-2" />
-          <div className="px-4 py-3 bg-amber-50 border border-amber-200 border-2 border-amber-400 rounded-xl font-black text-2xl text-amber-800">
-            {selectedResult || "?"}
-          </div>
+          <ArrowRight className="w-5 h-5 text-slate-400 mx-1" />
+          <button
+            type="button"
+            disabled={readOnly}
+            onClick={() => handleSelect(options[1])}
+            className={`px-4 py-3 rounded-xl border-2 font-black text-2xl transition-all cursor-pointer ${
+              selectedId === "B"
+                ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md ring-4 ring-emerald-400/30 scale-105"
+                : "bg-white border-amber-400 text-amber-800 hover:border-emerald-500"
+            }`}
+            title="Click to calculate BODMAS value: 30 - 30 = 0 (Opt B)"
+          >
+            {selectedOpt ? selectedOpt.val : "0"}
+          </button>
         </div>
       </div>
 
       {/* Answer Options Grid */}
-      <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-          Evaluate the result of the transformed arithmetic expression:
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+          Evaluate the result of 510 ÷ 17 − 15 × 2:
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {options.map((opt) => {
-            const isSelected = selectedResult === opt.val || selectedResult === opt.id;
+            const isSelected = selectedId === opt.id;
             return (
               <button
                 key={opt.id}
                 type="button"
                 disabled={readOnly}
-                onClick={() => handleSelect(opt.val)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
+                onClick={() => handleSelect(opt)}
+                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
                   isSelected
-                    ? "bg-amber-600/30 border-amber-400 text-amber-800 shadow-lg shadow-amber-500/20 scale-[1.02]"
+                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
                     : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-black">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-800" />}
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
+                      {opt.id}
+                    </span>
+                    <span className="text-2xl font-black">{opt.val}</span>
+                  </div>
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                 </div>
-                <span className="text-[10px] text-slate-600 mt-2 font-mono">{opt.label}</span>
+                <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.label}</span>
               </button>
             );
           })}

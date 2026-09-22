@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { RefreshCw, ArrowRight, CheckCircle2,  Droplets } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { RefreshCw, ArrowRight, CheckCircle2, Droplets } from "lucide-react";
 
 interface TransformationLabActivityProps {
   questionId: string;
@@ -13,13 +13,8 @@ interface TransformationLabActivityProps {
 export function TransformationLabActivity({
   value,
   onChange,
-  readOnly = false }: TransformationLabActivityProps) {
-  const [selectedWord, setSelectedWord] = useState<string>(value ? String(value) : "");
-
-  // Substitution chain:
-  // Apple -> Grass -> Water -> Coal -> Leaf
-  // Question: What is used to drink / What represents the colourless object (Water)?
-  // In substitution code: 'Water' is called 'Coal'.
+  readOnly = false,
+}: TransformationLabActivityProps) {
   const chain = [
     { from: "Apple", to: "Grass", icon: "🍎" },
     { from: "Grass", to: "Water", icon: "🌿" },
@@ -28,63 +23,79 @@ export function TransformationLabActivity({
   ];
 
   const options = [
-    { id: "A", val: "Coal", label: "Coal (Since 'Water' is called 'Coal')", isCorrect: true },
-    { id: "B", val: "Water", label: "Water", isCorrect: false },
+    { id: "A", val: "Water", label: "Water", isCorrect: false },
+    { id: "B", val: "Coal", label: "Coal (Since 'Water' is called 'Coal')", isCorrect: true },
     { id: "C", val: "Grass", label: "Grass", isCorrect: false },
-    { id: "D", val: "Leaf", label: "Leaf", isCorrect: false },
+    { id: "D", val: "Apple", label: "Apple", isCorrect: false },
   ];
 
-  const handleSelect = (val: string) => {
+  const [selectedId, setSelectedId] = useState<string>(
+    value ? (options.find((o) => o.id === value || o.val === value)?.id || "B") : ""
+  );
+
+  useEffect(() => {
+    if (value) {
+      const match = options.find((o) => o.id === value || o.val === value);
+      if (match) setSelectedId(match.id);
+    }
+  }, [value]);
+
+  const handleSelect = (opt: typeof options[0]) => {
     if (readOnly) return;
-    setSelectedWord(val);
-    onChange(val);
+    setSelectedId(opt.id);
+    onChange(opt.id);
   };
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-cyan-500/20 border border-cyan-400/40 rounded-lg text-cyan-800">
-            <RefreshCw className="w-5 h-5 animate-spin-slow" />
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
+            <RefreshCw className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-cyan-700 flex items-center gap-2">
-              Word Transformation Laboratory 
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              Substitution Cipher Laboratory
             </h3>
             <p className="text-xs text-slate-600">
-              Follow the substitution pipeline: Identify what a thirsty person will drink (Water → ?).
+              Click any stage on the substitution conveyor to decode what represents naturally colourless liquid (Water).
             </p>
           </div>
         </div>
       </div>
 
       {/* Interactive Mutation Pipeline Conveyor */}
-      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl overflow-x-auto shadow-inner">
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl overflow-x-auto shadow-xs">
         <div className="flex items-center justify-between min-w-[500px] gap-2">
           {chain.map((step, idx) => (
             <React.Fragment key={step.from}>
               <div
-                className={`flex-1 p-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${
+                onClick={() => {
+                  if (step.isTargetTransition) handleSelect(options[1]); // Coal
+                }}
+                className={`flex-1 p-3 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer ${
                   step.isTargetTransition
-                    ? "bg-cyan-50 border border-cyan-200 border-cyan-400 shadow-lg shadow-cyan-500/20"
-                    : "bg-white border border-slate-200 border-slate-200"
+                    ? selectedId === "B"
+                      ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md ring-4 ring-emerald-400/30 scale-105"
+                      : "bg-white border-amber-400 text-amber-900 hover:border-emerald-500"
+                    : "bg-white border-slate-200 text-slate-800"
                 }`}
               >
                 <span className="text-2xl mb-1">{step.icon}</span>
                 <span className="font-extrabold text-sm text-slate-900">{step.from}</span>
-                <span className="text-[10px] font-mono text-slate-600">is called</span>
+                <span className="text-[10px] font-mono text-slate-500">is called</span>
                 <span
                   className={`font-black text-sm mt-0.5 ${
-                    step.isTargetTransition ? "text-cyan-700" : "text-amber-700"
+                    step.isTargetTransition ? "text-emerald-700" : "text-slate-700"
                   }`}
                 >
-                  {step.to}
+                  {step.to} {step.isTargetTransition ? "★" : ""}
                 </span>
               </div>
 
               {idx < chain.length - 1 && (
-                <ArrowRight className="w-5 h-5 text-slate-600 shrink-0" />
+                <ArrowRight className="w-5 h-5 text-slate-400 shrink-0" />
               )}
             </React.Fragment>
           ))}
@@ -92,35 +103,39 @@ export function TransformationLabActivity({
       </div>
 
       {/* Target Clue & Selection Grid */}
-      <div className="space-y-3">
-        <div className="p-3.5 bg-white border border-slate-200 rounded-xl flex items-center gap-3">
-          <Droplets className="w-5 h-5 text-cyan-800" />
+      <div className="space-y-2">
+        <div className="p-3 bg-emerald-50/50 border border-emerald-200 rounded-xl flex items-center gap-3">
+          <Droplets className="w-5 h-5 text-emerald-700 shrink-0" />
           <p className="text-xs text-slate-700">
-            A thirsty person drinks <strong className="text-cyan-700 font-bold">Water</strong>.
-            Under this code, what is Water called?
+            Water is naturally colourless. Under this cipher: <strong className="text-emerald-800 font-bold">"Water is called Coal"</strong>.
           </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {options.map((opt) => {
-            const isSelected = selectedWord === opt.val || selectedWord === opt.id;
+            const isSelected = selectedId === opt.id;
             return (
               <button
                 key={opt.id}
                 type="button"
                 disabled={readOnly}
-                onClick={() => handleSelect(opt.val)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
+                onClick={() => handleSelect(opt)}
+                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
                   isSelected
-                    ? "bg-cyan-600/30 border-cyan-400 text-cyan-800 shadow-lg shadow-cyan-500/20 scale-[1.02]"
+                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
                     : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-black">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-cyan-800" />}
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
+                      {opt.id}
+                    </span>
+                    <span className="text-lg font-black">{opt.val}</span>
+                  </div>
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                 </div>
-                <span className="text-[10px] text-slate-600 mt-2">Option {opt.id}</span>
+                <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.label}</span>
               </button>
             );
           })}

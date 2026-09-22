@@ -100,17 +100,22 @@ export function ShapeClassificationActivity({
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-2 text-[11px] font-bold">
-          <span className="px-2 py-0.5 rounded bg-sky-100 text-sky-900 border border-sky-300">
-            Class 1 (Curves)
-          </span>
-          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
-            Class 2 (Polygons)
-          </span>
-          <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
-            Class 3 (Mixed)
-          </span>
+        {/* Quick Group Preset Buttons */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => handleSelectOption(opt.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                selectedId === opt.id
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+              }`}
+            >
+              Option {opt.id}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -126,7 +131,9 @@ export function ShapeClassificationActivity({
             return (
               <div
                 key={fig.num}
-                className="p-3 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-between text-center gap-2 shadow-xs transition-all"
+                onClick={() => handleSelectOption("B")}
+                className="p-3 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-between text-center gap-2 shadow-xs transition-all cursor-pointer hover:border-indigo-400 hover:scale-[1.02]"
+                title="Click to inspect this classification"
               >
                 <div className="flex items-center justify-between w-full text-[11px] font-mono">
                   <span className="font-bold text-slate-500">#{fig.num}</span>

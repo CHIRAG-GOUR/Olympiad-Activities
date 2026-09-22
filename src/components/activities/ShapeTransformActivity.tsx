@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowRight, Play, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Play, CheckCircle2, Shuffle } from "lucide-react";
 
 interface ShapeTransformActivityProps {
   questionId: string;
@@ -33,16 +33,22 @@ export function ShapeTransformActivity({
     onChange(id);
   };
 
+  const runSimulation = () => {
+    setIsSimulating(true);
+    handleSelect("A");
+    setTimeout(() => setIsSimulating(false), 800);
+  };
+
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-purple-500/20 border border-purple-400/40 rounded-lg text-purple-700">
-            
+          <div className="p-2.5 bg-purple-50 border border-purple-200 rounded-xl text-purple-700">
+            <Shuffle className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-purple-700 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
               Shape Transformation Machine
             </h3>
             <p className="text-xs text-slate-600">
@@ -53,71 +59,71 @@ export function ShapeTransformActivity({
 
         <button
           type="button"
-          onClick={() => {
-            setIsSimulating(true);
-            setTimeout(() => setIsSimulating(false), 1200);
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-800 hover:bg-purple-700 border border-purple-600 rounded text-xs font-semibold text-purple-800 transition"
+          onClick={runSimulation}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
         >
-          <Play className="w-3.5 h-3.5" /> Run Machine
+          <Play className="w-3.5 h-3.5 fill-current" /> Run Mutation
         </button>
       </div>
 
       {/* Machine Chamber Visualizer */}
-      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-around flex-wrap gap-4">
+      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-around flex-wrap gap-4">
         {/* Stage 1: Figure (i) */}
         <div className="flex flex-col items-center gap-2">
-          <div className="w-20 h-20 bg-white border border-slate-200 rounded-xl flex items-center justify-center p-2 shadow-inner">
+          <div className="w-20 h-20 bg-white border border-slate-200 rounded-xl flex items-center justify-center p-2 shadow-xs">
             <svg viewBox="0 0 60 60" className="w-full h-full">
-              <polygon points="30,5 55,50 5,50" fill="none" stroke="#38bdf8" strokeWidth="2.5" />
-              <circle cx="30" cy="35" r="7" fill="#f43f5e" />
+              <polygon points="30,5 55,50 5,50" fill="none" stroke="#0284c7" strokeWidth="2.5" />
+              <circle cx="30" cy="35" r="7" fill="#e11d48" />
             </svg>
           </div>
-          <span className="text-[11px] font-mono text-slate-600">Figure (i)</span>
+          <span className="text-[11px] font-mono text-slate-600 font-bold">Figure (i)</span>
         </div>
 
-        <ArrowRight className="w-6 h-6 text-purple-700 animate-pulse" />
+        <ArrowRight className="w-6 h-6 text-purple-600 animate-pulse" />
 
         {/* Stage 2: Figure (ii) Result */}
         <div className="flex flex-col items-center gap-2">
-          <div className="w-20 h-20 bg-white border border-slate-200 border border-purple-500/60 rounded-xl flex items-center justify-center p-2 shadow-inner">
+          <div className="w-20 h-20 bg-purple-50/70 border-2 border-purple-300 rounded-xl flex items-center justify-center p-2 shadow-xs">
             <svg viewBox="0 0 60 60" className="w-full h-full">
-              <polygon points="30,55 55,10 5,10" fill="none" stroke="#38bdf8" strokeWidth="2.5" />
-              <rect x="23" y="20" width="14" height="14" fill="#f43f5e" />
+              <polygon points="30,55 55,10 5,10" fill="none" stroke="#0284c7" strokeWidth="2.5" />
+              <rect x="23" y="20" width="14" height="14" fill="#e11d48" />
             </svg>
           </div>
-          <span className="text-[11px] font-mono text-purple-700 font-bold">Figure (ii) (Transformed)</span>
+          <span className="text-[11px] font-mono text-purple-700 font-bold">Figure (ii) (Mutated)</span>
         </div>
 
-        <div className="w-px h-16 bg-slate-100 border border-slate-200 hidden sm:block" />
+        <div className="w-px h-16 bg-slate-200 hidden sm:block" />
 
         {/* Stage 3: Figure (iii) Target Input */}
         <div className="flex flex-col items-center gap-2">
-          <div className="w-20 h-20 bg-white border border-slate-200 rounded-xl flex items-center justify-center p-2 shadow-inner">
+          <div className="w-20 h-20 bg-white border border-slate-200 rounded-xl flex items-center justify-center p-2 shadow-xs">
             <svg viewBox="0 0 60 60" className="w-full h-full">
-              <rect x="10" y="10" width="40" height="40" rx="4" fill="none" stroke="#34d399" strokeWidth="2.5" />
-              <polygon points="30,20 40,40 20,40" fill="#fbbf24" />
+              <rect x="10" y="10" width="40" height="40" rx="4" fill="none" stroke="#059669" strokeWidth="2.5" />
+              <polygon points="30,20 40,40 20,40" fill="#d97706" />
             </svg>
           </div>
-          <span className="text-[11px] font-mono text-slate-600">Figure (iii) (Input)</span>
+          <span className="text-[11px] font-mono text-slate-600 font-bold">Figure (iii) (Input)</span>
         </div>
 
-        <ArrowRight className="w-6 h-6 text-emerald-700 animate-pulse" />
+        <ArrowRight className="w-6 h-6 text-emerald-600 animate-pulse" />
 
         {/* Stage 4: Result Output Slot */}
-        <div className="flex flex-col items-center gap-2">
+        <div
+          onClick={() => handleSelect("A")}
+          className="flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition-transform"
+        >
           <div
-            className={`w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center p-2 transition-all ${
+            className={`w-20 h-20 rounded-xl border-2 flex items-center justify-center p-2 transition-all ${
               selectedOption
-                ? "bg-purple-50/70 border border-purple-200 border-purple-400 shadow-lg shadow-purple-500/20"
-                : "bg-white border border-slate-200 border-slate-200"
+                ? "bg-purple-50 border-purple-600 text-purple-900 shadow-md shadow-purple-600/10"
+                : "bg-white border-2 border-dashed border-slate-300"
             }`}
           >
-            <span className="font-black text-2xl text-purple-700">
-              {selectedOption ? `Opt ${selectedOption}` : "?"}
+            <span className="font-black text-xl font-mono text-purple-800">
+              {selectedOption ? `Opt ${selectedOption}` : "Click Target"}
             </span>
           </div>
-          <span className="text-[11px] font-mono text-emerald-700 font-bold">Figure (iv) Target</span>
+          <span className="text-[11px] font-mono text-purple-700 font-bold">Figure (iv) (Click)</span>
         </div>
       </div>
 
@@ -131,17 +137,22 @@ export function ShapeTransformActivity({
               type="button"
               disabled={readOnly}
               onClick={() => handleSelect(opt.id)}
-              className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
+              className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
                 isSelected
-                  ? "bg-purple-600/30 border-purple-400 text-purple-800 shadow-lg shadow-purple-500/20 scale-[1.02]"
+                  ? "bg-purple-50 border-purple-600 text-purple-950 shadow-md shadow-purple-600/10 scale-[1.02]"
                   : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-base font-black">{opt.label}</span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 text-purple-700" />}
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
+                    {opt.id}
+                  </span>
+                  <span className="text-base font-black font-mono">{opt.label}</span>
+                </div>
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-purple-600 shrink-0" />}
               </div>
-              <span className="text-[10px] text-slate-600 mt-2">{opt.desc}</span>
+              <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.desc}</span>
             </button>
           );
         })}

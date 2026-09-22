@@ -58,10 +58,13 @@ export function FieldRaceActivity({
         </div>
       </div>
 
-      {/* Dual Track Telemetry Meters */}
+      {/* Dual Track Telemetry Meters with direct interaction */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Rashi's Telemetry */}
-        <div className="p-4 bg-slate-50 border border-slate-200 border border-sky-500/40 rounded-xl space-y-2">
+        <div
+          onClick={() => handleSelect("Rashi, 1000 m")}
+          className="p-4 bg-slate-50 border-2 border-slate-200 hover:border-sky-400 rounded-xl space-y-2 cursor-pointer transition-all hover:scale-[1.01]"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono font-bold text-sky-800">RASHI (5 LAPS)</span>
             <span className="text-[10px] text-slate-600 font-mono">Rect: 52m × 30m</span>
@@ -69,29 +72,37 @@ export function FieldRaceActivity({
           <div className="text-xs text-slate-700 font-mono">
             Lap = 2 × (52 + 30) = 164 m
           </div>
-          <div className="pt-2 border-t border-slate-200 text-xl font-black text-sky-700">
-            Total = 5 × 164 = 820 m
+          <div className="pt-2 border-t border-slate-200 text-xl font-black text-sky-700 flex items-center justify-between">
+            <span>Total = 5 × 164 = 820 m</span>
+            <span className="text-xs font-normal text-slate-500 font-sans">Click to test Rashi</span>
           </div>
         </div>
 
         {/* Kirti's Telemetry */}
-        <div className="p-4 bg-slate-50 border border-slate-200 border border-emerald-500/40 rounded-xl space-y-2">
+        <div
+          onClick={() => handleSelect("Kirti, 1000 m")}
+          className="p-4 bg-emerald-50/60 border-2 border-emerald-400/80 rounded-xl space-y-2 cursor-pointer transition-all hover:scale-[1.01] hover:border-emerald-500 shadow-xs"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-emerald-700">KIRTI (7 LAPS)</span>
+            <span className="text-xs font-mono font-bold text-emerald-800">KIRTI (7 LAPS)</span>
             <span className="text-[10px] text-slate-600 font-mono">Square: 65m side</span>
           </div>
           <div className="text-xs text-slate-700 font-mono">
             Lap = 4 × 65 = 260 m
           </div>
-          <div className="pt-2 border-t border-slate-200 text-xl font-black text-emerald-700">
-            Total = 7 × 260 = 1,820 m
+          <div className="pt-2 border-t border-emerald-200 text-xl font-black text-emerald-700 flex items-center justify-between">
+            <span>Total = 7 × 260 = 1,820 m</span>
+            <span className="text-xs font-bold text-emerald-700 font-sans">✓ Covers More (Click to Select)</span>
           </div>
         </div>
       </div>
 
       {/* Comparison Delta Banner */}
-      <div className="p-3 bg-white border border-slate-200 rounded-lg text-center font-mono text-xs text-slate-700">
-        Distance Differential = 1,820 m - 820 m = <strong className="text-emerald-700 text-sm">1,000 m (Kirti covers more)</strong>
+      <div
+        onClick={() => handleSelect("Kirti, 1000 m")}
+        className="p-3 bg-white border-2 border-emerald-400 rounded-xl text-center font-mono text-xs text-slate-700 cursor-pointer hover:bg-emerald-50 transition-all shadow-xs"
+      >
+        Distance Differential = 1,820 m - 820 m = <strong className="text-emerald-700 text-sm">1,000 m (Kirti covers more - Option A)</strong>
       </div>
 
       {/* Answer Options Grid */}
@@ -104,20 +115,20 @@ export function FieldRaceActivity({
               type="button"
               disabled={readOnly}
               onClick={() => handleSelect(opt.val)}
-              className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
+              className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
                 isSelected
-                  ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.01]"
+                  ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
                   : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
               }`}
             >
               <div>
-                <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-emerald-700 mr-2">
+                <span className="px-2 py-0.5 bg-slate-100 border border-slate-300 rounded text-xs font-mono text-emerald-700 mr-2">
                   Option {opt.id}
                 </span>
                 <span className="font-mono text-base font-black">{opt.val}</span>
                 <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
               </div>
-              {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />}
+              {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
             </button>
           );
         })}

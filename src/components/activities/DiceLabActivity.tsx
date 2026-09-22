@@ -70,10 +70,6 @@ export function DiceLabActivity({
     setDragStart({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
   const handleOptionSelect = (opt: typeof options[0]) => {
     if (readOnly) return;
     setSelectedId(opt.id);
@@ -82,17 +78,40 @@ export function DiceLabActivity({
     onChange(opt.id);
   };
 
-  const setPreset = (view: "pos1" | "pos2" | "top") => {
-    if (view === "pos1") {
-      setRotX(-20);
-      setRotY(45); // Shows 3, 2, 5
-    } else if (view === "pos2") {
-      setRotX(-20);
-      setRotY(-135); // Shows 1, 4, 5
-    } else {
-      setRotX(-85);
-      setRotY(0); // Top down view
+  const setPreset = (preset: "pos1" | "pos2" | "top") => {
+    if (readOnly) return;
+    if (preset === "pos1") {
+      setRotX(-25);
+      setRotY(45);
+    } else if (preset === "pos2") {
+      setRotX(25);
+      setRotY(-45);
+    } else if (preset === "top") {
+      setRotX(-90);
+      setRotY(0);
     }
+  };
+
+  const handleFaceClick = (faceVal: string) => {
+    if (readOnly) return;
+    const targetOpt = options.find((o) => o.val === faceVal);
+    if (targetOpt) {
+      handleOptionSelect(targetOpt);
+    }
+  };
+
+  const handleDragRelease = () => {
+    setIsDragging(false);
+    // Find closest matching option angle
+    let closestOpt = options[0];
+    let minDiff = 999999;
+    options.forEach((opt) => {
+      const diff = Math.hypot(opt.rotX - rotX, opt.rotY - (rotY % 360));
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestOpt = opt;
+      }
+    });
   };
 
   return (
@@ -105,10 +124,10 @@ export function DiceLabActivity({
           </div>
           <div>
             <h3 className="font-bold text-lg text-slate-900 tracking-wide flex items-center gap-2">
-              Rotating 3D Dice Laboratory 
+              Rotating 3D Dice Laboratory
             </h3>
             <p className="text-xs text-slate-600">
-              Drag to inspect all faces in real-time or select an option to automatically orient the die.
+              Click any face on the 3D die or use the controls below to orient the die and submit your answer directly.
             </p>
           </div>
         </div>
@@ -144,8 +163,8 @@ export function DiceLabActivity({
         className="relative h-64 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none overflow-hidden"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseUp={handleDragRelease}
+        onMouseLeave={handleDragRelease}
         style={{ perspective: "900px" }}
       >
         {/* Ambient Grid Table */}
@@ -156,17 +175,45 @@ export function DiceLabActivity({
             backgroundSize: "20px 20px" }}
         />
 
+        {/* On-Stage Quick Interactive Face Buttons */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10 pointer-events-auto">
+          <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-xs p-1 rounded-xl border border-slate-200 shadow-xs">
+            <span className="text-[10px] font-bold text-slate-500 uppercase px-1.5">Turn to:</span>
+            {options.map((opt) => (
+              <button
+                key={opt.val}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOptionSelect(opt);
+                }}
+                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  selectedId === opt.id
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                Face {opt.val} ({opt.id})
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 3D Die Container with smooth transition */}
         <div
-          className="relative w-28 h-28 transition-transform duration-300 ease-out"
+          className="relative w-28 h-28 transition-transform duration-300 ease-out cursor-pointer"
           style={{
             transformStyle: "preserve-3d",
             transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)` }}
         >
           {/* Face 5 - Front */}
           <div
-            className="absolute inset-0 bg-white border-2 border-slate-400 rounded-xl shadow-md flex items-center justify-center select-none"
+            onClick={(e) => { e.stopPropagation(); handleFaceClick("5"); }}
+            className={`absolute inset-0 bg-white border-2 rounded-xl shadow-md flex items-center justify-center select-none transition-all hover:border-emerald-500 ${
+              selectedId === "D" ? "border-emerald-600 ring-4 ring-emerald-400/40" : "border-slate-400"
+            }`}
             style={{ transform: "translateZ(56px)" }}
+            title="Click to select Face 5"
           >
             <div className="grid grid-cols-3 grid-rows-3 gap-2 p-3 w-full h-full">
               <span className="w-3.5 h-3.5 bg-slate-900 rounded-full place-self-start" />
@@ -201,8 +248,12 @@ export function DiceLabActivity({
 
           {/* Face 3 - Right */}
           <div
-            className="absolute inset-0 bg-white border-2 border-slate-400 rounded-xl shadow-md flex items-center justify-center select-none"
+            onClick={(e) => { e.stopPropagation(); handleFaceClick("3"); }}
+            className={`absolute inset-0 bg-white border-2 rounded-xl shadow-md flex items-center justify-center select-none transition-all hover:border-emerald-500 ${
+              selectedId === "A" ? "border-emerald-600 ring-4 ring-emerald-400/40" : "border-slate-400"
+            }`}
             style={{ transform: "rotateY(90deg) translateZ(56px)" }}
+            title="Click to select Face 3"
           >
             <div className="grid grid-cols-3 grid-rows-3 gap-2 p-3 w-full h-full">
               <span className="w-3.5 h-3.5 bg-slate-900 rounded-full place-self-start" />
@@ -219,8 +270,12 @@ export function DiceLabActivity({
 
           {/* Face 4 - Left */}
           <div
-            className="absolute inset-0 bg-white border-2 border-slate-400 rounded-xl shadow-md flex items-center justify-center select-none"
+            onClick={(e) => { e.stopPropagation(); handleFaceClick("4"); }}
+            className={`absolute inset-0 bg-white border-2 rounded-xl shadow-md flex items-center justify-center select-none transition-all hover:border-emerald-500 ${
+              selectedId === "C" ? "border-emerald-600 ring-4 ring-emerald-400/40" : "border-slate-400"
+            }`}
             style={{ transform: "rotateY(-90deg) translateZ(56px)" }}
+            title="Click to select Face 4"
           >
             <div className="grid grid-cols-3 grid-rows-3 gap-2 p-3 w-full h-full">
               <span className="w-3.5 h-3.5 bg-slate-900 rounded-full place-self-start" />
@@ -237,8 +292,12 @@ export function DiceLabActivity({
 
           {/* Face 2 - Top */}
           <div
-            className="absolute inset-0 bg-white border-2 border-slate-400 rounded-xl shadow-md flex items-center justify-center select-none"
+            onClick={(e) => { e.stopPropagation(); handleFaceClick("2"); }}
+            className={`absolute inset-0 bg-white border-2 rounded-xl shadow-md flex items-center justify-center select-none transition-all hover:border-emerald-500 ${
+              selectedId === "B" ? "border-emerald-600 ring-4 ring-emerald-400/40" : "border-slate-400"
+            }`}
             style={{ transform: "rotateX(90deg) translateZ(56px)" }}
+            title="Click to select Face 2"
           >
             <div className="grid grid-cols-3 grid-rows-3 gap-2 p-3 w-full h-full">
               <span className="w-3.5 h-3.5 bg-slate-900 rounded-full place-self-start" />
@@ -296,7 +355,7 @@ export function DiceLabActivity({
                 className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
                   isSelected
                     ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
+                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div className="flex items-center justify-between">

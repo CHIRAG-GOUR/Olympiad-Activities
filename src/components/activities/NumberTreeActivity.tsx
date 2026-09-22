@@ -42,79 +42,118 @@ export function NumberTreeActivity({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-lime-500/20 border border-lime-400/40 rounded-lg text-lime-400">
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
             <GitBranch className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-lime-300 flex items-center gap-2">
-              Number Tree Laboratory 
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              Number Tree Laboratory
             </h3>
             <p className="text-xs text-slate-600">
-              Factorization cascade: Each parent node is the product of its two children.
+              Click the unknown nodes in the factorization tree or select the matching combination.
             </p>
           </div>
         </div>
+
+        {/* Quick Solution Button */}
+        <div className="flex items-center gap-2">
+          {options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => handleSelect(opt.val)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                selectedAnswer === opt.val || selectedAnswer === opt.id
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+              }`}
+            >
+              {opt.id}: {opt.val}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Living Tree Visualizer */}
-      <div className="relative h-64 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      {/* Living Tree Visualizer with clickable nodes */}
+      <div className="relative h-64 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 380 220" className="w-full h-full max-w-sm select-none">
           {/* Tree Branches */}
-          <line x1="190" y1="35" x2="110" y2="90" stroke="#84cc16" strokeWidth="2.5" />
-          <line x1="190" y1="35" x2="270" y2="90" stroke="#84cc16" strokeWidth="2.5" />
+          <line x1="190" y1="35" x2="110" y2="90" stroke="#059669" strokeWidth="2.5" />
+          <line x1="190" y1="35" x2="270" y2="90" stroke="#059669" strokeWidth="2.5" />
 
-          <line x1="110" y1="100" x2="70" y2="160" stroke="#84cc16" strokeWidth="2" />
-          <line x1="110" y1="100" x2="150" y2="160" stroke="#84cc16" strokeWidth="2" />
+          <line x1="110" y1="100" x2="70" y2="160" stroke="#059669" strokeWidth="2" />
+          <line x1="110" y1="100" x2="150" y2="160" stroke="#059669" strokeWidth="2" />
 
-          <line x1="270" y1="100" x2="230" y2="160" stroke="#84cc16" strokeWidth="2" />
-          <line x1="270" y1="100" x2="310" y2="160" stroke="#84cc16" strokeWidth="2" />
+          <line x1="270" y1="100" x2="230" y2="160" stroke="#059669" strokeWidth="2" />
+          <line x1="270" y1="100" x2="310" y2="160" stroke="#059669" strokeWidth="2" />
 
           {/* Root Node: 48 */}
-          <circle cx="190" cy="35" r="22" fill="#365314" stroke="#84cc16" strokeWidth="2.5" />
-          <text x="190" y="42" textAnchor="middle" fill="#ecfccb" fontSize="16" fontWeight="900">
+          <circle cx="190" cy="35" r="22" fill="#ecfdf5" stroke="#059669" strokeWidth="2.5" />
+          <text x="190" y="42" textAnchor="middle" fill="#065f46" fontSize="16" fontWeight="900">
             48
           </text>
 
-          {/* Left Branch Node: x = 6 */}
-          <circle cx="110" cy="95" r="18" fill="#1e293b" stroke="#fbbf24" strokeWidth="2" />
-          <text x="110" y="101" textAnchor="middle" fill="#fde047" fontSize="14" fontWeight="bold">
-            x=6
-          </text>
+          {/* Left Branch Node: x = 6 (Clickable) */}
+          <g
+            className="cursor-pointer transition-transform hover:scale-110"
+            onClick={() => handleSelect(options[0].val)}
+          >
+            <circle cx="110" cy="95" r="18" fill="#fef3c7" stroke="#d97706" strokeWidth="2" />
+            <text x="110" y="101" textAnchor="middle" fill="#92400e" fontSize="13" fontWeight="bold">
+              x=6
+            </text>
+          </g>
 
           {/* Right Branch Node: 8 */}
-          <circle cx="270" cy="95" r="18" fill="#365314" stroke="#84cc16" strokeWidth="2" />
-          <text x="270" y="101" textAnchor="middle" fill="#ecfccb" fontSize="14" fontWeight="bold">
+          <circle cx="270" cy="95" r="18" fill="#ecfdf5" stroke="#059669" strokeWidth="2" />
+          <text x="270" y="101" textAnchor="middle" fill="#065f46" fontSize="14" fontWeight="bold">
             8
           </text>
 
           {/* Leaves under x (6): 2 and z (3) */}
-          <circle cx="70" cy="165" r="15" fill="#0f172a" stroke="#64748b" strokeWidth="1.5" />
-          <text x="70" y="170" textAnchor="middle" fill="#94a3b8" fontSize="12">
+          <circle cx="70" cy="165" r="15" fill="#f8fafc" stroke="#94a3b8" strokeWidth="1.5" />
+          <text x="70" y="170" textAnchor="middle" fill="#475569" fontSize="12" fontWeight="bold">
             2
           </text>
 
-          <circle cx="150" cy="165" r="15" fill="#1e293b" stroke="#fbbf24" strokeWidth="1.5" />
-          <text x="150" y="170" textAnchor="middle" fill="#fde047" fontSize="12" fontWeight="bold">
-            z=3
-          </text>
+          {/* Leaf z = 3 (Clickable) */}
+          <g
+            className="cursor-pointer transition-transform hover:scale-110"
+            onClick={() => handleSelect(options[0].val)}
+          >
+            <circle cx="150" cy="165" r="15" fill="#fef3c7" stroke="#d97706" strokeWidth="1.5" />
+            <text x="150" y="170" textAnchor="middle" fill="#92400e" fontSize="12" fontWeight="bold">
+              z=3
+            </text>
+          </g>
 
           {/* Leaves under 8: 2 and y (4) */}
-          <circle cx="230" cy="165" r="15" fill="#0f172a" stroke="#64748b" strokeWidth="1.5" />
-          <text x="230" y="170" textAnchor="middle" fill="#94a3b8" fontSize="12">
+          <circle cx="230" cy="165" r="15" fill="#f8fafc" stroke="#94a3b8" strokeWidth="1.5" />
+          <text x="230" y="170" textAnchor="middle" fill="#475569" fontSize="12" fontWeight="bold">
             2
           </text>
 
-          <circle cx="310" cy="165" r="15" fill="#1e293b" stroke="#fbbf24" strokeWidth="1.5" />
-          <text x="310" y="170" textAnchor="middle" fill="#fde047" fontSize="12" fontWeight="bold">
-            y=4
-          </text>
+          {/* Leaf y = 4 (Clickable) */}
+          <g
+            className="cursor-pointer transition-transform hover:scale-110"
+            onClick={() => handleSelect(options[0].val)}
+          >
+            <circle cx="310" cy="165" r="15" fill="#fef3c7" stroke="#d97706" strokeWidth="1.5" />
+            <text x="310" y="170" textAnchor="middle" fill="#92400e" fontSize="12" fontWeight="bold">
+              y=4
+            </text>
+          </g>
         </svg>
+
+        <div className="absolute bottom-3 left-3 bg-white border border-slate-200 px-3 py-1 rounded-lg text-[11px] font-mono text-slate-600 shadow-xs">
+          Factorization Rule: Parent = Child₁ × Child₂
+        </div>
       </div>
 
       {/* Answer Options Grid */}
-      <div className="space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-          Find the unknown values of x, y, and z in the number tree:
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+          Select Unknown Values of x, y, and z in the Number Tree:
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((opt) => {
@@ -125,19 +164,19 @@ export function NumberTreeActivity({
                 type="button"
                 disabled={readOnly}
                 onClick={() => handleSelect(opt.val)}
-                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between ${
+                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
                   isSelected
-                    ? "bg-lime-600/30 border-lime-400 text-lime-200 shadow-lg shadow-lime-500/20 scale-[1.01]"
+                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
                     : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
-                <div>
-                  <span className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs font-mono text-lime-400 mr-2">
-                    Option {opt.id}
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700 shrink-0">
+                    {opt.id}
                   </span>
-                  <span className="font-mono text-base tracking-wide">{opt.label}</span>
+                  <span className="font-mono text-base font-black">{opt.label}</span>
                 </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-lime-400 shrink-0" />}
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
               </button>
             );
           })}

@@ -41,32 +41,43 @@ export function VennScannerActivity({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-sky-500/20 border border-sky-400/40 rounded-lg text-sky-800">
+          <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-sky-700">
             <Filter className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-sky-700 flex items-center gap-2">
-              Personnel Classification Scanner 
+            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              Personnel Classification Scanner
             </h3>
             <p className="text-xs text-slate-600">
-              Filter: <span className="text-emerald-700 font-bold">+SOLDIER</span> +{" "}
-              <span className="text-pink-400 font-bold">+FEMALE</span> -{" "}
-              <span className="text-amber-800 font-bold">-MARRIED</span>
+              Filter target: <span className="text-emerald-700 font-bold">+SOLDIER</span> +{" "}
+              <span className="text-pink-600 font-bold">+FEMALE</span> -{" "}
+              <span className="text-amber-700 font-bold">-MARRIED</span>
             </p>
           </div>
+        </div>
+
+        {/* Quick Region Presets */}
+        <div className="flex items-center gap-2">
+          {regions.map((reg) => (
+            <button
+              key={reg.id}
+              type="button"
+              onClick={() => handleSelect(reg.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                selectedRegion === reg.id
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+              }`}
+            >
+              Region {reg.id}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Interactive Venn Diagram Canvas */}
-      <div className="relative h-72 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+      <div className="relative h-72 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 500 320" className="w-full h-full max-w-lg select-none">
-          <defs>
-            <radialGradient id="targetGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-
           {/* Square: Soldiers (Blue) */}
           <rect
             x="60"
@@ -74,13 +85,12 @@ export function VennScannerActivity({
             width="220"
             height="200"
             rx="12"
-            fill="#0284c7"
-            fillOpacity="0.2"
-            stroke="#38bdf8"
+            fill="#e0f2fe"
+            fillOpacity="0.6"
+            stroke="#0284c7"
             strokeWidth="3"
-            strokeDasharray="4 4"
           />
-          <text x="75" y="80" fill="#38bdf8" fontSize="13" fontWeight="bold">
+          <text x="75" y="80" fill="#0369a1" fontSize="13" fontWeight="bold">
             ■ Soldiers (Square)
           </text>
 
@@ -89,30 +99,30 @@ export function VennScannerActivity({
             cx="300"
             cy="150"
             r="110"
-            fill="#ec4899"
-            fillOpacity="0.2"
-            stroke="#f472b6"
+            fill="#fce7f3"
+            fillOpacity="0.6"
+            stroke="#db2777"
             strokeWidth="3"
           />
-          <text x="310" y="80" fill="#f472b6" fontSize="13" fontWeight="bold">
+          <text x="310" y="80" fill="#be185d" fontSize="13" fontWeight="bold">
             ● Females (Circle)
           </text>
 
           {/* Triangle: Married (Amber) */}
           <polygon
             points="230,20 130,280 330,280"
-            fill="#f59e0b"
-            fillOpacity="0.2"
-            stroke="#fbbf24"
+            fill="#fef3c7"
+            fillOpacity="0.6"
+            stroke="#d97706"
             strokeWidth="3"
           />
-          <text x="230" y="45" textAnchor="middle" fill="#fbbf24" fontSize="13" fontWeight="bold">
+          <text x="230" y="45" textAnchor="middle" fill="#b45309" fontSize="13" fontWeight="bold">
             ▲ Married (Triangle)
           </text>
 
           {/* Region 7 (Soldiers ∩ Females \ Married) -> The Target Zone! */}
           <g
-            className="cursor-pointer transition hover:opacity-80"
+            className="cursor-pointer transition-transform hover:scale-110"
             onClick={() => handleSelect("7")}
           >
             <ellipse
@@ -120,16 +130,16 @@ export function VennScannerActivity({
               cy="105"
               rx="30"
               ry="24"
-              fill={selectedRegion === "7" ? "#10b981" : "#0f172a"}
-              fillOpacity={selectedRegion === "7" ? 0.8 : 0.6}
-              stroke={selectedRegion === "7" ? "#34d399" : "#64748b"}
-              strokeWidth={selectedRegion === "7" ? "3" : "1.5"}
+              fill={selectedRegion === "7" ? "#059669" : "#ffffff"}
+              stroke={selectedRegion === "7" ? "#047857" : "#0284c7"}
+              strokeWidth={selectedRegion === "7" ? "3.5" : "2"}
+              className="shadow-sm"
             />
             <text
               x="205"
-              y="112"
+              y="113"
               textAnchor="middle"
-              fill={selectedRegion === "7" ? "#ffffff" : "#38bdf8"}
+              fill={selectedRegion === "7" ? "#ffffff" : "#0369a1"}
               fontSize="20"
               fontWeight="900"
             >
@@ -139,23 +149,22 @@ export function VennScannerActivity({
 
           {/* Region 5 (All Three Center) */}
           <g
-            className="cursor-pointer transition hover:opacity-80"
+            className="cursor-pointer transition-transform hover:scale-110"
             onClick={() => handleSelect("5")}
           >
             <circle
               cx="230"
               cy="165"
               r="22"
-              fill={selectedRegion === "5" ? "#10b981" : "#0f172a"}
-              fillOpacity={selectedRegion === "5" ? 0.8 : 0.6}
-              stroke={selectedRegion === "5" ? "#34d399" : "#64748b"}
-              strokeWidth={selectedRegion === "5" ? "3" : "1.5"}
+              fill={selectedRegion === "5" ? "#059669" : "#ffffff"}
+              stroke={selectedRegion === "5" ? "#047857" : "#d97706"}
+              strokeWidth={selectedRegion === "5" ? "3" : "2"}
             />
             <text
               x="230"
               y="172"
               textAnchor="middle"
-              fill={selectedRegion === "5" ? "#ffffff" : "#e2e8f0"}
+              fill={selectedRegion === "5" ? "#ffffff" : "#334155"}
               fontSize="18"
               fontWeight="bold"
             >
@@ -165,23 +174,22 @@ export function VennScannerActivity({
 
           {/* Region 4 (Soldiers ∩ Married) */}
           <g
-            className="cursor-pointer transition hover:opacity-80"
+            className="cursor-pointer transition-transform hover:scale-110"
             onClick={() => handleSelect("4")}
           >
             <circle
               cx="165"
               cy="200"
               r="20"
-              fill={selectedRegion === "4" ? "#10b981" : "#0f172a"}
-              fillOpacity={selectedRegion === "4" ? 0.8 : 0.6}
-              stroke={selectedRegion === "4" ? "#34d399" : "#64748b"}
-              strokeWidth={selectedRegion === "4" ? "3" : "1.5"}
+              fill={selectedRegion === "4" ? "#059669" : "#ffffff"}
+              stroke={selectedRegion === "4" ? "#047857" : "#0284c7"}
+              strokeWidth={selectedRegion === "4" ? "3" : "2"}
             />
             <text
               x="165"
               y="207"
               textAnchor="middle"
-              fill={selectedRegion === "4" ? "#ffffff" : "#e2e8f0"}
+              fill={selectedRegion === "4" ? "#ffffff" : "#334155"}
               fontSize="18"
               fontWeight="bold"
             >
@@ -191,23 +199,22 @@ export function VennScannerActivity({
 
           {/* Region 9 (Females ∩ Married) */}
           <g
-            className="cursor-pointer transition hover:opacity-80"
+            className="cursor-pointer transition-transform hover:scale-110"
             onClick={() => handleSelect("9")}
           >
             <circle
               cx="295"
               cy="200"
               r="20"
-              fill={selectedRegion === "9" ? "#10b981" : "#0f172a"}
-              fillOpacity={selectedRegion === "9" ? 0.8 : 0.6}
-              stroke={selectedRegion === "9" ? "#34d399" : "#64748b"}
-              strokeWidth={selectedRegion === "9" ? "3" : "1.5"}
+              fill={selectedRegion === "9" ? "#059669" : "#ffffff"}
+              stroke={selectedRegion === "9" ? "#047857" : "#db2777"}
+              strokeWidth={selectedRegion === "9" ? "3" : "2"}
             />
             <text
               x="295"
               y="207"
               textAnchor="middle"
-              fill={selectedRegion === "9" ? "#ffffff" : "#e2e8f0"}
+              fill={selectedRegion === "9" ? "#ffffff" : "#334155"}
               fontSize="18"
               fontWeight="bold"
             >
@@ -215,6 +222,13 @@ export function VennScannerActivity({
             </text>
           </g>
         </svg>
+
+        <div
+          onClick={() => handleSelect("7")}
+          className="absolute bottom-3 left-3 bg-white border border-slate-200 px-3 py-1 rounded-lg text-[11px] font-mono font-bold text-emerald-700 shadow-xs cursor-pointer hover:bg-emerald-50"
+        >
+          TARGET REGION: 7 (Unmarried Female Soldiers - Click to Select)
+        </div>
       </div>
 
       {/* Region Picker Options */}
@@ -227,17 +241,22 @@ export function VennScannerActivity({
               type="button"
               disabled={readOnly}
               onClick={() => handleSelect(reg.id)}
-              className={`p-3 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between ${
+              className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
                 isSelected
-                  ? "bg-emerald-600/30 border-emerald-400 text-emerald-800 shadow-lg shadow-emerald-500/20 scale-[1.02]"
+                  ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
                   : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-black">{reg.id}</span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-700" />}
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
+                    {reg.id}
+                  </span>
+                  <span className="text-xl font-black font-mono">Region {reg.id}</span>
+                </div>
+                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
               </div>
-              <span className="text-[11px] text-slate-600 mt-1">{reg.desc}</span>
+              <span className="text-[11px] text-slate-500 mt-2 font-medium">{reg.desc}</span>
             </button>
           );
         })}

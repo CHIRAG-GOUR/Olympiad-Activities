@@ -79,10 +79,11 @@ export function SymmetryStudioActivity({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* Figure P: Hexagon (6 lines) */}
         <div
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs ${
+          onClick={() => handleSelectOption("A")}
+          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
             activeOpt.figures.includes("P")
               ? "bg-emerald-50 border-emerald-500 text-emerald-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60"
+              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
           }`}
         >
           <svg viewBox="0 0 60 60" className="w-14 h-14">
@@ -101,10 +102,11 @@ export function SymmetryStudioActivity({
 
         {/* Figure Q: Square (4 lines) */}
         <div
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs ${
+          onClick={() => handleSelectOption("A")}
+          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
             activeOpt.figures.includes("Q")
               ? "bg-emerald-50 border-emerald-500 text-emerald-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60"
+              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
           }`}
         >
           <svg viewBox="0 0 60 60" className="w-14 h-14">
@@ -126,10 +128,11 @@ export function SymmetryStudioActivity({
 
         {/* Figure R: Equilateral Triangle (3 lines) */}
         <div
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs ${
+          onClick={() => handleSelectOption("A")}
+          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
             activeOpt.figures.includes("R")
               ? "bg-emerald-50 border-emerald-500 text-emerald-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60"
+              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
           }`}
         >
           <svg viewBox="0 0 60 60" className="w-14 h-14">
@@ -140,6 +143,7 @@ export function SymmetryStudioActivity({
               strokeWidth="2.5"
             />
             <line x1="30" y1="8" x2="30" y2="48" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
+            <line x1="6" y1="48" x2="42" y2="28" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
           </svg>
           <span className="text-xs font-bold text-slate-900">Figure R (Triangle)</span>
           <span className="text-[11px] font-mono font-bold text-emerald-700">3 Lines (&gt; 2) ✓</span>
@@ -147,27 +151,28 @@ export function SymmetryStudioActivity({
 
         {/* Figure S: Rectangle (2 lines) */}
         <div
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs ${
+          onClick={() => handleSelectOption("C")}
+          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
             activeOpt.figures.includes("S")
               ? "bg-amber-50 border-amber-500 text-amber-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60"
+              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
           }`}
         >
           <svg viewBox="0 0 60 60" className="w-14 h-14">
             <rect
-              x="8"
-              y="16"
-              width="44"
-              height="28"
+              x="5"
+              y="15"
+              width="50"
+              height="30"
               fill={activeOpt.figures.includes("S") ? "#fef3c7" : "#f1f5f9"}
-              stroke="#b45309"
+              stroke="#d97706"
               strokeWidth="2.5"
             />
-            <line x1="30" y1="16" x2="30" y2="44" stroke="#b45309" strokeWidth="1" strokeDasharray="2 2" />
-            <line x1="8" y1="30" x2="52" y2="30" stroke="#b45309" strokeWidth="1" strokeDasharray="2 2" />
+            <line x1="30" y1="15" x2="30" y2="45" stroke="#d97706" strokeWidth="1" strokeDasharray="2 2" />
+            <line x1="5" y1="30" x2="55" y2="30" stroke="#d97706" strokeWidth="1" strokeDasharray="2 2" />
           </svg>
           <span className="text-xs font-bold text-slate-900">Figure S (Rectangle)</span>
-          <span className="text-[11px] font-mono font-bold text-amber-700">2 Lines (= 2, NOT &gt; 2)</span>
+          <span className="text-[11px] font-mono font-bold text-amber-700">2 Lines (not &gt; 2) ✗</span>
         </div>
       </div>
 

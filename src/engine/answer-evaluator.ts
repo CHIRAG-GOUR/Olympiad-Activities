@@ -35,7 +35,16 @@ export function evaluateAnswer(question: Question, payload: QuestionAnswerPayloa
       if (question.multipleChoiceConfig) {
         const correct = String(question.multipleChoiceConfig.correctOptionId).trim().toUpperCase();
         const userChoice = String(answer).trim().toUpperCase();
-        isCorrect = userChoice === correct;
+        const correctOpt = question.multipleChoiceConfig.options.find(
+          (o) => o.id.toUpperCase() === correct
+        );
+        isCorrect = Boolean(
+          userChoice === correct ||
+          (correctOpt !== undefined &&
+            (userChoice === String(correctOpt.text).trim().toUpperCase() ||
+              (question.numericConfig &&
+                parseFloat(userChoice) === question.numericConfig.correctValue)))
+        );
       }
       break;
     }
@@ -46,6 +55,10 @@ export function evaluateAnswer(question: Question, payload: QuestionAnswerPayloa
         isCorrect =
           answer.length === correct.length &&
           answer.every((val, idx) => String(val).trim() === String(correct[idx]).trim());
+      } else if (question.multipleChoiceConfig) {
+        const correct = String(question.multipleChoiceConfig.correctOptionId).trim().toUpperCase();
+        const userChoice = String(answer).trim().toUpperCase();
+        isCorrect = userChoice === correct;
       }
       break;
     }
@@ -63,6 +76,10 @@ export function evaluateAnswer(question: Question, payload: QuestionAnswerPayloa
             isPartial = true;
           }
         }
+      } else if (question.multipleChoiceConfig) {
+        const correct = String(question.multipleChoiceConfig.correctOptionId).trim().toUpperCase();
+        const userChoice = String(answer).trim().toUpperCase();
+        isCorrect = userChoice === correct;
       }
       break;
     }
@@ -75,7 +92,16 @@ export function evaluateAnswer(question: Question, payload: QuestionAnswerPayloa
           const target = question.numericConfig.correctValue;
           const tolerance = question.numericConfig.tolerance || 0;
           isCorrect = Math.abs(numVal - target) <= tolerance + 0.00001;
+        } else if (question.multipleChoiceConfig) {
+          // If answer was submitted as option ID like 'A', 'B', 'C', 'D'
+          const correct = String(question.multipleChoiceConfig.correctOptionId).trim().toUpperCase();
+          const userChoice = String(answer).trim().toUpperCase();
+          isCorrect = userChoice === correct;
         }
+      } else if (question.multipleChoiceConfig) {
+        const correct = String(question.multipleChoiceConfig.correctOptionId).trim().toUpperCase();
+        const userChoice = String(answer).trim().toUpperCase();
+        isCorrect = userChoice === correct;
       }
       break;
     }
