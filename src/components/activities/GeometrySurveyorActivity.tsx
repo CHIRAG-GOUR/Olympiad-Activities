@@ -1,185 +1,143 @@
 "use client";
 
-import React, { useState } from "react";
-import { Compass,  CheckCircle2 } from "lucide-react";
+import React from "react";
+import { Ruler } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag, clamp } from "./kit/usePointerDrag";
 
-interface GeometrySurveyorActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q21 — Quadrilateral surveyor.
+ *
+ * The vertices are draggable and the student draws segments by tapping two vertices. The
+ * number of distinct segments actually drawn on the figure is the answer.
+ */
+
+interface SurveyState {
+  pos: Record<string, { x: number; y: number }>;
+  segs: string[];
+  armed: string | null;
 }
 
-export function GeometrySurveyorActivity({
-  value,
-  onChange,
-  readOnly = false }: GeometrySurveyorActivityProps) {
-  // Count line segments in the given figure:
-  // Points: A, B, C, D on main horizontal line + intersecting verticals and diagonals
-  // Total line segments = 15 distinct line segments.
-  const [selectedCount, setSelectedCount] = useState<string>(
-    value ? String(value) : ""
-  );
+const V = ["A", "B", "C", "D"];
+const START = {
+  A: { x: 22, y: 20 },
+  B: { x: 78, y: 26 },
+  C: { x: 84, y: 80 },
+  D: { x: 18, y: 76 },
+};
 
-  const options = [
-    { id: "A", val: "15", label: "15 Segments (6 on horizontal + 4 verticals + 5 diagonals)", isCorrect: true },
-    { id: "B", val: "12", label: "12 Segments", isCorrect: false },
-    { id: "C", val: "16", label: "16 Segments", isCorrect: false },
-    { id: "D", val: "18", label: "18 Segments", isCorrect: false },
-  ];
+const key = (a: string, b: string) => [a, b].sort().join("");
 
-  const handleSelect = (val: string) => {
-    if (readOnly) return;
-    setSelectedCount(val);
-    onChange(val);
+export function GeometrySurveyorActivity({ value, activityState, onChange, readOnly }: ActivityComponentProps<SurveyState>) {
+  const engine = useActivityEngine<SurveyState, number>({
+    initialState: { pos: START, segs: [], armed: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => (s.segs.length ? s.segs.length : undefined),
+  });
+
+  const svgRef = React.useRef<SVGSVGElement | null>(null);
+  const dragged = React.useRef(false);
+
+  const { start } = usePointerDrag<string>({
+    disabled: engine.readOnly,
+    onStart: () => {
+      dragged.current = false;
+    },
+    onMove: (p, id) => {
+      const r = svgRef.current?.getBoundingClientRect();
+      if (!r) return;
+      dragged.current = true;
+      engine.update((s) => ({
+        ...s,
+        pos: {
+          ...s.pos,
+          [id]: { x: clamp(((p.x - r.left) / r.width) * 100, 8, 92), y: clamp(((p.y - r.top) / r.height) * 100, 8, 92) },
+        },
+      }));
+    },
+  });
+
+  const tap = (id: string) => {
+    if (engine.readOnly || dragged.current) return;
+    engine.update((s) => {
+      if (!s.armed) return { ...s, armed: id };
+      if (s.armed === id) return { ...s, armed: null };
+      const k = key(s.armed, id);
+      return { ...s, armed: null, segs: s.segs.includes(k) ? s.segs.filter((x) => x !== k) : [...s.segs, k] };
+    });
   };
 
-  const [highlightedGroup, setHighlightedGroup] = useState<string>("all");
+  const pos = engine.state.pos;
+  const sides = ["AB", "BC", "CD", "AD"];
+  const drawnSides = engine.state.segs.filter((s) => sides.includes(s)).length;
+  const drawnDiagonals = engine.state.segs.filter((s) => !sides.includes(s)).length;
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Compass className="w-5 h-5" />
+    <ActivityShell
+      icon={Ruler}
+      title="Quadrilateral Segment Surveyor"
+      howTo="Drag the vertices to reshape ABCD, then tap two vertices to draw (or erase) the segment joining them. Draw every distinct segment — the surveyor counts them for you."
+      answerText={engine.answer !== undefined ? String(engine.answer) : undefined}
+      mappedTo={engine.answer !== undefined ? `${drawnSides} sides + ${drawnDiagonals} diagonals` : undefined}
+      pendingHint="Tap two vertices to draw your first segment."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_180px]">
+        <Stage label="Survey field">
+          <svg ref={svgRef} viewBox="0 0 100 100" className="w-full max-w-[320px] mx-auto rounded-lg bg-white border border-slate-200" style={{ touchAction: "none" }}>
+            {engine.state.segs.map((s) => {
+              const a = pos[s[0]];
+              const b = pos[s[1]];
+              return <line key={s} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#059669" strokeWidth={1.6} strokeLinecap="round" />;
+            })}
+            {V.map((id) => (
+              <g key={id}>
+                <circle
+                  cx={pos[id].x}
+                  cy={pos[id].y}
+                  r={7}
+                  fill="transparent"
+                  style={{ cursor: "grab" }}
+                  onPointerDown={(e) => start(e as unknown as React.PointerEvent, id)}
+                  onClick={() => tap(id)}
+                />
+                <circle
+                  cx={pos[id].x}
+                  cy={pos[id].y}
+                  r={3}
+                  fill={engine.state.armed === id ? "#059669" : "#0f172a"}
+                  stroke="#fff"
+                  strokeWidth={1.2}
+                  pointerEvents="none"
+                />
+                <text x={pos[id].x + 4.5} y={pos[id].y - 4} fontSize={6} fontWeight="bold" fill="#0f172a" pointerEvents="none">
+                  {id}
+                </text>
+              </g>
+            ))}
+          </svg>
+          <p className="text-[10px] text-slate-500 text-center mt-1">
+            Tap a vertex to arm it, then tap another to join them.
+          </p>
+        </Stage>
+
+        <div className="space-y-2">
+          <ReadOut label="Segments drawn" value={engine.state.segs.length} tone={engine.state.segs.length ? "emerald" : "slate"} />
+          <ReadOut label="Sides" value={drawnSides} />
+          <ReadOut label="Diagonals" value={drawnDiagonals} />
+          <div className="flex flex-wrap gap-1">
+            {engine.state.segs.map((s) => (
+              <span key={s} className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold">
+                {s[0]}–{s[1]}
+              </span>
+            ))}
           </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Geometry Surveyor
-            </h3>
-            <p className="text-xs text-slate-600">
-              Survey and count all distinct straight line segments bounded by vertices.
-            </p>
-          </div>
-        </div>
-
-        {/* On-stage surveyor segment presets */}
-        <div className="flex items-center gap-2">
-          {options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => handleSelect(opt.val)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                selectedCount === opt.val || selectedCount === opt.id
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-              }`}
-            >
-              {opt.val} ({opt.id})
-            </button>
-          ))}
         </div>
       </div>
-
-      {/* Interactive Surveyor Canvas */}
-      <div className="relative h-64 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 380 200" className="w-full h-full max-w-sm select-none">
-          {/* Main Horizontal Baseline */}
-          <line
-            x1="40" y1="140" x2="340" y2="140"
-            stroke="#0284c7" strokeWidth="3.5"
-            className="cursor-pointer hover:stroke-emerald-500 transition-colors"
-            onClick={() => handleSelect("15")}
-          />
-
-          {/* Vertical & Diagonal Survey Struts */}
-          <line
-            x1="90" y1="140" x2="90" y2="50"
-            stroke="#059669" strokeWidth="3"
-            className="cursor-pointer hover:stroke-emerald-500 transition-colors"
-            onClick={() => handleSelect("15")}
-          />
-          <line
-            x1="190" y1="140" x2="190" y2="50"
-            stroke="#059669" strokeWidth="3"
-            className="cursor-pointer hover:stroke-emerald-500 transition-colors"
-            onClick={() => handleSelect("15")}
-          />
-          <line
-            x1="290" y1="140" x2="290" y2="50"
-            stroke="#059669" strokeWidth="3"
-            className="cursor-pointer hover:stroke-emerald-500 transition-colors"
-            onClick={() => handleSelect("15")}
-          />
-
-          <line
-            x1="90" y1="50" x2="190" y2="140"
-            stroke="#d97706" strokeWidth="2.5" strokeDasharray="4 4"
-            className="cursor-pointer hover:stroke-emerald-500 transition-colors"
-            onClick={() => handleSelect("15")}
-          />
-          <line
-            x1="190" y1="50" x2="290" y2="140"
-            stroke="#d97706" strokeWidth="2.5" strokeDasharray="4 4"
-            className="cursor-pointer hover:stroke-emerald-500 transition-colors"
-            onClick={() => handleSelect("15")}
-          />
-          <line
-            x1="90" y1="50" x2="290" y2="50"
-            stroke="#db2777" strokeWidth="2.5"
-            className="cursor-pointer hover:stroke-emerald-500 transition-colors"
-            onClick={() => handleSelect("15")}
-          />
-
-          {/* Vertex Survey Markers */}
-          <circle cx="40" cy="140" r="6" fill="#0284c7" stroke="#ffffff" strokeWidth="2" />
-          <circle cx="90" cy="140" r="6" fill="#059669" stroke="#ffffff" strokeWidth="2" />
-          <circle cx="190" cy="140" r="6" fill="#059669" stroke="#ffffff" strokeWidth="2" />
-          <circle cx="290" cy="140" r="6" fill="#059669" stroke="#ffffff" strokeWidth="2" />
-          <circle cx="340" cy="140" r="6" fill="#0284c7" stroke="#ffffff" strokeWidth="2" />
-
-          <circle cx="90" cy="50" r="6" fill="#db2777" stroke="#ffffff" strokeWidth="2" />
-          <circle cx="190" cy="50" r="6" fill="#db2777" stroke="#ffffff" strokeWidth="2" />
-          <circle cx="290" cy="50" r="6" fill="#db2777" stroke="#ffffff" strokeWidth="2" />
-
-          {/* Vertex Labels */}
-          <text x="35" y="162" fill="#334155" fontSize="12" fontWeight="bold">A</text>
-          <text x="85" y="162" fill="#334155" fontSize="12" fontWeight="bold">B</text>
-          <text x="185" y="162" fill="#334155" fontSize="12" fontWeight="bold">C</text>
-          <text x="285" y="162" fill="#334155" fontSize="12" fontWeight="bold">D</text>
-          <text x="335" y="162" fill="#334155" fontSize="12" fontWeight="bold">E</text>
-        </svg>
-
-        <div
-          onClick={() => handleSelect("15")}
-          className="absolute bottom-3 left-3 bg-white border border-slate-200 px-3 py-1 rounded-lg text-[11px] font-mono font-bold text-emerald-700 shadow-xs cursor-pointer hover:bg-emerald-50"
-        >
-          SURVEY TALLY: 15 DISTINCT LINE SEGMENTS (Click to select)
-        </div>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {options.map((opt) => {
-          const isSelected = selectedCount === opt.val || selectedCount === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={readOnly}
-              onClick={() => handleSelect(opt.val)}
-              className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                isSelected
-                  ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
-                  : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                    {opt.id}
-                  </span>
-                  <span className="text-xl font-black font-mono">{opt.val}</span>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </div>
-              <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    </ActivityShell>
   );
 }

@@ -1,153 +1,134 @@
 "use client";
 
-import React, { useState } from "react";
-import { ShoppingCart, CheckCircle2, Store, Calculator } from "lucide-react";
+import React from "react";
+import { ShoppingCart } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface MarketCheckoutActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q44 — Roman-label checkout.
+ *
+ * Each crate is labelled in Roman numerals. Dragging a crate over the scanner decodes it
+ * for real and adds it to the running bill; the bill total is the answer.
+ */
+
+interface CheckoutState {
+  scanned: string[];
 }
 
-export function MarketCheckoutActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: MarketCheckoutActivityProps) {
-  // Question 44: Amit bought MCDLXX apples (1470), CMXLVIII oranges (948), and MCCCXCIX watermelons (1399).
-  // Total fruits = 1470 + 948 + 1399 = 3817 (Option A)
+const CRATES = [
+  { id: "apples", label: "Apples", roman: "MCDLXX" },
+  { id: "oranges", label: "Oranges", roman: "CMXLVIII" },
+  { id: "melons", label: "Watermelons", roman: "MCCCXCIX" },
+];
 
-  const options = [
-    { id: "A", val: "3817", num: 3817, label: "3,817 Fruits (1470 + 948 + 1399)", desc: "Exact integer sum of all 3 fruits", isCorrect: true },
-    { id: "B", val: "3750", num: 3750, label: "3,750 Fruits", desc: "Rounding subtraction error" },
-    { id: "C", val: "3250", num: 3250, label: "3,250 Fruits", desc: "Missing watermelon tally" },
-    { id: "D", val: "2913", num: 2913, label: "2,913 Fruits", desc: "Underrepresented roman translation" },
-  ];
+const VALUES: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+const fromRoman = (s: string) =>
+  s.split("").reduce((t, ch, i) => t + (VALUES[ch] < (VALUES[s[i + 1]] || 0) ? -VALUES[ch] : VALUES[ch]), 0);
 
-  const getInitial = () => {
-    if (!value) return "A";
-    const str = String(value).trim();
-    const found = options.find((o) => o.id === str || o.val === str || String(o.num) === str);
-    return found ? found.id : "A";
+export function MarketCheckoutActivity({ value, activityState, onChange, readOnly }: ActivityComponentProps<CheckoutState>) {
+  const engine = useActivityEngine<CheckoutState, number>({
+    initialState: { scanned: [] },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) =>
+      s.scanned.length
+        ? s.scanned.reduce((t, id) => t + fromRoman(CRATES.find((c) => c.id === id)!.roman), 0)
+        : undefined,
+  });
+
+  const scannerRef = React.useRef<HTMLDivElement | null>(null);
+  const [ghost, setGhost] = React.useState<{ id: string; x: number; y: number } | null>(null);
+
+  const toggle = (id: string) =>
+    engine.update((s) => ({
+      scanned: s.scanned.includes(id) ? s.scanned.filter((x) => x !== id) : [...s.scanned, id],
+    }));
+
+  const overScanner = (x: number, y: number) => {
+    const r = scannerRef.current?.getBoundingClientRect();
+    return !!r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
   };
 
-  const [selectedId, setSelectedId] = useState<string>(getInitial());
-  const activeOpt = options.find((o) => o.id === selectedId) || options[0];
-
-  const handleSelect = (optId: string) => {
-    if (readOnly) return;
-    setSelectedId(optId);
-    onChange(optId);
-  };
+  const { start } = usePointerDrag<string>({
+    disabled: engine.readOnly,
+    onStart: (p, id) => setGhost({ id, x: p.x, y: p.y }),
+    onMove: (p, id) => setGhost({ id, x: p.x, y: p.y }),
+    onEnd: (p, id) => {
+      setGhost(null);
+      if (overScanner(p.x, p.y) && !engine.state.scanned.includes(id)) toggle(id);
+    },
+  });
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
-            <Store className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Ancient Roman Market Register (Q44)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Decipher Roman quantities: <strong className="text-slate-900 font-mono">MCDLXX Apples</strong>, <strong className="text-slate-900 font-mono">CMXLVIII Oranges</strong>, <strong className="text-slate-900 font-mono">MCCCXCIX Melons</strong>.
-            </p>
-          </div>
-        </div>
-
-        <div className="text-xs font-mono font-bold bg-amber-50 text-amber-900 px-3 py-1.5 rounded-lg border border-amber-300">
-          Register Total: <span className="text-amber-800 font-black">{activeOpt.val} Fruits</span>
-        </div>
-      </div>
-
-      {/* 3 Fruit Crates & Cash Register */}
-      <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
-        {/* Apples */}
-        <div
-          onClick={() => handleSelect("A")}
-          className="p-3.5 bg-white border border-slate-200 rounded-xl text-center space-y-1 cursor-pointer hover:border-amber-400 transition-all shadow-sm"
-        >
-          <div className="text-2xl">🍎</div>
-          <div className="text-xs font-mono font-bold text-slate-500">MCDLXX APPLES</div>
-          <div className="text-xl font-black text-slate-900 font-mono">1,470</div>
-          <div className="text-[10px] text-slate-400 font-mono">1000 + 400 + 70</div>
-        </div>
-
-        {/* Oranges */}
-        <div
-          onClick={() => handleSelect("A")}
-          className="p-3.5 bg-white border border-slate-200 rounded-xl text-center space-y-1 cursor-pointer hover:border-amber-400 transition-all shadow-sm"
-        >
-          <div className="text-2xl">🍊</div>
-          <div className="text-xs font-mono font-bold text-slate-500">CMXLVIII ORANGES</div>
-          <div className="text-xl font-black text-amber-700 font-mono">948</div>
-          <div className="text-[10px] text-slate-400 font-mono">900 + 40 + 8</div>
-        </div>
-
-        {/* Melons */}
-        <div
-          onClick={() => handleSelect("A")}
-          className="p-3.5 bg-white border border-slate-200 rounded-xl text-center space-y-1 cursor-pointer hover:border-amber-400 transition-all shadow-sm"
-        >
-          <div className="text-2xl">🍉</div>
-          <div className="text-xs font-mono font-bold text-slate-500">MCCCXCIX MELONS</div>
-          <div className="text-xl font-black text-emerald-700 font-mono">1,399</div>
-          <div className="text-[10px] text-slate-400 font-mono">1300 + 90 + 9</div>
-        </div>
-
-        {/* Register Sum */}
-        <div
-          onClick={() => handleSelect("A")}
-          className="p-3.5 bg-amber-50 border-2 border-amber-500 rounded-xl text-center space-y-1 cursor-pointer shadow-md"
-        >
-          <div className="flex items-center justify-center gap-1 text-[10px] font-mono font-bold text-amber-900 uppercase">
-            <Calculator className="w-3.5 h-3.5" />
-            <span>TOTAL FRUITS</span>
-          </div>
-          <div className="text-2xl font-black text-amber-950 font-mono">3,817</div>
-          <div className="text-[10px] text-emerald-700 font-mono font-bold">
-            1470 + 948 + 1399
-          </div>
-        </div>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-          Select Verified Total Fruits Purchased:
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-amber-50 border-amber-600 text-amber-950 shadow-sm ring-1 ring-amber-400"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-2xl font-black font-mono">{opt.val}</span>
-                  {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
+    <ActivityShell
+      icon={ShoppingCart}
+      title="Roman-Label Checkout"
+      howTo="Drag each crate across the scanner. The scanner decodes its Roman label into a number and adds it to the bill — the bill total is your answer."
+      answerText={engine.answer !== undefined ? String(engine.answer) : undefined}
+      mappedTo={engine.answer !== undefined ? `${engine.state.scanned.length} crate(s) scanned` : undefined}
+      pendingHint="Drag a crate onto the scanner window."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_210px]">
+        <Stage label="Checkout counter">
+          <div
+            ref={scannerRef}
+            className={`rounded-xl border-4 p-3 ${engine.state.scanned.length ? "border-emerald-500 bg-emerald-50" : "border-dashed border-slate-400 bg-white"}`}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Scanner bill</div>
+            {engine.state.scanned.length ? (
+              <div className="space-y-1">
+                {engine.state.scanned.map((id) => {
+                  const c = CRATES.find((x) => x.id === id)!;
+                  return (
+                    <div key={id} className="flex items-center justify-between text-xs font-bold text-slate-800">
+                      <span className="font-serif tracking-wide">{c.label} — {c.roman}</span>
+                      <span className="font-mono text-emerald-700">{fromRoman(c.roman)}</span>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center justify-between border-t border-slate-300 pt-1 mt-1 text-sm font-black">
+                  <span>Total fruits</span>
+                  <span className="font-mono text-emerald-700">{engine.answer}</span>
                 </div>
-                <div className="mt-1">
-                  <div className="text-[10px] text-slate-500 font-mono">Option {opt.id}</div>
-                  <div className="text-[10px] text-slate-400 truncate">{opt.label}</div>
-                </div>
-              </button>
-            );
-          })}
+              </div>
+            ) : (
+              <div className="py-5 text-center text-sm font-semibold text-slate-400">Drag a crate here</div>
+            )}
+          </div>
+        </Stage>
+
+        <div className="space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Crates</div>
+          {CRATES.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              disabled={engine.readOnly}
+              onPointerDown={(e) => start(e, c.id)}
+              onClick={() => toggle(c.id)}
+              className={`w-full rounded-xl border-2 px-2.5 py-2 text-left transition ${
+                engine.state.scanned.includes(c.id) ? "bg-emerald-50 border-emerald-500" : "bg-white border-slate-200 hover:border-emerald-400"
+              } ${engine.readOnly ? "" : "cursor-grab active:cursor-grabbing"}`}
+              style={{ touchAction: "none" }}
+            >
+              <span className="block text-xs font-black text-slate-900">{c.label}</span>
+              <span className="block font-serif text-sm font-bold tracking-wider text-slate-600">{c.roman}</span>
+            </button>
+          ))}
+          <ReadOut label="Bill total" value={engine.answer ?? "—"} tone={engine.answer !== undefined ? "emerald" : "slate"} />
         </div>
       </div>
-    </div>
+
+      {ghost && (
+        <div className="pointer-events-none fixed z-50 rounded-lg border-2 border-emerald-600 bg-white px-2 py-1 font-serif text-xs font-bold shadow-lg" style={{ left: ghost.x + 8, top: ghost.y + 8 }}>
+          {CRATES.find((c) => c.id === ghost.id)?.roman}
+        </div>
+      )}
+    </ActivityShell>
   );
 }

@@ -1,187 +1,154 @@
 "use client";
 
-import React, { useState } from "react";
-import { GitBranch,  CheckCircle2 } from "lucide-react";
+import React from "react";
+import { GitBranch } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface NumberTreeActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q17 — Prime factor tree.
+ *
+ * The student drags number tiles into the two empty nodes of the tree. Each parent node
+ * checks the product of its children live, and the ratio x / y computed from the tree the
+ * student builds is the answer.
+ */
+
+interface TreeState {
+  x: number | null;
+  y: number | null;
 }
 
-export function NumberTreeActivity({
-  value,
-  onChange,
-  readOnly = false }: NumberTreeActivityProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState<string>(
-    value ? String(value) : ""
-  );
+const TILES = [2, 3, 4, 6, 8, 12, 16, 24];
 
-  // Number tree structure:
-  // Root: 48
-  // Branch Left: x, Branch Right: 8 -> x * 8 = 48 -> x = 6!
-  // From 8: Branch Left: 2, Branch Right: y -> 2 * y = 8 -> y = 4!
-  // From 6 (x): Branch Left: 2, Branch Right: z -> 2 * z = 6 -> z = 3!
-  // Sum or value: x = 6, y = 4, z = 3.
-  const options = [
-    { id: "A", val: "x=6, y=4, z=3", label: "x = 6, y = 4, z = 3", isCorrect: true },
-    { id: "B", val: "x=8, y=2, z=4", label: "x = 8, y = 2, z = 4", isCorrect: false },
-    { id: "C", val: "x=6, y=3, z=2", label: "x = 6, y = 3, z = 2", isCorrect: false },
-    { id: "D", val: "x=4, y=6, z=3", label: "x = 4, y = 6, z = 3", isCorrect: false },
-  ];
+export function NumberTreeActivity({ value, activityState, onChange, readOnly }: ActivityComponentProps<TreeState>) {
+  const engine = useActivityEngine<TreeState, number>({
+    initialState: { x: null, y: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => (s.x !== null && s.y !== null && s.y !== 0 ? Number((s.x / s.y).toFixed(4)) : undefined),
+  });
 
-  const handleSelect = (val: string) => {
-    if (readOnly) return;
-    setSelectedAnswer(val);
-    onChange(val);
+  const nodeRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+  const [ghost, setGhost] = React.useState<{ n: number; x: number; y: number } | null>(null);
+  const [armed, setArmed] = React.useState<number | null>(null);
+
+  const nodeAt = (px: number, py: number) => {
+    for (const k of ["x", "y"] as const) {
+      const el = nodeRefs.current[k];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (px >= r.left && px <= r.right && py >= r.top && py <= r.bottom) return k;
+    }
+    return null;
   };
 
-  return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <GitBranch className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Number Tree Laboratory
-            </h3>
-            <p className="text-xs text-slate-600">
-              Click the unknown nodes in the factorization tree or select the matching combination.
-            </p>
-          </div>
-        </div>
+  const { start } = usePointerDrag<number>({
+    disabled: engine.readOnly,
+    onStart: (p, n) => setGhost({ n, x: p.x, y: p.y }),
+    onMove: (p, n) => setGhost({ n, x: p.x, y: p.y }),
+    onEnd: (p, n) => {
+      setGhost(null);
+      const slot = nodeAt(p.x, p.y);
+      if (slot) engine.patch({ [slot]: n } as Partial<TreeState>);
+    },
+  });
 
-        {/* Quick Solution Button */}
-        <div className="flex items-center gap-2">
-          {options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => handleSelect(opt.val)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                selectedAnswer === opt.val || selectedAnswer === opt.id
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-              }`}
-            >
-              {opt.id}: {opt.val}
-            </button>
-          ))}
-        </div>
-      </div>
+  const { x, y } = engine.state;
+  const topOk = x !== null && x * 8 === 48;
+  const lowOk = y !== null && y * 2 === 4;
 
-      {/* Living Tree Visualizer with clickable nodes */}
-      <div className="relative h-64 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 380 220" className="w-full h-full max-w-sm select-none">
-          {/* Tree Branches */}
-          <line x1="190" y1="35" x2="110" y2="90" stroke="#059669" strokeWidth="2.5" />
-          <line x1="190" y1="35" x2="270" y2="90" stroke="#059669" strokeWidth="2.5" />
-
-          <line x1="110" y1="100" x2="70" y2="160" stroke="#059669" strokeWidth="2" />
-          <line x1="110" y1="100" x2="150" y2="160" stroke="#059669" strokeWidth="2" />
-
-          <line x1="270" y1="100" x2="230" y2="160" stroke="#059669" strokeWidth="2" />
-          <line x1="270" y1="100" x2="310" y2="160" stroke="#059669" strokeWidth="2" />
-
-          {/* Root Node: 48 */}
-          <circle cx="190" cy="35" r="22" fill="#ecfdf5" stroke="#059669" strokeWidth="2.5" />
-          <text x="190" y="42" textAnchor="middle" fill="#065f46" fontSize="16" fontWeight="900">
-            48
-          </text>
-
-          {/* Left Branch Node: x = 6 (Clickable) */}
-          <g
-            className="cursor-pointer transition-transform hover:scale-110"
-            onClick={() => handleSelect(options[0].val)}
-          >
-            <circle cx="110" cy="95" r="18" fill="#fef3c7" stroke="#d97706" strokeWidth="2" />
-            <text x="110" y="101" textAnchor="middle" fill="#92400e" fontSize="13" fontWeight="bold">
-              x=6
-            </text>
-          </g>
-
-          {/* Right Branch Node: 8 */}
-          <circle cx="270" cy="95" r="18" fill="#ecfdf5" stroke="#059669" strokeWidth="2" />
-          <text x="270" y="101" textAnchor="middle" fill="#065f46" fontSize="14" fontWeight="bold">
-            8
-          </text>
-
-          {/* Leaves under x (6): 2 and z (3) */}
-          <circle cx="70" cy="165" r="15" fill="#f8fafc" stroke="#94a3b8" strokeWidth="1.5" />
-          <text x="70" y="170" textAnchor="middle" fill="#475569" fontSize="12" fontWeight="bold">
-            2
-          </text>
-
-          {/* Leaf z = 3 (Clickable) */}
-          <g
-            className="cursor-pointer transition-transform hover:scale-110"
-            onClick={() => handleSelect(options[0].val)}
-          >
-            <circle cx="150" cy="165" r="15" fill="#fef3c7" stroke="#d97706" strokeWidth="1.5" />
-            <text x="150" y="170" textAnchor="middle" fill="#92400e" fontSize="12" fontWeight="bold">
-              z=3
-            </text>
-          </g>
-
-          {/* Leaves under 8: 2 and y (4) */}
-          <circle cx="230" cy="165" r="15" fill="#f8fafc" stroke="#94a3b8" strokeWidth="1.5" />
-          <text x="230" y="170" textAnchor="middle" fill="#475569" fontSize="12" fontWeight="bold">
-            2
-          </text>
-
-          {/* Leaf y = 4 (Clickable) */}
-          <g
-            className="cursor-pointer transition-transform hover:scale-110"
-            onClick={() => handleSelect(options[0].val)}
-          >
-            <circle cx="310" cy="165" r="15" fill="#fef3c7" stroke="#d97706" strokeWidth="1.5" />
-            <text x="310" y="170" textAnchor="middle" fill="#92400e" fontSize="12" fontWeight="bold">
-              y=4
-            </text>
-          </g>
-        </svg>
-
-        <div className="absolute bottom-3 left-3 bg-white border border-slate-200 px-3 py-1 rounded-lg text-[11px] font-mono text-slate-600 shadow-xs">
-          Factorization Rule: Parent = Child₁ × Child₂
-        </div>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select Unknown Values of x, y, and z in the Number Tree:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedAnswer === opt.val || selectedAnswer === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt.val)}
-                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700 shrink-0">
-                    {opt.id}
-                  </span>
-                  <span className="font-mono text-base font-black">{opt.label}</span>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+  const Node = ({ label, value: v, slot, ok }: { label: string; value: number | null; slot?: "x" | "y"; ok?: boolean }) => (
+    <div
+      ref={slot ? (el) => { nodeRefs.current[slot] = el; } : undefined}
+      onClick={() => {
+        if (slot && armed !== null && !engine.readOnly) {
+          engine.patch({ [slot]: armed } as Partial<TreeState>);
+          setArmed(null);
+        }
+      }}
+      className={`w-14 h-14 grid place-items-center rounded-full border-2 font-mono text-lg font-black ${
+        slot
+          ? v === null
+            ? armed !== null
+              ? "border-emerald-500 border-dashed bg-emerald-50 text-emerald-600 cursor-pointer"
+              : "border-dashed border-slate-400 bg-white text-slate-300"
+            : ok
+            ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+            : "border-amber-500 bg-amber-50 text-amber-800"
+          : "border-slate-300 bg-white text-slate-800"
+      }`}
+    >
+      {v ?? label}
     </div>
+  );
+
+  return (
+    <ActivityShell
+      icon={GitBranch}
+      title="Prime Factor Tree Builder"
+      howTo="Drag number tiles into the two empty nodes (or tap a tile, then a node). Each parent checks its children's product, and the ratio x ÷ y from your tree is the answer."
+      answerText={engine.answer !== undefined ? String(engine.answer) : undefined}
+      mappedTo={engine.answer !== undefined && x !== null && y !== null ? `x ÷ y = ${x} ÷ ${y}` : undefined}
+      pendingHint="Fill both empty nodes of the tree."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_190px]">
+        <Stage label="Factor tree for 48">
+          <div className="flex flex-col items-center gap-1 py-1">
+            <Node label="48" value={48} />
+            <svg width="190" height="26"><path d="M95 0 L40 26 M95 0 L150 26" stroke="#94a3b8" strokeWidth={2} fill="none" /></svg>
+            <div className="flex gap-16">
+              <Node label="x" value={x} slot="x" ok={topOk} />
+              <Node label="8" value={8} />
+            </div>
+            <svg width="190" height="26"><path d="M150 0 L110 26 M150 0 L185 26" stroke="#94a3b8" strokeWidth={2} fill="none" /></svg>
+            <div className="flex gap-16 pl-24">
+              <Node label="2" value={2} />
+              <Node label="4" value={4} />
+            </div>
+            <svg width="190" height="26"><path d="M150 0 L120 26 M150 0 L180 26" stroke="#94a3b8" strokeWidth={2} fill="none" /></svg>
+            <div className="flex gap-12 pl-32">
+              <Node label="y" value={y} slot="y" ok={lowOk} />
+              <Node label="2" value={2} />
+            </div>
+          </div>
+          <div className="flex justify-center gap-4 text-[10px] font-bold mt-1">
+            <span className={topOk ? "text-emerald-700" : "text-slate-500"}>x × 8 = 48 {topOk ? "✓" : ""}</span>
+            <span className={lowOk ? "text-emerald-700" : "text-slate-500"}>y × 2 = 4 {lowOk ? "✓" : ""}</span>
+          </div>
+        </Stage>
+
+        <div className="space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Number tiles</div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {TILES.map((n) => (
+              <button
+                key={n}
+                type="button"
+                disabled={engine.readOnly}
+                onPointerDown={(e) => start(e, n)}
+                onClick={() => setArmed((a) => (a === n ? null : n))}
+                className={`h-11 rounded-lg border-2 font-mono text-sm font-black transition ${
+                  armed === n ? "bg-emerald-600 border-emerald-700 text-white" : "bg-white border-slate-200 text-slate-800 hover:border-emerald-400"
+                } ${engine.readOnly ? "" : "cursor-grab active:cursor-grabbing"}`}
+                style={{ touchAction: "none" }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <ReadOut label="Ratio x ÷ y" value={engine.answer ?? "—"} tone={engine.answer !== undefined ? "emerald" : "slate"} />
+        </div>
+      </div>
+
+      {ghost && (
+        <div className="pointer-events-none fixed z-50 w-12 h-12 grid place-items-center rounded-full border-2 border-emerald-600 bg-white font-mono text-lg font-black text-emerald-700 shadow-lg" style={{ left: ghost.x - 24, top: ghost.y - 24 }}>
+          {ghost.n}
+        </div>
+      )}
+    </ActivityShell>
   );
 }

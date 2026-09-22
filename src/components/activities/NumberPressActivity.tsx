@@ -1,133 +1,100 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Factory, CheckCircle2 } from "lucide-react";
+import React from "react";
+import { Hash } from "lucide-react";
+import { ActivityShell, Stage, ReorderList, useActivityEngine, ActivityComponentProps } from "./kit";
 
-interface NumberPressActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q26 — Digit press.
+ *
+ * The student drags digit tiles into place-value slots. The number the press forms is read
+ * back live in the Indian system, and the arrangement itself is the ordering answer.
+ */
+
+interface PressState {
+  order: string[];
+  touched: boolean;
 }
 
-export function NumberPressActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: NumberPressActivityProps) {
-  const options = [
-    { id: "A", name: "Nine lakh ninety five thousand three hundred twenty (995320)", num: "9,95,320", isCorrect: true },
-    { id: "B", name: "Nine hundred ninety five thousand three hundred twenty", num: "995,320 (International)", isCorrect: false },
-    { id: "C", name: "Nine lakh fifty five thousand three hundred two", num: "9,55,302", isCorrect: false },
-    { id: "D", name: "Nine hundred ninety thousand five hundred thirty two", num: "990,532", isCorrect: false },
-  ];
+const DIGIT_OF: Record<string, string> = { d9a: "9", d9b: "9", d5: "5", d3: "3", d2: "2", d0: "0" };
+const PLACES = ["Lakhs", "Ten-Thousands", "Thousands", "Hundreds", "Tens", "Ones"];
 
-  const [selectedId, setSelectedId] = useState<string>(
-    value ? (options.find((o) => o.id === value || o.name === value)?.id || "A") : ""
+function inWords(n: number) {
+  const ones = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+  const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+  const two = (v: number): string => (v < 20 ? ones[v] : `${tens[Math.floor(v / 10)]}${v % 10 ? `-${ones[v % 10]}` : ""}`);
+  const three = (v: number): string => (v >= 100 ? `${ones[Math.floor(v / 100)]} hundred${v % 100 ? ` ${two(v % 100)}` : ""}` : two(v));
+  const lakh = Math.floor(n / 100000);
+  const rest = n % 100000;
+  const thousand = Math.floor(rest / 1000);
+  const last = rest % 1000;
+  return [
+    lakh ? `${two(lakh)} lakh` : "",
+    thousand ? `${three(thousand)} thousand` : "",
+    last ? three(last) : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+export function NumberPressActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<PressState>) {
+  const items = React.useMemo(
+    () => (question?.orderingConfig?.items || []).map((i) => ({ id: i.id, label: DIGIT_OF[i.id] ?? i.label, sub: i.label })),
+    [question]
   );
 
-  useEffect(() => {
-    if (value) {
-      const match = options.find((o) => o.id === value || o.name === value);
-      if (match) setSelectedId(match.id);
-    }
-  }, [value]);
+  const initial = React.useMemo(() => {
+    const ids = (question?.orderingConfig?.items || []).map((i) => i.id);
+    return [3, 0, 5, 2, 4, 1].filter((n) => n < ids.length).map((n) => ids[n]);
+  }, [question]);
 
-  const handleSelect = (opt: typeof options[0]) => {
-    if (readOnly) return;
-    setSelectedId(opt.id);
-    onChange(opt.id);
-  };
+  const engine = useActivityEngine<PressState, string[]>({
+    initialState: { order: initial, touched: false },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    deriveStateFromValue: (v) => (Array.isArray(v) ? { order: v, touched: true } : undefined),
+    resolve: (s) => (s.touched ? s.order : undefined),
+  });
+
+  const digits = engine.state.order.map((id) => DIGIT_OF[id] ?? "0").join("");
+  const numeric = Number(digits);
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Factory className="w-5 h-5" />
+    <ActivityShell
+      icon={Hash}
+      title="Six-Digit Number Press"
+      howTo="Drag the digit tiles so the highest place value sits at the top of the stack. The press forms the number live and reads it back in words."
+      answerText={engine.answer ? digits : undefined}
+      mappedTo={engine.answer ? inWords(numeric) : undefined}
+      pendingHint="Move at least one digit tile to press a number."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_230px]">
+        <ReorderList
+          items={items}
+          order={engine.state.order}
+          onReorder={(order) => engine.update({ order, touched: true })}
+          readOnly={engine.readOnly}
+          renderMeta={(_id, idx) => (
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{PLACES[idx]}</span>
+          )}
+        />
+
+        <Stage label="Press output">
+          <div className="font-mono text-3xl font-black text-center text-slate-900 tracking-widest">
+            {digits.slice(0, 1)},{digits.slice(1, 3)},{digits.slice(3)}
           </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Number Formatter & Naming Press
-            </h3>
-            <p className="text-xs text-slate-600">
-              Form the greatest 6-digit number using digits 3, 5, 0, 2, 9 (repeating 9): <strong className="text-slate-900">9,95,320</strong>.
-            </p>
+          <div className="mt-3 text-center text-xs font-bold text-emerald-800 capitalize leading-snug">
+            {inWords(numeric)}
           </div>
-        </div>
+          <p className="text-[10px] text-slate-500 mt-3 leading-snug">
+            Digits available: 3, 5, 0, 2, 9 with the greatest digit repeated.
+          </p>
+        </Stage>
       </div>
-
-      {/* Assembly Digit Belt (Interactive Canvas) */}
-      <div
-        onClick={() => handleSelect(options[0])}
-        className="p-5 bg-slate-50 border-2 border-slate-200 hover:border-emerald-400 rounded-2xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all shadow-xs"
-        title="Click to assemble the greatest 6-digit number (9,95,320)"
-      >
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
-          {[
-            { d: "9", p: "Lakhs" },
-            { d: "9", p: "T-Th" },
-            { d: "5", p: "Thous" },
-            { d: "3", p: "Hund" },
-            { d: "2", p: "Tens" },
-            { d: "0", p: "Ones" },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              className={`w-14 h-16 rounded-xl flex flex-col items-center justify-center shadow-xs border-2 transition-all ${
-                selectedId === "A"
-                  ? "bg-white border-emerald-500 text-emerald-950 scale-105"
-                  : "bg-white border-slate-300 text-slate-900"
-              }`}
-            >
-              <span className="font-black text-2xl">{item.d}</span>
-              <span className="text-[9px] font-mono text-emerald-700 font-bold">{item.p}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="px-4 py-2 bg-white border border-slate-200 rounded-xl font-mono text-xs text-slate-700 shadow-xs">
-          Formed Number: <strong className="text-emerald-700 text-base font-black">9,95,320</strong> →{" "}
-          <span className="font-bold text-slate-900">Nine lakh ninety five thousand three hundred twenty (Option A) ★</span>
-        </div>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select the correct number name for the greatest 6-digit number:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {opt.id}
-                    </span>
-                    <span className="font-sans text-sm font-black">{opt.name}</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-1 font-mono font-medium">{opt.num}</p>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    </ActivityShell>
   );
 }

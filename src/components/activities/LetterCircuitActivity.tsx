@@ -1,181 +1,137 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Cpu, Zap, CheckCircle2 } from "lucide-react";
+import React from "react";
+import { Grid3x3 } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps, optionIdByText, optionLabel } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface LetterCircuitActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q2 — Letter matrix circuit.
+ *
+ * The student slides a live alphabet carriage into the empty cell of the matrix. The grid
+ * recomputes its row and column steps from the letter actually placed, so the placement
+ * itself is the answer; it is mapped onto the source option that names that letter.
+ */
+
+interface LetterState {
+  index: number | null; // 0..25
 }
 
-export function LetterCircuitActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: LetterCircuitActivityProps) {
-  const options = [
-    { id: "A", val: "O", label: "O (L + 3 = O, O + 2 = Q)", formula: "Row 3: L(12) + 3 = O(15) → O(15) + 2 = Q(17)", isCorrect: true },
-    { id: "B", val: "Q", label: "Q", formula: "Duplicate of end terminal", isCorrect: false },
-    { id: "C", val: "S", label: "S", formula: "L(12) + 7 = S(19)", isCorrect: false },
-    { id: "D", val: "M", label: "M", formula: "L(12) + 1 = M(13)", isCorrect: false },
-  ];
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const ROWS = [
+  ["U", "X", "Z"],
+  ["M", "P", "R"],
+  ["L", null, "Q"],
+];
+const code = (c: string) => ALPHABET.indexOf(c);
 
-  const initialOpt = options.find((o) => o.id === value || o.val === value) || options[0];
-  const [selectedId, setSelectedId] = useState<string>(value ? (options.find((o) => o.id === value || o.val === value)?.id || "A") : "");
+export function LetterCircuitActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<LetterState>) {
+  const engine = useActivityEngine<LetterState, string>({
+    initialState: { index: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      if (s.index === null) return undefined;
+      const letter = ALPHABET[s.index];
+      return optionIdByText(question, (t) => t.trim().toUpperCase().startsWith(letter));
+    },
+  });
 
-  useEffect(() => {
-    if (value) {
-      const match = options.find((o) => o.id === value || o.val === value);
-      if (match) setSelectedId(match.id);
-    }
-  }, [value]);
+  const letter = engine.state.index === null ? null : ALPHABET[engine.state.index];
+  const railRef = React.useRef<HTMLDivElement | null>(null);
 
-  const handleSelect = (opt: typeof options[0]) => {
-    if (readOnly) return;
-    setSelectedId(opt.id);
-    onChange(opt.id);
+  const pick = (clientX: number) => {
+    const r = railRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const frac = Math.min(0.999, Math.max(0, (clientX - r.left) / r.width));
+    engine.update({ index: Math.floor(frac * 26) });
   };
 
-  const selectedOpt = options.find((o) => o.id === selectedId);
+  const { start } = usePointerDrag({
+    disabled: engine.readOnly,
+    onStart: (p) => pick(p.x),
+    onMove: (p) => pick(p.x),
+  });
+
+  const stepRight = letter ? code("Q") - code(letter) : null;
+  const stepLeft = letter ? code(letter) - code("L") : null;
+  const colStep = letter ? code(letter) - code("P") : null;
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Cpu className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Letter Circuit Matrix Board
-            </h3>
-            <p className="text-xs text-slate-600">
-              Click the missing slot in the circuit or select a candidate terminal to complete the (+3, +2) rule.
-            </p>
-          </div>
-        </div>
-
-        {/* Selected status badge */}
-        {selectedOpt && (
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-300 rounded-lg text-xs font-mono font-bold text-emerald-800">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Plugged In: Option {selectedOpt.id} ({selectedOpt.val})</span>
-          </div>
-        )}
-      </div>
-
-      {/* Circuit Board 3x3 Grid */}
-      <div className="relative p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl overflow-hidden flex flex-col items-center justify-center">
-        {/* Subtle grid pattern */}
-        <div
-          className="absolute inset-0 opacity-15 pointer-events-none"
-          style={{
-            backgroundImage: "radial-gradient(circle at center, #059669 1px, transparent 1px)",
-            backgroundSize: "18px 18px",
-          }}
-        />
-
-        {/* 3x3 Matrix Nodes */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-5 z-10">
-          {/* Row 1 */}
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">U</span>
-            <span className="text-[10px] font-mono text-slate-500">21</span>
-          </div>
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">X</span>
-            <span className="text-[10px] font-mono text-emerald-700 font-bold">24 (+3)</span>
-          </div>
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">Z</span>
-            <span className="text-[10px] font-mono text-emerald-700 font-bold">26 (+2)</span>
-          </div>
-
-          {/* Row 2 */}
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">M</span>
-            <span className="text-[10px] font-mono text-slate-500">13</span>
-          </div>
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">P</span>
-            <span className="text-[10px] font-mono text-emerald-700 font-bold">16 (+3)</span>
-          </div>
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">R</span>
-            <span className="text-[10px] font-mono text-emerald-700 font-bold">18 (+2)</span>
-          </div>
-
-          {/* Row 3 */}
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">L</span>
-            <span className="text-[10px] font-mono text-slate-500">12</span>
-          </div>
-
-          {/* Missing Target Cell - Directly Clickable on Canvas */}
-          <button
-            type="button"
-            disabled={readOnly}
-            onClick={() => handleSelect(options[0])}
-            className={`w-20 h-20 rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer ${
-              selectedOpt
-                ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md ring-4 ring-emerald-400/30 scale-105"
-                : "bg-white border-amber-400 text-amber-600 hover:bg-amber-50"
-            }`}
-            title="Click to plug in the correct missing letter 'O'"
-          >
-            <span className="font-black text-2xl">{selectedOpt ? selectedOpt.val : "?"}</span>
-            <span className="text-[9px] font-mono font-bold text-emerald-700">
-              {selectedOpt ? `15 (+3)` : "CLICK TO FIT"}
-            </span>
-          </button>
-
-          <div className="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-xs">
-            <span className="font-black text-2xl text-slate-900">Q</span>
-            <span className="text-[10px] font-mono text-emerald-700 font-bold">17 (+2)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Letter Selector Candidates */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block flex items-center gap-2">
-          <Zap className="w-4 h-4 text-emerald-600" /> Plug In Missing Terminal Option:
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {options.map((cand) => {
-            const isSelected = selectedId === cand.id;
-            return (
-              <button
-                key={cand.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(cand)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {cand.id}
-                    </span>
-                    <span className="text-xl font-black">{cand.val}</span>
-                  </div>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+    <ActivityShell
+      icon={Grid3x3}
+      title="Letter Circuit Matrix"
+      howTo="Drag the alphabet carriage to slot a letter into the empty cell. The matrix recalculates its row and column steps live from the letter you place."
+      answerText={letter ? letter : undefined}
+      mappedTo={optionLabel(question, engine.answer)}
+      pendingHint="Slide a letter into the empty cell of row 3."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_230px]">
+        <Stage label="Letter matrix">
+          <div className="grid grid-cols-3 gap-2 max-w-[320px] mx-auto">
+            {ROWS.flatMap((row, r) =>
+              row.map((cell, c) => (
+                <div
+                  key={`${r}-${c}`}
+                  className={`aspect-square rounded-xl border-2 grid place-items-center font-black text-2xl ${
+                    cell === null
+                      ? letter
+                        ? "bg-emerald-50 border-emerald-500 text-emerald-800"
+                        : "bg-white border-dashed border-slate-400 text-slate-300"
+                      : "bg-white border-slate-300 text-slate-800"
+                  }`}
+                >
+                  {cell ?? letter ?? "?"}
                 </div>
-                <span className="text-[11px] text-slate-500 mt-2 font-medium line-clamp-1">
-                  {cand.formula}
-                </span>
-              </button>
-            );
-          })}
+              ))
+            )}
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-mono text-slate-500">
+            <span>Row 1 steps: +3, +2</span>
+            <span>Row 2 steps: +3, +2</span>
+            <span className={letter ? "text-emerald-700 font-bold" : ""}>
+              Row 3 steps: {stepLeft !== null ? `${stepLeft >= 0 ? "+" : ""}${stepLeft}` : "?"},{" "}
+              {stepRight !== null ? `${stepRight >= 0 ? "+" : ""}${stepRight}` : "?"}
+            </span>
+          </div>
+        </Stage>
+
+        <div className="space-y-2.5">
+          <ReadOut label="Letter placed" value={letter ?? "—"} tone={letter ? "emerald" : "slate"} />
+          <ReadOut label="Column step (from P)" value={colStep === null ? "—" : `${colStep >= 0 ? "+" : ""}${colStep}`} />
+          <p className="text-[10px] text-slate-500 leading-snug">
+            Compare your row 3 steps with rows 1 and 2, and your column step with the column above.
+          </p>
         </div>
       </div>
-    </div>
+
+      <div className="mt-3">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+          Alphabet carriage — drag to choose
+        </div>
+        <div
+          ref={railRef}
+          onPointerDown={(e) => start(e, undefined)}
+          className="flex rounded-xl border-2 border-slate-300 bg-white overflow-hidden cursor-pointer"
+          style={{ touchAction: "none" }}
+        >
+          {ALPHABET.map((ch, i) => (
+            <span
+              key={ch}
+              className={`flex-1 py-2.5 text-center text-[11px] font-black transition-colors ${
+                i === engine.state.index ? "bg-emerald-600 text-white" : "text-slate-500 hover:bg-emerald-50"
+              }`}
+            >
+              {ch}
+            </span>
+          ))}
+        </div>
+      </div>
+    </ActivityShell>
   );
 }

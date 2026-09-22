@@ -1,216 +1,192 @@
 "use client";
 
-import React, { useState } from "react";
-import { Split,  CheckCircle2 } from "lucide-react";
+import React from "react";
+import { FlipHorizontal2 } from "lucide-react";
+import { ActivityShell, Stage, ConnectPairs, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface SymmetryStudioActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q20 — Mirror-line studio.
+ *
+ * The student spins a mirror line over each shape. When the line lands on a genuine axis
+ * it locks in and the counter rises. The count discovered for a shape wires itself to the
+ * matching entry in Column B, so finding the axes IS answering the matching question.
+ */
+
+interface SymState {
+  angle: Record<string, number>;
+  found: Record<string, number[]>;
 }
 
-export function SymmetryStudioActivity({
-  value,
-  onChange,
-  readOnly = false }: SymmetryStudioActivityProps) {
-  const options = [
-    {
-      id: "A",
-      label: "P, Q and R only",
-      figures: ["P", "Q", "R"],
-      desc: "Hexagon (6), Square (4), Equilateral Triangle (3) > 2 lines",
-      isCorrect: true },
-    {
-      id: "B",
-      label: "P and Q only",
-      figures: ["P", "Q"],
-      desc: "Leaves out Equilateral Triangle (3 lines)",
-      isCorrect: false },
-    {
-      id: "C",
-      label: "P, Q, R and S",
-      figures: ["P", "Q", "R", "S"],
-      desc: "Rectangle (S) has only 2 lines (not > 2)",
-      isCorrect: false },
-    {
-      id: "D",
-      label: "Q and S only",
-      figures: ["Q", "S"],
-      desc: "Incorrect subset",
-      isCorrect: false },
-  ];
+const SHAPES: Record<string, { axes: number[]; art: React.ReactNode }> = {
+  rect: {
+    axes: [0, 90],
+    art: <rect x={14} y={30} width={72} height={40} fill="#e2e8f0" stroke="#0f172a" strokeWidth={2.5} />,
+  },
+  arrow: {
+    axes: [90],
+    art: <polygon points="50,12 78,44 62,44 62,86 38,86 38,44 22,44" fill="#e2e8f0" stroke="#0f172a" strokeWidth={2.5} />,
+  },
+  star: {
+    axes: [90, 126, 162, 18, 54],
+    art: (
+      <polygon
+        points="50,10 61,38 91,38 67,56 76,85 50,67 24,85 33,56 9,38 39,38"
+        fill="#e2e8f0"
+        stroke="#0f172a"
+        strokeWidth={2.5}
+      />
+    ),
+  },
+  semi: {
+    axes: [90],
+    art: <path d="M14 68 A 36 36 0 0 1 86 68 Z" fill="#e2e8f0" stroke="#0f172a" strokeWidth={2.5} />,
+  },
+};
 
-  const initialOpt = options.find((o) => o.id === value) || options[0];
-  const [selectedId, setSelectedId] = useState<string>(initialOpt.id);
+const TOL = 7;
+const norm = (a: number) => ((a % 180) + 180) % 180;
 
-  const activeOpt = options.find((o) => o.id === selectedId) || options[0];
+export function SymmetryStudioActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<SymState>) {
+  const cfg = question?.matchingConfig;
 
-  const handleSelectOption = (optId: string) => {
-    if (readOnly) return;
-    setSelectedId(optId);
-    onChange(optId);
+  /** Wire each shape to the first unused Column-B entry naming the count the student found. */
+  const wiring = React.useCallback(
+    (found: Record<string, number[]>) => {
+      if (!cfg) return [];
+      const used = new Set<string>();
+      const pairs: { leftId: string; rightId: string }[] = [];
+      for (const left of cfg.leftItems) {
+        const count = (found[left.id] || []).length;
+        if (!count) continue;
+        const match = cfg.rightItems.find((r) => !used.has(r.id) && Number((r.text.match(/\d+/) || [])[0]) === count);
+        if (match) {
+          used.add(match.id);
+          pairs.push({ leftId: left.id, rightId: match.id });
+        }
+      }
+      return pairs;
+    },
+    [cfg]
+  );
+
+  const engine = useActivityEngine<SymState, { leftId: string; rightId: string }[]>({
+    initialState: { angle: {}, found: {} },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      const pairs = wiring(s.found);
+      return cfg && pairs.length === cfg.leftItems.length ? pairs : undefined;
+    },
+  });
+
+  const boxRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+
+  const { start } = usePointerDrag<string>({
+    disabled: engine.readOnly,
+    onMove: (p, id) => {
+      const r = boxRefs.current[id]?.getBoundingClientRect();
+      if (!r) return;
+      const deg = norm((Math.atan2(-(p.y - (r.top + r.height / 2)), p.x - (r.left + r.width / 2)) * 180) / Math.PI);
+      engine.update((s) => {
+        const shapeId = id.replace(/^.*:/, "");
+        const axes = SHAPES[shapeId]?.axes || [];
+        const hit = axes.find((a) => Math.min(Math.abs(norm(a) - deg), 180 - Math.abs(norm(a) - deg)) <= TOL);
+        const prev = s.found[id] || [];
+        return {
+          angle: { ...s.angle, [id]: hit !== undefined ? norm(hit) : deg },
+          found: hit !== undefined && !prev.includes(norm(hit)) ? { ...s.found, [id]: [...prev, norm(hit)] } : s.found,
+        };
+      });
+    },
+  });
+
+  const pairs = wiring(engine.state.found);
+
+  const MirrorBox = ({ leftId }: { leftId: string }) => {
+    const key = leftId;
+    const shapeId = leftId.replace(/^.*:/, "");
+    const shape = SHAPES[shapeId];
+    if (!shape) return null;
+    const angle = engine.state.angle[key] ?? 0;
+    const found = engine.state.found[key] || [];
+    const locked = shape.axes.some((a) => Math.abs(norm(a) - angle) < 0.5);
+    return (
+      <div className="flex items-center gap-2">
+        <div
+          ref={(el) => {
+            boxRefs.current[key] = el;
+          }}
+          onPointerDown={(e) => start(e, key)}
+          className={`relative w-[86px] h-[86px] shrink-0 rounded-lg border-2 bg-white ${
+            engine.readOnly ? "" : "cursor-grab active:cursor-grabbing"
+          } ${locked ? "border-emerald-500" : "border-slate-200"}`}
+          style={{ touchAction: "none" }}
+        >
+          <svg viewBox="0 0 100 100" className="w-full h-full">
+            {shape.art}
+            <line
+              x1={50 - 60 * Math.cos((angle * Math.PI) / 180)}
+              y1={50 + 60 * Math.sin((angle * Math.PI) / 180)}
+              x2={50 + 60 * Math.cos((angle * Math.PI) / 180)}
+              y2={50 - 60 * Math.sin((angle * Math.PI) / 180)}
+              stroke={locked ? "#059669" : "#e11d48"}
+              strokeWidth={2.5}
+              strokeDasharray={locked ? undefined : "5 4"}
+            />
+            {found.map((a) => (
+              <line
+                key={a}
+                x1={50 - 60 * Math.cos((a * Math.PI) / 180)}
+                y1={50 + 60 * Math.sin((a * Math.PI) / 180)}
+                x2={50 + 60 * Math.cos((a * Math.PI) / 180)}
+                y2={50 - 60 * Math.sin((a * Math.PI) / 180)}
+                stroke="#059669"
+                strokeWidth={1.5}
+                opacity={0.55}
+              />
+            ))}
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <div className="font-bold text-xs text-slate-900">{cfg?.leftItems.find((l) => l.id === leftId)?.text}</div>
+          <div className={`text-[10px] font-mono font-bold ${found.length ? "text-emerald-700" : "text-slate-400"}`}>
+            axes found: {found.length}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-sky-700">
-            <Split className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Symmetry Mirror Studio 
-            </h3>
-            <p className="text-xs text-slate-600">
-              Inspect lines of reflectional symmetry. Condition: Figures with <strong className="text-sky-700">&gt; 2 lines of symmetry</strong>.
-            </p>
-          </div>
-        </div>
-
-        <div className="text-xs font-mono font-bold bg-sky-50 text-sky-900 px-3 py-1.5 rounded-lg border border-sky-200">
-          Target: Count &gt; 2 Lines
-        </div>
-      </div>
-
-      {/* 4 Geometric Shapes with dynamic highlight linked to option selection */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {/* Figure P: Hexagon (6 lines) */}
-        <div
-          onClick={() => handleSelectOption("A")}
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
-            activeOpt.figures.includes("P")
-              ? "bg-emerald-50 border-emerald-500 text-emerald-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
-          }`}
-        >
-          <svg viewBox="0 0 60 60" className="w-14 h-14">
-            <polygon
-              points="30,5 52,18 52,42 30,55 8,42 8,18"
-              fill={activeOpt.figures.includes("P") ? "#d1fae5" : "#f1f5f9"}
-              stroke="#059669"
-              strokeWidth="2.5"
-            />
-            <line x1="30" y1="5" x2="30" y2="55" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
-            <line x1="8" y1="30" x2="52" y2="30" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <span className="text-xs font-bold text-slate-900">Figure P (Hexagon)</span>
-          <span className="text-[11px] font-mono font-bold text-emerald-700">6 Lines (&gt; 2) ✓</span>
-        </div>
-
-        {/* Figure Q: Square (4 lines) */}
-        <div
-          onClick={() => handleSelectOption("A")}
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
-            activeOpt.figures.includes("Q")
-              ? "bg-emerald-50 border-emerald-500 text-emerald-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
-          }`}
-        >
-          <svg viewBox="0 0 60 60" className="w-14 h-14">
-            <rect
-              x="10"
-              y="10"
-              width="40"
-              height="40"
-              fill={activeOpt.figures.includes("Q") ? "#d1fae5" : "#f1f5f9"}
-              stroke="#059669"
-              strokeWidth="2.5"
-            />
-            <line x1="30" y1="10" x2="30" y2="50" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
-            <line x1="10" y1="30" x2="50" y2="30" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <span className="text-xs font-bold text-slate-900">Figure Q (Square)</span>
-          <span className="text-[11px] font-mono font-bold text-emerald-700">4 Lines (&gt; 2) ✓</span>
-        </div>
-
-        {/* Figure R: Equilateral Triangle (3 lines) */}
-        <div
-          onClick={() => handleSelectOption("A")}
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
-            activeOpt.figures.includes("R")
-              ? "bg-emerald-50 border-emerald-500 text-emerald-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
-          }`}
-        >
-          <svg viewBox="0 0 60 60" className="w-14 h-14">
-            <polygon
-              points="30,8 54,48 6,48"
-              fill={activeOpt.figures.includes("R") ? "#d1fae5" : "#f1f5f9"}
-              stroke="#059669"
-              strokeWidth="2.5"
-            />
-            <line x1="30" y1="8" x2="30" y2="48" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
-            <line x1="6" y1="48" x2="42" y2="28" stroke="#059669" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <span className="text-xs font-bold text-slate-900">Figure R (Triangle)</span>
-          <span className="text-[11px] font-mono font-bold text-emerald-700">3 Lines (&gt; 2) ✓</span>
-        </div>
-
-        {/* Figure S: Rectangle (2 lines) */}
-        <div
-          onClick={() => handleSelectOption("C")}
-          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
-            activeOpt.figures.includes("S")
-              ? "bg-amber-50 border-amber-500 text-amber-950 scale-[1.02]"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-60 hover:opacity-100"
-          }`}
-        >
-          <svg viewBox="0 0 60 60" className="w-14 h-14">
-            <rect
-              x="5"
-              y="15"
-              width="50"
-              height="30"
-              fill={activeOpt.figures.includes("S") ? "#fef3c7" : "#f1f5f9"}
-              stroke="#d97706"
-              strokeWidth="2.5"
-            />
-            <line x1="30" y1="15" x2="30" y2="45" stroke="#d97706" strokeWidth="1" strokeDasharray="2 2" />
-            <line x1="5" y1="30" x2="55" y2="30" stroke="#d97706" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <span className="text-xs font-bold text-slate-900">Figure S (Rectangle)</span>
-          <span className="text-[11px] font-mono font-bold text-amber-700">2 Lines (not &gt; 2) ✗</span>
-        </div>
-      </div>
-
-      {/* Answer Options Grid (Directly connected to shapes highlight) */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select Matching Subset:
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelectOption(opt.id)}
-                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-sky-50 border-sky-600 text-sky-950 shadow-md shadow-sky-600/10 scale-[1.02]"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {opt.id}
-                    </span>
-                    <span className="text-sm font-black">{opt.label}</span>
-                  </div>
-                  {isSelected && <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0" />}
-                </div>
-                <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.desc}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    <ActivityShell
+      icon={FlipHorizontal2}
+      title="Mirror Line Studio"
+      howTo="Spin the red mirror line across each shape. Every time it lands on a real axis of symmetry it locks green and the counter rises — the count then wires itself to Column B."
+      answerText={engine.answer ? `${pairs.length} of ${cfg?.leftItems.length} shapes measured` : undefined}
+      mappedTo={engine.answer ? "Wired from the axes you found" : undefined}
+      pendingHint={`Find every axis on each shape — ${pairs.length} of ${cfg?.leftItems.length ?? 4} wired.`}
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <Stage label={cfg?.instruction || "Find the axes, then read the wiring"}>
+        <ConnectPairs
+          left={(cfg?.leftItems || []).map((l) => ({
+            id: l.id,
+            text: l.text,
+            autoLinkTo: null,
+            body: <MirrorBox leftId={l.id} />,
+          }))}
+          right={(cfg?.rightItems || []).map((r) => ({ id: r.id, text: r.text.replace(/\s*\(.*\)$/, "") }))}
+          pairs={pairs}
+          onChange={() => undefined}
+          readOnly
+          leftTitle="Spin the mirror line"
+          rightTitle="Lines of symmetry"
+        />
+      </Stage>
+    </ActivityShell>
   );
 }

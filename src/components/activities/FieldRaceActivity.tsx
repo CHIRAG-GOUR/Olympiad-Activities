@@ -1,138 +1,112 @@
 "use client";
 
-import React, { useState } from "react";
-import { Flag,  CheckCircle2, Play } from "lucide-react";
+import React from "react";
+import { Flag } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, Stepper, useActivityEngine, ActivityComponentProps } from "./kit";
 
-interface FieldRaceActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q38 — Two-track lap race.
+ *
+ * The student sends each runner round her own track. Every lap adds that track's real
+ * perimeter, and the gap between the two distance counters is the answer.
+ */
+
+interface RaceState {
+  rashi: number;
+  kirti: number;
+  touched: boolean;
 }
 
-export function FieldRaceActivity({
-  value,
-  onChange,
-  readOnly = false }: FieldRaceActivityProps) {
-  // Rashi runs around a rectangular park: 52 m long, 30 m wide.
-  // Perimeter of Rashi's park = 2 * (52 + 30) = 2 * 82 = 164 m.
-  // Rashi completes 5 rounds = 5 * 164 m = 820 m.
-  // Kirti runs around a square park of side 65 m.
-  // Perimeter of Kirti's park = 4 * 65 m = 260 m.
-  // Kirti completes 7 rounds = 7 * 260 m = 1820 m.
-  // Who covered more distance and by how much?
-  // Kirti covered more by: 1820 m - 820 m = 1000 m!
-  const [selectedWinner, setSelectedWinner] = useState<string>(
-    value ? String(value) : ""
-  );
+const RASHI = { w: 52, h: 30, perimeter: 2 * (52 + 30) };
+const KIRTI = { side: 65, perimeter: 4 * 65 };
 
-  const options = [
-    { id: "A", val: "Kirti, 1000 m", label: "Kirti by 1000 m (1820m - 820m = 1000m)", isCorrect: true },
-    { id: "B", val: "Rashi, 1000 m", label: "Rashi by 1000 m", isCorrect: false },
-    { id: "C", val: "Kirti, 800 m", label: "Kirti by 800 m", isCorrect: false },
-    { id: "D", val: "Rashi, 600 m", label: "Rashi by 600 m", isCorrect: false },
-  ];
+export function FieldRaceActivity({ value, activityState, onChange, readOnly }: ActivityComponentProps<RaceState>) {
+  const engine = useActivityEngine<RaceState, number>({
+    initialState: { rashi: 0, kirti: 0, touched: false },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) =>
+      s.touched && s.rashi > 0 && s.kirti > 0
+        ? Math.abs(s.kirti * KIRTI.perimeter - s.rashi * RASHI.perimeter)
+        : undefined,
+  });
 
-  const handleSelect = (val: string) => {
-    if (readOnly) return;
-    setSelectedWinner(val);
-    onChange(val);
-  };
+  const { rashi, kirti } = engine.state;
+  const dR = rashi * RASHI.perimeter;
+  const dK = kirti * KIRTI.perimeter;
 
-  return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/20 border border-emerald-400/40 rounded-lg text-emerald-700">
-            <Flag className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-emerald-700 flex items-center gap-2">
-              Olympiad Field Race Telemetry 
-            </h3>
-            <p className="text-xs text-slate-600">
-              Rashi (5 rounds of 52m×30m) vs Kirti (7 rounds of 65m square).
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Dual Track Telemetry Meters with direct interaction */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Rashi's Telemetry */}
-        <div
-          onClick={() => handleSelect("Rashi, 1000 m")}
-          className="p-4 bg-slate-50 border-2 border-slate-200 hover:border-sky-400 rounded-xl space-y-2 cursor-pointer transition-all hover:scale-[1.01]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-sky-800">RASHI (5 LAPS)</span>
-            <span className="text-[10px] text-slate-600 font-mono">Rect: 52m × 30m</span>
-          </div>
-          <div className="text-xs text-slate-700 font-mono">
-            Lap = 2 × (52 + 30) = 164 m
-          </div>
-          <div className="pt-2 border-t border-slate-200 text-xl font-black text-sky-700 flex items-center justify-between">
-            <span>Total = 5 × 164 = 820 m</span>
-            <span className="text-xs font-normal text-slate-500 font-sans">Click to test Rashi</span>
-          </div>
-        </div>
-
-        {/* Kirti's Telemetry */}
-        <div
-          onClick={() => handleSelect("Kirti, 1000 m")}
-          className="p-4 bg-emerald-50/60 border-2 border-emerald-400/80 rounded-xl space-y-2 cursor-pointer transition-all hover:scale-[1.01] hover:border-emerald-500 shadow-xs"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-emerald-800">KIRTI (7 LAPS)</span>
-            <span className="text-[10px] text-slate-600 font-mono">Square: 65m side</span>
-          </div>
-          <div className="text-xs text-slate-700 font-mono">
-            Lap = 4 × 65 = 260 m
-          </div>
-          <div className="pt-2 border-t border-emerald-200 text-xl font-black text-emerald-700 flex items-center justify-between">
-            <span>Total = 7 × 260 = 1,820 m</span>
-            <span className="text-xs font-bold text-emerald-700 font-sans">✓ Covers More (Click to Select)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Comparison Delta Banner */}
-      <div
-        onClick={() => handleSelect("Kirti, 1000 m")}
-        className="p-3 bg-white border-2 border-emerald-400 rounded-xl text-center font-mono text-xs text-slate-700 cursor-pointer hover:bg-emerald-50 transition-all shadow-xs"
-      >
-        Distance Differential = 1,820 m - 820 m = <strong className="text-emerald-700 text-sm">1,000 m (Kirti covers more - Option A)</strong>
-      </div>
-
-      {/* Answer Options Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {options.map((opt) => {
-          const isSelected = selectedWinner === opt.val || selectedWinner === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={readOnly}
-              onClick={() => handleSelect(opt.val)}
-              className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
-                isSelected
-                  ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
-                  : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-              }`}
-            >
-              <div>
-                <span className="px-2 py-0.5 bg-slate-100 border border-slate-300 rounded text-xs font-mono text-emerald-700 mr-2">
-                  Option {opt.id}
-                </span>
-                <span className="font-mono text-base font-black">{opt.val}</span>
-                <p className="text-[11px] text-slate-600 mt-1 font-normal">{opt.label}</p>
-              </div>
-              {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-            </button>
-          );
-        })}
+  const Track = ({
+    name,
+    laps,
+    distance,
+    shape,
+    colour,
+  }: {
+    name: string;
+    laps: number;
+    distance: number;
+    shape: React.ReactNode;
+    colour: string;
+  }) => (
+    <div className="flex-1 text-center">
+      <svg viewBox="0 0 120 90" className="w-full max-w-[160px] mx-auto">
+        {shape}
+        {laps > 0 && (
+          <circle r={5} fill={colour}>
+            <animateMotion dur={`${Math.max(1.2, 4 / laps)}s`} repeatCount="indefinite" path="M20,18 H100 V72 H20 Z" />
+          </circle>
+        )}
+      </svg>
+      <div className="text-xs font-black text-slate-900">{name}</div>
+      <div className="font-mono text-sm font-black" style={{ color: colour }}>
+        {distance} m
       </div>
     </div>
+  );
+
+  return (
+    <ActivityShell
+      icon={Flag}
+      title="Two-Track Lap Race"
+      howTo="Send each runner round her track with the lap counters. Every lap adds that track's real perimeter — the gap between the two distance readings is your answer."
+      answerText={engine.answer !== undefined ? String(engine.answer) : undefined}
+      mappedTo={engine.answer !== undefined ? `${dK > dR ? "Kirti" : "Rashi"} ran further by this much` : undefined}
+      pendingHint="Give both runners at least one lap."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_200px]">
+        <Stage label="Running tracks">
+          <div className="flex gap-3">
+            <Track
+              name={`Rashi — ${RASHI.w} m × ${RASHI.h} m rectangle`}
+              laps={rashi}
+              distance={dR}
+              colour="#0284c7"
+              shape={<rect x={20} y={18} width={80} height={54} fill="none" stroke="#94a3b8" strokeWidth={3} rx={3} />}
+            />
+            <Track
+              name={`Kirti — ${KIRTI.side} m square`}
+              laps={kirti}
+              distance={dK}
+              colour="#059669"
+              shape={<rect x={27} y={13} width={66} height={66} fill="none" stroke="#94a3b8" strokeWidth={3} rx={3} />}
+            />
+          </div>
+          <div className="flex justify-center gap-4 mt-2 text-[10px] font-mono font-bold text-slate-500">
+            <span>Rashi lap = {RASHI.perimeter} m</span>
+            <span>Kirti lap = {KIRTI.perimeter} m</span>
+          </div>
+        </Stage>
+
+        <div className="space-y-2">
+          <Stepper label="Rashi's laps" value={rashi} min={0} max={12} onChange={(v) => engine.update((s) => ({ ...s, rashi: v, touched: true }))} readOnly={engine.readOnly} />
+          <Stepper label="Kirti's laps" value={kirti} min={0} max={12} onChange={(v) => engine.update((s) => ({ ...s, kirti: v, touched: true }))} readOnly={engine.readOnly} />
+          <ReadOut label="Distance gap" value={engine.answer === undefined ? "—" : `${engine.answer} m`} tone={engine.answer !== undefined ? "emerald" : "slate"} />
+        </div>
+      </div>
+    </ActivityShell>
   );
 }

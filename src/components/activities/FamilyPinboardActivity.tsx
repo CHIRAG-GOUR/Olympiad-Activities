@@ -1,193 +1,212 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Users, CheckCircle2 } from "lucide-react";
+import React from "react";
+import { Users, Trash2 } from "lucide-react";
+import { ActivityShell, Stage, ToggleRow, useActivityEngine, ActivityComponentProps, optionLabel } from "./kit";
+import { usePointerDrag, clamp } from "./kit/usePointerDrag";
 
-interface FamilyPinboardActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q9 — Family pinboard.
+ *
+ * The student pins each person where they like and strings the stated relationships
+ * between them. The board then infers how V relates to W from the graph the student
+ * actually built, and that inference is the answer.
+ */
+
+type Rel = "sibling" | "spouse" | "parent";
+interface Edge {
+  a: string;
+  b: string;
+  rel: Rel;
+}
+interface PinState {
+  pos: Record<string, { x: number; y: number }>;
+  edges: Edge[];
+  tool: Rel;
+  armed: string | null;
 }
 
-export function FamilyPinboardActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: FamilyPinboardActivityProps) {
-  const options = [
-    { id: "A", val: "Nephew", label: "Nephew (Son of brother X)", isCorrect: true },
-    { id: "B", val: "Son", label: "Son", isCorrect: false },
-    { id: "C", val: "Uncle", label: "Uncle", isCorrect: false },
-    { id: "D", val: "Son-in-law", label: "Son-in-law", isCorrect: false },
-  ];
+const PEOPLE = [
+  { id: "W", name: "W", sub: "sister of X" },
+  { id: "X", name: "X", sub: "father of V, husband of T" },
+  { id: "T", name: "T", sub: "wife of X" },
+  { id: "V", name: "V", sub: "brother of Z (male)" },
+  { id: "Z", name: "Z", sub: "sibling of V" },
+];
 
-  const [selectedId, setSelectedId] = useState<string>(
-    value ? (options.find((o) => o.id === value || o.val === value)?.id || "A") : ""
-  );
+const START: Record<string, { x: number; y: number }> = {
+  W: { x: 0.16, y: 0.22 },
+  X: { x: 0.46, y: 0.22 },
+  T: { x: 0.78, y: 0.22 },
+  V: { x: 0.38, y: 0.74 },
+  Z: { x: 0.7, y: 0.74 },
+};
 
-  useEffect(() => {
-    if (value) {
-      const match = options.find((o) => o.id === value || o.val === value);
-      if (match) setSelectedId(match.id);
-    }
-  }, [value]);
+const REL_LABEL: Record<Rel, string> = { sibling: "is a sibling of", spouse: "is married to", parent: "is a parent of" };
 
-  const handleSelect = (opt: typeof options[0]) => {
-    if (readOnly) return;
-    setSelectedId(opt.id);
-    onChange(opt.id);
+function inferRelation(edges: Edge[]): string | null {
+  const parentOf = (p: string, c: string) => edges.some((e) => e.rel === "parent" && e.a === p && e.b === c);
+  const siblings = (a: string, b: string) =>
+    edges.some((e) => e.rel === "sibling" && ((e.a === a && e.b === b) || (e.a === b && e.b === a)));
+  const spouses = (a: string, b: string) =>
+    edges.some((e) => e.rel === "spouse" && ((e.a === a && e.b === b) || (e.a === b && e.b === a)));
+  const ids = PEOPLE.map((p) => p.id);
+
+  if (parentOf("W", "V")) return "Son";
+  for (const p of ids) if (parentOf(p, "V") && siblings(p, "W")) return "Nephew";
+  for (const c of ids) if (parentOf("W", c) && spouses("V", c)) return "Son-in-law";
+  for (const c of ids) if (parentOf("V", c) && siblings(c, "W")) return "Uncle";
+  return null;
+}
+
+export function FamilyPinboardActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<PinState>) {
+  const engine = useActivityEngine<PinState, string>({
+    initialState: { pos: START, edges: [], tool: "sibling", armed: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      const rel = inferRelation(s.edges);
+      if (!rel) return undefined;
+      const opts = question?.multipleChoiceConfig?.options || [];
+      if (rel === "Son") return opts.find((o) => o.text.trim() === "Son")?.id;
+      return opts.find((o) => o.text.toLowerCase().includes(rel.toLowerCase()))?.id;
+    },
+  });
+
+  const s = engine.state;
+  const boardRef = React.useRef<HTMLDivElement | null>(null);
+  const moved = React.useRef(false);
+
+  const { start } = usePointerDrag<string>({
+    disabled: engine.readOnly,
+    onStart: () => {
+      moved.current = false;
+    },
+    onMove: (p, id) => {
+      const r = boardRef.current?.getBoundingClientRect();
+      if (!r) return;
+      moved.current = true;
+      engine.update((st) => ({
+        ...st,
+        pos: { ...st.pos, [id]: { x: clamp((p.x - r.left) / r.width, 0.06, 0.94), y: clamp((p.y - r.top) / r.height, 0.08, 0.92) } },
+      }));
+    },
+  });
+
+  const tapNode = (id: string) => {
+    if (engine.readOnly || moved.current) return;
+    engine.update((st) => {
+      if (!st.armed) return { ...st, armed: id };
+      if (st.armed === id) return { ...st, armed: null };
+      const edge: Edge = { a: st.armed, b: id, rel: st.tool };
+      const exists = st.edges.some((e) => e.rel === edge.rel && e.a === edge.a && e.b === edge.b);
+      return { ...st, armed: null, edges: exists ? st.edges : [...st.edges, edge] };
+    });
   };
 
+  const relation = inferRelation(s.edges);
+
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Genealogical Pedigree Board
-            </h3>
-            <p className="text-xs text-slate-600">
-              Click the family nodes or deduction link to determine how V is related to W.
-            </p>
-          </div>
-        </div>
-
-        {/* Quick Deduction Presets */}
-        <div className="flex items-center gap-2">
-          {options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => handleSelect(opt)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                selectedId === opt.id
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-              }`}
-            >
-              {opt.val} ({opt.id})
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Interactive Detective Corkboard Tree */}
-      <div className="relative h-64 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 460 220" className="w-full h-full max-w-lg select-none">
-          {/* Generation 1: W (Sister) <-> X (Father) */}
-          <line x1="140" y1="60" x2="280" y2="60" stroke="#e11d48" strokeWidth="2.5" strokeDasharray="4 4" />
-          <text x="210" y="50" textAnchor="middle" fill="#e11d48" fontSize="11" fontWeight="bold">
-            ◄── SIBLINGS ──►
-          </text>
-
-          {/* Node W (Female - Sister of X) */}
-          <g
-            className="cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => handleSelect(options[0])}
+    <ActivityShell
+      icon={Users}
+      title="Family Relationship Pinboard"
+      howTo="Drag the name pins anywhere, pick a string type, then tap two people to tie them together. The board works out how V is related to W from the family you build."
+      answerText={relation ?? undefined}
+      mappedTo={optionLabel(question, engine.answer)}
+      pendingHint="String the stated relationships until a path connects V back to W."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_215px]">
+        <Stage label="Pinboard">
+          <div
+            ref={boardRef}
+            className="relative h-[270px] rounded-xl bg-[repeating-linear-gradient(45deg,#fafaf9,#fafaf9_10px,#f5f5f4_10px,#f5f5f4_20px)] border border-slate-200 overflow-hidden"
+            style={{ touchAction: "none" }}
           >
-            <rect x="70" y="30" width="70" height="60" rx="10" fill="#ffe4e6" stroke="#e11d48" strokeWidth="2" />
-            <text x="105" y="58" textAnchor="middle" fill="#9f1239" fontSize="20" fontWeight="black">W</text>
-            <text x="105" y="78" textAnchor="middle" fill="#be123c" fontSize="10" fontWeight="bold">(Sister)</text>
-          </g>
+            <svg className="absolute inset-0 w-full h-full pointer-events-none">
+              {s.edges.map((e, i) => {
+                const a = s.pos[e.a];
+                const b = s.pos[e.b];
+                if (!a || !b) return null;
+                const colour = e.rel === "parent" ? "#059669" : e.rel === "spouse" ? "#e11d48" : "#0284c7";
+                return (
+                  <g key={i}>
+                    <line
+                      x1={`${a.x * 100}%`}
+                      y1={`${a.y * 100}%`}
+                      x2={`${b.x * 100}%`}
+                      y2={`${b.y * 100}%`}
+                      stroke={colour}
+                      strokeWidth={2.5}
+                      strokeDasharray={e.rel === "sibling" ? "6 4" : undefined}
+                    />
+                  </g>
+                );
+              })}
+            </svg>
 
-          {/* Node X (Male - Brother of W, Father of V) */}
-          <g className="cursor-pointer" onClick={() => handleSelect(options[0])}>
-            <rect x="280" y="30" width="70" height="60" rx="10" fill="#e0f2fe" stroke="#0284c7" strokeWidth="2" />
-            <text x="315" y="58" textAnchor="middle" fill="#0369a1" fontSize="20" fontWeight="black">X</text>
-            <text x="315" y="78" textAnchor="middle" fill="#0284c7" fontSize="10" fontWeight="bold">(Father)</text>
-          </g>
+            {PEOPLE.map((p) => {
+              const pos = s.pos[p.id] || START[p.id];
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onPointerDown={(e) => start(e, p.id)}
+                  onClick={() => tapNode(p.id)}
+                  className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 bg-white px-2.5 py-1.5 text-left shadow-sm min-w-[64px] ${
+                    s.armed === p.id ? "border-emerald-600 ring-2 ring-emerald-300" : "border-slate-300"
+                  } ${engine.readOnly ? "" : "cursor-grab active:cursor-grabbing"}`}
+                  style={{ left: `${pos.x * 100}%`, top: `${pos.y * 100}%`, touchAction: "none" }}
+                >
+                  <span className="block font-black text-base text-slate-900 leading-none">{p.name}</span>
+                  <span className="block text-[9px] text-slate-500 leading-tight mt-0.5">{p.sub}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Stage>
 
-          {/* Vertical Parent-Child Line: X -> V & Z */}
-          <line x1="315" y1="90" x2="315" y2="135" stroke="#0284c7" strokeWidth="2" />
-          <line x1="240" y1="135" x2="390" y2="135" stroke="#0284c7" strokeWidth="2" />
-          <line x1="240" y1="135" x2="240" y2="155" stroke="#0284c7" strokeWidth="2" />
-          <line x1="390" y1="135" x2="390" y2="155" stroke="#0284c7" strokeWidth="2" />
-
-          {/* Node V (Male - Son of X, Nephew of W) */}
-          <g
-            className="cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => handleSelect(options[0])}
-          >
-            <rect
-              x="205" y="155" width="70" height="55" rx="10"
-              fill={selectedId === "A" ? "#d1fae5" : "#ecfdf5"}
-              stroke={selectedId === "A" ? "#059669" : "#10b981"}
-              strokeWidth={selectedId === "A" ? 3 : 2}
-            />
-            <text x="240" y="182" textAnchor="middle" fill="#065f46" fontSize="18" fontWeight="black">V</text>
-            <text x="240" y="198" textAnchor="middle" fill="#059669" fontSize="9" fontWeight="bold">(Son/Brother)</text>
-          </g>
-
-          {/* Node Z (Sibling) */}
-          <g>
-            <rect x="355" y="155" width="70" height="55" rx="10" fill="#f8fafc" stroke="#94a3b8" strokeWidth="1.5" />
-            <text x="390" y="182" textAnchor="middle" fill="#475569" fontSize="18" fontWeight="black">Z</text>
-            <text x="390" y="198" textAnchor="middle" fill="#64748b" fontSize="9">(Sibling)</text>
-          </g>
-
-          {/* Direct Deductive Connector: W -> V (Nephew) */}
-          <path
-            d="M 105 90 Q 120 180 205 180"
-            fill="none"
-            stroke="#d97706"
-            strokeWidth="3"
-            strokeDasharray="6 6"
-            className="cursor-pointer hover:stroke-emerald-600 transition-colors"
-            onClick={() => handleSelect(options[0])}
+        <div className="space-y-2.5">
+          <ToggleRow<Rel>
+            label="String type — then tap two pins"
+            options={[
+              { id: "sibling", label: "Sibling" },
+              { id: "spouse", label: "Married to" },
+              { id: "parent", label: "Parent → child" },
+            ]}
+            value={s.tool}
+            onChange={(tool) => engine.update((st) => ({ ...st, tool, armed: null }))}
+            readOnly={engine.readOnly}
           />
-          <text
-            x="120" y="142"
-            fill="#b45309"
-            fontSize="11"
-            fontWeight="bold"
-            className="cursor-pointer"
-            onClick={() => handleSelect(options[0])}
-          >
-            V is Nephew of W (A) ★
-          </text>
-        </svg>
-      </div>
 
-      {/* Answer Options Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          How is V related to W?
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.02]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {opt.id}
-                    </span>
-                    <span className="text-base font-black">{opt.val}</span>
-                  </div>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                </div>
-                <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.label}</span>
-              </button>
-            );
-          })}
+          <div className="rounded-xl border-2 border-slate-200 bg-white p-2 space-y-1 max-h-[150px] overflow-auto">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Strings tied</div>
+            {s.edges.length === 0 && <div className="text-[11px] text-slate-400 italic py-1">Nothing tied yet.</div>}
+            {s.edges.map((e, i) => (
+              <div key={i} className="flex items-center justify-between gap-2 text-[11px] font-semibold text-slate-700">
+                <span>
+                  {e.a} {REL_LABEL[e.rel]} {e.b}
+                </span>
+                <button
+                  type="button"
+                  disabled={engine.readOnly}
+                  onClick={() => engine.update((st) => ({ ...st, edges: st.edges.filter((_, j) => j !== i) }))}
+                  className="w-7 h-7 grid place-items-center rounded text-slate-400 hover:bg-slate-100"
+                  aria-label="Cut string"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-500 leading-snug">
+            V is male (brother of Z), so the board names a son, nephew, uncle or son-in-law.
+          </p>
         </div>
       </div>
-    </div>
+    </ActivityShell>
   );
 }

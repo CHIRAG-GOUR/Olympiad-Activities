@@ -1,226 +1,190 @@
 "use client";
 
-import React, { useState } from "react";
-import { FoldVertical,  CheckCircle2, Eye, RotateCcw } from "lucide-react";
+import React from "react";
+import { FoldHorizontal } from "lucide-react";
+import { ActivityShell, Stage, ToggleRow, useActivityEngine, ActivityComponentProps, optionLabel } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface FoldingStudioActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q7 — Transparent sheet folding studio.
+ *
+ * The student picks a fold line and physically drags the flap across. The chevrons on the
+ * moving half are genuinely mirrored onto the fixed half, so the superimposed pattern the
+ * student produces is what gets classified into an option.
+ */
+
+type Axis = "vertical" | "horizontal" | "diagonal";
+interface FoldState {
+  axis: Axis;
+  progress: number; // 0..1
+  folds: number; // completed folds
 }
 
-export function FoldingStudioActivity({
-  value,
-  onChange,
-  readOnly = false }: FoldingStudioActivityProps) {
-  const options = [
-    {
-      id: "A",
-      label: "Figure A",
-      desc: "Triangle flips horizontally and overlaps circle on right half",
-      isCorrect: true,
-      triScaleX: -1,
-      triShiftX: 200 },
-    {
-      id: "B",
-      label: "Figure B",
-      desc: "Triangle inverted vertically",
-      isCorrect: false,
-      triScaleX: 1,
-      triShiftX: 200 },
-    {
-      id: "C",
-      label: "Figure C",
-      desc: "Circle transferred to left half",
-      isCorrect: false,
-      triScaleX: -1,
-      triShiftX: 0 },
-    {
-      id: "D",
-      label: "Figure D",
-      desc: "No overlap or transformation",
-      isCorrect: false,
-      triScaleX: 1,
-      triShiftX: 0 },
-  ];
+const CHEVRONS = [30, 60, 90, 120, 150];
 
-  const initialOpt = options.find((o) => o.id === value) || options[0];
-  const [selectedId, setSelectedId] = useState<string>(initialOpt.id);
-  const [foldProgress, setFoldProgress] = useState(100);
+export function FoldingStudioActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<FoldState>) {
+  const engine = useActivityEngine<FoldState, string>({
+    initialState: { axis: "vertical", progress: 0, folds: 0 },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      const has = (id: string) => question?.multipleChoiceConfig?.options.find((o) => o.id === id)?.id;
+      if (s.folds >= 2) return has("C"); // folded twice: chevrons collapse into parallel stripes
+      if (s.progress < 0.95) return undefined;
+      if (s.axis === "vertical") return has("A");
+      if (s.axis === "horizontal") return has("B");
+      return has("D");
+    },
+  });
 
-  const activeOpt = options.find((o) => o.id === selectedId) || options[0];
+  const s = engine.state;
+  const sheetRef = React.useRef<HTMLDivElement | null>(null);
 
-  const handleSelectOption = (optId: string) => {
-    if (readOnly) return;
-    setSelectedId(optId);
-    setFoldProgress(100);
-    onChange(optId);
-  };
+  const { start } = usePointerDrag({
+    disabled: engine.readOnly,
+    onMove: (p) => {
+      const r = sheetRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const frac =
+        s.axis === "horizontal"
+          ? (p.y - r.top) / r.height
+          : (p.x - r.left) / r.width;
+      engine.patch({ progress: Math.min(1, Math.max(0, (frac - 0) * 2)) });
+    },
+    onEnd: () =>
+      engine.update((st) => ({
+        ...st,
+        progress: st.progress > 0.55 ? 1 : 0,
+        folds: st.progress > 0.55 ? Math.min(2, st.folds + 1) : st.folds,
+      })),
+  });
 
-  const handleSliderChange = (val: number) => {
-    if (readOnly) return;
-    setFoldProgress(val);
-    if (val >= 80) {
-      setSelectedId("A");
-      onChange("A");
-    }
-  };
+  const folded = s.progress >= 0.95;
+  const flapAngle = s.progress * 180;
+
+  const resultName = s.folds >= 2
+    ? "Parallel vertical stripes"
+    : !folded
+    ? null
+    : s.axis === "vertical"
+    ? "Superimposed crossed chevron diamond grid"
+    : s.axis === "horizontal"
+    ? "Single direction chevron pattern"
+    : "Offset disconnected lines";
+
+  const Chevrons = ({ mirror = false, dim = false }: { mirror?: boolean; dim?: boolean }) => (
+    <g opacity={dim ? 0.55 : 1} transform={mirror ? "translate(120,0) scale(-1,1)" : undefined}>
+      {CHEVRONS.map((y) => (
+        <polyline
+          key={y}
+          points={`10,${y + 16} 60,${y} 110,${y + 16}`}
+          fill="none"
+          stroke={dim ? "#0ea5e9" : "#475569"}
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+      ))}
+    </g>
+  );
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-sky-700">
-            <FoldVertical className="w-5 h-5" />
+    <ActivityShell
+      icon={FoldHorizontal}
+      title="Transparent Sheet Folding Studio"
+      howTo="Choose the fold line, then drag the flap right across the sheet. Release past halfway to complete the fold — the superimposed pattern you create is your answer."
+      answerText={resultName ?? undefined}
+      mappedTo={optionLabel(question, engine.answer)}
+      pendingHint="Drag the flap across the dotted fold line and release to complete the fold."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+      tools={
+        <span className="text-[11px] font-mono font-bold text-slate-500">
+          folds: {s.folds} · {Math.round(s.progress * 100)}%
+        </span>
+      }
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_210px]">
+        <Stage label="Sheet">
+          <div
+            ref={sheetRef}
+            onPointerDown={(e) => start(e, undefined)}
+            className="relative mx-auto max-w-[320px] cursor-grab active:cursor-grabbing"
+            style={{ touchAction: "none", perspective: "800px" }}
+          >
+            <svg viewBox="0 0 240 200" className="w-full rounded-lg bg-white border border-slate-200">
+              {/* Fixed half */}
+              <g transform="translate(120,0)">
+                <Chevrons />
+              </g>
+              {/* Mirrored image arriving from the folded flap */}
+              {s.progress > 0.05 && (
+                <g transform="translate(120,0)" opacity={s.progress}>
+                  {s.axis === "vertical" && <Chevrons mirror dim />}
+                  {s.axis === "horizontal" && (
+                    <g transform="translate(0,200) scale(1,-1)">
+                      <Chevrons dim />
+                    </g>
+                  )}
+                  {s.axis === "diagonal" && (
+                    <g transform="rotate(-38 60 100)">
+                      <Chevrons dim />
+                    </g>
+                  )}
+                </g>
+              )}
+              {s.folds >= 2 &&
+                [20, 45, 70, 95].map((x) => (
+                  <line key={x} x1={120 + x} y1={12} x2={120 + x} y2={188} stroke="#0ea5e9" strokeWidth={3} />
+                ))}
+
+              {/* Moving flap */}
+              <g style={{ transformOrigin: "120px 100px", transform: `rotateY(${flapAngle}deg)`, transformStyle: "preserve-3d" }}>
+                {s.progress < 0.98 && (
+                  <g opacity={1 - s.progress * 0.5}>
+                    <rect x={4} y={4} width={116} height={192} fill="#ffffff" stroke="#94a3b8" strokeWidth={1.5} />
+                    <Chevrons />
+                  </g>
+                )}
+              </g>
+
+              {/* Fold line */}
+              {s.axis === "vertical" && <line x1={120} y1={0} x2={120} y2={200} stroke="#e11d48" strokeWidth={2} strokeDasharray="6 5" />}
+              {s.axis === "horizontal" && <line x1={0} y1={100} x2={240} y2={100} stroke="#e11d48" strokeWidth={2} strokeDasharray="6 5" />}
+              {s.axis === "diagonal" && <line x1={0} y1={200} x2={240} y2={0} stroke="#e11d48" strokeWidth={2} strokeDasharray="6 5" />}
+            </svg>
           </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Transparent Sheet Folding Studio 
-            </h3>
-            <p className="text-xs text-slate-600">
-              Drag the fold slider or click an option to simulate folding along the dotted crease line.
-            </p>
-          </div>
-        </div>
+        </Stage>
 
-        {/* Quick Fold Controls */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleSliderChange(0)}
-            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 transition cursor-pointer"
-          >
-            Unfolded (0%)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSliderChange(100)}
-            className="px-3 py-1.5 bg-sky-700 hover:bg-sky-800 text-white rounded-lg text-xs font-bold transition cursor-pointer"
-          >
-            Folded (100%)
-          </button>
-        </div>
-      </div>
-
-      {/* Interactive Sheet Canvas */}
-      <div className="relative h-64 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center p-4 overflow-hidden">
-        <svg viewBox="0 0 360 200" className="w-full h-full max-w-sm select-none">
-          {/* Transparent Sheet Base */}
-          <rect
-            x="40"
-            y="20"
-            width="280"
-            height="160"
-            rx="8"
-            fill="#f8fafc"
-            stroke="#94a3b8"
-            strokeWidth="2"
-            strokeDasharray="1 0"
+        <div className="space-y-2.5">
+          <ToggleRow<Axis>
+            label="Fold line"
+            options={[
+              { id: "vertical", label: "Vertical", sub: "the dotted middle line" },
+              { id: "horizontal", label: "Horizontal", sub: "across the middle" },
+              { id: "diagonal", label: "Diagonal", sub: "corner to corner" },
+            ]}
+            value={s.axis}
+            onChange={(axis) => engine.update({ axis, progress: 0, folds: 0 })}
+            readOnly={engine.readOnly}
           />
-
-          {/* Dotted Fold Axis Line */}
-          <line
-            x1="180"
-            y1="20"
-            x2="180"
-            y2="180"
-            stroke="#d97706"
-            strokeWidth="2"
-            strokeDasharray="5 5"
-          />
-
-          {/* Left Half: Triangle (Flips horizontally on folding) */}
-          <g
-            style={{
-              transformOrigin: "180px 100px",
-              transform: `scaleX(${1 - (foldProgress / 100) * 2})`,
-              opacity: foldProgress > 70 ? 0.35 : 1,
-              transition: "transform 0.2s ease-out" }}
-          >
-            <polygon
-              points="90,50 140,150 60,150"
-              fill="#ec4899"
-              fillOpacity="0.4"
-              stroke="#db2777"
-              strokeWidth="2.5"
-            />
-          </g>
-
-          {/* Right Half: Fixed Target Circle */}
-          <circle
-            cx="250"
-            cy="100"
-            r="35"
-            fill="#0284c7"
-            fillOpacity="0.3"
-            stroke="#0284c7"
-            strokeWidth="2.5"
-          />
-
-          {/* Overlapping Fold Projection */}
-          {foldProgress > 50 && (
-            <g style={{ opacity: foldProgress / 100, transition: "opacity 0.2s" }}>
-              <polygon
-                points={
-                  selectedId === "B"
-                    ? "270,150 220,50 300,50"
-                    : selectedId === "C"
-                    ? "90,50 140,150 60,150"
-                    : "270,50 220,150 300,150"
-                }
-                fill="#ec4899"
-                fillOpacity="0.6"
-                stroke="#db2777"
-                strokeWidth="2.5"
-              />
-            </g>
+          {folded && s.folds < 2 && (
+            <button
+              type="button"
+              disabled={engine.readOnly}
+              onClick={() => engine.update((st) => ({ ...st, folds: 2 }))}
+              className="w-full min-h-[44px] rounded-lg border-2 border-slate-200 bg-white text-xs font-bold text-slate-700 hover:border-emerald-400"
+            >
+              Fold the folded sheet again
+            </button>
           )}
-        </svg>
-
-        {/* Live Folding Status */}
-        <div className="absolute bottom-3 left-3 bg-white border border-slate-200 px-3 py-1 rounded-lg text-[11px] font-mono text-slate-700 shadow-xs flex items-center gap-2">
-          <Eye className="w-3.5 h-3.5 text-sky-600" />
-          <span>Folded State: {foldProgress}% | Active Model: {activeOpt.label}</span>
+          <p className="text-[10px] text-slate-500 leading-snug">
+            A transparent sheet keeps both patterns visible after folding — look at where the
+            chevrons cross.
+          </p>
         </div>
       </div>
-
-      {/* Answer Options Grid (Directly connected to folding animation) */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select Resulting Figure (Simulation synchronizes with choice):
-        </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelectOption(opt.id)}
-                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-sky-50 border-sky-600 text-sky-950 shadow-md shadow-sky-600/10 scale-[1.02]"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {opt.id}
-                    </span>
-                    <span className="text-base font-black">{opt.label}</span>
-                  </div>
-                  {isSelected && <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0" />}
-                </div>
-                <span className="text-[11px] text-slate-500 mt-2 font-medium">{opt.desc}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    </ActivityShell>
   );
 }

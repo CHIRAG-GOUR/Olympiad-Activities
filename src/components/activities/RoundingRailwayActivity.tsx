@@ -1,149 +1,121 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Train, CheckCircle2 } from "lucide-react";
+import React from "react";
+import { TrainTrack } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag, clamp } from "./kit/usePointerDrag";
 
-interface RoundingRailwayActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q18 — Rounding railway.
+ *
+ * Two number lines with draggable carriages. Each carriage snaps to a thousand-marker, and
+ * the difference between the two stations the student parks at is the answer.
+ */
+
+interface RailState {
+  a: number | null;
+  b: number | null;
 }
 
-export function RoundingRailwayActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: RoundingRailwayActivityProps) {
-  const options = [
-    { id: "A", val: "360000", label: "3,60,000", isCorrect: false },
-    { id: "B", val: "354000", label: "3,54,000 (7,90,000 − 4,36,000 = 3,54,000)", isCorrect: true },
-    { id: "C", val: "352000", label: "3,52,000", isCorrect: false },
-    { id: "D", val: "362000", label: "3,62,000", isCorrect: false },
-  ];
+const LINES = [
+  { id: "a" as const, exact: 789562, min: 785000, max: 794000 },
+  { id: "b" as const, exact: 435821, min: 431000, max: 440000 },
+];
 
-  const [selectedId, setSelectedId] = useState<string>(
-    value ? (options.find((o) => o.id === value || o.val === value)?.id || "B") : ""
-  );
+export function RoundingRailwayActivity({ value, activityState, onChange, readOnly }: ActivityComponentProps<RailState>) {
+  const engine = useActivityEngine<RailState, number>({
+    initialState: { a: null, b: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => (s.a !== null && s.b !== null ? s.a - s.b : undefined),
+  });
 
-  useEffect(() => {
-    if (value) {
-      const match = options.find((o) => o.id === value || o.val === value);
-      if (match) setSelectedId(match.id);
-    }
-  }, [value]);
+  const refs = React.useRef<Record<string, HTMLDivElement | null>>({});
 
-  const handleSelect = (opt: typeof options[0]) => {
-    if (readOnly) return;
-    setSelectedId(opt.id);
-    onChange(opt.id);
-  };
+  const { start } = usePointerDrag<"a" | "b">({
+    disabled: engine.readOnly,
+    onStart: (p, id) => place(p.x, id),
+    onMove: (p, id) => place(p.x, id),
+  });
 
-  const selectedOpt = options.find((o) => o.id === selectedId);
+  function place(clientX: number, id: "a" | "b") {
+    const line = LINES.find((l) => l.id === id)!;
+    const r = refs.current[id]?.getBoundingClientRect();
+    if (!r) return;
+    const frac = clamp((clientX - r.left) / r.width, 0, 1);
+    const raw = line.min + frac * (line.max - line.min);
+    engine.patch({ [id]: Math.round(raw / 1000) * 1000 } as Partial<RailState>);
+  }
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Train className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Rounding Railway Yard (Nearest 1,000)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Round <strong className="text-slate-900 font-mono">7,89,562</strong> → 7,90,000 and <strong className="text-slate-900 font-mono">4,35,821</strong> → 4,36,000. Calculate their estimated difference.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Railway Number Line Track (Interactive Canvas) */}
-      <div className="p-5 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center">
-        <div className="w-full max-w-lg relative py-6">
-          {/* Dual Trains Telemetry */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div
-              onClick={() => handleSelect(options[1])}
-              className="p-3 bg-white border-2 border-slate-200 hover:border-emerald-400 rounded-xl text-center cursor-pointer transition-all shadow-xs"
-            >
-              <span className="text-[11px] font-mono text-slate-500 uppercase block font-bold">Train 1 (Load A)</span>
-              <span className="text-sm font-black text-slate-900">7,89,562</span>
-              <div className="text-xs font-mono font-bold text-emerald-700 mt-1">
-                ≈ 7,90,000 (Rounds Up)
-              </div>
-            </div>
-
-            <div
-              onClick={() => handleSelect(options[1])}
-              className="p-3 bg-white border-2 border-slate-200 hover:border-emerald-400 rounded-xl text-center cursor-pointer transition-all shadow-xs"
-            >
-              <span className="text-[11px] font-mono text-slate-500 uppercase block font-bold">Train 2 (Load B)</span>
-              <span className="text-sm font-black text-slate-900">4,35,821</span>
-              <div className="text-xs font-mono font-bold text-emerald-700 mt-1">
-                ≈ 4,36,000 (Rounds Up)
-              </div>
-            </div>
-          </div>
-
-          {/* Main Track Line with Switch */}
-          <div
-            onClick={() => handleSelect(options[1])}
-            className="h-4 bg-slate-200 rounded-full w-full relative flex items-center justify-between px-3 cursor-pointer shadow-inner"
-          >
-            <div className="absolute left-[50%] -translate-x-1/2 -top-7 flex flex-col items-center">
-              <div className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-black shadow-xs flex items-center gap-1.5 animate-bounce">
-                🚂 Difference: 3,54,000
-              </div>
-              <div className="w-2 h-2 bg-emerald-600 transform rotate-45 -mt-1" />
-            </div>
-          </div>
-
-          {/* Station Platforms */}
-          <div className="flex items-center justify-between mt-3 text-xs font-mono">
-            <span className="text-slate-500">7,90,000 (Minuend)</span>
-            <span className="text-emerald-700 font-bold">− 4,36,000 (Subtrahend)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Destination Stations Grid */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select Estimated Difference at Junction:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
+    <ActivityShell
+      icon={TrainTrack}
+      title="Rounding Railway"
+      howTo="Drag each carriage along its track and park it at the nearest thousand-station for that number. The gap between the two stations is your answer."
+      answerText={engine.answer !== undefined ? String(engine.answer) : undefined}
+      mappedTo={engine.answer !== undefined ? `${engine.state.a} − ${engine.state.b}` : undefined}
+      pendingHint="Park both carriages on a thousand-station."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_180px]">
+        <div className="space-y-3">
+          {LINES.map((line) => {
+            const parked = engine.state[line.id];
+            const stations: number[] = [];
+            for (let v = line.min; v <= line.max; v += 1000) stations.push(v);
+            const fracOf = (v: number) => (v - line.min) / (line.max - line.min);
             return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {opt.id}
+              <Stage key={line.id} label={`Track ${line.id.toUpperCase()} — exact value ${line.exact.toLocaleString("en-IN")}`}>
+                <div
+                  ref={(el) => {
+                    refs.current[line.id] = el;
+                  }}
+                  onPointerDown={(e) => start(e, line.id)}
+                  className="relative h-[74px] cursor-pointer"
+                  style={{ touchAction: "none" }}
+                >
+                  <div className="absolute left-0 right-0 top-[40px] h-1.5 bg-slate-300 rounded-full" />
+                  {stations.map((v) => (
+                    <div key={v} className="absolute -translate-x-1/2 top-[34px]" style={{ left: `${fracOf(v) * 100}%` }}>
+                      <div className={`w-0.5 h-4 mx-auto ${parked === v ? "bg-emerald-600" : "bg-slate-400"}`} />
+                      <span className={`block mt-1 text-[9px] font-mono ${parked === v ? "text-emerald-700 font-black" : "text-slate-400"}`}>
+                        {(v / 1000).toFixed(0)}k
+                      </span>
+                    </div>
+                  ))}
+                  {/* exact value flag */}
+                  <div className="absolute -translate-x-1/2 top-0" style={{ left: `${fracOf(line.exact) * 100}%` }}>
+                    <span className="block text-[9px] font-mono font-bold text-rose-600 whitespace-nowrap">
+                      {line.exact.toLocaleString("en-IN")}
                     </span>
-                    <span className="font-mono text-lg font-black">{opt.val}</span>
+                    <div className="w-0.5 h-5 bg-rose-500 mx-auto" />
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1 font-medium">{opt.label}</p>
+                  {parked !== null && (
+                    <div className="absolute -translate-x-1/2 top-[26px] transition-all" style={{ left: `${fracOf(parked) * 100}%` }}>
+                      <div className="w-9 h-7 rounded bg-emerald-600 border-2 border-emerald-800 grid place-items-center text-white text-[9px] font-black">
+                        {line.id.toUpperCase()}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </button>
+              </Stage>
             );
           })}
         </div>
+
+        <div className="space-y-2">
+          <ReadOut label="Rounded A" value={engine.state.a?.toLocaleString("en-IN") ?? "—"} />
+          <ReadOut label="Rounded B" value={engine.state.b?.toLocaleString("en-IN") ?? "—"} />
+          <ReadOut
+            label="Estimated difference"
+            value={engine.answer?.toLocaleString("en-IN") ?? "—"}
+            tone={engine.answer !== undefined ? "emerald" : "slate"}
+          />
+        </div>
       </div>
-    </div>
+    </ActivityShell>
   );
 }

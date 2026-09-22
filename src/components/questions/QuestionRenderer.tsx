@@ -16,7 +16,9 @@ import { SimulationQuestion } from "./SimulationQuestion";
 interface QuestionRendererProps {
   question: Question;
   value?: any;
-  onChange: (val: any) => void;
+  /** Serialized microworld state for the bespoke activity, restored when revisiting */
+  activityState?: any;
+  onChange: (val: any, activityState?: any) => void;
   readOnly?: boolean;
   showMetadata?: boolean;
   activeView?: "activity" | "standard";
@@ -26,6 +28,7 @@ interface QuestionRendererProps {
 export function QuestionRenderer({
   question,
   value,
+  activityState,
   onChange,
   readOnly = false,
   showMetadata = true,
@@ -251,10 +254,14 @@ export function QuestionRenderer({
       {/* Interactive Core Body */}
       <div className="pt-1">
         {BespokeActivityComponent && activeView === "activity" ? (
+          /* Keyed per question so each microworld mounts clean and tears its
+             animations / listeners down when the student navigates away. */
           <BespokeActivityComponent
+            key={question.id || question.questionId}
             questionId={question.id || question.questionId}
             question={question}
             value={value}
+            activityState={activityState}
             onChange={onChange}
             readOnly={readOnly}
           />

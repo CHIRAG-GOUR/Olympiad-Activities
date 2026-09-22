@@ -1,192 +1,145 @@
 "use client";
 
-import React, { useState } from "react";
-import { Scroll, CheckCircle2, Sparkles, HelpCircle } from "lucide-react";
+import React from "react";
+import { Landmark } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface RomanArchaeologyActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q33 — Roman decoder table.
+ *
+ * Four excavated tablet pairs. The student drags a pair onto the decoder, which really
+ * parses the Roman numerals and subtracts them. The value the decoder prints for the pair
+ * the student chose to test is the answer.
+ */
+
+interface RomanState {
+  loaded: string | null;
 }
 
-export function RomanArchaeologyActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: RomanArchaeologyActivityProps) {
-  // Question 33: Calculate the value of the Roman numeral operation that gives the LEAST value:
-  // A: MMMCLXIX − MMDCCXVII = 3169 − 2717 = 452
-  // B: MMCDLXV − MCCXLIV = 2465 − 1244 = 1221
-  // C: DCCCXCIX − CDXLVII = 899 − 447 = 452
-  // D: MMDCCIX − MMCDIII = 2709 − 2403 = 306 (LEAST VALUE = 306) -> Option D
+const PAIRS = [
+  { id: "P1", a: "MMMCLXIX", b: "MMDCCXVII" },
+  { id: "P2", a: "MMCDLXV", b: "MCCXLIV" },
+  { id: "P3", a: "DCCCXCIX", b: "CDXLVII" },
+  { id: "P4", a: "MMDCCIX", b: "MMCDIII" },
+];
 
-  const options = [
-    {
-      id: "A",
-      expr: "MMMCLXIX − MMDCCXVII",
-      n1: "3169",
-      n2: "2717",
-      diff: 452,
-      label: "3,169 − 2,717 = 452",
-      isLeast: false,
-    },
-    {
-      id: "B",
-      expr: "MMCDLXV − MCCXLIV",
-      n1: "2465",
-      n2: "1244",
-      diff: 1221,
-      label: "2,465 − 1,244 = 1,221",
-      isLeast: false,
-    },
-    {
-      id: "C",
-      expr: "DCCCXCIX − CDXLVII",
-      n1: "899",
-      n2: "447",
-      diff: 452,
-      label: "899 − 447 = 452",
-      isLeast: false,
-    },
-    {
-      id: "D",
-      expr: "MMDCCIX − MMCDIII",
-      n1: "2709",
-      n2: "2403",
-      diff: 306,
-      label: "2,709 − 2,403 = 306 (LEAST VALUE)",
-      isLeast: true,
-    },
-  ];
+const VALUES: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
 
-  const getInitial = () => {
-    if (!value) return "D";
-    const str = String(value).trim();
-    const found = options.find(
-      (o) => o.id === str || o.expr === str || String(o.diff) === str
-    );
-    return found ? found.id : "D";
+function fromRoman(s: string) {
+  let total = 0;
+  for (let i = 0; i < s.length; i++) {
+    const v = VALUES[s[i]] || 0;
+    const next = VALUES[s[i + 1]] || 0;
+    total += v < next ? -v : v;
+  }
+  return total;
+}
+
+export function RomanArchaeologyActivity({ value, activityState, onChange, readOnly }: ActivityComponentProps<RomanState>) {
+  const engine = useActivityEngine<RomanState, number>({
+    initialState: { loaded: null },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      const pair = PAIRS.find((p) => p.id === s.loaded);
+      return pair ? fromRoman(pair.a) - fromRoman(pair.b) : undefined;
+    },
+  });
+
+  const deckRef = React.useRef<HTMLDivElement | null>(null);
+  const [ghost, setGhost] = React.useState<{ id: string; x: number; y: number } | null>(null);
+
+  const overDeck = (x: number, y: number) => {
+    const r = deckRef.current?.getBoundingClientRect();
+    return !!r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
   };
 
-  const [selectedId, setSelectedId] = useState<string>(getInitial());
+  const { start } = usePointerDrag<string>({
+    disabled: engine.readOnly,
+    onStart: (p, id) => setGhost({ id, x: p.x, y: p.y }),
+    onMove: (p, id) => setGhost({ id, x: p.x, y: p.y }),
+    onEnd: (p, id) => {
+      setGhost(null);
+      if (overDeck(p.x, p.y)) engine.update({ loaded: id });
+    },
+  });
 
-  const handleSelect = (optId: string) => {
-    if (readOnly) return;
-    setSelectedId(optId);
-    onChange(optId);
-  };
-
-  const activeOpt = options.find((o) => o.id === selectedId) || options[3];
+  const pair = PAIRS.find((p) => p.id === engine.state.loaded);
+  const results = PAIRS.map((p) => ({ p, v: fromRoman(p.a) - fromRoman(p.b) }));
+  const least = Math.min(...results.map((r) => r.v));
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/20 border border-amber-400/40 rounded-xl text-amber-800">
-            <Scroll className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-amber-900 flex items-center gap-2">
-              Roman Numeral Archaeology Lab (Q33)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Decipher all 4 ancient stone tablets and click the tablet with the <strong className="text-amber-800">LEAST numeric difference (306)</strong>.
-            </p>
-          </div>
-        </div>
-
-        <div className="text-xs font-mono font-bold bg-amber-50 text-amber-900 px-3 py-1.5 rounded-lg border border-amber-300">
-          Decoded: {activeOpt.expr} = <span className="text-emerald-700">{activeOpt.diff}</span>
-        </div>
-      </div>
-
-      {/* 4 Clickable Inscription Tablets */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-          Interactive Archaeological Tablets (Click any tablet to decipher & select):
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <div
-                key={opt.id}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between text-center relative ${
-                  isSelected
-                    ? "bg-amber-50 border-amber-500 text-amber-950 shadow-md ring-2 ring-amber-400/30 scale-[1.02]"
-                    : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300"
-                }`}
-              >
-                {opt.isLeast && (
-                  <span className="absolute -top-2 right-2 text-[9px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-sm">
-                    LEAST: 306
-                  </span>
+    <ActivityShell
+      icon={Landmark}
+      title="Roman Tablet Decoder"
+      howTo="Drag an excavated tablet pair onto the decoder table. The decoder really parses the numerals and subtracts them — load each pair to find which subtraction gives the least value."
+      answerText={engine.answer !== undefined ? String(engine.answer) : undefined}
+      mappedTo={pair ? `${pair.a} − ${pair.b}` : undefined}
+      pendingHint="Drag a tablet pair onto the decoder."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_230px]">
+        <Stage label="Decoder table">
+          <div
+            ref={deckRef}
+            className={`mx-auto max-w-[320px] rounded-2xl border-4 p-4 text-center ${
+              pair ? "border-emerald-500 bg-emerald-50" : "border-dashed border-slate-400 bg-white"
+            }`}
+          >
+            {pair ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-center gap-3 font-serif text-lg font-black tracking-wider text-slate-800">
+                  <span>{pair.a}</span>
+                  <span className="text-slate-400">−</span>
+                  <span>{pair.b}</span>
+                </div>
+                <div className="flex items-center justify-center gap-3 font-mono text-base font-bold text-slate-600">
+                  <span>{fromRoman(pair.a)}</span>
+                  <span className="text-slate-400">−</span>
+                  <span>{fromRoman(pair.b)}</span>
+                  <span className="text-slate-400">=</span>
+                  <span className="text-2xl font-black text-emerald-700">{engine.answer}</span>
+                </div>
+                {engine.answer === least && (
+                  <div className="text-[11px] font-bold text-emerald-700">This is the least value of the four pairs.</div>
                 )}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded">
-                      TABLET {opt.id}
-                    </span>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
-                  </div>
-                  <div className="font-mono text-xs font-black text-slate-900 my-1 break-words">
-                    {opt.expr}
-                  </div>
-                  <div className="text-[11px] font-mono text-slate-500 mt-1">
-                    {opt.n1} − {opt.n2}
-                  </div>
-                </div>
-
-                <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-slate-500">Value:</span>
-                  <span className={`font-mono text-sm font-black ${opt.isLeast ? "text-emerald-700" : "text-slate-800"}`}>
-                    = {opt.diff}
-                  </span>
-                </div>
               </div>
-            );
-          })}
+            ) : (
+              <div className="py-6 text-sm font-semibold text-slate-400">Drop a tablet pair here</div>
+            )}
+          </div>
+        </Stage>
+
+        <div className="space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Excavated tablets</div>
+          {PAIRS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              disabled={engine.readOnly}
+              onPointerDown={(e) => start(e, p.id)}
+              onClick={() => engine.update({ loaded: p.id })}
+              className={`w-full rounded-xl border-2 px-2.5 py-2 text-left font-serif text-xs font-bold tracking-wide transition ${
+                engine.state.loaded === p.id ? "bg-emerald-50 border-emerald-500 text-emerald-900" : "bg-white border-slate-200 text-slate-800 hover:border-emerald-400"
+              } ${engine.readOnly ? "" : "cursor-grab active:cursor-grabbing"}`}
+              style={{ touchAction: "none" }}
+            >
+              {p.a} − {p.b}
+            </button>
+          ))}
+          <ReadOut label="Decoded value" value={engine.answer ?? "—"} tone={engine.answer !== undefined ? "emerald" : "slate"} />
         </div>
       </div>
 
-      {/* Answer Options Grid (Strictly connected to tablet selector) */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-          Select Roman Numeral Expression with LEAST Value:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between gap-3 cursor-pointer ${
-                  isSelected
-                    ? "bg-amber-50 border-amber-600 text-amber-950 shadow-sm ring-1 ring-amber-400"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700 shrink-0">
-                    {opt.id}
-                  </span>
-                  <div>
-                    <div className="font-mono text-xs font-black">{opt.expr}</div>
-                    <div className="text-[11px] text-slate-500 font-sans font-normal mt-0.5">{opt.label}</div>
-                  </div>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </button>
-            );
-          })}
+      {ghost && (
+        <div className="pointer-events-none fixed z-50 rounded-lg border-2 border-emerald-600 bg-white px-2 py-1 font-serif text-xs font-bold shadow-lg" style={{ left: ghost.x + 8, top: ghost.y + 8 }}>
+          {PAIRS.find((p) => p.id === ghost.id)?.a}
         </div>
-      </div>
-    </div>
+      )}
+    </ActivityShell>
   );
 }

@@ -834,6 +834,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                 <QuestionRenderer
                   question={currentQuestion}
                   value={currentAnswerValue}
+                  activityState={activityStates[currentQuestion.id]}
                   onChange={handleAnswerChange}
                   readOnly={false}
                   showMetadata={false}

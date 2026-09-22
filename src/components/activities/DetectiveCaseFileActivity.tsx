@@ -1,177 +1,165 @@
 "use client";
 
-import React, { useState } from "react";
-import { Compass, CheckCircle2, Layers, Ruler } from "lucide-react";
+import React from "react";
+import { Search } from "lucide-react";
+import { ActivityShell, Stage, ReadOut, ReorderList, useActivityEngine, ActivityComponentProps } from "./kit";
+import { usePointerDrag } from "./kit/usePointerDrag";
 
-interface DetectiveCaseFileActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q50 — Detective case file.
+ *
+ * The student measures the composite figure for real — tapping edges to walk the perimeter
+ * and dragging over cells to measure the shaded area — then drags the four result cards
+ * into ascending order. That ordering is the answer.
+ */
+
+interface CaseState {
+  edges: string[];
+  cells: number[];
+  order: string[];
+  touched: boolean;
 }
 
-export function DetectiveCaseFileActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: DetectiveCaseFileActivityProps) {
-  // Question 50:
-  // Perimeter: p = 66 cm
-  // Total rectangle area = 18 × 12 = 216 cm²
-  // Shaded area = 54 cm²
-  // Unshaded area: q = 216 − 54 = 162 cm²
-  // Option A: (p) 66 cm, (q) 162 cm² (Correct!)
+/** Composite figure: an 18 x 12 rectangle with a 9 x 6 shaded block inside. */
+const GW = 18;
+const GH = 12;
+const EDGES = [
+  { id: "top", len: 18 },
+  { id: "right", len: 12 },
+  { id: "bottom", len: 18 },
+  { id: "left", len: 12 },
+  { id: "step-in", len: 3 },
+  { id: "step-up", len: 3 },
+];
 
-  const options = [
-    { id: "A", p: "66 cm", q: "162 cm²", label: "(p) 66 cm, (q) 162 cm²", isCorrect: true },
-    { id: "B", p: "61 cm", q: "196 cm²", label: "(p) 61 cm, (q) 196 cm²", isCorrect: false },
-    { id: "C", p: "66 cm", q: "216 cm²", label: "(p) 66 cm, (q) 216 cm²", isCorrect: false },
-    { id: "D", p: "61 cm", q: "162 cm²", label: "(p) 61 cm, (q) 162 cm²", isCorrect: false },
-  ];
+const VALUE: Record<string, number> = { v_shaded: 54, v_perim: 66, v_unshaded: 162, v_total: 216 };
 
-  const getInitial = () => {
-    if (!value) return "A";
-    const str = String(value).trim();
-    const found = options.find((o) => o.id === str || o.label === str);
-    return found ? found.id : "A";
-  };
+export function DetectiveCaseFileActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<CaseState>) {
+  const items = React.useMemo(
+    () => (question?.orderingConfig?.items || []).map((i) => ({ id: i.id, label: i.label })),
+    [question]
+  );
 
-  const [selectedId, setSelectedId] = useState<string>(getInitial());
-  const [activeLayer, setActiveLayer] = useState<"perimeter" | "area">("perimeter");
+  const initial = React.useMemo(() => {
+    const ids = (question?.orderingConfig?.items || []).map((i) => i.id);
+    return [3, 1, 0, 2].filter((n) => n < ids.length).map((n) => ids[n]);
+  }, [question]);
 
-  const handleSelect = (optId: string) => {
-    if (readOnly) return;
-    setSelectedId(optId);
-    onChange(optId);
-  };
+  const engine = useActivityEngine<CaseState, string[]>({
+    initialState: { edges: [], cells: [], order: initial, touched: false },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    deriveStateFromValue: (v) => (Array.isArray(v) ? { edges: [], cells: [], order: v, touched: true } : undefined),
+    resolve: (s) => (s.touched ? s.order : undefined),
+  });
 
-  const activeOpt = options.find((o) => o.id === selectedId) || options[0];
+  const s = engine.state;
+  const shadedSet = new Set(s.cells);
+  const mode = React.useRef<"add" | "remove">("add");
+
+  const applyCell = (i: number) =>
+    engine.update((st) => {
+      const next = new Set(st.cells);
+      if (mode.current === "add") next.add(i);
+      else next.delete(i);
+      return { ...st, cells: Array.from(next) };
+    });
+
+  const { start } = usePointerDrag<number>({
+    disabled: engine.readOnly,
+    onStart: (_p, i) => {
+      mode.current = shadedSet.has(i) ? "remove" : "add";
+      applyCell(i);
+    },
+    onMove: (p) => {
+      const el = document.elementFromPoint(p.x, p.y) as HTMLElement | null;
+      const idx = el?.dataset?.cell;
+      if (idx !== undefined) applyCell(Number(idx));
+    },
+  });
+
+  const perimeter = s.edges.reduce((t, id) => t + (EDGES.find((e) => e.id === id)?.len ?? 0), 0);
+  const values = s.order.map((id) => VALUE[id] ?? 0);
+  const ascending = values.every((v, i) => i === 0 || v > values[i - 1]);
 
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Compass className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Composite CAD Blueprint Laboratory (Q50)
-            </h3>
-            <p className="text-xs text-slate-600">
-              Achievers Section: Calculate total outer boundary perimeter (<strong className="text-emerald-700">p</strong>) and remaining unshaded area (<strong className="text-emerald-700">q</strong>).
-            </p>
-          </div>
-        </div>
-
-        <div className="text-xs font-mono font-bold bg-emerald-50 text-emerald-900 px-3 py-1.5 rounded-lg border border-emerald-300">
-          Evaluated Pair: <span className="text-emerald-700 font-black">{activeOpt.label}</span>
-        </div>
-      </div>
-
-      {/* Layer Controls */}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveLayer("perimeter")}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-            activeLayer === "perimeter"
-              ? "bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-sm"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-          }`}
-        >
-          <Ruler className="w-4 h-4 text-emerald-700" /> Perimeter Inspection (p = 66 cm)
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveLayer("area")}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-            activeLayer === "area"
-              ? "bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-sm"
-              : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-          }`}
-        >
-          <Layers className="w-4 h-4 text-emerald-700" /> Area Subtraction Layer (q = 162 cm²)
-        </button>
-      </div>
-
-      {/* Interactive Blueprint Schematic */}
-      <div
-        onClick={() => handleSelect("A")}
-        className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 items-center cursor-pointer hover:border-emerald-400 transition-all shadow-sm"
-      >
-        {/* Visual Schematic Box */}
-        <div className="relative border-2 border-dashed border-emerald-400 rounded-xl p-4 bg-emerald-50/50 flex flex-col items-center justify-center min-h-[160px] font-mono text-center">
-          <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-widest mb-1">
-            CAD DIMENSION OVERLAY: 18 cm &times; 12 cm
-          </div>
-          {activeLayer === "perimeter" ? (
-            <div className="space-y-1">
-              <div className="text-3xl font-black text-emerald-700">p = 66 cm</div>
-              <div className="text-xs text-slate-600">
-                Sum of all perimeter boundary segments
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <div className="text-3xl font-black text-emerald-700">q = 162 cm²</div>
-              <div className="text-xs text-slate-600">
-                Total (216 cm²) &minus; Shaded (54 cm²) = 162 cm²
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Mathematical Breakdown Card */}
-        <div className="space-y-2.5 font-mono text-xs text-slate-700">
-          <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-1 shadow-sm">
-            <span className="text-emerald-700 font-bold">1. Calculated Perimeter (p):</span>
-            <div className="text-slate-600 font-sans">
-              Outer boundaries sum = <span className="text-slate-900 font-bold font-mono">66 cm</span>
-            </div>
-          </div>
-          <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-1 shadow-sm">
-            <span className="text-emerald-700 font-bold">2. Calculated Unshaded Area (q):</span>
-            <div className="text-slate-600 font-sans">
-              Area = 216 &minus; 54 = <span className="text-slate-900 font-bold font-mono">162 cm²</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Answer Options Selection */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
-          Select Verified Measurement Pair:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-3.5 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between gap-3 cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-sm ring-1 ring-emerald-400"
-                    : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
+    <ActivityShell
+      icon={Search}
+      title="Composite Figure Case File"
+      howTo="Tap the edges to walk the perimeter and drag over squares to measure the shaded area, then drag the four result cards into ascending order."
+      answerText={engine.answer ? values.join(" < ") : undefined}
+      mappedTo={engine.answer ? (ascending ? "Strictly ascending" : "Order as arranged") : undefined}
+      pendingHint="Measure the figure, then reorder the result cards."
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[260px_1fr]">
+        <Stage label="Evidence figure">
+          <div
+            className="grid gap-[2px] mx-auto"
+            style={{ gridTemplateColumns: `repeat(${GW}, minmax(0,1fr))`, touchAction: "none" }}
+          >
+            {Array.from({ length: GW * GH }, (_, i) => (
+              <div
+                key={i}
+                data-cell={i}
+                onPointerDown={(e) => start(e, i)}
+                className={`aspect-square rounded-[1px] border border-slate-200 ${
+                  shadedSet.has(i) ? "bg-emerald-600" : "bg-white hover:bg-emerald-100"
                 }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700 shrink-0">
-                    {opt.id}
-                  </span>
-                  <div className="text-sm font-black font-mono">{opt.label}</div>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </button>
-            );
-          })}
+              />
+            ))}
+          </div>
+
+          <div className="mt-2.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Walk the perimeter — tap each edge
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {EDGES.map((e) => (
+                <button
+                  key={e.id}
+                  type="button"
+                  disabled={engine.readOnly}
+                  onClick={() =>
+                    engine.update((st) => ({
+                      ...st,
+                      edges: st.edges.includes(e.id) ? st.edges.filter((x) => x !== e.id) : [...st.edges, e.id],
+                    }))
+                  }
+                  className={`px-2 py-1.5 min-h-[34px] rounded-lg border-2 text-[10px] font-black transition ${
+                    s.edges.includes(e.id) ? "bg-emerald-600 border-emerald-700 text-white" : "bg-white border-slate-200 text-slate-700"
+                  }`}
+                >
+                  {e.id} ({e.len})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2 mt-2">
+            <ReadOut label="Perimeter walked" value={`${perimeter} cm`} tone={perimeter === 66 ? "emerald" : "slate"} />
+            <ReadOut label="Shaded measured" value={`${shadedSet.size} cm²`} tone={shadedSet.size === 54 ? "emerald" : "slate"} />
+          </div>
+        </Stage>
+
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+            {question?.orderingConfig?.instruction || "Arrange the results in ascending order"}
+          </div>
+          <ReorderList
+            items={items}
+            order={s.order}
+            onReorder={(order) => engine.update((st) => ({ ...st, order, touched: true }))}
+            readOnly={engine.readOnly}
+            renderMeta={(id) => (
+              <span className="font-mono text-[11px] font-black text-slate-500 tabular-nums">{VALUE[id]}</span>
+            )}
+          />
         </div>
       </div>
-    </div>
+    </ActivityShell>
   );
 }

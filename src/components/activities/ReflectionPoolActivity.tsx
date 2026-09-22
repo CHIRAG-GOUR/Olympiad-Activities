@@ -1,170 +1,139 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Waves, CheckCircle2, Eye, Sparkles } from "lucide-react";
+import React from "react";
+import { Waves } from "lucide-react";
+import { ActivityShell, Stage, SwitchToggle, useActivityEngine, ActivityComponentProps, optionLabel } from "./kit";
+import { usePointerDrag, clamp } from "./kit/usePointerDrag";
 
-interface ReflectionPoolActivityProps {
-  questionId: string;
-  value?: any;
-  onChange: (val: any) => void;
-  readOnly?: boolean;
+/**
+ * Q6 — Reflection pool.
+ *
+ * The student drags the waterline up to the word and switches on the transformations they
+ * think a water image performs. The reflection is rendered from those transformations, and
+ * the transformation set they build is mapped onto the matching option.
+ */
+
+interface PoolState {
+  water: number; // 0..1 height of the waterline
+  flipV: boolean;
+  reverse: boolean;
+  rotate180: boolean;
+  vowelsOnly: boolean;
 }
 
-export function ReflectionPoolActivity({
-  value,
-  onChange,
-  readOnly = false,
-}: ReflectionPoolActivityProps) {
-  const options = [
-    {
-      id: "A",
-      text: "Option A (W→M, E→E, L flipped up, C→C, O→O, M→W, E→E)",
-      desc: "True vertical water reflection for every letter",
-      reflectedString: "M E ⅃ C O W E",
-      isCorrect: true,
-    },
-    {
-      id: "B",
-      text: "Option B (Horizontal reverse order)",
-      desc: "Reversed horizontally like a horizontal mirror",
-      reflectedString: "E M O C L E W",
-      isCorrect: false,
-    },
-    {
-      id: "C",
-      text: "Option C (Letters rotated 180 degrees)",
-      desc: "Letters rotated 180 degrees instead of pure reflection",
-      reflectedString: "Ǝ W O Ɔ ⅂ Ǝ M",
-      isCorrect: false,
-    },
-    {
-      id: "D",
-      text: "Option D (Only vowels inverted)",
-      desc: "Only vowels inverted, consonants unchanged",
-      reflectedString: "W Ǝ L C O M Ǝ",
-      isCorrect: false,
-    },
-  ];
+const WORD = "WELCOME";
+const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 
-  const [selectedId, setSelectedId] = useState<string>(
-    value ? (options.find((o) => o.id === value)?.id || "A") : ""
-  );
+export function ReflectionPoolActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps<PoolState>) {
+  const engine = useActivityEngine<PoolState, string>({
+    initialState: { water: 0.25, flipV: false, reverse: false, rotate180: false, vowelsOnly: false },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    resolve: (s) => {
+      const opts = question?.multipleChoiceConfig?.options || [];
+      const pick = (id: string) => opts.find((o) => o.id === id)?.id;
+      if (s.water < 0.4) return undefined; // the word must actually touch the water
+      if (s.vowelsOnly) return pick("D");
+      if (s.rotate180) return pick("C");
+      if (s.flipV && s.reverse) return pick("B");
+      if (s.flipV) return pick("A");
+      return undefined;
+    },
+  });
 
-  useEffect(() => {
-    if (value) {
-      const match = options.find((o) => o.id === value);
-      if (match) setSelectedId(match.id);
-    }
-  }, [value]);
+  const s = engine.state;
+  const poolRef = React.useRef<HTMLDivElement | null>(null);
+  const { start } = usePointerDrag({
+    disabled: engine.readOnly,
+    onStart: (p) => engine.patch({ water: clamp(1 - p.fracY, 0.05, 0.62) }),
+    onMove: (p) => {
+      const r = poolRef.current?.getBoundingClientRect();
+      if (!r) return;
+      engine.patch({ water: clamp(1 - (p.y - r.top) / r.height, 0.05, 0.62) });
+    },
+  });
 
-  const handleSelect = (id: string) => {
-    if (readOnly) return;
-    setSelectedId(id);
-    onChange(id);
+  const letters = (s.reverse ? WORD.split("").reverse() : WORD.split(""));
+  const submerged = s.water >= 0.4;
+
+  const describe = () => {
+    const parts: string[] = [];
+    if (s.flipV) parts.push("flipped top-to-bottom");
+    if (s.reverse) parts.push("letter order reversed");
+    if (s.rotate180) parts.push("rotated 180°");
+    if (s.vowelsOnly) parts.push("vowels only inverted");
+    return parts.length ? parts.join(" + ") : null;
   };
 
-  const activeOpt = options.find((o) => o.id === selectedId) || options[0];
-
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 text-slate-900 shadow-sm space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-            <Waves className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-              Optical Water Reflection Pool
-            </h3>
-            <p className="text-xs text-slate-600">
-              Click the underwater reflection chamber or select an option to simulate the vertical water image.
-            </p>
-          </div>
-        </div>
+    <ActivityShell
+      icon={Waves}
+      title="Reflection Pool Bench"
+      howTo="Drag the waterline up until the word meets the surface, then switch on the transformations a water image really performs. The reflection you build is your answer."
+      answerText={engine.answer ? describe() ?? undefined : undefined}
+      mappedTo={optionLabel(question, engine.answer)}
+      pendingHint={submerged ? "Switch on the transformations that form the water image." : "Drag the waterline up to the word."}
+      onReset={engine.reset}
+      readOnly={engine.readOnly}
+    >
+      <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
+        <Stage label="Pool">
+          <div
+            ref={poolRef}
+            onPointerDown={(e) => start(e, undefined)}
+            className="relative h-[220px] rounded-xl bg-gradient-to-b from-white to-sky-50 overflow-hidden border border-slate-200 cursor-ns-resize"
+            style={{ touchAction: "none" }}
+          >
+            {/* The word standing above the pool */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 flex gap-0.5 font-black text-3xl text-slate-900"
+              style={{ bottom: `calc(${s.water * 100}% + 4px)` }}
+            >
+              {WORD.split("").map((ch, i) => (
+                <span key={i}>{ch}</span>
+              ))}
+            </div>
 
-        <div className="text-xs font-mono font-bold bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg border border-slate-300">
-          Axis: Horizontal Waterline (Vertical Inversion)
-        </div>
-      </div>
-
-      {/* Interactive Water Chamber */}
-      <div
-        onClick={() => handleSelect("A")}
-        className="relative h-64 bg-slate-50 border-2 border-slate-200 hover:border-emerald-400 rounded-2xl flex flex-col items-center justify-center overflow-hidden select-none p-4 cursor-pointer transition-all"
-        title="Click to select Option A (True Reflection)"
-      >
-        {/* Above Water: Original Word */}
-        <div className="flex-1 flex items-end justify-center pb-3">
-          <span className="font-black text-3xl sm:text-4xl tracking-widest text-slate-900 font-mono">
-            W E L C O M E
-          </span>
-        </div>
-
-        {/* Water Surface Line */}
-        <div className="w-full relative flex items-center justify-center my-1">
-          <div className="w-full h-0.5 bg-cyan-600 shadow-[0_0_8px_#0891b2]" />
-          <span className="absolute px-3 py-0.5 bg-cyan-50 border border-cyan-300 rounded-full text-[10px] font-mono font-bold text-cyan-900">
-            WATERLINE (HORIZONTAL REFLECTION AXIS)
-          </span>
-        </div>
-
-        {/* Below Water: Simulated Reflection linked to Selected Option */}
-        <div className="flex-1 flex items-start justify-center pt-3 relative">
-          <span className="font-black text-3xl sm:text-4xl tracking-widest text-cyan-700 font-mono opacity-90">
-            {activeOpt.reflectedString}
-          </span>
-          {activeOpt.id === "A" && (
-            <span className="absolute -top-1 right-0 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 animate-pulse">
-              ✓ Exact Match
-            </span>
-          )}
-        </div>
-
-        {/* Active Inspection Pill */}
-        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs border border-slate-200 px-3 py-1 rounded-lg text-[11px] font-mono text-slate-700 shadow-xs flex items-center gap-1.5">
-          <Eye className="w-3.5 h-3.5 text-cyan-700" />
-          <span>Active Simulation: Option {activeOpt.id}</span>
-        </div>
-      </div>
-
-      {/* Answer Options Grid (Directly connected to pool) */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-          Select Water Reflection Option:
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {options.map((opt) => {
-            const isSelected = selectedId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={readOnly}
-                onClick={() => handleSelect(opt.id)}
-                className={`p-4 rounded-xl border-2 font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
-                  isSelected
-                    ? "bg-emerald-50 border-emerald-600 text-emerald-950 shadow-md shadow-emerald-600/10 scale-[1.01]"
-                    : "bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:border-slate-300"
-                }`}
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-700">
-                      {opt.id}
+            {/* Water body */}
+            <div
+              className="absolute inset-x-0 bottom-0 bg-sky-200/50 border-t-2 border-sky-400 backdrop-blur-[1px]"
+              style={{ height: `${s.water * 100}%` }}
+            >
+              <div className="absolute left-1/2 -translate-x-1/2 top-1 flex gap-0.5 font-black text-3xl text-sky-800/70">
+                {letters.map((ch, i) => {
+                  const flip = s.vowelsOnly ? VOWELS.has(ch) : s.flipV;
+                  const transforms = [flip ? "scaleY(-1)" : "", s.rotate180 ? "rotate(180deg)" : ""].filter(Boolean).join(" ");
+                  return (
+                    <span key={i} style={{ display: "inline-block", transform: transforms || undefined }}>
+                      {ch}
                     </span>
-                    <span className="font-mono text-base font-black tracking-wider text-slate-900">
-                      {opt.reflectedString}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-1 font-medium">{opt.desc}</p>
-                </div>
-                {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-              </button>
-            );
-          })}
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              className="absolute right-2 text-[10px] font-mono font-bold text-sky-700"
+              style={{ bottom: `calc(${s.water * 100}% + 2px)` }}
+            >
+              waterline
+            </div>
+          </div>
+        </Stage>
+
+        <div className="space-y-2">
+          <SwitchToggle label="Flip top-to-bottom" sub="Mirror across the waterline" on={s.flipV} onChange={(v) => engine.patch({ flipV: v })} readOnly={engine.readOnly} />
+          <SwitchToggle label="Reverse letter order" sub="Last letter first" on={s.reverse} onChange={(v) => engine.patch({ reverse: v })} readOnly={engine.readOnly} />
+          <SwitchToggle label="Rotate each letter 180°" sub="Turn, do not mirror" on={s.rotate180} onChange={(v) => engine.patch({ rotate180: v })} readOnly={engine.readOnly} />
+          <SwitchToggle label="Invert vowels only" sub="Leave consonants upright" on={s.vowelsOnly} onChange={(v) => engine.patch({ vowelsOnly: v })} readOnly={engine.readOnly} />
+          <p className="text-[10px] text-slate-500 leading-snug">
+            Watch letters such as W, E and M in the reflection — a true water image mirrors across the
+            surface without re-ordering the word.
+          </p>
         </div>
       </div>
-    </div>
+    </ActivityShell>
   );
 }
