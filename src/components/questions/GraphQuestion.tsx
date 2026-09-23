@@ -88,7 +88,7 @@ export function GraphQuestion({ question, value, onChange, readOnly = false }: G
           <button
             type="button"
             onClick={handleClear}
-            className="h-[34px] px-3 bg-white border-2 border-[#FDE68A] hover:bg-rose-50 text-rose-600 text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-xs"
+            className="h-[34px] px-3 bg-white border-2 border-[#FDE68A] hover:bg-rose-50 text-rose-600 text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow-subtle"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Clear Points
           </button>
@@ -125,14 +125,14 @@ export function GraphQuestion({ question, value, onChange, readOnly = false }: G
             );
           })}
 
-          <line x1={38} y1={342} x2={352} y2={342} stroke="#0B4F8A" strokeWidth="2.5" />
-          <line x1={38} y1={342} x2={38} y2={28} stroke="#0B4F8A" strokeWidth="2.5" />
-          <polygon points="352,338 362,342 352,346" fill="#0B4F8A" />
-          <polygon points="34,28 38,18 42,28" fill="#0B4F8A" />
-          <text x={358} y={362} fontSize="13" fill="#0B4F8A" fontWeight="900">
+          <line x1={38} y1={342} x2={352} y2={342} stroke="#2468B2" strokeWidth="2.5" />
+          <line x1={38} y1={342} x2={38} y2={28} stroke="#2468B2" strokeWidth="2.5" />
+          <polygon points="352,338 362,342 352,346" fill="#2468B2" />
+          <polygon points="34,28 38,18 42,28" fill="#2468B2" />
+          <text x={358} y={362} fontSize="13" fill="#2468B2" fontWeight="900">
             X
           </text>
-          <text x={18} y={24} fontSize="13" fill="#0B4F8A" fontWeight="900">
+          <text x={18} y={24} fontSize="13" fill="#2468B2" fontWeight="900">
             Y
           </text>
 
@@ -142,13 +142,13 @@ export function GraphQuestion({ question, value, onChange, readOnly = false }: G
 
             return (
               <g key={`pt-${idx}`}>
-                <circle cx={px} cy={py} r="8" fill="#F59E0B" stroke="#0B4F8A" strokeWidth="2.5" />
+                <circle cx={px} cy={py} r="8" fill="#F59E0B" stroke="#2468B2" strokeWidth="2.5" />
                 <circle cx={px} cy={py} r="3" fill="#FFFFFF" />
                 <text
                   x={px + 10}
                   y={py - 10}
                   fontSize="12"
-                  fill="#0B4F8A"
+                  fill="#2468B2"
                   fontWeight="900"
                   fontFamily="monospace"
                 >

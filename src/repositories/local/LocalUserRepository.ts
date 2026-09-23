@@ -1,13 +1,14 @@
 import { IUserRepository } from "../interfaces/IUserRepository";
 import { UserProfile, UserRole } from "@/lib/auth/rbac";
 
-const LOCAL_STORAGE_KEY = "olympiad_users_repo";
+// Key bumped so the renamed administrator record replaces any previously cached copy.
+const LOCAL_STORAGE_KEY = "olympiad_users_repo_v2";
 
 const INITIAL_USERS: UserProfile[] = [
   {
     id: "usr_admin_01",
-    name: "Dr. Vikram Sethi",
-    email: "admin@olympiad.org",
+    name: "Chirag Gour",
+    email: "pa1@skillizee.io",
     role: "SUPER_ADMIN",
     schoolName: "National Olympiad Council",
     createdAt: "2024-01-01T00:00:00Z",
@@ -41,22 +42,33 @@ const INITIAL_USERS: UserProfile[] = [
 ];
 
 export class LocalUserRepository implements IUserRepository {
+  // Every read used to re-parse the full localStorage blob from scratch, even though
+  // this repository is a singleton queried from most admin pages on every mount. Cache
+  // it in memory the same way LocalExamRepository/LocalQuestionRepository already do.
+  private inMemory: UserProfile[] | null = null;
+
   private async load(): Promise<UserProfile[]> {
+    if (this.inMemory) return this.inMemory;
+
     if (typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (raw) {
-          return JSON.parse(raw);
+          this.inMemory = JSON.parse(raw);
+          return this.inMemory!;
         }
       } catch {
         // ignore
       }
     }
-    this.persist(INITIAL_USERS);
-    return INITIAL_USERS;
+
+    this.inMemory = [...INITIAL_USERS];
+    this.persist(this.inMemory);
+    return this.inMemory;
   }
 
   private persist(users: UserProfile[]) {
+    this.inMemory = users;
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(users));

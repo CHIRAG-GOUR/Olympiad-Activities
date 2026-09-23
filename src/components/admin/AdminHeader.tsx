@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Plus, Upload, Play, FileSpreadsheet, Sparkles } from "lucide-react";
+import { Plus, Play, FileSpreadsheet } from "lucide-react";
 
 interface AdminHeaderProps {
   title: string;
@@ -14,46 +14,42 @@ interface AdminHeaderProps {
   };
 }
 
+/** Page header card — matches the dashboard's surface language. */
 export function AdminHeader({ title, subtitle, actionButton }: AdminHeaderProps) {
   const ActionIcon = actionButton?.icon || Plus;
 
   return (
-    <header className="bg-white border-b-2 border-[#D4E0C2] min-h-[76px] px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-10 shadow-xs">
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#547322]" />
-          <h1 className="text-xl lg:text-[23px] font-black text-slate-900 tracking-tight leading-tight">
-            {title}
-          </h1>
-        </div>
+    <header className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl px-6 sm:px-7 py-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+      <div className="min-w-0">
+        <h1 className="text-[22px] sm:text-[24px] font-bold text-[#182338] tracking-[-0.02em] leading-tight">
+          {title}
+        </h1>
         {subtitle && (
-          <p className="text-[13px] text-slate-600 font-semibold mt-0.5">
-            {subtitle}
-          </p>
+          <p className="text-[13.5px] text-[#667085] mt-1.5 leading-relaxed max-w-2xl">{subtitle}</p>
         )}
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+      <div className="flex items-center gap-2.5 flex-wrap shrink-0">
         <Link
           href="/"
-          className="h-[42px] px-4 bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#92400E] border-2 border-[#FDE68A] rounded-xl text-[13px] font-extrabold flex items-center gap-2 transition-all shadow-xs"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338] hover:bg-white/70 hover:border-[#C3D8EC] transition-colors"
         >
-          <Play className="w-4 h-4 fill-[#D97706] text-[#D97706]" />
-          <span>Launch Student Exam</span>
+          <Play className="w-4 h-4 text-[#F29A38]" strokeWidth={2.2} />
+          <span>Candidate portal</span>
         </Link>
 
         <Link
           href="/admin/imports"
-          className="h-[42px] px-4 bg-[#F4F7EE] hover:bg-[#EBF1E4] text-[#3E5519] border-2 border-[#D4E0C2] rounded-xl text-[13px] font-bold flex items-center gap-2 transition-all shadow-xs"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338] hover:bg-white/70 hover:border-[#C3D8EC] transition-colors"
         >
-          <FileSpreadsheet className="w-4 h-4 text-[#547322]" />
-          <span>Import Questions</span>
+          <FileSpreadsheet className="w-4 h-4 text-[#2468B2]" strokeWidth={2.2} />
+          <span>Import questions</span>
         </Link>
 
         {actionButton && (
           <Link
             href={actionButton.href}
-            className="h-[42px] px-5 bg-[#547322] hover:bg-[#435C1B] text-white rounded-xl text-[14px] font-extrabold flex items-center gap-2 shadow-md shadow-[#547322]/20 transition-all"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-[#2468B2] text-white text-[13px] font-semibold hover:bg-[#1C5190] transition-colors shadow-subtle"
           >
             <ActionIcon className="w-4 h-4" />
             <span>{actionButton.label}</span>
@@ -63,4 +59,3 @@ export function AdminHeader({ title, subtitle, actionButton }: AdminHeaderProps)
     </header>
   );
 }
-

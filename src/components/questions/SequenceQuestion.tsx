@@ -39,7 +39,7 @@ export function SequenceQuestion({ question, value, onChange, readOnly = false }
             return (
               <div
                 key={item.id || idx}
-                className={`min-w-[84px] h-[84px] px-5 rounded-2xl border-3 border-dashed flex items-center justify-center transition-all shadow-xs ${
+                className={`min-w-[84px] h-[84px] px-5 rounded-2xl border-2 border-dashed flex items-center justify-center transition-all shadow-subtle ${
                   chosenOption
                     ? "border-[#F59E0B] bg-[#FEF3C7] text-slate-900 font-mono font-extrabold text-3xl scale-105"
                     : "border-[#D97706] bg-[#FEF3C7]/40 text-[#D97706]"
@@ -80,14 +80,14 @@ export function SequenceQuestion({ question, value, onChange, readOnly = false }
                 type="button"
                 onClick={() => handleSelect(opt.id)}
                 disabled={readOnly}
-                className={`h-[60px] px-6 rounded-xl border-2 font-mono font-extrabold text-2xl transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer ${
+                className={`h-[60px] px-6 rounded-xl border-2 font-mono font-extrabold text-2xl transition-all flex items-center justify-center gap-2 shadow-subtle cursor-pointer ${
                   isSelected
-                    ? "border-[#F59E0B] bg-[#0B4F8A] text-white shadow-md scale-105"
+                    ? "border-[#F59E0B] bg-[#2468B2] text-white shadow-md scale-105"
                     : "border-[#FDE68A] bg-white text-slate-900 hover:border-[#F59E0B] hover:bg-[#FEF3C7]"
                 }`}
               >
                 <span>{opt.value}</span>
-                {isSelected && <Check className="w-5 h-5 text-[#F4C400]" />}
+                {isSelected && <Check className="w-5 h-5 text-[#E0AE2B]" />}
               </button>
             );
           })}

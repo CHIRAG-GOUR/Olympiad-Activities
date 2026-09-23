@@ -6,7 +6,8 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify:rbac": "npx --yes tsx --tsconfig tsconfig.json src/lib/auth/__tests__/accessMatrix.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

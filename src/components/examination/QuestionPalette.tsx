@@ -76,8 +76,8 @@ export function QuestionPalette({
         </div>
         <div className="min-w-0">
           <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Candidate Name</div>
-          <div className="text-[14px] font-extrabold text-slate-900 truncate">{candidateName}</div>
-          <div className="text-[11px] font-mono font-bold text-[#0B4F8A]">Roll No: {candidateId}</div>
+          <div className="text-[14px] font-bold text-slate-900 truncate">{candidateName}</div>
+          <div className="text-[11px] font-mono font-bold text-[#2468B2]">Roll No: {candidateId}</div>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export function QuestionPalette({
         <div className="grid grid-cols-2 gap-2 text-[12px] font-bold text-slate-800">
           {/* Answered (Green) */}
           <div className="flex items-center gap-2 bg-emerald-50/70 p-1.5 rounded border border-emerald-200">
-            <span className="w-6 h-6 rounded bg-[#28A745] text-white flex items-center justify-center font-mono text-xs font-black shrink-0 shadow-xs">
+            <span className="w-6 h-6 rounded bg-[#55B987] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-subtle">
               {countAnswered}
             </span>
             <span className="text-emerald-950 font-semibold truncate">Answered</span>
@@ -99,7 +99,7 @@ export function QuestionPalette({
 
           {/* Not Answered (Red) */}
           <div className="flex items-center gap-2 bg-rose-50/70 p-1.5 rounded border border-rose-200">
-            <span className="w-6 h-6 rounded bg-[#DC3545] text-white flex items-center justify-center font-mono text-xs font-black shrink-0 shadow-xs">
+            <span className="w-6 h-6 rounded bg-[#E8786A] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-subtle">
               {countNotAnswered}
             </span>
             <span className="text-rose-950 font-semibold truncate">Not Answered</span>
@@ -107,7 +107,7 @@ export function QuestionPalette({
 
           {/* Not Visited (Silver) */}
           <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded border border-slate-200">
-            <span className="w-6 h-6 rounded bg-slate-100 text-slate-700 border border-slate-300 flex items-center justify-center font-mono text-xs font-black shrink-0">
+            <span className="w-6 h-6 rounded bg-slate-100 text-slate-700 border border-slate-300 flex items-center justify-center font-mono text-xs font-bold shrink-0">
               {countNotVisited}
             </span>
             <span className="text-slate-700 font-semibold truncate">Not Visited</span>
@@ -115,7 +115,7 @@ export function QuestionPalette({
 
           {/* Marked for Review (Purple) */}
           <div className="flex items-center gap-2 bg-purple-50/70 p-1.5 rounded border border-purple-200">
-            <span className="w-6 h-6 rounded-full bg-[#6F42C1] text-white flex items-center justify-center font-mono text-xs font-black shrink-0 shadow-xs">
+            <span className="w-6 h-6 rounded-full bg-[#8067D9] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-subtle">
               {countMarked}
             </span>
             <span className="text-purple-950 font-semibold truncate">Marked for Review</span>
@@ -124,9 +124,9 @@ export function QuestionPalette({
 
         {/* Answered & Marked for Review (Purple with Green badge) */}
         <div className="flex items-center gap-2.5 bg-purple-50/50 p-1.5 rounded border border-purple-200 text-[11px] font-bold">
-          <div className="relative w-6 h-6 rounded-full bg-[#6F42C1] text-white flex items-center justify-center font-mono text-xs font-black shrink-0 shadow-xs">
+          <div className="relative w-6 h-6 rounded-full bg-[#8067D9] text-white flex items-center justify-center font-mono text-xs font-bold shrink-0 shadow-subtle">
             <span>{countAnsweredMarked}</span>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#28A745] border border-white" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#55B987] border border-white" />
           </div>
           <span className="text-purple-900 leading-tight">
             Ans & Marked for Review <span className="text-[10px] text-slate-500 font-normal block">(Will be evaluated)</span>
@@ -138,10 +138,10 @@ export function QuestionPalette({
       <div className="p-3.5 space-y-2 flex-1">
         <div className="flex items-center justify-between text-xs font-bold text-slate-700">
           <span className="uppercase tracking-wider">Choose Question</span>
-          <span className="text-[#0B4F8A] font-mono">Q. {currentIndex + 1} Active</span>
+          <span className="text-[#2468B2] font-mono">Q. {currentIndex + 1} Active</span>
         </div>
 
-        <div className="max-h-[300px] overflow-y-auto pr-1">
+        <div className="max-h-[clamp(220px,40vh,460px)] overflow-y-auto pr-1">
           <div className="grid grid-cols-5 gap-2">
             {questions.map((q, idx) => {
               const isCurrent = idx === currentIndex;
@@ -149,13 +149,13 @@ export function QuestionPalette({
 
               let statusStyles = "";
               if (status === "answered") {
-                statusStyles = "bg-[#28A745] text-white border-[#218838]";
+                statusStyles = "bg-[#55B987] text-white border-[#3E9E6F]";
               } else if (status === "not_answered") {
-                statusStyles = "bg-[#DC3545] text-white border-[#C82333]";
+                statusStyles = "bg-[#E8786A] text-white border-[#D25F52]";
               } else if (status === "marked_for_review") {
-                statusStyles = "bg-[#6F42C1] text-white border-[#5A32A3] rounded-full";
+                statusStyles = "bg-[#8067D9] text-white border-[#6C55C4] rounded-full";
               } else if (status === "answered_marked_for_review") {
-                statusStyles = "bg-[#6F42C1] text-white border-[#5A32A3] rounded-full";
+                statusStyles = "bg-[#8067D9] text-white border-[#6C55C4] rounded-full";
               } else {
                 // not_visited
                 statusStyles = "bg-white text-slate-800 border-slate-300 hover:bg-slate-100";
@@ -172,7 +172,7 @@ export function QuestionPalette({
                       : "rounded-md"
                   } ${statusStyles} ${
                     isCurrent
-                      ? "ring-3 ring-[#0B4F8A] ring-offset-1 scale-105 z-10 font-black shadow-md"
+                      ? "ring-2 ring-[#2468B2] ring-offset-1 scale-105 z-10 font-bold shadow-md"
                       : "hover:opacity-90"
                   }`}
                 >
@@ -180,7 +180,7 @@ export function QuestionPalette({
 
                   {/* Corner indicator for answered + marked */}
                   {status === "answered_marked_for_review" && (
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#28A745] border border-white" />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#55B987] border border-white" />
                   )}
                 </button>
               );
@@ -194,7 +194,7 @@ export function QuestionPalette({
         <button
           type="button"
           onClick={onSubmitExam}
-          className="w-full h-[46px] bg-[#0B4F8A] hover:bg-[#083863] active:bg-[#062644] text-white rounded-lg text-sm font-extrabold shadow transition-all cursor-pointer flex items-center justify-center gap-2"
+          className="w-full h-[46px] bg-[#2468B2] hover:bg-[#1C5190] active:bg-[#163F71] text-white rounded-lg text-sm font-bold shadow transition-all cursor-pointer flex items-center justify-center gap-2"
         >
           <span>Submit Question Paper</span>
         </button>

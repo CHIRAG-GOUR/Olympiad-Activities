@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
-      <body className="bg-[#F0F4F8] text-slate-900 min-h-screen">
+      <body className="bg-[#F4F7FB] text-slate-900 min-h-screen">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

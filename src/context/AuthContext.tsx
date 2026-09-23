@@ -1,120 +1,142 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { UserRole, Permission, UserProfile, hasPermission, getPermissionsForRole } from "@/lib/auth/rbac";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import {
+  UserRole,
+  Permission,
+  UserProfile,
+  hasPermission,
+  availableRolesFor,
+  canSwitchRole as accountCanSwitchRole,
+} from "@/lib/auth/rbac";
+import { authService, type SignInOutcome } from "@/lib/auth/authService";
+import { scopeFor, type AccessScope } from "@/lib/auth/dataAccess";
 
+/**
+ * Authentication and authorization context.
+ *
+ * Exposes the signed-in account, the role it is currently operating as, the roles it is
+ * permitted to operate as, and permission predicates. Screens ask questions of this
+ * context; none of them compare role strings themselves.
+ */
 export interface AuthContextType {
   user: UserProfile | null;
-  role: UserRole;
+  /** The role whose experience is currently rendered. */
+  activeRole: UserRole;
+  /** Roles this account may operate as — one entry unless it is a privileged tester. */
+  availableRoles: UserRole[];
+  /** Whether the role switcher should be offered at all. */
+  canSwitchRole: boolean;
   isAuthenticated: boolean;
+  /** False until the persisted session has been read — guards wait on this. */
+  isReady: boolean;
+  /** Authorization scope handed to the data-access layer. */
+  scope: AccessScope | null;
+  signIn: (email: string, password: string, role: UserRole) => Promise<SignInOutcome>;
+  signOut: () => void;
   switchRole: (role: UserRole) => void;
   can: (permission: Permission) => boolean;
   canAll: (permissions: Permission[]) => boolean;
   canAny: (permissions: Permission[]) => boolean;
-  loginAs: (user: Partial<UserProfile> & { role: UserRole }) => void;
+  /** Retained alias used by existing call sites. */
+  role: UserRole;
   logout: () => void;
 }
-
-const DEFAULT_USERS: Record<UserRole, UserProfile> = {
-  SUPER_ADMIN: {
-    id: "usr_admin_01",
-    name: "Dr. Vikram Sethi",
-    email: "admin@olympiad.org",
-    role: "SUPER_ADMIN",
-    schoolName: "National Olympiad Council",
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  TEACHER: {
-    id: "usr_teacher_01",
-    name: "Prof. Ananya Sen",
-    email: "ananya.sen@olympiad.org",
-    role: "TEACHER",
-    schoolName: "Delhi Public School, R.K. Puram",
-    createdAt: "2024-02-15T00:00:00Z",
-  },
-  STUDENT: {
-    id: "usr_student_01",
-    name: "Rahul Sharma",
-    email: "rahul.s@student.olympiad.org",
-    role: "STUDENT",
-    schoolName: "Kendriya Vidyalaya No. 1",
-    grade: 6,
-    createdAt: "2024-03-10T00:00:00Z",
-  },
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_USERS.SUPER_ADMIN);
-  const [isMounted, setIsMounted] = useState(false);
+  const [account, setAccount] = useState<UserProfile | null>(null);
+  const [activeRole, setActiveRole] = useState<UserRole>("STUDENT");
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    try {
-      const savedRole = localStorage.getItem("olympiad_auth_role") as UserRole | null;
-      if (savedRole && DEFAULT_USERS[savedRole]) {
-        setCurrentUser(DEFAULT_USERS[savedRole]);
-      }
-    } catch {
-      // ignore
-    }
+    let cancelled = false;
+    authService
+      .restore()
+      .then((session) => {
+        if (cancelled || !session) return;
+        setAccount(session.profile);
+        setActiveRole(session.activeRole ?? session.profile.role);
+      })
+      .finally(() => {
+        if (!cancelled) setIsReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const switchRole = (newRole: UserRole) => {
-    const newUser = DEFAULT_USERS[newRole] || DEFAULT_USERS.STUDENT;
-    setCurrentUser(newUser);
-    try {
-      localStorage.setItem("olympiad_auth_role", newRole);
-    } catch {
-      // ignore
-    }
-  };
+  const signIn = useCallback(
+    async (email: string, password: string, role: UserRole): Promise<SignInOutcome> => {
+      const outcome = await authService.signIn({ email, password, role });
+      if (outcome.ok) {
+        setAccount(outcome.profile);
+        setActiveRole(outcome.activeRole);
+      }
+      return outcome;
+    },
+    []
+  );
 
-  const loginAs = (userData: Partial<UserProfile> & { role: UserRole }) => {
-    const base = DEFAULT_USERS[userData.role] || DEFAULT_USERS.STUDENT;
-    const merged: UserProfile = {
-      ...base,
-      ...userData,
-      id: userData.id || `usr_${Date.now()}`,
-    };
-    setCurrentUser(merged);
-    try {
-      localStorage.setItem("olympiad_auth_role", merged.role);
-    } catch {
-      // ignore
-    }
-  };
+  const signOut = useCallback(() => {
+    void authService.signOut();
+    setAccount(null);
+    setActiveRole("STUDENT");
+  }, []);
 
-  const logout = () => {
-    switchRole("STUDENT");
-  };
+  const availableRoles = useMemo(
+    () => (account ? availableRolesFor(account.email, account.role) : []),
+    [account]
+  );
 
-  const can = (permission: Permission): boolean => {
-    return hasPermission(currentUser.role, permission);
-  };
+  const canSwitch = useMemo(() => accountCanSwitchRole(account?.email), [account]);
 
-  const canAll = (permissions: Permission[]): boolean => {
-    return permissions.every((p) => hasPermission(currentUser.role, p));
-  };
+  /**
+   * Changes which experience is rendered. Refused unless the account is entitled to the
+   * requested role, so this cannot be used to escalate from the console.
+   */
+  const switchRole = useCallback(
+    (nextRole: UserRole) => {
+      if (!account) return;
+      if (!availableRoles.includes(nextRole)) return;
+      setActiveRole(nextRole);
+      void authService.setActiveRole(nextRole);
+    },
+    [account, availableRoles]
+  );
 
-  const canAny = (permissions: Permission[]): boolean => {
-    return permissions.some((p) => hasPermission(currentUser.role, p));
-  };
+  const can = useCallback(
+    (permission: Permission) => (account ? hasPermission(activeRole, permission) : false),
+    [account, activeRole]
+  );
+  const canAll = useCallback((permissions: Permission[]) => permissions.every(can), [can]);
+  const canAny = useCallback((permissions: Permission[]) => permissions.some(can), [can]);
 
-  const value = useMemo(
+  const scope = useMemo(
+    () => (account ? scopeFor({ ...account, role: activeRole }) : null),
+    [account, activeRole]
+  );
+
+  const value = useMemo<AuthContextType>(
     () => ({
-      user: currentUser,
-      role: currentUser.role,
-      isAuthenticated: true,
+      user: account ? { ...account, role: activeRole } : null,
+      activeRole,
+      role: activeRole,
+      availableRoles,
+      canSwitchRole: canSwitch,
+      isAuthenticated: account !== null,
+      isReady,
+      scope,
+      signIn,
+      signOut,
       switchRole,
       can,
       canAll,
       canAny,
-      loginAs,
-      logout,
+      logout: signOut,
     }),
-    [currentUser]
+    [account, activeRole, availableRoles, canSwitch, isReady, scope, signIn, signOut, switchRole, can, canAll, canAny]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -128,6 +150,7 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
+/** Renders children only when the active role holds the permission. */
 export function PermissionGate({
   permission,
   children,
@@ -138,8 +161,6 @@ export function PermissionGate({
   fallback?: React.ReactNode;
 }) {
   const { can } = useAuth();
-  if (!can(permission)) {
-    return <>{fallback}</>;
-  }
+  if (!can(permission)) return <>{fallback}</>;
   return <>{children}</>;
 }
