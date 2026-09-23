@@ -33,7 +33,7 @@ export default function ExamDetailPage({ params }: { params: Promise<{ id: strin
   if (loading) {
     return (
       <div className="p-10 text-center space-y-2">
-        <div className="w-8 h-8 border-3 border-olympiad-primary border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-olympiad-primary border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-[14px] text-olympiad-textMuted font-bold">Loading examination details...</p>
       </div>
     );
@@ -66,14 +66,14 @@ export default function ExamDetailPage({ params }: { params: Promise<{ id: strin
         <div className="flex items-center justify-between">
           <Link
             href="/admin/exams"
-            className="h-[40px] px-3.5 bg-white border border-olympiad-border rounded-md text-[13px] font-bold text-olympiad-textMuted hover:text-navy-900 flex items-center gap-1.5 transition-colors shadow-xs"
+            className="h-[40px] px-3.5 bg-white border border-olympiad-border rounded-md text-[13px] font-bold text-olympiad-textMuted hover:text-navy-900 flex items-center gap-1.5 transition-colors shadow-subtle"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Examinations
           </Link>
 
           <Link
             href={`/exam/${exam.id}`}
-            className="h-[42px] px-5 bg-olympiad-primary hover:bg-olympiad-deep text-white text-[14px] font-bold rounded-md shadow-xs flex items-center gap-2 transition-colors"
+            className="h-[42px] px-5 bg-olympiad-primary hover:bg-olympiad-deep text-white text-[14px] font-bold rounded-md shadow-subtle flex items-center gap-2 transition-colors"
           >
             <Play className="w-4 h-4 fill-current" />
             <span>Open Candidate Test Window</span>

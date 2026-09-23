@@ -110,7 +110,7 @@ export default function NewQuestionPage() {
         <div className="flex items-center justify-between">
           <Link
             href="/admin/questions"
-            className="h-[42px] px-4 bg-white border border-olympiad-border hover:bg-olympiad-blueSoft rounded text-[14px] font-bold text-olympiad-deepBlue flex items-center gap-2 transition-all shadow-xs"
+            className="h-[42px] px-4 bg-white border border-olympiad-border hover:bg-olympiad-blueSoft rounded text-[14px] font-bold text-olympiad-deepBlue flex items-center gap-2 transition-all shadow-subtle"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Repository
           </Link>
@@ -130,7 +130,7 @@ export default function NewQuestionPage() {
           <div className="xl:col-span-7 bg-white border border-olympiad-border rounded-lg p-6 lg:p-8 shadow-subtle space-y-6">
             <div className="border-b border-olympiad-border pb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-extrabold text-olympiad-deepBlue">Question Parameters & Rules</h2>
+                <h2 className="text-lg font-bold text-olympiad-deepBlue">Question Parameters & Rules</h2>
                 <p className="text-[13px] text-olympiad-textMuted font-medium">
                   Specify curriculum taxonomy, interaction model, and grading criteria
                 </p>
@@ -203,7 +203,7 @@ export default function NewQuestionPage() {
                 <select
                   value={formData.questionType || "ORDERING"}
                   onChange={(e) => handleTypeChange(e.target.value as QuestionType)}
-                  className="w-full h-[46px] px-4 text-[14px] bg-olympiad-blueLight border-2 border-olympiad-primaryBlue text-olympiad-deepBlue font-extrabold rounded-md focus:outline-none cursor-pointer"
+                  className="w-full h-[46px] px-4 text-[14px] bg-olympiad-blueLight border-2 border-olympiad-primaryBlue text-olympiad-deepBlue font-bold rounded-md focus:outline-none cursor-pointer"
                 >
                   <option value="ORDERING">ORDERING (Drag Sequence)</option>
                   <option value="DRAG_DROP">DRAG & DROP (Zone Sorting)</option>
@@ -255,7 +255,7 @@ export default function NewQuestionPage() {
                   step="0.5"
                   value={formData.marks || 1}
                   onChange={(e) => setFormData({ ...formData, marks: parseFloat(e.target.value) || 1 })}
-                  className="w-full h-[46px] px-3 text-[15px] bg-olympiad-bg border border-olympiad-border rounded-md font-mono font-extrabold text-olympiad-deepBlue text-center"
+                  className="w-full h-[46px] px-3 text-[15px] bg-olympiad-bg border border-olympiad-border rounded-md font-mono font-bold text-olympiad-deepBlue text-center"
                 />
               </div>
 
@@ -294,7 +294,7 @@ export default function NewQuestionPage() {
           <div className="xl:col-span-5 bg-white border-2 border-olympiad-primaryBlue/40 rounded-lg p-6 lg:p-8 shadow-card space-y-6 sticky top-24">
             <div className="border-b border-olympiad-border pb-4 flex items-center justify-between">
               <div>
-                <span className="text-[13px] font-extrabold uppercase tracking-wider text-olympiad-primaryBlue flex items-center gap-2">
+                <span className="text-[13px] font-bold uppercase tracking-wider text-olympiad-primaryBlue flex items-center gap-2">
                   <Eye className="w-5 h-5" /> Live Student Interactive Preview
                 </span>
                 <p className="text-[12px] text-olympiad-textMuted font-medium mt-0.5">

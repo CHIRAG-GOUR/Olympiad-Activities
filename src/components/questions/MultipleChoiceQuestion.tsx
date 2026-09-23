@@ -61,7 +61,7 @@ export function MultipleChoiceQuestion({
                 }
               }}
               disabled={readOnly}
-              className={`text-left p-4 sm:p-5 rounded-xl border-2 transition-all flex items-start gap-4 group cursor-pointer shadow-xs ${
+              className={`text-left p-4 sm:p-5 rounded-xl border-2 transition-all flex items-start gap-4 group cursor-pointer shadow-subtle ${
                 isSelected
                   ? "border-[#F59E0B] bg-[#FEF3C7] shadow-md ring-2 ring-[#FEF08A]"
                   : "border-[#FDE68A] bg-[#FFFDF5] hover:border-[#F59E0B] hover:bg-[#FEFCE8]"
@@ -71,11 +71,11 @@ export function MultipleChoiceQuestion({
               <div
                 className={`w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center font-mono font-extrabold text-[15px] border-2 transition-colors ${
                   isSelected
-                    ? "bg-[#0B4F8A] text-white border-[#0B4F8A] shadow-xs"
+                    ? "bg-[#2563A8] text-white border-[#2563A8] shadow-subtle"
                     : "bg-white text-slate-800 border-[#FDE68A] group-hover:border-[#F59E0B] group-hover:bg-[#FEF3C7]"
                 }`}
               >
-                {isSelected ? <Check className="w-5 h-5 text-[#F4C400]" /> : opt.id}
+                {isSelected ? <Check className="w-5 h-5 text-[#E0AE2B]" /> : opt.id}
               </div>
 
               {/* Option Text & Media */}

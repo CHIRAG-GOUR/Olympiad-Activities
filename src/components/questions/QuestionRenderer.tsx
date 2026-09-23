@@ -173,7 +173,7 @@ export function QuestionRenderer({
           );
         }
         return (
-          <div className="p-4 bg-[#F6F9F1] border border-[#DDE4D7] rounded-xl text-xs text-[#172033]">
+          <div className="p-4 bg-[#F6F8FB] border border-[#E3E8EF] rounded-xl text-xs text-[#172033]">
             Interactive engine renderer for {question.questionType} is active.
           </div>
         );
@@ -184,10 +184,10 @@ export function QuestionRenderer({
     <div className="space-y-3.5">
       {/* Optional Top Meta Bar (when showMetadata is enabled) */}
       {showMetadata && (
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#DDE4D7]">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E3E8EF]">
           <div className="flex items-center gap-2 flex-wrap">
             {question.section && (
-              <span className="px-2.5 py-0.5 bg-[#4D741F] text-white font-bold text-[11px] uppercase tracking-wider rounded-md">
+              <span className="px-2.5 py-0.5 bg-[#2563A8] text-white font-bold text-[11px] uppercase tracking-wider rounded-md">
                 {question.section}
               </span>
             )}
@@ -204,7 +204,7 @@ export function QuestionRenderer({
           </div>
 
           <div className="flex items-center gap-3 text-xs font-mono font-bold">
-            <span className="px-2 py-0.5 bg-[#EEF5E7] text-[#355415] rounded-md border border-[#DDE4D7]">
+            <span className="px-2 py-0.5 bg-[#EAF2FB] text-[#1B4E88] rounded-md border border-[#E3E8EF]">
               +{question.marks} {question.marks === 1 ? "Mark" : "Marks"}
             </span>
             {question.negativeMarks > 0 && (
@@ -215,13 +215,13 @@ export function QuestionRenderer({
 
             {/* Compact view toggle placed near right & negative */}
             {BespokeActivityComponent && (
-              <div className="flex items-center gap-0.5 bg-[#F6F9F1] p-0.5 rounded-lg border border-[#DDE4D7] font-sans">
+              <div className="flex items-center gap-0.5 bg-[#F6F8FB] p-0.5 rounded-lg border border-[#E3E8EF] font-sans">
                 <button
                   type="button"
                   onClick={() => handleToggle("activity")}
                   className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all ${
                     activeView === "activity"
-                      ? "bg-[#4D741F] text-white shadow-xs"
+                      ? "bg-[#2563A8] text-white shadow-subtle"
                       : "text-[#667085] hover:text-[#172033]"
                   }`}
                 >
@@ -232,7 +232,7 @@ export function QuestionRenderer({
                   onClick={() => handleToggle("standard")}
                   className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all ${
                     activeView === "standard"
-                      ? "bg-slate-700 text-white shadow-xs"
+                      ? "bg-slate-700 text-white shadow-subtle"
                       : "text-[#667085] hover:text-[#172033]"
                   }`}
                 >

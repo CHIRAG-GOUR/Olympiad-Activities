@@ -79,7 +79,7 @@ export default function EditQuestionPage({ params }: { params: Promise<{ id: str
         <div className="flex items-center justify-between">
           <Link
             href="/admin/questions"
-            className="h-[42px] px-4 bg-white border border-olympiad-border hover:bg-olympiad-blueSoft rounded text-[14px] font-bold text-olympiad-deepBlue flex items-center gap-2 transition-all shadow-xs"
+            className="h-[42px] px-4 bg-white border border-olympiad-border hover:bg-olympiad-blueSoft rounded text-[14px] font-bold text-olympiad-deepBlue flex items-center gap-2 transition-all shadow-subtle"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Repository
           </Link>
@@ -99,7 +99,7 @@ export default function EditQuestionPage({ params }: { params: Promise<{ id: str
           <div className="xl:col-span-7 bg-white border border-olympiad-border rounded-lg p-6 lg:p-8 shadow-subtle space-y-6">
             <div className="border-b border-olympiad-border pb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-extrabold text-olympiad-deepBlue">Question Parameters</h2>
+                <h2 className="text-lg font-bold text-olympiad-deepBlue">Question Parameters</h2>
                 <p className="text-[13px] text-olympiad-textMuted font-medium">Configure question taxonomy and grading</p>
               </div>
               <span className="px-3 py-1 bg-olympiad-blueLight text-olympiad-deepBlue rounded font-mono font-bold text-[13px]">
@@ -155,7 +155,7 @@ export default function EditQuestionPage({ params }: { params: Promise<{ id: str
 
               <div>
                 <label className="text-[13px] font-bold text-olympiad-deepBlue mb-1.5 block">Interaction Type</label>
-                <div className="h-[46px] px-4 bg-olympiad-blueLight border-2 border-olympiad-academicBlue/40 text-olympiad-deepBlue font-extrabold rounded-md flex items-center text-[14px]">
+                <div className="h-[46px] px-4 bg-olympiad-blueLight border-2 border-olympiad-academicBlue/40 text-olympiad-deepBlue font-bold rounded-md flex items-center text-[14px]">
                   {formData.questionType}
                 </div>
               </div>
@@ -193,7 +193,7 @@ export default function EditQuestionPage({ params }: { params: Promise<{ id: str
                   step="0.5"
                   value={formData.marks || 1}
                   onChange={(e) => setFormData({ ...formData, marks: parseFloat(e.target.value) || 1 })}
-                  className="w-full h-[46px] px-3 text-[15px] bg-olympiad-bg border border-olympiad-border rounded-md font-mono font-extrabold text-olympiad-deepBlue text-center"
+                  className="w-full h-[46px] px-3 text-[15px] bg-olympiad-bg border border-olympiad-border rounded-md font-mono font-bold text-olympiad-deepBlue text-center"
                 />
               </div>
 
@@ -224,7 +224,7 @@ export default function EditQuestionPage({ params }: { params: Promise<{ id: str
           <div className="xl:col-span-5 bg-white border-2 border-olympiad-primaryBlue/40 rounded-lg p-6 lg:p-8 shadow-card space-y-6 sticky top-24">
             <div className="border-b border-olympiad-border pb-4 flex items-center justify-between">
               <div>
-                <span className="text-[13px] font-extrabold uppercase tracking-wider text-olympiad-primaryBlue flex items-center gap-2">
+                <span className="text-[13px] font-bold uppercase tracking-wider text-olympiad-primaryBlue flex items-center gap-2">
                   <Eye className="w-5 h-5" /> Live Student Interactive Preview
                 </span>
                 <p className="text-[12px] text-olympiad-textMuted font-medium mt-0.5">

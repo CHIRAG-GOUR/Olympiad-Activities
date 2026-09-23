@@ -103,7 +103,7 @@ export function DragDropQuestion({ question, value, onChange, readOnly = false }
                   e.preventDefault();
                   handleDropOnZone(zone.id);
                 }}
-                className={`p-5 rounded-2xl border-2 transition-all min-h-[150px] flex flex-col justify-between shadow-xs ${
+                className={`p-5 rounded-2xl border-2 transition-all min-h-[150px] flex flex-col justify-between shadow-subtle ${
                   isTarget
                     ? "border-[#F59E0B] bg-[#FEF3C7]"
                     : "border-dashed border-[#FDE68A] bg-white hover:border-[#F59E0B]"
@@ -125,7 +125,7 @@ export function DragDropQuestion({ question, value, onChange, readOnly = false }
                     assignedItems.map((item) => (
                       <div
                         key={item.id}
-                        className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#FEF3C7] border border-[#FDE68A] rounded-xl text-[13px] font-extrabold text-[#92400E] shadow-xs"
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#FEF3C7] border border-[#FDE68A] rounded-xl text-[13px] font-extrabold text-[#92400E] shadow-subtle"
                       >
                         <span>{item.label}</span>
                         {!readOnly && (

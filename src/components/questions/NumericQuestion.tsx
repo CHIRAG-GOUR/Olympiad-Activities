@@ -72,7 +72,7 @@ export function NumericQuestion({ question, value, onChange, readOnly = false }:
               onChange={handleTextChange}
               disabled={readOnly}
               placeholder="0.00"
-              className="w-56 h-[56px] text-center text-3xl font-mono font-extrabold text-slate-900 px-4 bg-white border-2 border-[#F59E0B] rounded-xl shadow-inner focus:bg-white focus:outline-none focus:ring-3 focus:ring-[#FEF08A]"
+              className="w-56 h-[56px] text-center text-3xl font-mono font-extrabold text-slate-900 px-4 bg-white border-2 border-[#F59E0B] rounded-xl shadow-inner focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FEF08A]"
             />
             {config?.unit && (
               <span className="h-[56px] text-lg font-extrabold text-[#92400E] bg-[#FEF3C7] px-4 border-2 border-[#FDE68A] rounded-xl flex items-center font-mono">
@@ -93,14 +93,14 @@ export function NumericQuestion({ question, value, onChange, readOnly = false }:
                 <button
                   type="button"
                   onClick={handleBackspace}
-                  className="h-[36px] px-3 bg-white border-2 border-[#FDE68A] hover:bg-[#FEF3C7] rounded-xl text-[13px] font-extrabold text-slate-800 flex items-center gap-1 shadow-xs"
+                  className="h-[36px] px-3 bg-white border-2 border-[#FDE68A] hover:bg-[#FEF3C7] rounded-xl text-[13px] font-extrabold text-slate-800 flex items-center gap-1 shadow-subtle"
                 >
                   <Delete className="w-4 h-4 text-[#D97706]" /> Back
                 </button>
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="h-[36px] px-3 bg-white border-2 border-[#FDE68A] hover:bg-rose-50 hover:text-rose-600 rounded-xl text-[13px] font-extrabold text-slate-700 flex items-center gap-1 shadow-xs"
+                  className="h-[36px] px-3 bg-white border-2 border-[#FDE68A] hover:bg-rose-50 hover:text-rose-600 rounded-xl text-[13px] font-extrabold text-slate-700 flex items-center gap-1 shadow-subtle"
                 >
                   <RotateCcw className="w-4 h-4" /> Clear
                 </button>
@@ -113,7 +113,7 @@ export function NumericQuestion({ question, value, onChange, readOnly = false }:
                   key={btn}
                   type="button"
                   onClick={() => appendKey(btn)}
-                  className="h-[52px] bg-white border-2 border-[#FDE68A] hover:border-[#F59E0B] hover:bg-[#FEF3C7] active:bg-[#F59E0B] active:text-slate-950 rounded-xl font-mono font-extrabold text-xl text-slate-900 transition-all shadow-xs"
+                  className="h-[52px] bg-white border-2 border-[#FDE68A] hover:border-[#F59E0B] hover:bg-[#FEF3C7] active:bg-[#F59E0B] active:text-slate-950 rounded-xl font-mono font-extrabold text-xl text-slate-900 transition-all shadow-subtle"
                 >
                   {btn}
                 </button>

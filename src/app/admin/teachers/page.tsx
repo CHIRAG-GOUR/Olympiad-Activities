@@ -76,16 +76,16 @@ export default function TeachersDirectoryPage() {
   );
 
   return (
-    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
       {/* 1. Header (Requirement 8, 46) */}
-      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
             <span>Faculty & Evaluator Roster</span>
             <span className="text-[#667085]">•</span>
             <span>People</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
             Teachers & Evaluators
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -97,7 +97,7 @@ export default function TeachersDirectoryPage() {
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Faculty</span>
@@ -105,10 +105,10 @@ export default function TeachersDirectoryPage() {
         </div>
       </div>
 
-      <div className="p-6 sm:p-8 space-y-6 flex-1">
+      <div className="space-y-6">
         
         {/* 2. Search Toolbar */}
-        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-4 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative flex-1 w-full min-w-[260px]">
             <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -116,24 +116,24 @@ export default function TeachersDirectoryPage() {
               placeholder="Search faculty by name, ID, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#4D741F] focus:bg-white"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
             />
           </div>
 
           <span className="text-xs font-bold text-[#667085] px-2">
-            Showing <strong className="text-[#4D741F]">{filtered.length}</strong> faculty members
+            Showing <strong className="text-[#2563A8]">{filtered.length}</strong> faculty members
           </span>
         </div>
 
         {/* 3. Teachers Table */}
-        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl shadow-xs overflow-hidden">
+        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl shadow-subtle overflow-hidden">
           {filtered.length === 0 ? (
             <div className="py-16 px-6 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center mx-auto border border-[#DDE4D7]">
+              <div className="w-12 h-12 rounded-2xl bg-[#EAF2FB] text-[#2563A8] flex items-center justify-center mx-auto border border-[#E3E8EF]">
                 <Users className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-extrabold text-[#172033]">No Faculty Members Found</h3>
+                <h3 className="text-base font-bold text-[#172033]">No Faculty Members Found</h3>
                 <p className="text-xs text-[#667085] max-w-md mx-auto">
                   Add teacher accounts to authorize examiners to compile test papers and review student results.
                 </p>
@@ -142,7 +142,7 @@ export default function TeachersDirectoryPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(true)}
-                  className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold shadow-xs inline-flex items-center gap-1.5"
+                  className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold shadow-subtle inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add First Teacher</span>
@@ -152,7 +152,7 @@ export default function TeachersDirectoryPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
-                <thead className="bg-[#F6F9F1] text-[#667085] border-b border-[#DDE4D7] uppercase text-[10px] tracking-wider">
+                <thead className="bg-[#F6F8FB] text-[#667085] border-b border-[#E3E8EF] uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="p-4">Faculty Member</th>
                     <th className="p-4">Teacher ID</th>
@@ -163,15 +163,15 @@ export default function TeachersDirectoryPage() {
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#DDE4D7] text-[#172033]">
+                <tbody className="divide-y divide-[#E3E8EF] text-[#172033]">
                   {filtered.map((t) => (
-                    <tr key={t.id} className="hover:bg-[#F6F9F1]/60 transition-colors">
+                    <tr key={t.id} className="hover:bg-[#F6F8FB]/60 transition-colors">
                       <td className="p-4">
-                        <div className="font-extrabold text-sm text-[#172033]">{t.name}</div>
+                        <div className="font-bold text-sm text-[#172033]">{t.name}</div>
                         <div className="text-[10px] text-[#667085]">Olympiad Examination Council</div>
                       </td>
                       <td className="p-4">
-                        <span className="font-mono font-bold text-[#4D741F] bg-[#EEF5E7] px-2 py-0.5 rounded-md border border-[#DDE4D7]">
+                        <span className="font-mono font-bold text-[#2563A8] bg-[#EAF2FB] px-2 py-0.5 rounded-md border border-[#E3E8EF]">
                           {t.id}
                         </span>
                       </td>
@@ -183,18 +183,18 @@ export default function TeachersDirectoryPage() {
                       <td className="p-4 text-[#667085]">
                         {t.email || "faculty@olympiad.org"}
                       </td>
-                      <td className="p-4 text-center font-mono font-bold text-[#355415]">
+                      <td className="p-4 text-center font-mono font-bold text-[#1B4E88]">
                         {exams.length}
                       </td>
                       <td className="p-4 text-center">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7]">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#EAF2FB] text-[#1B4E88] border border-[#E3E8EF]">
                           Active
                         </span>
                       </td>
                       <td className="p-4 text-right">
                         <Link
                           href="/admin/exams"
-                          className="px-3 py-1.5 bg-[#EEF5E7] hover:bg-[#DDE4D7] text-[#355415] rounded-lg text-xs font-bold transition-all inline-block"
+                          className="px-3 py-1.5 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-lg text-xs font-bold transition-all inline-block"
                         >
                           View Papers
                         </Link>
@@ -210,9 +210,9 @@ export default function TeachersDirectoryPage() {
         {/* Add Teacher Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white border border-[#DDE4D7] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-[#DDE4D7] pb-3">
-                <h3 className="text-base font-extrabold text-[#172033]">Add Faculty Examiner</h3>
+            <div className="bg-white border border-[#E3E8EF] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-[#E3E8EF] pb-3">
+                <h3 className="text-base font-bold text-[#172033]">Add Faculty Examiner</h3>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
@@ -231,7 +231,7 @@ export default function TeachersDirectoryPage() {
                     value={newTeacherName}
                     onChange={(e) => setNewTeacherName(e.target.value)}
                     placeholder="e.g. Dr. Ramesh Gupta"
-                    className="w-full h-9 px-3 text-xs bg-[#F6F9F1] border border-[#DDE4D7] rounded-xl text-[#172033] focus:outline-none focus:border-[#4D741F]"
+                    className="w-full h-9 px-3 text-xs bg-[#F6F8FB] border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8]"
                   />
                 </div>
 
@@ -242,7 +242,7 @@ export default function TeachersDirectoryPage() {
                     value={newTeacherEmail}
                     onChange={(e) => setNewTeacherEmail(e.target.value)}
                     placeholder="e.g. ramesh.gupta@olympiad.org"
-                    className="w-full h-9 px-3 text-xs bg-[#F6F9F1] border border-[#DDE4D7] rounded-xl text-[#172033] focus:outline-none focus:border-[#4D741F]"
+                    className="w-full h-9 px-3 text-xs bg-[#F6F8FB] border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8]"
                   />
                 </div>
 
@@ -251,7 +251,7 @@ export default function TeachersDirectoryPage() {
                   <select
                     value={newTeacherSubject}
                     onChange={(e) => setNewTeacherSubject(e.target.value)}
-                    className="w-full h-9 px-3 text-xs font-bold bg-[#F6F9F1] border border-[#DDE4D7] rounded-xl text-[#172033] focus:outline-none focus:border-[#4D741F]"
+                    className="w-full h-9 px-3 text-xs font-bold bg-[#F6F8FB] border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8]"
                   >
                     <option value="Mathematics">Mathematics</option>
                     <option value="Science">Science</option>
@@ -259,17 +259,17 @@ export default function TeachersDirectoryPage() {
                   </select>
                 </div>
 
-                <div className="pt-3 border-t border-[#DDE4D7] flex items-center justify-end gap-2">
+                <div className="pt-3 border-t border-[#E3E8EF] flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="h-9 px-4 bg-white border border-[#DDE4D7] text-[#667085] rounded-xl text-xs font-bold cursor-pointer"
+                    className="h-9 px-4 bg-white border border-[#E3E8EF] text-[#667085] rounded-xl text-xs font-bold cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="h-9 px-5 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold cursor-pointer"
+                    className="h-9 px-5 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold cursor-pointer"
                   >
                     Create Faculty Account
                   </button>

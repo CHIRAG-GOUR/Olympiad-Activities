@@ -48,16 +48,16 @@ export default function StudentsDirectoryPage() {
   );
 
   return (
-    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
       {/* 1. Header (Requirement 8) */}
-      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
             <span>Candidate Directory</span>
             <span className="text-[#667085]">•</span>
             <span>Student Management</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
             Registered Candidates
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -68,17 +68,17 @@ export default function StudentsDirectoryPage() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin/live-monitor"
-            className="h-9 px-3.5 bg-white border border-[#DDE4D7] hover:bg-[#EEF5E7] text-[#355415] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all"
+            className="h-9 px-3.5 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
           >
             <span>Live Monitor</span>
           </Link>
         </div>
       </div>
 
-      <div className="p-6 sm:p-8 space-y-6 flex-1">
+      <div className="space-y-6">
         
         {/* 2. Search Toolbar */}
-        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-4 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative flex-1 w-full min-w-[260px]">
             <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -86,24 +86,24 @@ export default function StudentsDirectoryPage() {
               placeholder="Search students by name, roll ID, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#4D741F] focus:bg-white"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
             />
           </div>
 
           <span className="text-xs font-bold text-[#667085] px-2">
-            Showing <strong className="text-[#4D741F]">{filtered.length}</strong> candidates
+            Showing <strong className="text-[#2563A8]">{filtered.length}</strong> candidates
           </span>
         </div>
 
         {/* 3. Students Table */}
-        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl shadow-xs overflow-hidden">
+        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl shadow-subtle overflow-hidden">
           {filtered.length === 0 ? (
             <div className="py-16 px-6 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center mx-auto border border-[#DDE4D7]">
+              <div className="w-12 h-12 rounded-2xl bg-[#EAF2FB] text-[#2563A8] flex items-center justify-center mx-auto border border-[#E3E8EF]">
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-extrabold text-[#172033]">No Registered Candidates Found</h3>
+                <h3 className="text-base font-bold text-[#172033]">No Registered Candidates Found</h3>
                 <p className="text-xs text-[#667085] max-w-md mx-auto">
                   Student candidate records will appear here as they register and participate in Olympiad examinations.
                 </p>
@@ -112,7 +112,7 @@ export default function StudentsDirectoryPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
-                <thead className="bg-[#F6F9F1] text-[#667085] border-b border-[#DDE4D7] uppercase text-[10px] tracking-wider">
+                <thead className="bg-[#F6F8FB] text-[#667085] border-b border-[#E3E8EF] uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="p-4">Candidate Name</th>
                     <th className="p-4">Roll / Student ID</th>
@@ -123,17 +123,17 @@ export default function StudentsDirectoryPage() {
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#DDE4D7] text-[#172033]">
+                <tbody className="divide-y divide-[#E3E8EF] text-[#172033]">
                   {filtered.map((s) => {
                     const studentAttempts = attempts.filter((a) => a.student?.studentId === s.id);
                     return (
-                      <tr key={s.id} className="hover:bg-[#F6F9F1]/60 transition-colors">
+                      <tr key={s.id} className="hover:bg-[#F6F8FB]/60 transition-colors">
                         <td className="p-4">
-                          <div className="font-extrabold text-sm text-[#172033]">{s.name}</div>
+                          <div className="font-bold text-sm text-[#172033]">{s.name}</div>
                           <div className="text-[10px] text-[#667085]">Olympiad Scholar</div>
                         </td>
                         <td className="p-4">
-                          <span className="font-mono font-bold text-[#4D741F] bg-[#EEF5E7] px-2 py-0.5 rounded-md border border-[#DDE4D7]">
+                          <span className="font-mono font-bold text-[#2563A8] bg-[#EAF2FB] px-2 py-0.5 rounded-md border border-[#E3E8EF]">
                             {s.id}
                           </span>
                         </td>
@@ -143,18 +143,18 @@ export default function StudentsDirectoryPage() {
                         <td className="p-4 text-[#667085]">
                           {s.email || "student@olympiad.org"}
                         </td>
-                        <td className="p-4 text-center font-mono font-bold text-[#355415]">
+                        <td className="p-4 text-center font-mono font-bold text-[#1B4E88]">
                           {studentAttempts.length}
                         </td>
                         <td className="p-4 text-center">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7]">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#EAF2FB] text-[#1B4E88] border border-[#E3E8EF]">
                             Verified
                           </span>
                         </td>
                         <td className="p-4 text-right">
                           <Link
                             href="/admin/results"
-                            className="px-3 py-1.5 bg-[#EEF5E7] hover:bg-[#DDE4D7] text-[#355415] rounded-lg text-xs font-bold transition-all inline-block"
+                            className="px-3 py-1.5 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-lg text-xs font-bold transition-all inline-block"
                           >
                             View Scores
                           </Link>

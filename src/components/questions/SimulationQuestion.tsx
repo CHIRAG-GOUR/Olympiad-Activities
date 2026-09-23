@@ -97,7 +97,7 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
               {simType === "rocket_altitude" ? (
                 <Rocket className="w-6 h-6 text-[#D97706]" />
               ) : (
-                <Scale className="w-6 h-6 text-[#0B4F8A]" />
+                <Scale className="w-6 h-6 text-[#2563A8]" />
               )}
               {config?.parameterName || "Control Value"}
             </div>
@@ -112,7 +112,7 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
               value={currentVal}
               onChange={handleNumericChange}
               disabled={readOnly}
-              className="w-36 h-[48px] text-center text-2xl font-mono font-extrabold text-slate-900 px-3 bg-white border-2 border-[#F59E0B] rounded-xl shadow-inner focus:bg-white focus:outline-none focus:ring-3 focus:ring-[#FEF08A]"
+              className="w-36 h-[48px] text-center text-2xl font-mono font-extrabold text-slate-900 px-3 bg-white border-2 border-[#F59E0B] rounded-xl shadow-inner focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FEF08A]"
             />
             <span className="h-[48px] px-4 bg-[#FEF3C7] border-2 border-[#FDE68A] text-[#92400E] font-extrabold text-[14px] rounded-xl flex items-center font-mono">
               {config?.parameterUnit}
@@ -177,10 +177,10 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
               className="absolute left-0 right-0 border-t-2 border-dashed border-rose-500 z-10 flex items-center justify-between px-4"
               style={{ bottom: `${(targetAlt / 350) * 100}%` }}
             >
-              <span className="text-[12px] font-extrabold text-rose-700 bg-white/95 px-2.5 py-1 rounded-lg shadow-xs border border-rose-200">
+              <span className="text-[12px] font-extrabold text-rose-700 bg-white/95 px-2.5 py-1 rounded-lg shadow-subtle border border-rose-200">
                 Target Threshold ({targetAlt} km)
               </span>
-              <span className="text-[12px] text-rose-700 font-mono font-extrabold bg-white/95 px-2 py-0.5 rounded-lg shadow-xs">
+              <span className="text-[12px] text-rose-700 font-mono font-extrabold bg-white/95 px-2 py-0.5 rounded-lg shadow-subtle">
                 Orbital Checkpoint Line
               </span>
             </div>
@@ -235,12 +235,12 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
 
           <div className="py-12 flex flex-col items-center justify-center">
             <div
-              className="relative w-96 h-4 bg-[#0B4F8A] rounded transition-transform duration-300 shadow-md"
+              className="relative w-96 h-4 bg-[#2563A8] rounded transition-transform duration-300 shadow-md"
               style={{ transform: `rotate(${tiltAngleDeg}deg)` }}
             >
               <div className="absolute -left-4 top-4 flex flex-col items-center">
                 <div className="w-1 h-14 bg-slate-400" />
-                <div className="px-4 py-2 bg-white border-2 border-[#0B4F8A] rounded-xl text-[14px] font-extrabold text-[#0B4F8A] shadow-md">
+                <div className="px-4 py-2 bg-white border-2 border-[#2563A8] rounded-xl text-[14px] font-extrabold text-[#2563A8] shadow-md">
                   18 kg
                 </div>
               </div>
@@ -253,7 +253,7 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
               </div>
             </div>
 
-            <div className="w-0 h-0 border-l-[22px] border-l-transparent border-r-[22px] border-r-transparent border-b-[36px] border-b-[#0B4F8A] mt-2" />
+            <div className="w-0 h-0 border-l-[22px] border-l-transparent border-r-[22px] border-r-transparent border-b-[36px] border-b-[#2563A8] mt-2" />
             <div className="w-32 h-3 bg-slate-700 rounded" />
           </div>
 

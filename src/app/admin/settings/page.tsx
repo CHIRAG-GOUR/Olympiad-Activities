@@ -17,16 +17,16 @@ export default function SettingsAdminPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
       {/* 1. Header */}
-      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
             <span>System Configuration</span>
             <span className="text-[#667085]">•</span>
             <span>Settings</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
             System Settings
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -38,8 +38,8 @@ export default function SettingsAdminPage() {
       <div className="p-6 sm:p-8 space-y-6 flex-1 max-w-[1200px]">
         <form onSubmit={handleSave} className="space-y-6">
           {/* Default Policies */}
-          <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-6 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#172033] border-b border-[#DDE4D7] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-6 shadow-subtle space-y-4">
+            <h3 className="text-sm font-bold text-[#172033] border-b border-[#E3E8EF] pb-3">
               Default Examination Policies
             </h3>
 
@@ -52,7 +52,7 @@ export default function SettingsAdminPage() {
                   type="number"
                   value={defaultDuration}
                   onChange={(e) => setDefaultDuration(parseInt(e.target.value) || 45)}
-                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] focus:outline-none focus:border-[#4D741F] focus:bg-white"
+                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] focus:bg-white"
                 />
               </div>
 
@@ -62,7 +62,7 @@ export default function SettingsAdminPage() {
                     type="checkbox"
                     checked={autoSubmit}
                     onChange={(e) => setAutoSubmit(e.target.checked)}
-                    className="w-4 h-4 text-[#4D741F] rounded border-[#DDE4D7] focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 text-[#2563A8] rounded border-[#E3E8EF] focus:ring-0 cursor-pointer"
                   />
                   <span>Enforce Auto-Submit on Countdown Expiry</span>
                 </label>
@@ -72,7 +72,7 @@ export default function SettingsAdminPage() {
                     type="checkbox"
                     checked={allowBacktrack}
                     onChange={(e) => setAllowBacktrack(e.target.checked)}
-                    className="w-4 h-4 text-[#4D741F] rounded border-[#DDE4D7] focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 text-[#2563A8] rounded border-[#E3E8EF] focus:ring-0 cursor-pointer"
                   />
                   <span>Allow Free Backtracking Between Questions</span>
                 </label>
@@ -81,21 +81,21 @@ export default function SettingsAdminPage() {
           </div>
 
           {/* Firebase Storage Architecture */}
-          <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-[#DDE4D7] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-6 shadow-subtle space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E3E8EF] pb-3">
               <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-[#4D741F]" />
-                <h3 className="text-sm font-extrabold text-[#172033]">
+                <Database className="w-4 h-4 text-[#2563A8]" />
+                <h3 className="text-sm font-bold text-[#172033]">
                   Firebase Persistence Architecture (Requirement 45)
                 </h3>
               </div>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-[#EEF5E7] text-[#355415] border border-[#DDE4D7] font-extrabold font-mono uppercase">
+              <span className="text-[10px] px-2.5 py-0.5 rounded-md bg-[#EAF2FB] text-[#1B4E88] border border-[#E3E8EF] font-bold font-mono uppercase">
                 {isRealFirebaseConfigured ? "Live Firestore Active" : "Local Repository Ready"}
               </span>
             </div>
 
             <p className="text-xs text-[#667085] leading-relaxed font-medium">
-              The application utilizes clean Repository interfaces (<code className="text-[#355415] font-bold">IExamRepository</code>, <code className="text-[#355415] font-bold">IQuestionRepository</code>, <code className="text-[#355415] font-bold">IAttemptRepository</code>, <code className="text-[#355415] font-bold">IReportRepository</code>) backed by local IndexedDB storage, ready for Firebase Firestore activation without UI refactoring.
+              The application utilizes clean Repository interfaces (<code className="text-[#1B4E88] font-bold">IExamRepository</code>, <code className="text-[#1B4E88] font-bold">IQuestionRepository</code>, <code className="text-[#1B4E88] font-bold">IAttemptRepository</code>, <code className="text-[#1B4E88] font-bold">IReportRepository</code>) backed by local IndexedDB storage, ready for Firebase Firestore activation without UI refactoring.
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
@@ -109,7 +109,7 @@ export default function SettingsAdminPage() {
                 "reports",
                 "auditLogs",
               ].map((c) => (
-                <div key={c} className="p-2 bg-[#F6F9F1] border border-[#DDE4D7] rounded-lg text-[#355415] font-bold text-center">
+                <div key={c} className="p-2 bg-[#F6F8FB] border border-[#E3E8EF] rounded-lg text-[#1B4E88] font-bold text-center">
                   📁 {c}
                 </div>
               ))}
@@ -118,13 +118,13 @@ export default function SettingsAdminPage() {
 
           <div className="flex items-center justify-between pt-2">
             {saved && (
-              <span className="text-xs text-[#355415] font-bold flex items-center gap-1.5 bg-[#EEF5E7] px-3 py-1.5 rounded-xl border border-[#DDE4D7]">
-                <CheckCircle2 className="w-4 h-4 text-[#4D741F]" /> Settings updated.
+              <span className="text-xs text-[#1B4E88] font-bold flex items-center gap-1.5 bg-[#EAF2FB] px-3 py-1.5 rounded-xl border border-[#E3E8EF]">
+                <CheckCircle2 className="w-4 h-4 text-[#2563A8]" /> Settings updated.
               </span>
             )}
             <button
               type="submit"
-              className="ml-auto h-9 px-5 bg-[#4D741F] hover:bg-[#355415] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              className="ml-auto h-9 px-5 bg-[#2563A8] hover:bg-[#1B4E88] text-white text-xs font-bold rounded-xl shadow-subtle flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" /> Save Settings
             </button>

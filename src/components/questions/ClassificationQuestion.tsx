@@ -69,7 +69,7 @@ export function ClassificationQuestion({ question, value, onChange, readOnly = f
                   onClick={() => !readOnly && setSelectedItemId(isSelected ? null : item.id)}
                   className={`h-[52px] px-6 rounded-xl text-[15px] font-extrabold transition-all border-2 shadow-sm ${
                     isSelected
-                      ? "bg-[#0B4F8A] text-white border-[#0B4F8A] scale-105 shadow-md"
+                      ? "bg-[#2563A8] text-white border-[#2563A8] scale-105 shadow-md"
                       : "bg-white text-slate-900 border-[#FDE68A] hover:border-[#F59E0B] hover:scale-105 hover:bg-[#FEF3C7]"
                   }`}
                 >
@@ -93,7 +93,7 @@ export function ClassificationQuestion({ question, value, onChange, readOnly = f
             return (
               <div
                 key={cat.id}
-                className="bg-white border-2 border-[#FDE68A] rounded-2xl p-5 flex flex-col justify-between min-h-[190px] shadow-xs hover:border-[#F59E0B] transition-colors"
+                className="bg-white border-2 border-[#FDE68A] rounded-2xl p-5 flex flex-col justify-between min-h-[190px] shadow-subtle hover:border-[#F59E0B] transition-colors"
               >
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b-2 border-[#FDE68A]">

@@ -524,7 +524,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-[#0B4F8A] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-12 h-12 border-4 border-[#2563A8] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm font-extrabold text-slate-700">Loading Official Examination Paper...</p>
         </div>
       </div>
@@ -540,7 +540,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
           <p className="text-sm text-slate-600">The requested examination could not be loaded from storage.</p>
           <Link
             href="/"
-            className="inline-block px-5 py-2.5 bg-[#0B4F8A] text-white font-bold rounded-lg text-sm"
+            className="inline-block px-5 py-2.5 bg-[#2563A8] text-white font-bold rounded-lg text-sm"
           >
             Return to Examination Portal
           </Link>
@@ -561,10 +561,10 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
     const formattedRemaining = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4 font-sans select-none">
-        <div className="bg-white rounded-2xl border-2 border-[#0B4F8A] max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
+      <div className="min-h-screen bg-[#F6F8FB] flex items-center justify-center p-4 font-sans select-none">
+        <div className="bg-white rounded-2xl border-2 border-[#2563A8] max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 border-2 border-[#0B4F8A] text-[#0B4F8A] flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 border-2 border-[#2563A8] text-[#2563A8] flex items-center justify-center shrink-0">
               <History className="w-6 h-6" />
             </div>
             <div>
@@ -582,7 +582,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
             </div>
             <div className="flex justify-between py-1 border-b border-slate-200/60">
               <span className="font-bold text-slate-500 uppercase tracking-wider">Exam:</span>
-              <span className="font-bold text-[#0B4F8A]">{incompleteSession.examTitle}</span>
+              <span className="font-bold text-[#2563A8]">{incompleteSession.examTitle}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-200/60">
               <span className="font-bold text-slate-500 uppercase tracking-wider">Last Saved:</span>
@@ -611,7 +611,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
             <button
               type="button"
               onClick={handleResumeSession}
-              className="flex-1 h-11 px-6 bg-[#0B4F8A] hover:bg-[#083863] text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider"
+              className="flex-1 h-11 px-6 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider"
             >
               <Check className="w-4 h-4 stroke-[3]" /> Resume Examination
             </button>
@@ -624,11 +624,11 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   // SCREEN 1: Candidate Verification & Instructions
   if (!hasStarted) {
     return (
-      <div className="min-h-screen bg-[#F0F4F8] flex flex-col justify-between select-none font-sans">
-        <header className="bg-[#0B4F8A] text-white py-3.5 px-6 border-b-2 border-[#083863] shadow">
+      <div className="min-h-screen bg-[#F6F8FB] flex flex-col justify-between select-none font-sans">
+        <header className="bg-[#2563A8] text-white py-3.5 px-6 border-b-2 border-[#1B4E88] shadow">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="w-9 h-9 rounded-lg bg-white text-[#0B4F8A] flex items-center justify-center font-black text-lg">
+              <span className="w-9 h-9 rounded-lg bg-white text-[#2563A8] flex items-center justify-center font-black text-lg">
                 &Omega;
               </span>
               <div>
@@ -648,7 +648,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
         <main className="flex-1 max-w-3xl mx-auto w-full p-4 sm:p-6 my-6">
           <div className="bg-white rounded-2xl border-2 border-slate-300 p-6 sm:p-8 shadow-xl space-y-6">
             <div className="border-b border-slate-200 pb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#0B4F8A] bg-blue-50 px-2.5 py-1 rounded border border-blue-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#2563A8] bg-blue-50 px-2.5 py-1 rounded border border-blue-200">
                 Official Level-1 Examination Paper
               </span>
               <h1 className="text-2xl font-black text-slate-900 mt-2">
@@ -671,7 +671,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
               </div>
               <div>
                 <span className="text-xs text-slate-500 font-bold block">Max Marks</span>
-                <strong className="text-[#0B4F8A] text-lg font-mono font-black">+{exam.totalMarks} Marks</strong>
+                <strong className="text-[#2563A8] text-lg font-mono font-black">+{exam.totalMarks} Marks</strong>
               </div>
             </div>
 
@@ -688,7 +688,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                   placeholder="e.g. Rahul Sharma"
                   value={candidateName}
                   onChange={(e) => setCandidateName(e.target.value)}
-                  className="w-full h-11 px-3 text-sm bg-white border-2 border-slate-300 rounded-lg text-slate-900 font-bold focus:outline-none focus:border-[#0B4F8A]"
+                  className="w-full h-11 px-3 text-sm bg-white border-2 border-slate-300 rounded-lg text-slate-900 font-bold focus:outline-none focus:border-[#2563A8]"
                 />
               </div>
 
@@ -702,7 +702,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                     type="text"
                     disabled
                     value={candidateId}
-                    className="w-full h-11 px-3 text-sm bg-slate-100 border border-slate-300 rounded-lg font-mono font-bold text-[#0B4F8A]"
+                    className="w-full h-11 px-3 text-sm bg-slate-100 border border-slate-300 rounded-lg font-mono font-bold text-[#2563A8]"
                   />
                 </div>
 
@@ -716,7 +716,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                     placeholder="e.g. Kendriya Vidyalaya No. 1"
                     value={schoolName}
                     onChange={(e) => setSchoolName(e.target.value)}
-                    className="w-full h-11 px-3 text-sm bg-white border-2 border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#0B4F8A]"
+                    className="w-full h-11 px-3 text-sm bg-white border-2 border-slate-300 rounded-lg text-slate-900 font-semibold focus:outline-none focus:border-[#2563A8]"
                   />
                 </div>
               </div>
@@ -737,7 +737,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
 
               <button
                 type="submit"
-                className="w-full h-12 bg-[#28A745] hover:bg-[#218838] active:bg-[#1E7E34] text-white rounded-lg text-base font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                className="w-full h-12 bg-[#39A96B] hover:bg-[#2E8F59] active:bg-[#26784A] text-white rounded-lg text-base font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
                 <span>Enter & Start Examination</span>
                 <ArrowRight className="w-5 h-5 stroke-[2.5]" />
@@ -757,7 +757,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
   );
 
   return (
-    <div className="h-dvh w-full bg-[#F0F4F8] flex flex-col overflow-hidden select-none font-sans">
+    <div className="h-dvh w-full bg-[#F6F8FB] flex flex-col overflow-hidden select-none font-sans">
       {/* Official Top Header Bar (fixed height, never scrolls away) */}
       <ExamHeader
         olympiadTitle={exam.title}
@@ -793,7 +793,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                       onClick={() => setCurrentIndex(sec.startIdx)}
                       className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all shrink-0 flex items-center gap-1.5 cursor-pointer border ${
                         isActive
-                          ? "bg-[#0B4F8A] text-white border-[#083863] shadow-xs"
+                          ? "bg-[#2563A8] text-white border-[#1B4E88] shadow-subtle"
                           : "bg-white text-slate-700 border-slate-300 hover:bg-slate-200"
                       }`}
                     >
@@ -813,7 +813,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
               {/* Question Info Bar */}
               <div className="px-3 sm:px-5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-700">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-[#4D741F]">
+                  <span className="text-sm font-black text-[#2563A8]">
                     Question No. {currentIndex + 1}
                   </span>
                   <span className="text-slate-400">|</span>
@@ -830,14 +830,14 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
 
                   {/* View Switcher Toggle placed right here next to Right and Negative */}
                   {currentQuestion && (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
-                    <div className="flex items-center gap-0.5 bg-[#EEF5E7] p-0.5 rounded-lg border border-[#DDE4D7] font-sans ml-1">
+                    <div className="flex items-center gap-0.5 bg-[#EAF2FB] p-0.5 rounded-lg border border-[#E3E8EF] font-sans ml-1">
                       <button
                         type="button"
                         onClick={() => setQuestionView("activity")}
                         className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
                           questionView === "activity"
-                            ? "bg-[#4D741F] text-white shadow-xs"
-                            : "text-[#355415] hover:bg-[#DDE4D7]"
+                            ? "bg-[#2563A8] text-white shadow-subtle"
+                            : "text-[#1B4E88] hover:bg-[#E3E8EF]"
                         }`}
                       >
                         Interactive
@@ -847,7 +847,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
                         onClick={() => setQuestionView("standard")}
                         className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
                           questionView === "standard"
-                            ? "bg-slate-700 text-white shadow-xs"
+                            ? "bg-slate-700 text-white shadow-subtle"
                             : "text-slate-600 hover:bg-slate-200"
                         }`}
                       >
@@ -914,7 +914,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
 
       {/* Official NTA Final Submission Confirmation Summary Dialog */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-2xl max-w-xl w-full p-6 space-y-6">
             <div className="border-b border-slate-200 pb-3">
               <h3 className="text-lg font-black text-slate-900">
@@ -981,7 +981,7 @@ export default function ExamSessionContainer({ params }: { params: Promise<{ exa
               <button
                 type="button"
                 onClick={() => handleFinalSubmit("normal")}
-                className="h-10 px-6 bg-[#28A745] hover:bg-[#218838] text-white rounded-lg text-xs font-black shadow transition-all cursor-pointer uppercase tracking-wide"
+                className="h-10 px-6 bg-[#39A96B] hover:bg-[#2E8F59] text-white rounded-lg text-xs font-black shadow transition-all cursor-pointer uppercase tracking-wide"
               >
                 Yes, Final Submit
               </button>

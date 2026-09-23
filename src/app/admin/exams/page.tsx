@@ -45,16 +45,16 @@ export default function ExamsListPage() {
   );
 
   return (
-    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
       {/* 1. Header (Requirement 8) */}
-      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
             <span>Examination Operations</span>
             <span className="text-[#667085]">•</span>
             <span>Test Management</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
             All Examinations
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -65,7 +65,7 @@ export default function ExamsListPage() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin/exams/new"
-            className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create Examination</span>
@@ -73,10 +73,10 @@ export default function ExamsListPage() {
         </div>
       </div>
 
-      <div className="p-6 sm:p-8 space-y-6 flex-1">
+      <div className="space-y-6">
         
         {/* 2. Search & Overview */}
-        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-4 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative flex-1 w-full min-w-[260px]">
             <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -84,23 +84,23 @@ export default function ExamsListPage() {
               placeholder="Search examinations by title, code, or subject..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#4D741F] focus:bg-white"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
             />
           </div>
 
           <span className="text-xs font-bold text-[#667085] px-2">
-            Showing <strong className="text-[#4D741F]">{filtered.length}</strong> examinations
+            Showing <strong className="text-[#2563A8]">{filtered.length}</strong> examinations
           </span>
         </div>
 
         {/* 3. Examination Cards Grid */}
         {filtered.length === 0 ? (
-          <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-16 text-center space-y-4 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center mx-auto border border-[#DDE4D7]">
+          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-16 text-center space-y-4 shadow-subtle">
+            <div className="w-12 h-12 rounded-2xl bg-[#EAF2FB] text-[#2563A8] flex items-center justify-center mx-auto border border-[#E3E8EF]">
               <FileCheck2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-extrabold text-[#172033]">
+              <h3 className="text-base font-bold text-[#172033]">
                 {exams.length === 0 ? "No Examinations Published Yet" : "No Matching Examinations"}
               </h3>
               <p className="text-xs text-[#667085] max-w-sm mx-auto">
@@ -113,7 +113,7 @@ export default function ExamsListPage() {
               <div className="pt-2">
                 <Link
                   href="/admin/exams/new"
-                  className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold shadow-xs inline-flex items-center gap-1.5"
+                  className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold shadow-subtle inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Create Examination</span>
@@ -126,22 +126,22 @@ export default function ExamsListPage() {
             {filtered.map((exam) => (
               <div
                 key={exam.id}
-                className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-[#4D741F] transition-all space-y-4"
+                className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-5 shadow-subtle flex flex-col justify-between hover:border-[#2563A8] transition-all space-y-4"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono font-extrabold text-[11px] text-[#4D741F] bg-[#EEF5E7] px-2 py-0.5 rounded-md border border-[#DDE4D7]">
+                    <span className="font-mono font-bold text-[11px] text-[#2563A8] bg-[#EAF2FB] px-2 py-0.5 rounded-md border border-[#E3E8EF]">
                       {exam.code}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#F6F9F1] text-[#355415] border border-[#DDE4D7] text-[10px] font-extrabold uppercase">
+                    <span className="px-2 py-0.5 rounded-md bg-[#F6F8FB] text-[#1B4E88] border border-[#E3E8EF] text-[10px] font-bold uppercase">
                       ● {exam.status || "Active"}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-extrabold text-[#172033] leading-snug">{exam.title}</h3>
+                    <h3 className="text-sm font-bold text-[#172033] leading-snug">{exam.title}</h3>
                     {exam.subtitle && (
-                      <p className="text-[11px] text-[#4D741F] mt-0.5 font-bold">{exam.subtitle}</p>
+                      <p className="text-[11px] text-[#2563A8] mt-0.5 font-bold">{exam.subtitle}</p>
                     )}
                   </div>
 
@@ -149,13 +149,13 @@ export default function ExamsListPage() {
                     {exam.description || "Official Olympiad digital examination."}
                   </p>
 
-                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#DDE4D7] text-xs text-[#667085]">
+                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#E3E8EF] text-xs text-[#667085]">
                     <div className="flex items-center gap-1.5 font-bold">
-                      <Clock className="w-3.5 h-3.5 text-[#4D741F]" />
+                      <Clock className="w-3.5 h-3.5 text-[#2563A8]" />
                       <span>{exam.durationMinutes} mins</span>
                     </div>
                     <div className="flex items-center gap-1.5 font-bold">
-                      <Award className="w-3.5 h-3.5 text-[#5F8A28]" />
+                      <Award className="w-3.5 h-3.5 text-[#4FA8D8]" />
                       <span>{exam.totalMarks || 60} Marks</span>
                     </div>
                     <div className="flex items-center gap-1.5 font-bold">
@@ -165,18 +165,18 @@ export default function ExamsListPage() {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#DDE4D7] flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-[#E3E8EF] flex items-center justify-between gap-2">
                   <Link
                     href={`/exam/${exam.id}`}
-                    className="h-9 px-3 text-xs font-bold text-[#355415] bg-[#EEF5E7] hover:bg-[#DDE4D7] rounded-xl flex items-center gap-1.5 transition-all"
+                    className="h-9 px-3 text-xs font-bold text-[#1B4E88] bg-[#EAF2FB] hover:bg-[#E3E8EF] rounded-xl flex items-center gap-1.5 transition-all"
                   >
-                    <Play className="w-3.5 h-3.5 fill-[#355415] text-[#355415]" />
+                    <Play className="w-3.5 h-3.5 fill-[#1B4E88] text-[#1B4E88]" />
                     <span>Launch Exam</span>
                   </Link>
 
                   <Link
                     href={`/admin/exams/${exam.id}`}
-                    className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
+                    className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-subtle"
                   >
                     Manage
                   </Link>

@@ -173,16 +173,16 @@ export default function QuestionBankPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col font-sans select-none text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
       {/* 1. Header (Requirement 27) */}
-      <div className="px-6 sm:px-8 py-6 border-b border-[#DDE4D7] bg-[#F6F9F1]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-widest text-[#4D741F]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
             <span>Standardized Curriculum Library</span>
             <span className="text-[#667085]">•</span>
             <span>Question Bank</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
             Question Bank
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -193,7 +193,7 @@ export default function QuestionBankPage() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin/exams/new"
-            className="h-9 px-4 bg-[#4D741F] hover:bg-[#355415] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Compile New Exam</span>
@@ -201,10 +201,10 @@ export default function QuestionBankPage() {
         </div>
       </div>
 
-      <div className="p-6 sm:p-8 space-y-6 flex-1">
+      <div className="space-y-6">
         
         {/* 2. Top Search & Active Filter Strip */}
-        <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-4 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative flex-1 w-full min-w-[260px]">
             <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -212,7 +212,7 @@ export default function QuestionBankPage() {
               placeholder="Search question bank by keyword, concept, or code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F9F1]/60 border border-[#DDE4D7] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#4D741F] focus:bg-white"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
             />
           </div>
 
@@ -225,13 +225,13 @@ export default function QuestionBankPage() {
                   setSelectedClass("all");
                   setSelectedTopic("all");
                 }}
-                className="h-9 px-3 bg-[#EEF5E7] hover:bg-[#DDE4D7] text-[#355415] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-3 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Reset Filter
               </button>
             )}
             <span className="text-xs font-bold text-[#667085] px-2">
-              Showing <strong className="text-[#4D741F]">{filteredQuestions.length}</strong> questions
+              Showing <strong className="text-[#2563A8]">{filteredQuestions.length}</strong> questions
             </span>
           </div>
         </div>
@@ -240,11 +240,11 @@ export default function QuestionBankPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Left Column: Hierarchical Taxonomy Tree (4 cols) */}
-          <div className="lg:col-span-4 bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-5 shadow-xs space-y-4">
-            <div className="border-b border-[#DDE4D7] pb-3 flex items-center justify-between">
+          <div className="lg:col-span-4 bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-5 shadow-subtle space-y-4">
+            <div className="border-b border-[#E3E8EF] pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-[#4D741F]" />
-                <h2 className="text-sm font-extrabold text-[#172033]">Curriculum Tree</h2>
+                <Database className="w-4 h-4 text-[#2563A8]" />
+                <h2 className="text-sm font-bold text-[#172033]">Curriculum Tree</h2>
               </div>
               <span className="text-[11px] font-mono font-bold text-[#667085]">
                 {questions.length} Total Questions
@@ -267,27 +267,27 @@ export default function QuestionBankPage() {
                       }}
                       className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all ${
                         isSubjSelected
-                          ? "bg-[#EEF5E7] text-[#355415] font-extrabold border border-[#DDE4D7]"
-                          : "hover:bg-[#F6F9F1] text-[#172033]"
+                          ? "bg-[#EAF2FB] text-[#1B4E88] font-bold border border-[#E3E8EF]"
+                          : "hover:bg-[#F6F8FB] text-[#172033]"
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         {isSubjOpen ? (
-                          <ChevronDown className="w-3.5 h-3.5 text-[#4D741F]" />
+                          <ChevronDown className="w-3.5 h-3.5 text-[#2563A8]" />
                         ) : (
                           <ChevronRight className="w-3.5 h-3.5 text-[#667085]" />
                         )}
-                        <Folder className="w-4 h-4 text-[#4D741F]" />
+                        <Folder className="w-4 h-4 text-[#2563A8]" />
                         <span>{subjName}</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-[#F6F9F1] text-[10px] font-mono font-bold text-[#667085] border border-[#DDE4D7]">
+                      <span className="px-2 py-0.5 rounded-full bg-[#F6F8FB] text-[10px] font-mono font-bold text-[#667085] border border-[#E3E8EF]">
                         {subjObj.count}
                       </span>
                     </div>
 
                     {/* Classes under Subject */}
                     {isSubjOpen && (
-                      <div className="pl-6 space-y-1 border-l-2 border-[#DDE4D7] ml-3.5">
+                      <div className="pl-6 space-y-1 border-l-2 border-[#E3E8EF] ml-3.5">
                         {Object.entries(subjObj.classes).map(([className, classObj]) => {
                           const classKey = `${subjName}-${className}`;
                           const isClassOpen = openClasses[classKey] !== false;
@@ -309,17 +309,17 @@ export default function QuestionBankPage() {
                                 }}
                                 className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-all ${
                                   isClassSelected
-                                    ? "bg-[#EEF5E7] text-[#355415] font-extrabold"
-                                    : "hover:bg-[#F6F9F1] text-[#172033]"
+                                    ? "bg-[#EAF2FB] text-[#1B4E88] font-bold"
+                                    : "hover:bg-[#F6F8FB] text-[#172033]"
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
                                   {isClassOpen ? (
-                                    <ChevronDown className="w-3 h-3 text-[#4D741F]" />
+                                    <ChevronDown className="w-3 h-3 text-[#2563A8]" />
                                   ) : (
                                     <ChevronRight className="w-3 h-3 text-[#667085]" />
                                   )}
-                                  <BookOpen className="w-3.5 h-3.5 text-[#5F8A28]" />
+                                  <BookOpen className="w-3.5 h-3.5 text-[#4FA8D8]" />
                                   <span>{className}</span>
                                 </div>
                                 <span className="text-[10px] font-mono text-[#667085]">
@@ -329,7 +329,7 @@ export default function QuestionBankPage() {
 
                               {/* Topics under Class */}
                               {isClassOpen && (
-                                <div className="pl-5 space-y-0.5 border-l border-[#DDE4D7] ml-2.5">
+                                <div className="pl-5 space-y-0.5 border-l border-[#E3E8EF] ml-2.5">
                                   {Object.entries(classObj.topics).map(([topicName, topicObj]) => {
                                     const isTopicSelected =
                                       selectedSubject === subjName &&
@@ -347,8 +347,8 @@ export default function QuestionBankPage() {
                                         }}
                                         className={`flex items-center justify-between py-1 px-2 rounded-md cursor-pointer text-[11px] transition-all ${
                                           isTopicSelected
-                                            ? "bg-[#4D741F] text-white font-bold shadow-xs"
-                                            : "hover:bg-[#F6F9F1] text-[#667085] hover:text-[#172033]"
+                                            ? "bg-[#2563A8] text-white font-bold shadow-subtle"
+                                            : "hover:bg-[#F6F8FB] text-[#667085] hover:text-[#172033]"
                                         }`}
                                       >
                                         <span className="truncate pr-1">• {topicName}</span>
@@ -374,11 +374,11 @@ export default function QuestionBankPage() {
           {/* Right Column: Question Cards Collection (8 cols) */}
           <div className="lg:col-span-8 space-y-4">
             {filteredQuestions.length === 0 ? (
-              <div className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-12 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#EEF5E7] text-[#4D741F] flex items-center justify-center mx-auto border border-[#DDE4D7]">
+              <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#EAF2FB] text-[#2563A8] flex items-center justify-center mx-auto border border-[#E3E8EF]">
                   <Database className="w-6 h-6" />
                 </div>
-                <h3 className="text-base font-extrabold text-[#172033]">No Questions in Selected Node</h3>
+                <h3 className="text-base font-bold text-[#172033]">No Questions in Selected Node</h3>
                 <p className="text-xs text-[#667085] max-w-sm mx-auto">
                   Try selecting a different topic or resetting filters to explore the Olympiad question bank.
                 </p>
@@ -388,15 +388,15 @@ export default function QuestionBankPage() {
                 {filteredQuestions.map((q) => (
                   <div
                     key={q.id}
-                    className="bg-[#FFFFFF] border border-[#DDE4D7] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-[#4D741F] transition-all space-y-4"
+                    className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-5 shadow-subtle flex flex-col justify-between hover:border-[#2563A8] transition-all space-y-4"
                   >
                     <div className="space-y-2.5">
                       {/* Card Header: Code + Interaction Type */}
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-extrabold text-[11px] text-[#4D741F] bg-[#EEF5E7] px-2 py-0.5 rounded-md border border-[#DDE4D7]">
+                        <span className="font-mono font-bold text-[11px] text-[#2563A8] bg-[#EAF2FB] px-2 py-0.5 rounded-md border border-[#E3E8EF]">
                           {q.questionId}
                         </span>
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-[#F6F9F1] text-[#355415] border border-[#DDE4D7]">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-[#F6F8FB] text-[#1B4E88] border border-[#E3E8EF]">
                           {q.questionType}
                         </span>
                       </div>
@@ -409,19 +409,19 @@ export default function QuestionBankPage() {
                       {/* Topic & Chapter metadata */}
                       <div className="text-[11px] text-[#667085] font-semibold space-y-0.5 pt-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[#355415] font-bold">{q.topic}</span>
-                          <span className="font-mono text-[10px] text-[#4D741F] font-black">+{q.marks || 1} Mark</span>
+                          <span className="text-[#1B4E88] font-bold">{q.topic}</span>
+                          <span className="font-mono text-[10px] text-[#2563A8] font-bold">+{q.marks || 1} Mark</span>
                         </div>
                         {q.chapter && <div className="text-[10px] text-[#667085]">{q.chapter}</div>}
                       </div>
                     </div>
 
                     {/* Card Actions */}
-                    <div className="pt-3 border-t border-[#DDE4D7] flex items-center justify-between">
+                    <div className="pt-3 border-t border-[#E3E8EF] flex items-center justify-between">
                       <button
                         type="button"
                         onClick={() => handleDuplicate(q)}
-                        className="text-[11px] font-bold text-[#667085] hover:text-[#355415] flex items-center gap-1 cursor-pointer transition-colors"
+                        className="text-[11px] font-bold text-[#667085] hover:text-[#1B4E88] flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         {copiedId === q.id ? (
                           <>
@@ -438,7 +438,7 @@ export default function QuestionBankPage() {
 
                       <Link
                         href={`/admin/questions/${q.id}`}
-                        className="px-3 py-1.5 bg-[#EEF5E7] hover:bg-[#DDE4D7] text-[#355415] rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
+                        className="px-3 py-1.5 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Interactive Test</span>
