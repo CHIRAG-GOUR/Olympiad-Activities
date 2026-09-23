@@ -67,9 +67,9 @@ export default function QuestionRepositoryPage() {
   const getInteractionBadge = (type: QuestionType) => {
     switch (type) {
       case "ORDERING":
-        return { label: "Ordering", bg: "bg-[#EAF2FB] text-[#1B4E88] border-[#E3E8EF]" };
+        return { label: "Ordering", bg: "bg-[#EAF2FC] text-[#1C5190] border-[#E1E7EF]" };
       case "DRAG_DROP":
-        return { label: "Drag & Drop", bg: "bg-[#EAF2FB] text-[#1B4E88] border-[#E3E8EF]" };
+        return { label: "Drag & Drop", bg: "bg-[#EAF2FC] text-[#1C5190] border-[#E1E7EF]" };
       case "NUMERIC":
         return { label: "Numeric", bg: "bg-emerald-50 text-emerald-800 border-emerald-200" };
       case "MATCHING":
@@ -83,23 +83,23 @@ export default function QuestionRepositoryPage() {
       case "GRAPH":
         return { label: "Graph", bg: "bg-blue-50 text-blue-800 border-blue-200" };
       case "SIMULATION":
-        return { label: "Simulation", bg: "bg-[#EAF2FB] text-[#2563A8] border-[#E3E8EF]" };
+        return { label: "Simulation", bg: "bg-[#EAF2FC] text-[#2468B2] border-[#E1E7EF]" };
       default:
-        return { label: type, bg: "bg-[#F6F8FB] text-[#172033] border-[#E3E8EF]" };
+        return { label: type, bg: "bg-[#F4F7FB] text-[#182338] border-[#E1E7EF]" };
     }
   };
 
   return (
-    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       {/* 1. Header (Requirement 25) */}
-      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Examination Item Bank</span>
             <span className="text-[#667085]">•</span>
             <span>Question Repository</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182338] mt-1">
             Question Repository
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -110,14 +110,14 @@ export default function QuestionRepositoryPage() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin/imports"
-            className="h-9 px-3.5 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
+            className="h-9 px-3.5 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Import Questions</span>
           </Link>
           <Link
             href="/admin/questions/new"
-            className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
+            className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Question</span>
@@ -128,7 +128,7 @@ export default function QuestionRepositoryPage() {
       <div className="space-y-6">
         
         {/* 2. Compact Search & Filter Toolbar */}
-        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-4 shadow-subtle flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-subtle flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
           <div className="relative flex-1 min-w-[240px]">
             <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -136,7 +136,7 @@ export default function QuestionRepositoryPage() {
               placeholder="Search questions by code, concept, topic, or keyword..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
+              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
             />
           </div>
 
@@ -145,7 +145,7 @@ export default function QuestionRepositoryPage() {
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Subjects</option>
               <option value="sub_math">Mathematics</option>
@@ -157,7 +157,7 @@ export default function QuestionRepositoryPage() {
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Classes</option>
               <option value="6">Class 6</option>
@@ -169,7 +169,7 @@ export default function QuestionRepositoryPage() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Interactions</option>
               <option value="ORDERING">Ordering</option>
@@ -187,7 +187,7 @@ export default function QuestionRepositoryPage() {
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Difficulties</option>
               <option value="EASY">Easy</option>
@@ -198,20 +198,20 @@ export default function QuestionRepositoryPage() {
           </div>
 
           <div className="text-xs text-[#667085] font-semibold text-right">
-            Showing <strong className="text-[#2563A8] font-bold">{filteredQuestions.length}</strong> questions
+            Showing <strong className="text-[#2468B2] font-bold">{filteredQuestions.length}</strong> questions
           </div>
         </div>
 
         {/* 3. Question Repository Table (Requirement 25) */}
-        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl shadow-subtle overflow-hidden">
+        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl shadow-subtle overflow-hidden">
           {filteredQuestions.length === 0 ? (
             /* Empty state (Requirement 36) */
             <div className="py-16 px-6 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#EAF2FB] text-[#2563A8] flex items-center justify-center mx-auto border border-[#E3E8EF]">
+              <div className="w-12 h-12 rounded-2xl bg-[#EAF2FC] text-[#2468B2] flex items-center justify-center mx-auto border border-[#E1E7EF]">
                 <HelpCircle className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-[#172033]">Question Repository is Empty</h3>
+                <h3 className="text-base font-bold text-[#182338]">Question Repository is Empty</h3>
                 <p className="text-xs text-[#667085] max-w-md mx-auto">
                   Import or author questions to build your standardized Olympiad examination repository.
                 </p>
@@ -219,14 +219,14 @@ export default function QuestionRepositoryPage() {
               <div className="pt-2 flex items-center justify-center gap-3">
                 <Link
                   href="/admin/questions/new"
-                  className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold shadow-subtle inline-flex items-center gap-1.5"
+                  className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-subtle inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Question</span>
                 </Link>
                 <Link
                   href="/admin/imports"
-                  className="h-9 px-4 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
+                  className="h-9 px-4 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   <span>Import Questions</span>
@@ -236,7 +236,7 @@ export default function QuestionRepositoryPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
-                <thead className="bg-[#F6F8FB] text-[#667085] border-b border-[#E3E8EF] uppercase text-[10px] tracking-wider">
+                <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="p-4 w-[110px]">Code</th>
                     <th className="p-4 min-w-[300px]">Question & Concept</th>
@@ -249,21 +249,21 @@ export default function QuestionRepositoryPage() {
                     <th className="p-4 w-[120px] text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E3E8EF] text-[#172033]">
+                <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
                   {filteredQuestions.map((q) => {
                     const badge = getInteractionBadge(q.questionType);
                     return (
-                      <tr key={q.id} className="hover:bg-[#F6F8FB]/60 transition-colors">
+                      <tr key={q.id} className="hover:bg-[#F4F7FB]/60 transition-colors">
                         {/* Code */}
                         <td className="p-4 align-top">
-                          <span className="font-mono font-bold text-[11px] text-[#2563A8] bg-[#EAF2FB] px-2 py-0.5 rounded-md border border-[#E3E8EF] block text-center">
+                          <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] block text-center">
                             {q.questionId}
                           </span>
                         </td>
 
                         {/* Question Text */}
                         <td className="p-4 align-top">
-                          <div className="font-bold text-xs text-[#172033] leading-snug line-clamp-2">
+                          <div className="font-bold text-xs text-[#182338] leading-snug line-clamp-2">
                             {q.questionText}
                           </div>
                           {q.section && (
@@ -275,13 +275,13 @@ export default function QuestionRepositoryPage() {
 
                         {/* Subject */}
                         <td className="p-4 align-top">
-                          <div className="font-bold text-[#172033]">{q.subjectName || "Mathematics"}</div>
+                          <div className="font-bold text-[#182338]">{q.subjectName || "Mathematics"}</div>
                           <div className="text-[10px] text-[#667085]">Class {q.grade || 6}</div>
                         </td>
 
                         {/* Topic */}
                         <td className="p-4 align-top">
-                          <span className="font-semibold text-[#172033] block truncate max-w-[150px]">
+                          <span className="font-semibold text-[#182338] block truncate max-w-[150px]">
                             {q.topic}
                           </span>
                           {q.chapter && (
@@ -300,20 +300,20 @@ export default function QuestionRepositoryPage() {
 
                         {/* Difficulty */}
                         <td className="p-4 align-top text-center">
-                          <span className="px-2 py-0.5 bg-[#F6F8FB] text-[#667085] border border-[#E3E8EF] rounded-md text-[10px] font-bold uppercase">
+                          <span className="px-2 py-0.5 bg-[#F4F7FB] text-[#667085] border border-[#E1E7EF] rounded-md text-[10px] font-bold uppercase">
                             {q.difficulty}
                           </span>
                         </td>
 
                         {/* Marks */}
-                        <td className="p-4 align-top text-center font-mono font-bold text-[#2563A8]">
+                        <td className="p-4 align-top text-center font-mono font-bold text-[#2468B2]">
                           +{q.marks || 1}
                         </td>
 
                         {/* Status */}
                         <td className="p-4 align-top text-center">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1B4E88]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#2563A8]" />
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1C5190]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#2468B2]" />
                             {q.status || "Published"}
                           </span>
                         </td>
@@ -323,7 +323,7 @@ export default function QuestionRepositoryPage() {
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
                               href={`/admin/questions/${q.id}`}
-                              className="px-2.5 py-1 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-md text-[11px] font-bold transition-all"
+                              className="px-2.5 py-1 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-md text-[11px] font-bold transition-all"
                             >
                               Edit
                             </Link>

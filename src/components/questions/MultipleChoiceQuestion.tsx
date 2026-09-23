@@ -71,7 +71,7 @@ export function MultipleChoiceQuestion({
               <div
                 className={`w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center font-mono font-extrabold text-[15px] border-2 transition-colors ${
                   isSelected
-                    ? "bg-[#2563A8] text-white border-[#2563A8] shadow-subtle"
+                    ? "bg-[#2468B2] text-white border-[#2468B2] shadow-subtle"
                     : "bg-white text-slate-800 border-[#FDE68A] group-hover:border-[#F59E0B] group-hover:bg-[#FEF3C7]"
                 }`}
               >

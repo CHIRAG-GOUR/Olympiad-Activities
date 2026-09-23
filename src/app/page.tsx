@@ -45,16 +45,16 @@ export default function GatewayHomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F6F8FB] flex flex-col justify-between font-sans antialiased text-[#172033] select-none">
+    <div className="min-h-screen bg-[#F4F7FB] flex flex-col justify-between font-sans antialiased text-[#182338] select-none">
       {/* 1. Official Olympiad Header */}
-      <header className="bg-white border-b border-[#E3E8EF] sticky top-0 z-30">
+      <header className="bg-white border-b border-[#E1E7EF] sticky top-0 z-30">
         <div className="w-full max-w-[1480px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <span className="w-9 h-9 rounded-xl bg-[#2563A8] text-white grid place-items-center font-display font-bold text-lg shadow-subtle group-hover:bg-[#1B4E88] transition-colors">
+            <span className="w-9 h-9 rounded-xl bg-[#2468B2] text-white grid place-items-center font-display font-bold text-lg shadow-subtle group-hover:bg-[#1C5190] transition-colors">
               Ω
             </span>
             <span className="leading-tight">
-              <span className="block text-[14px] font-bold text-[#172033] tracking-[-0.01em]">
+              <span className="block text-[14px] font-bold text-[#182338] tracking-[-0.01em]">
                 Olympiad
               </span>
               <span className="hidden sm:block text-[11px] text-[#98A2B3] font-medium">
@@ -65,7 +65,7 @@ export default function GatewayHomePage() {
 
           <div className="flex items-center gap-2.5">
             {/* Role selection — this build lets you view the platform as any role */}
-            <div className="hidden sm:flex items-center bg-[#F6F8FB] rounded-xl p-1 border border-[#E3E8EF] text-[12.5px] font-semibold">
+            <div className="hidden sm:flex items-center bg-[#F4F7FB] rounded-xl p-1 border border-[#E1E7EF] text-[12.5px] font-semibold">
               {(["STUDENT", "TEACHER", "SUPER_ADMIN"] as const).map((r) => (
                 <button
                   key={r}
@@ -73,8 +73,8 @@ export default function GatewayHomePage() {
                   onClick={() => switchRole(r)}
                   className={`px-3 h-8 rounded-lg transition-colors ${
                     role === r
-                      ? "bg-white text-[#2563A8] shadow-subtle"
-                      : "text-[#667085] hover:text-[#172033]"
+                      ? "bg-white text-[#2468B2] shadow-subtle"
+                      : "text-[#667085] hover:text-[#182338]"
                   }`}
                 >
                   {r === "STUDENT" ? "Student" : r === "TEACHER" ? "Teacher" : "Admin"}
@@ -85,14 +85,14 @@ export default function GatewayHomePage() {
             {role !== "STUDENT" ? (
               <Link
                 href="/admin/dashboard"
-                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-[#2563A8] text-white text-[13px] font-semibold hover:bg-[#1B4E88] transition-colors shadow-subtle"
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-[#2468B2] text-white text-[13px] font-semibold hover:bg-[#1C5190] transition-colors shadow-subtle"
               >
                 <LayoutDashboard className="w-4 h-4" strokeWidth={2.2} />
                 <span className="hidden sm:inline">Dashboard</span>
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-2 h-10 px-3.5 rounded-xl border border-[#E3E8EF] bg-white text-[13px] font-semibold text-[#172033]">
-                <GraduationCap className="w-4 h-4 text-[#2563A8]" strokeWidth={2.2} />
+              <span className="inline-flex items-center gap-2 h-10 px-3.5 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338]">
+                <GraduationCap className="w-4 h-4 text-[#2468B2]" strokeWidth={2.2} />
                 <span className="max-w-[140px] truncate">{user?.name}</span>
               </span>
             )}
@@ -104,15 +104,15 @@ export default function GatewayHomePage() {
       <main className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 flex-1">
         
         {/* Banner Section */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#E3E8EF] space-y-3 relative overflow-hidden">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#E1E7EF] space-y-3 relative overflow-hidden">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#1B4E88] bg-[#EAF2FB] px-2.5 py-1 rounded-md border border-[#E3E8EF]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#1C5190] bg-[#EAF2FC] px-2.5 py-1 rounded-md border border-[#E1E7EF]">
               Official Examination Session Environment
             </span>
             <span className="text-xs text-[#667085] font-semibold">• 2024–25 Academic Cycle</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#172033] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#182338] tracking-tight">
             Digital Olympiad Examination
           </h1>
 
@@ -126,12 +126,12 @@ export default function GatewayHomePage() {
           
           {/* Left: Active Examinations (8 cols) */}
           <div className="lg:col-span-8 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E3E8EF]">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E1E7EF]">
               <div className="flex items-center gap-2">
-                <FileCheck2 className="w-5 h-5 text-[#2563A8]" />
-                <h2 className="text-lg font-bold text-[#172033]">Available Examination Papers</h2>
+                <FileCheck2 className="w-5 h-5 text-[#2468B2]" />
+                <h2 className="text-lg font-bold text-[#182338]">Available Examination Papers</h2>
               </div>
-              <span className="text-xs text-[#1B4E88] font-bold font-mono bg-[#EAF2FB] px-2.5 py-1 rounded-lg border border-[#E3E8EF]">
+              <span className="text-xs text-[#1C5190] font-bold font-mono bg-[#EAF2FC] px-2.5 py-1 rounded-lg border border-[#E1E7EF]">
                 {exams.length} Active Paper{exams.length === 1 ? "" : "s"}
               </span>
             </div>
@@ -140,46 +140,46 @@ export default function GatewayHomePage() {
               {exams.map((exam) => (
                 <div
                   key={exam.id}
-                  className="bg-white border border-[#E3E8EF] hover:border-[#2563A8] rounded-3xl p-6 shadow-sm transition-all space-y-4"
+                  className="bg-white border border-[#E1E7EF] hover:border-[#2468B2] rounded-3xl p-6 shadow-sm transition-all space-y-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono font-bold text-xs bg-[#2563A8] text-white px-3 py-1 rounded-lg">
+                      <span className="font-mono font-bold text-xs bg-[#2468B2] text-white px-3 py-1 rounded-lg">
                         {exam.code}
                       </span>
-                      <span className="text-xs text-[#1B4E88] font-bold px-2.5 py-1 rounded-lg bg-[#EAF2FB] border border-[#E3E8EF]">
+                      <span className="text-xs text-[#1C5190] font-bold px-2.5 py-1 rounded-lg bg-[#EAF2FC] border border-[#E1E7EF]">
                         Class {exam.grade}
                       </span>
-                      <span className="text-xs text-[#667085] font-bold px-2.5 py-1 rounded-lg bg-[#F6F8FB] border border-[#E3E8EF]">
+                      <span className="text-xs text-[#667085] font-bold px-2.5 py-1 rounded-lg bg-[#F4F7FB] border border-[#E1E7EF]">
                         {exam.questionIds.length || 50} Questions
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-[#172033] font-mono font-bold">
+                    <div className="flex items-center gap-3 text-xs text-[#182338] font-mono font-bold">
                       <span>{exam.durationMinutes} Mins</span>
                       <span>•</span>
-                      <span className="text-[#1B4E88] font-bold">+{exam.totalMarks || 60} Marks</span>
+                      <span className="text-[#1C5190] font-bold">+{exam.totalMarks || 60} Marks</span>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-bold text-[#172033]">{exam.title}</h3>
+                    <h3 className="text-xl font-bold text-[#182338]">{exam.title}</h3>
                     {exam.subtitle && (
-                      <p className="text-xs text-[#2563A8] mt-0.5 font-bold">{exam.subtitle}</p>
+                      <p className="text-xs text-[#2468B2] mt-0.5 font-bold">{exam.subtitle}</p>
                     )}
                     <p className="text-xs text-[#667085] mt-2 leading-relaxed font-medium">
                       {exam.description || "Standardized digital Olympiad examination paper."}
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-[#E3E8EF] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="pt-3 border-t border-[#E1E7EF] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="text-xs text-[#667085] font-medium">
                       Sections: Logical Reasoning, Mathematical Reasoning, Everyday Math, Achievers Section.
                     </div>
 
                     <Link
                       href={`/exam/${exam.id}`}
-                      className="h-10 px-6 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-subtle transition-all uppercase tracking-wider cursor-pointer whitespace-nowrap"
+                      className="h-10 px-6 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-subtle transition-all uppercase tracking-wider cursor-pointer whitespace-nowrap"
                     >
                       <span>Take Examination</span>
                       <Play className="w-3.5 h-3.5 fill-current" />
@@ -191,15 +191,15 @@ export default function GatewayHomePage() {
 
             {/* Recent Results Section */}
             <div className="pt-4 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E3E8EF]">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E1E7EF]">
                 <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-[#2563A8]" />
-                  <h2 className="text-lg font-bold text-[#172033]">Recent Completed Attempts</h2>
+                  <Award className="w-5 h-5 text-[#2468B2]" />
+                  <h2 className="text-lg font-bold text-[#182338]">Recent Completed Attempts</h2>
                 </div>
               </div>
 
               {recentAttempts.length === 0 ? (
-                <div className="bg-white border border-dashed border-[#E3E8EF] rounded-2xl p-6 text-center text-xs text-[#667085]">
+                <div className="bg-white border border-dashed border-[#E1E7EF] rounded-2xl p-6 text-center text-xs text-[#667085]">
                   No completed examination attempts recorded yet. Start an exam above to generate your official score paper.
                 </div>
               ) : (
@@ -207,12 +207,12 @@ export default function GatewayHomePage() {
                   {recentAttempts.map((att) => (
                     <div
                       key={att.id}
-                      className="bg-white border border-[#E3E8EF] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-subtle"
+                      className="bg-white border border-[#E1E7EF] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-subtle"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-[#172033]">{att.examTitle}</span>
-                          <span className="text-[10px] font-bold bg-[#EAF2FB] text-[#1B4E88] px-2 py-0.5 rounded-md border border-[#E3E8EF]">
+                          <span className="font-bold text-sm text-[#182338]">{att.examTitle}</span>
+                          <span className="text-[10px] font-bold bg-[#EAF2FC] text-[#1C5190] px-2 py-0.5 rounded-md border border-[#E1E7EF]">
                             Completed
                           </span>
                         </div>
@@ -224,15 +224,15 @@ export default function GatewayHomePage() {
 
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <div className="text-sm font-bold font-mono text-[#2563A8]">
+                          <div className="text-sm font-bold font-mono text-[#2468B2]">
                             Score: {att.scoreDisplay}
                           </div>
-                          <div className="text-xs font-bold text-[#1B4E88]">{att.percentage}% Accuracy</div>
+                          <div className="text-xs font-bold text-[#1C5190]">{att.percentage}% Accuracy</div>
                         </div>
 
                         <Link
                           href={`/results/${att.id}`}
-                          className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
+                          className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
                         >
                           <FileText className="w-3.5 h-3.5" /> View Score Paper
                         </Link>
@@ -246,14 +246,14 @@ export default function GatewayHomePage() {
 
           {/* Right: Operations & Information Hierarchy (4 cols) */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="pb-2 border-b border-[#E3E8EF] flex items-center gap-2">
-              <Database className="w-5 h-5 text-[#2563A8]" />
-              <h2 className="text-lg font-bold text-[#172033]">Question Repository</h2>
+            <div className="pb-2 border-b border-[#E1E7EF] flex items-center gap-2">
+              <Database className="w-5 h-5 text-[#2468B2]" />
+              <h2 className="text-lg font-bold text-[#182338]">Question Repository</h2>
             </div>
 
-            <div className="bg-white border border-[#E3E8EF] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white border border-[#E1E7EF] rounded-3xl p-6 shadow-sm space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-[#172033]">Standardized Question Bank</h3>
+                <h3 className="text-sm font-bold text-[#182338]">Standardized Question Bank</h3>
                 <p className="text-xs text-[#667085] mt-1 font-medium leading-relaxed">
                   Interactive Olympiad questions with deterministic mechanics (Ordering, Simulation, Graph, Numeric, Matching, Classification, Hotspot).
                 </p>
@@ -261,7 +261,7 @@ export default function GatewayHomePage() {
 
               <Link
                 href="/admin/questions"
-                className="w-full h-10 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full h-10 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <span>Browse Question Repository</span>
                 <ArrowRight className="w-4 h-4" />
@@ -269,37 +269,37 @@ export default function GatewayHomePage() {
             </div>
 
             {/* Quick Operations Links */}
-            <div className="bg-white border border-[#E3E8EF] rounded-3xl p-5 shadow-sm space-y-3">
-              <h3 className="text-xs font-bold text-[#172033] uppercase tracking-wider">
+            <div className="bg-white border border-[#E1E7EF] rounded-3xl p-5 shadow-sm space-y-3">
+              <h3 className="text-xs font-bold text-[#182338] uppercase tracking-wider">
                 Examination Operations
               </h3>
               <div className="space-y-2 text-xs font-bold">
                 <Link
                   href="/admin/live-monitor"
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F8FB] hover:bg-[#EAF2FB] text-[#172033] transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#F4F7FB] hover:bg-[#EAF2FC] text-[#182338] transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#2563A8]" /> Live Surveillance Monitor
+                    <Activity className="w-4 h-4 text-[#2468B2]" /> Live Surveillance Monitor
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-[#667085]" />
                 </Link>
 
                 <Link
                   href="/admin/results"
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F8FB] hover:bg-[#EAF2FB] text-[#172033] transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#F4F7FB] hover:bg-[#EAF2FC] text-[#182338] transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-[#2563A8]" /> Results & Reports Ledger
+                    <Award className="w-4 h-4 text-[#2468B2]" /> Results & Reports Ledger
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-[#667085]" />
                 </Link>
 
                 <Link
                   href="/admin/question-bank"
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#F6F8FB] hover:bg-[#EAF2FB] text-[#172033] transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[#F4F7FB] hover:bg-[#EAF2FC] text-[#182338] transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-[#2563A8]" /> Curriculum Question Bank
+                    <Database className="w-4 h-4 text-[#2468B2]" /> Curriculum Question Bank
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-[#667085]" />
                 </Link>
@@ -311,7 +311,7 @@ export default function GatewayHomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-[#E3E8EF] py-4 px-6 text-center text-xs font-semibold text-[#667085]">
+      <footer className="bg-white border-t border-[#E1E7EF] py-4 px-6 text-center text-xs font-semibold text-[#667085]">
         National Olympiad Digital Examination Platform • Council Accreditation Standard
       </footer>
     </div>

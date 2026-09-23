@@ -82,7 +82,7 @@ export function SequenceQuestion({ question, value, onChange, readOnly = false }
                 disabled={readOnly}
                 className={`h-[60px] px-6 rounded-xl border-2 font-mono font-extrabold text-2xl transition-all flex items-center justify-center gap-2 shadow-subtle cursor-pointer ${
                   isSelected
-                    ? "border-[#F59E0B] bg-[#2563A8] text-white shadow-md scale-105"
+                    ? "border-[#F59E0B] bg-[#2468B2] text-white shadow-md scale-105"
                     : "border-[#FDE68A] bg-white text-slate-900 hover:border-[#F59E0B] hover:bg-[#FEF3C7]"
                 }`}
               >

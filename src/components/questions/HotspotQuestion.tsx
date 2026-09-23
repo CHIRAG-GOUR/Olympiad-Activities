@@ -60,21 +60,21 @@ export function HotspotQuestion({ question, value, onChange, readOnly = false }:
             <polygon
               points="20,75 50,25 80,75"
               fill="#FEF3C7"
-              stroke="#2563A8"
+              stroke="#2468B2"
               strokeWidth="1.8"
               strokeLinejoin="round"
             />
             <line x1="50" y1="25" x2="50" y2="75" stroke="#D97706" strokeWidth="1.2" strokeDasharray="3,3" />
-            <line x1="20" y1="75" x2="80" y2="75" stroke="#2563A8" strokeWidth="2.2" />
+            <line x1="20" y1="75" x2="80" y2="75" stroke="#2468B2" strokeWidth="2.2" />
 
-            <path d="M 44,36 A 12,12 0 0,0 58,35" fill="none" stroke="#D9534F" strokeWidth="1.5" />
-            <text x="46" y="19" fontSize="5" fill="#2563A8" fontWeight="900">
+            <path d="M 44,36 A 12,12 0 0,0 58,35" fill="none" stroke="#E8786A" strokeWidth="1.5" />
+            <text x="46" y="19" fontSize="5" fill="#2468B2" fontWeight="900">
               Vertex B (125°)
             </text>
-            <text x="12" y="83" fontSize="5" fill="#2563A8" fontWeight="900">
+            <text x="12" y="83" fontSize="5" fill="#2468B2" fontWeight="900">
               Vertex A (50°)
             </text>
-            <text x="82" y="83" fontSize="5" fill="#2563A8" fontWeight="900">
+            <text x="82" y="83" fontSize="5" fill="#2468B2" fontWeight="900">
               Vertex C (65°)
             </text>
             <text x="52" y="70" fontSize="4.5" fill="#92400E" fontWeight="bold">
@@ -99,8 +99,8 @@ export function HotspotQuestion({ question, value, onChange, readOnly = false }:
                 }}
                 className={`absolute w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-[#D9534F] text-white ring-6 ring-rose-200 shadow-xl scale-125 z-20"
-                    : "bg-white border-2 border-[#F59E0B] text-[#D97706] hover:bg-[#2563A8] hover:text-white shadow-md hover:scale-110 z-10"
+                    ? "bg-[#E8786A] text-white ring-6 ring-rose-200 shadow-xl scale-125 z-20"
+                    : "bg-white border-2 border-[#F59E0B] text-[#D97706] hover:bg-[#2468B2] hover:text-white shadow-md hover:scale-110 z-10"
                 }`}
                 title={spot.label || `Hotspot ${spot.id}`}
               >

@@ -74,7 +74,7 @@ export function ExamNavigation({
           <button
             type="button"
             onClick={onMarkForReviewAndNext}
-            className="h-[42px] px-4 bg-[#8C7AE6] hover:bg-[#7565CC] active:bg-[#5F51AD] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            className="h-[42px] px-4 bg-[#8067D9] hover:bg-[#6C55C4] active:bg-[#5A46A6] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
             <Bookmark className="w-3.5 h-3.5" />
             <span>Mark for Review & Next</span>
@@ -94,7 +94,7 @@ export function ExamNavigation({
           <button
             type="button"
             onClick={onSaveAndNext}
-            className="h-[42px] px-6 bg-[#39A96B] hover:bg-[#2E8F59] active:bg-[#26784A] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer tracking-wide uppercase"
+            className="h-[42px] px-6 bg-[#55B987] hover:bg-[#3E9E6F] active:bg-[#33875C] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer tracking-wide uppercase"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Save & Next</span>
@@ -104,7 +104,7 @@ export function ExamNavigation({
             <button
               type="button"
               onClick={onSubmitExam}
-              className="h-[42px] px-5 bg-[#2563A8] hover:bg-[#1B4E88] active:bg-[#143C69] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer tracking-wide uppercase"
+              className="h-[42px] px-5 bg-[#2468B2] hover:bg-[#1C5190] active:bg-[#163F71] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer tracking-wide uppercase"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Submit Paper</span>

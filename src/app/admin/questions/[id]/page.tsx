@@ -74,7 +74,7 @@ export default function EditQuestionPage({ params }: { params: Promise<{ id: str
         subtitle="Modify parameters with live student solving preview"
       />
 
-      <div className="p-6 lg:p-8 space-y-6 w-full max-w-[1750px]">
+      <div className="space-y-6 w-full max-w-[1750px]">
         {/* Top Actions */}
         <div className="flex items-center justify-between">
           <Link

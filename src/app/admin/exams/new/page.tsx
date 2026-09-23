@@ -157,16 +157,16 @@ export default function NewExamPage() {
   });
 
   return (
-    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       {/* 1. Header (Requirement 28) */}
-      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Authoring Wizard</span>
             <span className="text-[#667085]">•</span>
             <span>Examination Builder</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182338] mt-1">
             Create Examination
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -177,7 +177,7 @@ export default function NewExamPage() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin/exams"
-            className="h-9 px-3.5 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
+            className="h-9 px-3.5 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Cancel</span>
@@ -185,7 +185,7 @@ export default function NewExamPage() {
           <button
             type="button"
             onClick={handleSaveExam}
-            className="h-9 px-4 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
+            className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>Publish Examination</span>
@@ -193,10 +193,10 @@ export default function NewExamPage() {
         </div>
       </div>
 
-      <div className="p-6 sm:p-8 space-y-6 flex-1 max-w-[1300px]">
+      <div className="space-y-6 max-w-[1300px]">
         
         {/* Step Navigation Tabs */}
-        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-2 shadow-subtle flex items-center justify-between overflow-x-auto gap-2">
+        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-2 shadow-subtle flex items-center justify-between overflow-x-auto gap-2">
           {steps.map((s) => {
             const Icon = s.icon;
             const isActive = currentStep === s.num;
@@ -208,10 +208,10 @@ export default function NewExamPage() {
                 onClick={() => setCurrentStep(s.num)}
                 className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#2563A8] text-white shadow-subtle"
+                    ? "bg-[#2468B2] text-white shadow-subtle"
                     : isCompleted
-                    ? "bg-[#EAF2FB] text-[#1B4E88]"
-                    : "text-[#667085] hover:bg-[#F6F8FB]"
+                    ? "bg-[#EAF2FC] text-[#1C5190]"
+                    : "text-[#667085] hover:bg-[#F4F7FB]"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -223,14 +223,14 @@ export default function NewExamPage() {
 
         {/* STEP 1: Basic Information */}
         {currentStep === 1 && (
-          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-6 shadow-subtle space-y-5">
-            <h3 className="text-base font-bold text-[#172033] border-b border-[#E3E8EF] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-6 shadow-subtle space-y-5">
+            <h3 className="text-base font-bold text-[#182338] border-b border-[#E1E7EF] pb-3">
               Step 1: Examination Identification & Metadata
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="text-xs font-bold text-[#172033] mb-1.5 block">
+                <label className="text-xs font-bold text-[#182338] mb-1.5 block">
                   Examination Title *
                 </label>
                 <input
@@ -238,12 +238,12 @@ export default function NewExamPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g. SOF International Mathematics Olympiad"
-                  className="w-full h-10 px-3.5 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
+                  className="w-full h-10 px-3.5 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#172033] mb-1.5 block">
+                <label className="text-xs font-bold text-[#182338] mb-1.5 block">
                   Examination Code *
                 </label>
                 <input
@@ -251,12 +251,12 @@ export default function NewExamPage() {
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="e.g. IMO-2025-G6-SETB"
-                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#2563A8] focus:outline-none focus:border-[#2563A8] focus:bg-white"
+                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#2468B2] focus:outline-none focus:border-[#2468B2] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#172033] mb-1.5 block">
+                <label className="text-xs font-bold text-[#182338] mb-1.5 block">
                   Subject Name
                 </label>
                 <select
@@ -273,7 +273,7 @@ export default function NewExamPage() {
                       subjectName: subjMap[e.target.value] || "Mathematics",
                     });
                   }}
-                  className="w-full h-10 px-3.5 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+                  className="w-full h-10 px-3.5 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
                 >
                   <option value="sub_math">Mathematics</option>
                   <option value="sub_science">Science</option>
@@ -282,13 +282,13 @@ export default function NewExamPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#172033] mb-1.5 block">
+                <label className="text-xs font-bold text-[#182338] mb-1.5 block">
                   Target Class / Grade
                 </label>
                 <select
                   value={formData.grade}
                   onChange={(e) => setFormData({ ...formData, grade: parseInt(e.target.value) || 6 })}
-                  className="w-full h-10 px-3.5 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+                  className="w-full h-10 px-3.5 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
                 >
                   <option value={6}>Class 6</option>
                   <option value={7}>Class 7</option>
@@ -297,7 +297,7 @@ export default function NewExamPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="text-xs font-bold text-[#172033] mb-1.5 block">
+                <label className="text-xs font-bold text-[#182338] mb-1.5 block">
                   Description & Candidate Instructions
                 </label>
                 <textarea
@@ -305,16 +305,16 @@ export default function NewExamPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Provide syllabus context, examination rules, and guidelines for students..."
-                  className="w-full p-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-medium focus:outline-none focus:border-[#2563A8] focus:bg-white"
+                  className="w-full p-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-medium focus:outline-none focus:border-[#2468B2] focus:bg-white"
                 />
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#E3E8EF] flex justify-end">
+            <div className="pt-3 border-t border-[#E1E7EF] flex justify-end">
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="h-9 px-5 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                className="h-9 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <span>Continue to Question Bank</span>
                 <ChevronRight className="w-4 h-4" />
@@ -325,10 +325,10 @@ export default function NewExamPage() {
 
         {/* STEP 2: Question Bank Compilation (Requirement 28) */}
         {currentStep === 2 && (
-          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-6 shadow-subtle space-y-5">
-            <div className="flex items-center justify-between border-b border-[#E3E8EF] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-6 shadow-subtle space-y-5">
+            <div className="flex items-center justify-between border-b border-[#E1E7EF] pb-3">
               <div>
-                <h3 className="text-base font-bold text-[#172033]">
+                <h3 className="text-base font-bold text-[#182338]">
                   Step 2: Select Questions from Question Bank
                 </h3>
                 <p className="text-xs text-[#667085] font-medium mt-0.5">
@@ -340,14 +340,14 @@ export default function NewExamPage() {
                 <button
                   type="button"
                   onClick={selectAllQuestions}
-                  className="h-8 px-3 bg-[#EAF2FB] hover:bg-[#E3E8EF] text-[#1B4E88] rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  className="h-8 px-3 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold transition-all cursor-pointer"
                 >
                   Select All ({questions.length})
                 </button>
                 <button
                   type="button"
                   onClick={deselectAllQuestions}
-                  className="h-8 px-3 bg-white border border-[#E3E8EF] hover:bg-[#F6F8FB] text-[#667085] rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  className="h-8 px-3 bg-white border border-[#E1E7EF] hover:bg-[#F4F7FB] text-[#667085] rounded-lg text-xs font-bold transition-all cursor-pointer"
                 >
                   Deselect All
                 </button>
@@ -355,12 +355,12 @@ export default function NewExamPage() {
             </div>
 
             {/* Selected Summary Pill */}
-            <div className="p-3 bg-[#EAF2FB] border border-[#E3E8EF] rounded-xl flex items-center justify-between text-xs font-bold text-[#1B4E88]">
+            <div className="p-3 bg-[#EAF2FC] border border-[#E1E7EF] rounded-xl flex items-center justify-between text-xs font-bold text-[#1C5190]">
               <span>
-                Selected: <strong className="text-[#172033] font-bold">{formData.questionIds?.length || 0}</strong> Questions
+                Selected: <strong className="text-[#182338] font-bold">{formData.questionIds?.length || 0}</strong> Questions
               </span>
               <span>
-                Total Examination Marks: <strong className="text-[#172033] font-bold">{formData.totalMarks}</strong>
+                Total Examination Marks: <strong className="text-[#182338] font-bold">{formData.totalMarks}</strong>
               </span>
             </div>
 
@@ -372,12 +372,12 @@ export default function NewExamPage() {
                 placeholder="Filter questions by concept, topic, or code..."
                 value={qSearch}
                 onChange={(e) => setQSearch(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
+                className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
               />
             </div>
 
             {/* Questions Checklist */}
-            <div className="border border-[#E3E8EF] rounded-xl divide-y divide-[#E3E8EF] max-h-[450px] overflow-y-auto">
+            <div className="border border-[#E1E7EF] rounded-xl divide-y divide-[#E1E7EF] max-h-[450px] overflow-y-auto">
               {filteredQList.map((q) => {
                 const isSelected = formData.questionIds?.includes(q.id);
                 return (
@@ -385,37 +385,37 @@ export default function NewExamPage() {
                     key={q.id}
                     onClick={() => toggleQuestionSelection(q.id)}
                     className={`p-3.5 flex items-start gap-3.5 cursor-pointer transition-all ${
-                      isSelected ? "bg-[#EAF2FB]/50" : "hover:bg-[#F6F8FB]"
+                      isSelected ? "bg-[#EAF2FC]/50" : "hover:bg-[#F4F7FB]"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => {}}
-                      className="mt-0.5 w-4 h-4 text-[#2563A8] rounded border-[#E3E8EF] focus:ring-0 cursor-pointer"
+                      className="mt-0.5 w-4 h-4 text-[#2468B2] rounded border-[#E1E7EF] focus:ring-0 cursor-pointer"
                     />
 
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[11px] font-bold text-[#2563A8]">
+                          <span className="font-mono text-[11px] font-bold text-[#2468B2]">
                             {q.questionId}
                           </span>
-                          <span className="px-2 py-0.2 rounded text-[10px] font-bold uppercase bg-[#F6F8FB] text-[#1B4E88] border border-[#E3E8EF]">
+                          <span className="px-2 py-0.2 rounded text-[10px] font-bold uppercase bg-[#F4F7FB] text-[#1C5190] border border-[#E1E7EF]">
                             {q.questionType}
                           </span>
                         </div>
-                        <span className="font-mono text-xs font-bold text-[#2563A8]">
+                        <span className="font-mono text-xs font-bold text-[#2468B2]">
                           +{q.marks || 1} Mark
                         </span>
                       </div>
 
-                      <div className="text-xs font-bold text-[#172033] line-clamp-2">
+                      <div className="text-xs font-bold text-[#182338] line-clamp-2">
                         {q.questionText}
                       </div>
 
                       <div className="text-[11px] text-[#667085] font-semibold">
-                        Topic: <span className="text-[#1B4E88]">{q.topic}</span>
+                        Topic: <span className="text-[#1C5190]">{q.topic}</span>
                         {q.section && <span> • Section: {q.section}</span>}
                       </div>
                     </div>
@@ -424,18 +424,18 @@ export default function NewExamPage() {
               })}
             </div>
 
-            <div className="pt-3 border-t border-[#E3E8EF] flex items-center justify-between">
+            <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="h-9 px-4 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="h-9 px-5 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                className="h-9 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <span>Continue to Timing & Scoring</span>
                 <ChevronRight className="w-4 h-4" />
@@ -446,26 +446,26 @@ export default function NewExamPage() {
 
         {/* STEP 3: Timing & Scoring */}
         {currentStep === 3 && (
-          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-6 shadow-subtle space-y-5">
-            <h3 className="text-base font-bold text-[#172033] border-b border-[#E3E8EF] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-6 shadow-subtle space-y-5">
+            <h3 className="text-base font-bold text-[#182338] border-b border-[#E1E7EF] pb-3">
               Step 3: Timing & Pass Criteria
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="text-xs font-bold text-[#172033] mb-1.5 block">
+                <label className="text-xs font-bold text-[#182338] mb-1.5 block">
                   Duration (Minutes)
                 </label>
                 <input
                   type="number"
                   value={formData.durationMinutes}
                   onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 45 })}
-                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] focus:bg-white"
+                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#172033] mb-1.5 block">
+                <label className="text-xs font-bold text-[#182338] mb-1.5 block">
                   Passing Percentage (%)
                 </label>
                 <input
@@ -477,23 +477,23 @@ export default function NewExamPage() {
                       rules: { ...formData.rules!, passPercentage: parseInt(e.target.value) || 40 },
                     })
                   }
-                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] focus:bg-white"
+                  className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] focus:bg-white"
                 />
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#E3E8EF] flex items-center justify-between">
+            <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="h-9 px-4 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentStep(4)}
-                className="h-9 px-5 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                className="h-9 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <span>Continue to Rules & Security</span>
                 <ChevronRight className="w-4 h-4" />
@@ -504,13 +504,13 @@ export default function NewExamPage() {
 
         {/* STEP 4: Rules & Security */}
         {currentStep === 4 && (
-          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-6 shadow-subtle space-y-5">
-            <h3 className="text-base font-bold text-[#172033] border-b border-[#E3E8EF] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-6 shadow-subtle space-y-5">
+            <h3 className="text-base font-bold text-[#182338] border-b border-[#E1E7EF] pb-3">
               Step 4: Examination Security & Rules
             </h3>
 
             <div className="space-y-3">
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-[#F6F8FB] border border-[#E3E8EF] cursor-pointer text-xs font-bold text-[#172033]">
+              <label className="flex items-center gap-3 p-3 rounded-xl bg-[#F4F7FB] border border-[#E1E7EF] cursor-pointer text-xs font-bold text-[#182338]">
                 <input
                   type="checkbox"
                   checked={formData.rules?.allowBacktrack}
@@ -520,12 +520,12 @@ export default function NewExamPage() {
                       rules: { ...formData.rules!, allowBacktrack: e.target.checked },
                     })
                   }
-                  className="w-4 h-4 text-[#2563A8] rounded border-[#E3E8EF] focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 text-[#2468B2] rounded border-[#E1E7EF] focus:ring-0 cursor-pointer"
                 />
                 <span>Allow Free Question Palette Navigation & Backtracking</span>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-[#F6F8FB] border border-[#E3E8EF] cursor-pointer text-xs font-bold text-[#172033]">
+              <label className="flex items-center gap-3 p-3 rounded-xl bg-[#F4F7FB] border border-[#E1E7EF] cursor-pointer text-xs font-bold text-[#182338]">
                 <input
                   type="checkbox"
                   checked={formData.rules?.autoSubmitOnTimeUp}
@@ -535,24 +535,24 @@ export default function NewExamPage() {
                       rules: { ...formData.rules!, autoSubmitOnTimeUp: e.target.checked },
                     })
                   }
-                  className="w-4 h-4 text-[#2563A8] rounded border-[#E3E8EF] focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 text-[#2468B2] rounded border-[#E1E7EF] focus:ring-0 cursor-pointer"
                 />
                 <span>Enforce Automatic Submission When Countdown Reaches 00:00</span>
               </label>
             </div>
 
-            <div className="pt-3 border-t border-[#E3E8EF] flex items-center justify-between">
+            <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="h-9 px-4 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentStep(5)}
-                className="h-9 px-5 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                className="h-9 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <span>Continue to Final Review</span>
                 <ChevronRight className="w-4 h-4" />
@@ -563,42 +563,42 @@ export default function NewExamPage() {
 
         {/* STEP 5: Review & Publish */}
         {currentStep === 5 && (
-          <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-6 shadow-subtle space-y-5">
-            <h3 className="text-base font-bold text-[#172033] border-b border-[#E3E8EF] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-6 shadow-subtle space-y-5">
+            <h3 className="text-base font-bold text-[#182338] border-b border-[#E1E7EF] pb-3">
               Step 5: Review & Publish Examination Paper
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-[#F6F8FB] border border-[#E3E8EF] rounded-xl text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl text-xs">
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#667085] block">Title</span>
-                <strong className="text-xs font-bold text-[#172033]">{formData.title}</strong>
+                <strong className="text-xs font-bold text-[#182338]">{formData.title}</strong>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#667085] block">Code</span>
-                <strong className="text-xs font-mono font-bold text-[#2563A8]">{formData.code}</strong>
+                <strong className="text-xs font-mono font-bold text-[#2468B2]">{formData.code}</strong>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#667085] block">Questions</span>
-                <strong className="text-xs font-mono font-bold text-[#172033]">{formData.questionIds?.length} Items</strong>
+                <strong className="text-xs font-mono font-bold text-[#182338]">{formData.questionIds?.length} Items</strong>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#667085] block">Total Marks</span>
-                <strong className="text-xs font-mono font-bold text-[#2563A8]">{formData.totalMarks} Marks</strong>
+                <strong className="text-xs font-mono font-bold text-[#2468B2]">{formData.totalMarks} Marks</strong>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#E3E8EF] flex items-center justify-between">
+            <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setCurrentStep(4)}
-                className="h-9 px-4 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleSaveExam}
-                className="h-10 px-6 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-subtle cursor-pointer"
+                className="h-10 px-6 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-subtle cursor-pointer"
               >
                 <Save className="w-4 h-4" />
                 <span>Confirm & Publish Examination</span>

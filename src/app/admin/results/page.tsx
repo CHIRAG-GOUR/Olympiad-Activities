@@ -71,16 +71,16 @@ export default function ResultsAdminPage() {
   });
 
   return (
-    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       {/* 1. HEADER (Requirement 17) */}
-      <div className="bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2563A8]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Evaluation Ledger</span>
             <span className="text-[#667085]">•</span>
             <span>Official Examination Records</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#172033] mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182338] mt-1">
             Results & Reports
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
@@ -91,7 +91,7 @@ export default function ResultsAdminPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/live-monitor"
-            className="h-9 px-4 bg-white border border-[#E3E8EF] hover:bg-[#EAF2FB] text-[#1B4E88] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
+            className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
           >
             <span>Live Monitor Feed</span>
           </Link>
@@ -101,7 +101,7 @@ export default function ResultsAdminPage() {
       <div className="space-y-6">
         
         {/* 2. COMPACT PROFESSIONAL FILTERS (Requirement 17) */}
-        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl p-4 shadow-subtle flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-subtle flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           <div className="flex flex-1 items-center gap-3 flex-wrap">
             {/* Search Input */}
             <div className="relative flex-1 min-w-[240px]">
@@ -111,7 +111,7 @@ export default function ResultsAdminPage() {
                 placeholder="Search candidate name or roll number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 text-xs bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] font-semibold focus:outline-none focus:border-[#2563A8] focus:bg-white"
+                className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
               />
             </div>
 
@@ -119,7 +119,7 @@ export default function ResultsAdminPage() {
             <select
               value={selectedExamId}
               onChange={(e) => setSelectedExamId(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Examinations</option>
               {exams.map((ex) => (
@@ -133,7 +133,7 @@ export default function ResultsAdminPage() {
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Classes</option>
               <option value="6">Class 6</option>
@@ -145,7 +145,7 @@ export default function ResultsAdminPage() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F6F8FB]/60 border border-[#E3E8EF] rounded-xl text-[#172033] focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Statuses</option>
               <option value="passed">Passed Tier</option>
@@ -154,20 +154,20 @@ export default function ResultsAdminPage() {
           </div>
 
           <div className="text-xs text-[#667085] font-semibold text-right">
-            Showing <strong className="text-[#2563A8] font-bold">{filteredAttempts.length}</strong> evaluated records
+            Showing <strong className="text-[#2468B2] font-bold">{filteredAttempts.length}</strong> evaluated records
           </div>
         </div>
 
         {/* 3. RESULT TABLE (Requirements 18, 24) */}
-        <div className="bg-[#FFFFFF] border border-[#E3E8EF] rounded-2xl shadow-subtle overflow-hidden">
+        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl shadow-subtle overflow-hidden">
           {filteredAttempts.length === 0 ? (
             /* EMPTY STATE (Requirement 24) */
             <div className="py-16 px-6 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#EAF2FB] text-[#2563A8] flex items-center justify-center mx-auto border border-[#E3E8EF]">
+              <div className="w-12 h-12 rounded-2xl bg-[#EAF2FC] text-[#2468B2] flex items-center justify-center mx-auto border border-[#E1E7EF]">
                 <Award className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-[#172033]">No Results Yet</h3>
+                <h3 className="text-base font-bold text-[#182338]">No Results Yet</h3>
                 <p className="text-xs text-[#667085] max-w-md mx-auto">
                   Student results will appear here once an examination has been completed and evaluated.
                 </p>
@@ -175,7 +175,7 @@ export default function ResultsAdminPage() {
               <div className="pt-2">
                 <Link
                   href="/admin/exams"
-                  className="inline-flex items-center gap-2 h-10 px-5 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-xl text-xs font-bold shadow-subtle transition-all"
+                  className="inline-flex items-center gap-2 h-10 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-subtle transition-all"
                 >
                   <span>View Active Examinations</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -185,7 +185,7 @@ export default function ResultsAdminPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
-                <thead className="bg-[#F6F8FB] text-[#667085] border-b border-[#E3E8EF] uppercase text-[10px] tracking-wider">
+                <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="p-4">Student</th>
                     <th className="p-4">Examination</th>
@@ -199,7 +199,7 @@ export default function ResultsAdminPage() {
                     <th className="p-4 text-right">Report</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E3E8EF] text-[#172033]">
+                <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
                   {filteredAttempts.map((att) => {
                     const totalQ = att.questionEvaluations.length || 50;
                     const correctQ = att.questionEvaluations.filter((q) => q.isCorrect).length;
@@ -208,28 +208,28 @@ export default function ResultsAdminPage() {
                     const unansweredQ = Math.max(0, totalQ - attemptedQ);
 
                     return (
-                      <tr key={att.id} className="hover:bg-[#F6F8FB]/60 transition-colors">
+                      <tr key={att.id} className="hover:bg-[#F4F7FB]/60 transition-colors">
                         <td className="p-4">
-                          <div className="font-bold text-sm text-[#172033]">{att.student.name}</div>
+                          <div className="font-bold text-sm text-[#182338]">{att.student.name}</div>
                           <div className="text-[11px] font-mono text-[#667085] mt-0.5">
                             {att.student.studentId} • {att.student.schoolName || "Registered Candidate"}
                           </div>
                         </td>
 
                         <td className="p-4">
-                          <div className="font-bold text-[#172033]">{att.examTitle}</div>
-                          <div className="text-[11px] font-mono text-[#2563A8]">{att.examCode}</div>
+                          <div className="font-bold text-[#182338]">{att.examTitle}</div>
+                          <div className="text-[11px] font-mono text-[#2468B2]">{att.examCode}</div>
                         </td>
 
-                        <td className="p-4 text-center font-bold text-[#172033]">
+                        <td className="p-4 text-center font-bold text-[#182338]">
                           Class {att.student.grade || 6}
                         </td>
 
-                        <td className="p-4 text-center font-mono font-bold text-sm text-[#2563A8]">
+                        <td className="p-4 text-center font-mono font-bold text-sm text-[#2468B2]">
                           {att.scoreDisplay}
                         </td>
 
-                        <td className="p-4 text-center font-mono font-bold text-[#1B4E88]">
+                        <td className="p-4 text-center font-mono font-bold text-[#1C5190]">
                           {att.percentage}%
                         </td>
 
@@ -257,7 +257,7 @@ export default function ResultsAdminPage() {
                         <td className="p-4 text-right">
                           <Link
                             href={`/results/${att.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2563A8] hover:bg-[#1B4E88] text-white rounded-lg text-xs font-bold transition-all shadow-subtle"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-lg text-xs font-bold transition-all shadow-subtle"
                           >
                             <FileText className="w-3.5 h-3.5" />
                             <span>View</span>

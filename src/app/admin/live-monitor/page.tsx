@@ -121,7 +121,7 @@ export default function LiveMonitorPage() {
   const activeCount = sessions.filter((s) => s.connectionStatus === "Connected" && !s.isSubmitted).length;
 
   return (
-    <div className="space-y-6 animate-rise-in font-sans text-[#172033]">
+    <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       <AdminHeader
         title="Live Examination Control Room"
         subtitle="Real-time candidate monitoring, live telemetry, connection heartbeats, and browser diagnostics"
@@ -129,7 +129,7 @@ export default function LiveMonitorPage() {
 
       <div className="space-y-6">
         {/* Top Control Room Status Banner (Forest Green Gradient) */}
-        <div className="bg-gradient-to-r from-[#2563A8] via-[#2563A8] to-[#1B4E88] text-white rounded-2xl p-6 lg:p-8 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-4 border-[#F4C542] relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#2468B2] via-[#2468B2] to-[#1C5190] text-white rounded-2xl p-6 lg:p-8 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-4 border-[#F4C542] relative overflow-hidden">
           <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-80 h-80 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
           <div className="space-y-2 relative z-10">
@@ -158,16 +158,16 @@ export default function LiveMonitorPage() {
             <button
               type="button"
               onClick={loadSessions}
-              className="h-[46px] px-5 bg-[#F4C542] hover:bg-[#E0AE2B] text-[#1B4E88] rounded-xl text-[14px] font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer"
+              className="h-[46px] px-5 bg-[#F4C542] hover:bg-[#E0AE2B] text-[#1C5190] rounded-xl text-[14px] font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer"
             >
-              <RefreshCw className={`w-4 h-4 text-[#1B4E88] ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 text-[#1C5190] ${isRefreshing ? "animate-spin" : ""}`} />
               Refresh Feed
             </button>
           </div>
         </div>
 
         {/* Search & Filter Toolbar */}
-        <div className="bg-white border-2 border-[#E3E8EF] rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="flex flex-1 items-center gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[280px]">
               <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -176,14 +176,14 @@ export default function LiveMonitorPage() {
                 placeholder="Search candidate name, candidate ID, or session code..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-[46px] pl-11 pr-4 text-[14px] bg-[#F6F8FB] border border-[#E3E8EF] rounded-xl focus:bg-white focus:outline-none focus:border-[#2563A8] text-slate-900 font-bold placeholder:text-slate-400"
+                className="w-full h-[46px] pl-11 pr-4 text-[14px] bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl focus:bg-white focus:outline-none focus:border-[#2468B2] text-slate-900 font-bold placeholder:text-slate-400"
               />
             </div>
 
             <select
               value={filterExam}
               onChange={(e) => setFilterExam(e.target.value)}
-              className="h-[46px] px-4 text-[14px] font-bold bg-[#F6F8FB] border border-[#E3E8EF] rounded-xl text-[#1B4E88] focus:bg-white focus:outline-none focus:border-[#2563A8] cursor-pointer"
+              className="h-[46px] px-4 text-[14px] font-bold bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl text-[#1C5190] focus:bg-white focus:outline-none focus:border-[#2468B2] cursor-pointer"
             >
               <option value="all">All Active Examinations</option>
               {uniqueExams.map((ex) => (
@@ -195,16 +195,16 @@ export default function LiveMonitorPage() {
           </div>
 
           <div className="text-[13px] text-slate-600 font-bold">
-            Showing <strong className="text-[#2563A8] font-bold">{filteredSessions.length}</strong> live candidate sessions
+            Showing <strong className="text-[#2468B2] font-bold">{filteredSessions.length}</strong> live candidate sessions
           </div>
         </div>
 
         {/* Live Surveillance Table */}
-        <div className="bg-white border-2 border-[#E3E8EF] rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[14px] border-collapse">
               <thead>
-                <tr className="bg-[#F6F8FB] border-b border-[#E3E8EF] text-slate-600 font-bold text-[12px] uppercase tracking-wider">
+                <tr className="bg-[#F4F7FB] border-b border-[#E1E7EF] text-slate-600 font-bold text-[12px] uppercase tracking-wider">
                   <th className="py-4 px-6">Student Candidate</th>
                   <th className="py-4 px-6">Session ID</th>
                   <th className="py-4 px-6">Examination</th>
@@ -216,7 +216,7 @@ export default function LiveMonitorPage() {
                   <th className="py-4 px-6 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E3E8EF]">
+              <tbody className="divide-y divide-[#E1E7EF]">
                 {filteredSessions.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="py-12 text-center text-slate-500 font-medium">
@@ -225,7 +225,7 @@ export default function LiveMonitorPage() {
                   </tr>
                 ) : (
                   filteredSessions.map((session) => (
-                    <tr key={session.id} className="hover:bg-[#F6F8FB]/60 transition-colors h-[76px]">
+                    <tr key={session.id} className="hover:bg-[#F4F7FB]/60 transition-colors h-[76px]">
                       {/* Candidate Name & School */}
                       <td className="py-4 px-6">
                         <div className="font-bold text-[15px] text-slate-900">
@@ -237,7 +237,7 @@ export default function LiveMonitorPage() {
                       </td>
 
                       {/* Session ID */}
-                      <td className="py-4 px-6 font-mono font-bold text-[13px] text-[#1B4E88]">
+                      <td className="py-4 px-6 font-mono font-bold text-[13px] text-[#1C5190]">
                         {session.sessionId}
                       </td>
 
@@ -248,17 +248,17 @@ export default function LiveMonitorPage() {
 
                       {/* Current Progress & Question */}
                       <td className="py-4 px-6">
-                        <div className="font-mono font-bold text-[13px] text-[#2563A8] mb-1">
+                        <div className="font-mono font-bold text-[13px] text-[#2468B2] mb-1">
                           Question {session.currentQuestionIndex + 1} of {session.totalQuestions}
                         </div>
                         <div className="w-36 flex items-center gap-2">
-                          <div className="flex-1 h-2.5 bg-[#F6F8FB] rounded-full overflow-hidden border border-[#E3E8EF]">
+                          <div className="flex-1 h-2.5 bg-[#F4F7FB] rounded-full overflow-hidden border border-[#E1E7EF]">
                             <div
-                              className="h-full bg-[#2563A8] rounded-full"
+                              className="h-full bg-[#2468B2] rounded-full"
                               style={{ width: `${session.progressPercent}%` }}
                             />
                           </div>
-                          <span className="font-mono text-[11px] font-bold text-[#2563A8]">
+                          <span className="font-mono text-[11px] font-bold text-[#2468B2]">
                             {session.progressPercent}%
                           </span>
                         </div>
@@ -294,8 +294,8 @@ export default function LiveMonitorPage() {
                         <span
                           className={`px-3 py-1 rounded-xl text-[12px] font-bold ${
                             session.isSubmitted
-                              ? "bg-[#F6F8FB] text-slate-600 border border-[#E3E8EF]"
-                              : "bg-[#2563A8] text-white shadow-subtle"
+                              ? "bg-[#F4F7FB] text-slate-600 border border-[#E1E7EF]"
+                              : "bg-[#2468B2] text-white shadow-subtle"
                           }`}
                         >
                           {session.isSubmitted ? "Submitted" : "In Progress"}

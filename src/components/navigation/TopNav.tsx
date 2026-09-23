@@ -99,16 +99,16 @@ export function TopNav() {
   };
 
   return (
-    <header className="shrink-0 bg-white border-b border-[#E3E8EF] z-30">
+    <header className="shrink-0 bg-white border-b border-[#E1E7EF] z-30">
       <div className="mx-auto w-full max-w-[1480px] px-4 sm:px-6">
         <div className="h-16 flex items-center gap-3">
           {/* Emblem + wordmark */}
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 shrink-0 group">
-            <span className="w-9 h-9 rounded-xl bg-[#2563A8] text-white grid place-items-center font-display font-bold text-lg shadow-subtle group-hover:bg-[#1B4E88] transition-colors">
+            <span className="w-9 h-9 rounded-xl bg-[#2468B2] text-white grid place-items-center font-display font-bold text-lg shadow-subtle group-hover:bg-[#1C5190] transition-colors">
               Ω
             </span>
             <span className="hidden sm:block leading-tight">
-              <span className="block text-[14px] font-bold text-[#172033] tracking-[-0.01em]">
+              <span className="block text-[14px] font-bold text-[#182338] tracking-[-0.01em]">
                 Olympiad
               </span>
               <span className="block text-[11px] text-[#98A2B3] font-medium">Examination Centre</span>
@@ -125,13 +125,13 @@ export function TopNav() {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={`relative px-3.5 h-16 flex items-center text-[13.5px] font-semibold transition-colors ${
-                    active ? "text-[#2563A8]" : "text-[#667085] hover:text-[#172033]"
+                    active ? "text-[#2468B2]" : "text-[#667085] hover:text-[#182338]"
                   }`}
                 >
                   {item.label}
                   <span
                     className={`absolute left-3 right-3 bottom-0 h-[2.5px] rounded-t-full transition-opacity ${
-                      active ? "bg-[#2563A8] opacity-100" : "opacity-0"
+                      active ? "bg-[#2468B2] opacity-100" : "opacity-0"
                     }`}
                   />
                 </Link>
@@ -147,10 +147,10 @@ export function TopNav() {
               <Link
                 href="/admin/live-monitor"
                 title="Live examination activity"
-                className="relative w-10 h-10 grid place-items-center rounded-xl text-[#667085] hover:text-[#172033] hover:bg-[#F6F8FB] transition-colors"
+                className="relative w-10 h-10 grid place-items-center rounded-xl text-[#667085] hover:text-[#182338] hover:bg-[#F4F7FB] transition-colors"
               >
                 <Bell className="w-[18px] h-[18px]" strokeWidth={2} />
-                <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-[#F39A3D]" />
+                <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-[#F29A38]" />
               </Link>
             )}
 
@@ -160,13 +160,13 @@ export function TopNav() {
                 onClick={() => setProfileOpen((o) => !o)}
                 aria-expanded={profileOpen}
                 aria-haspopup="menu"
-                className="flex items-center gap-2 h-10 pl-1.5 pr-2 rounded-xl border border-[#E3E8EF] bg-white hover:bg-[#F6F8FB] transition-colors"
+                className="flex items-center gap-2 h-10 pl-1.5 pr-2 rounded-xl border border-[#E1E7EF] bg-white hover:bg-[#F4F7FB] transition-colors"
               >
-                <span className="w-7 h-7 rounded-lg bg-[#EAF2FB] text-[#2563A8] grid place-items-center text-[11px] font-bold">
+                <span className="w-7 h-7 rounded-lg bg-[#EAF2FC] text-[#2468B2] grid place-items-center text-[11px] font-bold">
                   {initials(user?.name ?? "User")}
                 </span>
                 <span className="hidden md:block text-left leading-tight pr-0.5">
-                  <span className="block text-[12.5px] font-semibold text-[#172033] max-w-[130px] truncate">
+                  <span className="block text-[12.5px] font-semibold text-[#182338] max-w-[130px] truncate">
                     {user?.name}
                   </span>
                   <span className="block text-[10.5px] text-[#98A2B3]">{ROLE_LABEL[role]}</span>
@@ -177,10 +177,10 @@ export function TopNav() {
               {profileOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%+8px)] w-60 bg-white border border-[#E3E8EF] rounded-2xl shadow-dropdown p-1.5 animate-rise-in"
+                  className="absolute right-0 top-[calc(100%+8px)] w-60 bg-white border border-[#E1E7EF] rounded-2xl shadow-dropdown p-1.5 animate-rise-in"
                 >
-                  <div className="px-3 py-2.5 border-b border-[#E3E8EF] mb-1">
-                    <div className="text-[13px] font-semibold text-[#172033] truncate">{user?.name}</div>
+                  <div className="px-3 py-2.5 border-b border-[#E1E7EF] mb-1">
+                    <div className="text-[13px] font-semibold text-[#182338] truncate">{user?.name}</div>
                     <div className="text-[11.5px] text-[#98A2B3] truncate">{user?.email}</div>
                     {user?.schoolName && (
                       <div className="text-[11px] text-[#667085] mt-1 truncate">{user.schoolName}</div>
@@ -200,7 +200,7 @@ export function TopNav() {
                         setProfileOpen(false);
                       }}
                       className={`w-full flex items-center justify-between gap-2 px-3 h-9 rounded-lg text-[13px] font-medium transition-colors ${
-                        role === r ? "bg-[#EAF2FB] text-[#2563A8] font-semibold" : "text-[#172033] hover:bg-[#F6F8FB]"
+                        role === r ? "bg-[#EAF2FC] text-[#2468B2] font-semibold" : "text-[#182338] hover:bg-[#F4F7FB]"
                       }`}
                     >
                       {ROLE_LABEL[r]}
@@ -217,7 +217,7 @@ export function TopNav() {
               onClick={() => setMobileOpen((o) => !o)}
               aria-expanded={mobileOpen}
               aria-label="Toggle navigation"
-              className="lg:hidden w-10 h-10 grid place-items-center rounded-xl border border-[#E3E8EF] text-[#172033] hover:bg-[#F6F8FB] transition-colors"
+              className="lg:hidden w-10 h-10 grid place-items-center rounded-xl border border-[#E1E7EF] text-[#182338] hover:bg-[#F4F7FB] transition-colors"
             >
               {mobileOpen ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
             </button>
@@ -228,7 +228,7 @@ export function TopNav() {
       {/* Mobile navigation sheet */}
       {mobileOpen && (
         <nav
-          className="lg:hidden border-t border-[#E3E8EF] bg-white px-4 sm:px-6 py-2 animate-rise-in"
+          className="lg:hidden border-t border-[#E1E7EF] bg-white px-4 sm:px-6 py-2 animate-rise-in"
           aria-label="Main"
         >
           {items.map((item) => {
@@ -239,7 +239,7 @@ export function TopNav() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center h-12 px-3 rounded-xl text-[14px] font-semibold transition-colors ${
-                  active ? "bg-[#EAF2FB] text-[#2563A8]" : "text-[#172033] hover:bg-[#F6F8FB]"
+                  active ? "bg-[#EAF2FC] text-[#2468B2]" : "text-[#182338] hover:bg-[#F4F7FB]"
                 }`}
               >
                 {item.label}

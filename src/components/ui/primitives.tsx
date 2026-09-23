@@ -28,9 +28,9 @@ export function Card({
 }) {
   return (
     <Tag
-      className={`bg-white border border-[#E3E8EF] rounded-2xl shadow-subtle ${
+      className={`bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle ${
         interactive
-          ? "transition-[transform,box-shadow,border-color] duration-200 hover:border-[#C2D4E8] hover:shadow-lifted hover:-translate-y-[1px]"
+          ? "transition-[transform,box-shadow,border-color] duration-200 hover:border-[#C3D8EC] hover:shadow-lifted hover:-translate-y-[1px]"
           : ""
       } ${className}`}
     >
@@ -54,8 +54,8 @@ export function SectionHeading({
   return (
     <div className="flex items-end justify-between gap-4 mb-4">
       <div className="min-w-0">
-        <h2 className="text-[15px] sm:text-base font-bold text-[#172033] tracking-[-0.01em] flex items-center gap-2">
-          {Icon && <Icon className="w-4 h-4 text-[#2563A8]" strokeWidth={2.2} />}
+        <h2 className="text-[15px] sm:text-base font-bold text-[#182338] tracking-[-0.01em] flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-[#2468B2]" strokeWidth={2.2} />}
           {title}
         </h2>
         {description && (
@@ -65,7 +65,7 @@ export function SectionHeading({
       {action && (
         <Link
           href={action.href}
-          className="shrink-0 text-[13px] font-semibold text-[#2563A8] hover:text-[#1B4E88] transition-colors whitespace-nowrap"
+          className="shrink-0 text-[13px] font-semibold text-[#2468B2] hover:text-[#1C5190] transition-colors whitespace-nowrap"
         >
           {action.label} →
         </Link>
@@ -80,17 +80,17 @@ type ButtonTone = "primary" | "secondary" | "ghost" | "yellow";
 
 const BUTTON_TONES: Record<ButtonTone, string> = {
   primary:
-    "bg-[#2563A8] text-white border-transparent hover:bg-[#1B4E88] active:bg-[#143C69] shadow-subtle",
+    "bg-[#2468B2] text-white border-transparent hover:bg-[#1C5190] active:bg-[#163F71] shadow-subtle",
   secondary:
-    "bg-white text-[#172033] border-[#E3E8EF] hover:border-[#C2D4E8] hover:bg-[#F6F8FB] active:bg-[#EAF2FB]",
+    "bg-white text-[#182338] border-[#E1E7EF] hover:border-[#C3D8EC] hover:bg-[#F4F7FB] active:bg-[#EAF2FC]",
   ghost:
-    "bg-transparent text-[#2563A8] border-transparent hover:bg-[#EAF2FB] active:bg-[#DCE9F7]",
+    "bg-transparent text-[#2468B2] border-transparent hover:bg-[#EAF2FC] active:bg-[#D9E8F8]",
   yellow:
     "bg-[#F4C542] text-[#5A4410] border-transparent hover:bg-[#E0AE2B] active:bg-[#CE9E23] shadow-subtle",
 };
 
 const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl border text-[13px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563A8]/40 focus-visible:ring-offset-2 disabled:opacity-45 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl border text-[13px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2468B2]/40 focus-visible:ring-offset-2 disabled:opacity-45 disabled:pointer-events-none";
 
 export function ActionLink({
   href,
@@ -150,11 +150,11 @@ export function ActionButton({
 export type StatusKind = "solving" | "submitted" | "paused" | "completed" | "idle";
 
 const STATUS_STYLE: Record<StatusKind, { dot: string; label: string; text: string }> = {
-  solving: { dot: "bg-[#39A96B]", label: "Solving", text: "text-[#2E8F59]" },
-  submitted: { dot: "bg-[#2563A8]", label: "Submitted", text: "text-[#2563A8]" },
-  paused: { dot: "bg-[#F39A3D]", label: "Paused", text: "text-[#B4701F]" },
+  solving: { dot: "bg-[#55B987]", label: "Solving", text: "text-[#3E9E6F]" },
+  submitted: { dot: "bg-[#2468B2]", label: "Submitted", text: "text-[#2468B2]" },
+  paused: { dot: "bg-[#F29A38]", label: "Paused", text: "text-[#B4701F]" },
   completed: { dot: "bg-[#667085]", label: "Completed", text: "text-[#667085]" },
-  idle: { dot: "bg-[#C2D4E8]", label: "Not started", text: "text-[#98A2B3]" },
+  idle: { dot: "bg-[#C3D8EC]", label: "Not started", text: "text-[#98A2B3]" },
 };
 
 /** Understated status marker: a small dot plus plain text. No loud pills. */
@@ -183,8 +183,8 @@ export function ScoreMark({
   const big = size === "md";
   return (
     <span className="inline-flex flex-col items-center leading-none font-mono tabular-nums">
-      <span className={`${big ? "text-[15px]" : "text-[13px]"} font-bold text-[#172033]`}>{score}</span>
-      <span className={`${big ? "w-7" : "w-6"} h-px bg-[#172033]/25 my-[3px]`} />
+      <span className={`${big ? "text-[15px]" : "text-[13px]"} font-bold text-[#182338]`}>{score}</span>
+      <span className={`${big ? "w-7" : "w-6"} h-px bg-[#182338]/25 my-[3px]`} />
       <span className={`${big ? "text-[12px]" : "text-[11px]"} text-[#667085]`}>{max}</span>
     </span>
   );
@@ -194,11 +194,11 @@ export function ScoreMark({
 export function AccuracySeal({ percent, size = 44 }: { percent: number; size?: number }) {
   const r = (size - 6) / 2;
   const circ = 2 * Math.PI * r;
-  const tone = percent >= 75 ? "#39A96B" : percent >= 50 ? "#F39A3D" : "#D9534F";
+  const tone = percent >= 75 ? "#55B987" : percent >= 50 ? "#F29A38" : "#E8786A";
   return (
     <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#E8EDF4" strokeWidth={3} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#E7EDF5" strokeWidth={3} />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -237,15 +237,15 @@ export function Figure({
   tone?: "default" | "primary" | "success" | "warn";
 }) {
   const valueTone = {
-    default: "text-[#172033]",
-    primary: "text-[#2563A8]",
-    success: "text-[#2E8F59]",
+    default: "text-[#182338]",
+    primary: "text-[#2468B2]",
+    success: "text-[#3E9E6F]",
     warn: "text-[#B4701F]",
   }[tone];
   return (
     <div>
       <div className={`font-mono text-[26px] leading-none font-bold tabular-nums ${valueTone}`}>{value}</div>
-      <div className="text-[12px] font-semibold text-[#172033] mt-1.5">{label}</div>
+      <div className="text-[12px] font-semibold text-[#182338] mt-1.5">{label}</div>
       {hint && <div className="text-[11px] text-[#98A2B3] mt-0.5">{hint}</div>}
     </div>
   );
@@ -256,7 +256,7 @@ export function DotGauge({
   filled,
   total,
   max = 14,
-  tone = "#2563A8",
+  tone = "#2468B2",
 }: {
   filled: number;
   total: number;
@@ -272,7 +272,7 @@ export function DotGauge({
         <span
           key={i}
           className="w-1.5 h-1.5 rounded-full transition-colors"
-          style={{ background: i < lit ? tone : "#E3E8EF" }}
+          style={{ background: i < lit ? tone : "#E1E7EF" }}
         />
       ))}
     </span>
@@ -282,7 +282,7 @@ export function DotGauge({
 /** Slim measured progress rule — used sparingly, never as the primary visual. */
 export function ProgressRule({
   percent,
-  tone = "#2563A8",
+  tone = "#2468B2",
   className = "",
 }: {
   percent: number;
@@ -290,7 +290,7 @@ export function ProgressRule({
   className?: string;
 }) {
   return (
-    <span className={`block h-1.5 w-full rounded-full bg-[#E8EDF4] overflow-hidden ${className}`}>
+    <span className={`block h-1.5 w-full rounded-full bg-[#E7EDF5] overflow-hidden ${className}`}>
       <span
         className="block h-full rounded-full transition-[width] duration-500 ease-out"
         style={{ width: `${Math.min(100, Math.max(0, percent))}%`, background: tone }}

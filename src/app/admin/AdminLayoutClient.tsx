@@ -12,7 +12,7 @@ import { TopNav } from "@/components/navigation/TopNav";
  */
 export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   return (
-    <div className="h-dvh bg-[#F6F8FB] flex flex-col overflow-hidden font-sans text-[#172033] antialiased">
+    <div className="h-dvh bg-[#F4F7FB] flex flex-col overflow-hidden font-sans text-[#182338] antialiased">
       <TopNav />
       <main className="flex-1 min-h-0 overflow-y-auto">
         <div className="mx-auto w-full max-w-[1480px] px-4 sm:px-6 py-6 sm:py-8">{children}</div>

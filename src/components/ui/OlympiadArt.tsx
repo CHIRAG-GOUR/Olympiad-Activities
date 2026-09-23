@@ -11,13 +11,13 @@ import React from "react";
  * scattered decoration.
  */
 
-const INK = "#172033";
-const BLUE = "#2563A8";
-const SKY = "#4FA8D8";
+const INK = "#182338";
+const BLUE = "#2468B2";
+const SKY = "#59B6DE";
 const YELLOW = "#F4C542";
-const ORANGE = "#F39A3D";
-const LAV = "#8C7AE6";
-const LINE = "#C2D4E8";
+const ORANGE = "#F29A38";
+const LAV = "#8067D9";
+const LINE = "#C3D8EC";
 
 /* ── Section motifs ───────────────────────────────────────── */
 
@@ -104,8 +104,8 @@ export function InteractionMotif({
       {kind === "rotate" && (
         <g className={animate ? "origin-center transition-transform duration-700 group-hover:rotate-12" : ""} style={{ transformOrigin: "36px 28px" }}>
           <path d="M22 20 L36 13 L50 20 L36 27 Z" fill="#FFFFFF" stroke={BLUE} strokeWidth="1.8" strokeLinejoin="round" />
-          <path d="M22 20 v14 l14 7 V27 Z" fill="#EAF2FB" stroke={BLUE} strokeWidth="1.8" strokeLinejoin="round" />
-          <path d="M50 20 v14 l-14 7 V27 Z" fill="#DCE9F7" stroke={BLUE} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M22 20 v14 l14 7 V27 Z" fill="#EAF2FC" stroke={BLUE} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M50 20 v14 l-14 7 V27 Z" fill="#D9E8F8" stroke={BLUE} strokeWidth="1.8" strokeLinejoin="round" />
           <circle cx="29" cy="24" r="1.6" fill={INK} />
           <circle cx="43" cy="31" r="1.6" fill={INK} />
           <circle cx="36" cy="20" r="1.6" fill={ORANGE} />
@@ -116,7 +116,7 @@ export function InteractionMotif({
         <>
           <path d="M14 44 H60 M14 44 V10" stroke={LINE} strokeWidth="1.6" strokeLinecap="round" />
           {[24, 34, 44, 54].map((x) => (
-            <path key={x} d={`M${x} 42 v4`} stroke="#E3E8EF" strokeWidth="1.2" />
+            <path key={x} d={`M${x} 42 v4`} stroke="#E1E7EF" strokeWidth="1.2" />
           ))}
           <path d="M18 38 L30 28 L42 32 L56 16" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="42" cy="32" r="3.4" fill="#FFFFFF" stroke={ORANGE} strokeWidth="2" className={animate ? "transition-transform duration-500 group-hover:-translate-y-1.5" : ""} />
@@ -126,7 +126,7 @@ export function InteractionMotif({
 
       {kind === "arrange" && (
         <>
-          <rect x="12" y="12" width="14" height="12" rx="2.5" fill="#EAF2FB" stroke={BLUE} strokeWidth="1.8" />
+          <rect x="12" y="12" width="14" height="12" rx="2.5" fill="#EAF2FC" stroke={BLUE} strokeWidth="1.8" />
           <rect x="30" y="12" width="14" height="12" rx="2.5" fill="#FFFFFF" stroke={LINE} strokeWidth="1.8" />
           <rect x="48" y="12" width="12" height="12" rx="2.5" fill="#FFFFFF" stroke={LINE} strokeWidth="1.8" />
           <rect
@@ -199,24 +199,24 @@ export function ExamCentreScene({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 320 200" className={className} fill="none" aria-hidden>
       {/* orbital construction arcs */}
-      <ellipse cx="232" cy="96" rx="76" ry="76" stroke="#E3E8EF" strokeWidth="1.4" />
-      <ellipse cx="232" cy="96" rx="76" ry="28" stroke="#E3E8EF" strokeWidth="1.4" transform="rotate(-24 232 96)" />
+      <ellipse cx="232" cy="96" rx="76" ry="76" stroke="#E1E7EF" strokeWidth="1.4" />
+      <ellipse cx="232" cy="96" rx="76" ry="28" stroke="#E1E7EF" strokeWidth="1.4" transform="rotate(-24 232 96)" />
 
       {/* examination paper */}
       <g>
-        <rect x="34" y="34" width="104" height="132" rx="6" fill="#FFFFFF" stroke="#D3DBE6" strokeWidth="2" />
-        <rect x="34" y="34" width="104" height="22" rx="6" fill="#EAF2FB" />
-        <path d="M34 56 H138" stroke="#D3DBE6" strokeWidth="1.4" />
+        <rect x="34" y="34" width="104" height="132" rx="6" fill="#FFFFFF" stroke="#D5DDE8" strokeWidth="2" />
+        <rect x="34" y="34" width="104" height="22" rx="6" fill="#EAF2FC" />
+        <path d="M34 56 H138" stroke="#D5DDE8" strokeWidth="1.4" />
         <path d="M48 45 h34" stroke={BLUE} strokeWidth="2.4" strokeLinecap="round" />
         {[72, 84, 96, 108].map((y) => (
-          <path key={y} d={`M48 ${y} h${y === 108 ? 44 : 76}`} stroke="#E3E8EF" strokeWidth="2.4" strokeLinecap="round" />
+          <path key={y} d={`M48 ${y} h${y === 108 ? 44 : 76}`} stroke="#E1E7EF" strokeWidth="2.4" strokeLinecap="round" />
         ))}
         {/* marked answers */}
         <circle cx="52" cy="128" r="5" fill="none" stroke={SKY} strokeWidth="1.8" />
-        <path d="M49.6 128 l1.8 1.9 3.4-3.8" stroke={"#39A96B"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M64 128 h48" stroke="#E3E8EF" strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="52" cy="146" r="5" fill="none" stroke="#E3E8EF" strokeWidth="1.8" />
-        <path d="M64 146 h36" stroke="#E3E8EF" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M49.6 128 l1.8 1.9 3.4-3.8" stroke={"#55B987"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M64 128 h48" stroke="#E1E7EF" strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="52" cy="146" r="5" fill="none" stroke="#E1E7EF" strokeWidth="1.8" />
+        <path d="M64 146 h36" stroke="#E1E7EF" strokeWidth="2.4" strokeLinecap="round" />
       </g>
 
       {/* compass over the paper */}
@@ -230,15 +230,15 @@ export function ExamCentreScene({ className = "" }: { className?: string }) {
       {/* geometric solid */}
       <g>
         <path d="M212 60 L246 44 L280 60 L246 76 Z" fill="#FFFFFF" stroke={BLUE} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M212 60 v32 l34 16 V76 Z" fill="#EAF2FB" stroke={BLUE} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M280 60 v32 l-34 16 V76 Z" fill="#DCE9F7" stroke={BLUE} strokeWidth="2" strokeLinejoin="round" />
+        <path d="M212 60 v32 l34 16 V76 Z" fill="#EAF2FC" stroke={BLUE} strokeWidth="2" strokeLinejoin="round" />
+        <path d="M280 60 v32 l-34 16 V76 Z" fill="#D9E8F8" stroke={BLUE} strokeWidth="2" strokeLinejoin="round" />
       </g>
 
       {/* number line */}
       <g>
         <path d="M196 140 H296" stroke={SKY} strokeWidth="2.4" strokeLinecap="round" />
         {[204, 228, 252, 276].map((x) => (
-          <path key={x} d={`M${x} 134 v12`} stroke="#C2D4E8" strokeWidth="2" strokeLinecap="round" />
+          <path key={x} d={`M${x} 134 v12`} stroke="#C3D8EC" strokeWidth="2" strokeLinecap="round" />
         ))}
         <circle cx="252" cy="140" r="6" fill={YELLOW} stroke={INK} strokeWidth="1.8" />
       </g>
@@ -254,8 +254,85 @@ export function AcademicSeal({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 40 40" className={className} fill="none" aria-hidden>
       <circle cx="20" cy="20" r="14" stroke={BLUE} strokeWidth="1.6" />
-      <circle cx="20" cy="20" r="10.5" stroke="#C2D4E8" strokeWidth="1.2" strokeDasharray="2 3" />
+      <circle cx="20" cy="20" r="10.5" stroke="#C3D8EC" strokeWidth="1.2" strokeDasharray="2 3" />
       <path d="M20 13.5 l1.7 3.5 3.8.6-2.8 2.7.7 3.8-3.4-1.8-3.4 1.8.7-3.8-2.8-2.7 3.8-.6 Z" fill={YELLOW} />
+    </svg>
+  );
+}
+
+/* ── Empty-state illustrations ────────────────────────────── */
+
+export type EmptyKind = "results" | "candidates" | "exams" | "chart";
+
+/** Small, subject-relevant drawing so an empty region reads as intentional. */
+export function EmptyArt({ kind, className = "" }: { kind: EmptyKind; className?: string }) {
+  return (
+    <svg viewBox="0 0 120 90" className={className} fill="none" aria-hidden>
+      {kind === "results" && (
+        <>
+          <rect x="30" y="14" width="60" height="64" rx="6" fill="#FFFFFF" stroke="#D5DDE8" strokeWidth="2" />
+          <path d="M42 32 h36 M42 44 h36 M42 56 h22" stroke="#E1E7EF" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="86" cy="62" r="15" fill="#FFFFFF" stroke={BLUE} strokeWidth="2" />
+          <path d="M80 62 l4 4 8-9" stroke={LINE} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+
+      {kind === "candidates" && (
+        <>
+          <circle cx="40" cy="36" r="11" fill="#FFFFFF" stroke={BLUE} strokeWidth="2" />
+          <path d="M22 66 a18 18 0 0 1 36 0" fill="#FFFFFF" stroke={BLUE} strokeWidth="2" strokeLinecap="round" />
+          <circle cx="76" cy="40" r="9" fill="#FFFFFF" stroke="#D5DDE8" strokeWidth="2" />
+          <path d="M62 66 a14 14 0 0 1 28 0" fill="#FFFFFF" stroke="#D5DDE8" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="97" cy="24" r="3" fill={YELLOW} />
+        </>
+      )}
+
+      {kind === "exams" && (
+        <>
+          <rect x="26" y="16" width="52" height="60" rx="5" fill="#FFFFFF" stroke="#D5DDE8" strokeWidth="2" />
+          <path d="M37 33 h30 M37 45 h30 M37 57 h18" stroke="#E1E7EF" strokeWidth="3" strokeLinecap="round" />
+          <path d="M84 30 L96 54" stroke={BLUE} strokeWidth="2.6" strokeLinecap="round" />
+          <path d="M96 30 L84 54" stroke={BLUE} strokeWidth="2.6" strokeLinecap="round" />
+          <circle cx="90" cy="26" r="3.4" fill={YELLOW} />
+        </>
+      )}
+
+      {kind === "chart" && (
+        <>
+          <path d="M24 70 H100" stroke="#D5DDE8" strokeWidth="2" strokeLinecap="round" />
+          <path d="M24 70 V22" stroke="#D5DDE8" strokeWidth="2" strokeLinecap="round" />
+          <rect x="36" y="52" width="12" height="18" rx="2.5" fill="#E1E7EF" />
+          <rect x="56" y="44" width="12" height="26" rx="2.5" fill="#E1E7EF" />
+          <rect x="76" y="58" width="12" height="12" rx="2.5" fill="#E1E7EF" />
+          <path d="M34 40 l14-10 14 6 16-14" stroke={LINE} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 4" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
+ * Faint coordinate-grid + orbit wash used behind the hero. Sits under content at low
+ * opacity so the hero reads as an Olympiad workspace rather than a plain white box.
+ */
+export function HeroBackdrop({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 800 300"
+      preserveAspectRatio="xMidYMid slice"
+      className={className}
+      fill="none"
+      aria-hidden
+    >
+      <defs>
+        <pattern id="hero-grid" width="36" height="36" patternUnits="userSpaceOnUse">
+          <path d="M36 0 H0 V36" stroke="#2468B2" strokeOpacity="0.06" strokeWidth="1" fill="none" />
+        </pattern>
+      </defs>
+      <rect width="800" height="300" fill="url(#hero-grid)" />
+      <circle cx="690" cy="70" r="120" stroke="#2468B2" strokeOpacity="0.07" strokeWidth="1.5" />
+      <ellipse cx="690" cy="70" rx="120" ry="44" stroke="#8067D9" strokeOpacity="0.09" strokeWidth="1.5" transform="rotate(-22 690 70)" />
+      <circle cx="120" cy="250" r="86" stroke="#F29A38" strokeOpacity="0.09" strokeWidth="1.5" />
     </svg>
   );
 }

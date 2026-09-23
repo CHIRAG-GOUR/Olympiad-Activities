@@ -85,7 +85,7 @@ export default function ActivityLibraryPage() {
       <Card className="p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">
-            <h1 className="text-[24px] font-bold text-[#172033] tracking-[-0.02em]">Activity library</h1>
+            <h1 className="text-[24px] font-bold text-[#182338] tracking-[-0.02em]">Activity library</h1>
             <p className="text-[13.5px] text-[#667085] mt-1.5 max-w-xl leading-relaxed">
               Every question in the bank with a bespoke interactive activity behind it. The student
               manipulates the activity and the manipulation itself produces the answer.
@@ -94,17 +94,17 @@ export default function ActivityLibraryPage() {
 
           <div className="flex items-center gap-8">
             <div>
-              <div className="font-mono text-[26px] font-bold text-[#2563A8] leading-none tabular-nums">
+              <div className="font-mono text-[26px] font-bold text-[#2468B2] leading-none tabular-nums">
                 {activities.length}
               </div>
               <div className="text-[12px] text-[#667085] mt-1.5">Activities</div>
             </div>
             <div className="min-w-[128px]">
-              <div className="font-mono text-[26px] font-bold text-[#172033] leading-none tabular-nums">
+              <div className="font-mono text-[26px] font-bold text-[#182338] leading-none tabular-nums">
                 {coverage}%
               </div>
               <div className="text-[12px] text-[#667085] mt-1.5 mb-2">Bank coverage</div>
-              <ProgressRule percent={coverage} tone="#4FA8D8" />
+              <ProgressRule percent={coverage} tone="#59B6DE" />
             </div>
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function ActivityLibraryPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by topic, interaction or question code"
-            className="w-full h-11 pl-10 pr-4 bg-white border border-[#E3E8EF] rounded-xl text-[13.5px] text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2563A8] focus:ring-2 focus:ring-[#2563A8]/15 transition-shadow"
+            className="w-full h-11 pl-10 pr-4 bg-white border border-[#E1E7EF] rounded-xl text-[13.5px] text-[#182338] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2468B2] focus:ring-2 focus:ring-[#2468B2]/15 transition-shadow"
           />
         </div>
 
@@ -129,8 +129,8 @@ export default function ActivityLibraryPage() {
             onClick={() => setSection("all")}
             className={`h-11 px-3.5 rounded-xl text-[13px] font-semibold border transition-colors ${
               section === "all"
-                ? "bg-[#2563A8] border-[#2563A8] text-white"
-                : "bg-white border-[#E3E8EF] text-[#667085] hover:text-[#172033] hover:border-[#C2D4E8]"
+                ? "bg-[#2468B2] border-[#2468B2] text-white"
+                : "bg-white border-[#E1E7EF] text-[#667085] hover:text-[#182338] hover:border-[#C3D8EC]"
             }`}
           >
             All sections
@@ -142,8 +142,8 @@ export default function ActivityLibraryPage() {
               onClick={() => setSection(s)}
               className={`h-11 px-3.5 rounded-xl text-[13px] font-semibold border transition-colors ${
                 section === s
-                  ? "bg-[#2563A8] border-[#2563A8] text-white"
-                  : "bg-white border-[#E3E8EF] text-[#667085] hover:text-[#172033] hover:border-[#C2D4E8]"
+                  ? "bg-[#2468B2] border-[#2468B2] text-white"
+                  : "bg-white border-[#E1E7EF] text-[#667085] hover:text-[#182338] hover:border-[#C3D8EC]"
               }`}
             >
               {s}
@@ -170,21 +170,21 @@ export default function ActivityLibraryPage() {
                 <span className="font-mono text-[11px] text-[#98A2B3] shrink-0">{q.questionId}</span>
               </div>
 
-              <h3 className="mt-3 text-[14.5px] font-bold text-[#172033] leading-snug">
+              <h3 className="mt-3 text-[14.5px] font-bold text-[#182338] leading-snug">
                 {q.topic || q.chapter}
               </h3>
-              <p className="mt-1 text-[12.5px] text-[#2563A8] font-medium">{KIND_LABEL[kind]}</p>
+              <p className="mt-1 text-[12.5px] text-[#2468B2] font-medium">{KIND_LABEL[kind]}</p>
 
               <p className="mt-2.5 text-[12.5px] text-[#667085] leading-relaxed line-clamp-3">
                 {q.questionText}
               </p>
 
-              <div className="mt-auto pt-4 flex items-center justify-between gap-3 border-t border-[#E3E8EF]">
+              <div className="mt-auto pt-4 flex items-center justify-between gap-3 border-t border-[#E1E7EF]">
                 <span className="text-[11.5px] text-[#98A2B3] truncate">{q.section}</span>
                 {primaryExamId && (
                   <Link
                     href={`/exam/${primaryExamId}`}
-                    className="text-[12.5px] font-semibold text-[#2563A8] hover:text-[#1B4E88] whitespace-nowrap transition-colors"
+                    className="text-[12.5px] font-semibold text-[#2468B2] hover:text-[#1C5190] whitespace-nowrap transition-colors"
                   >
                     Try it →
                   </Link>
@@ -214,7 +214,7 @@ export default function ActivityLibraryPage() {
                 <Card key={s} className="p-5 flex items-center gap-4">
                   <SectionMotif kind={motif as never} className="w-10 h-10 shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-[13.5px] font-bold text-[#172033] truncate">{s}</div>
+                    <div className="text-[13.5px] font-bold text-[#182338] truncate">{s}</div>
                     <div className="text-[12px] text-[#667085] mt-0.5">{inSection} activities</div>
                   </div>
                 </Card>

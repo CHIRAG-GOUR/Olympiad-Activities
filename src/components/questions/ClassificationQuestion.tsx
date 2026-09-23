@@ -69,7 +69,7 @@ export function ClassificationQuestion({ question, value, onChange, readOnly = f
                   onClick={() => !readOnly && setSelectedItemId(isSelected ? null : item.id)}
                   className={`h-[52px] px-6 rounded-xl text-[15px] font-extrabold transition-all border-2 shadow-sm ${
                     isSelected
-                      ? "bg-[#2563A8] text-white border-[#2563A8] scale-105 shadow-md"
+                      ? "bg-[#2468B2] text-white border-[#2468B2] scale-105 shadow-md"
                       : "bg-white text-slate-900 border-[#FDE68A] hover:border-[#F59E0B] hover:scale-105 hover:bg-[#FEF3C7]"
                   }`}
                 >

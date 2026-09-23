@@ -105,7 +105,7 @@ export default function NewQuestionPage() {
         subtitle="Author standardized interactive Olympiad questions with real-time student solving preview"
       />
 
-      <div className="p-6 lg:p-8 space-y-6 w-full max-w-[1750px]">
+      <div className="space-y-6 w-full max-w-[1750px]">
         {/* Navigation & Action Header */}
         <div className="flex items-center justify-between">
           <Link

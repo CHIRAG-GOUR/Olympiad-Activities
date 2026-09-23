@@ -239,3 +239,80 @@ export function firstName(fullName?: string): string {
   const cleaned = fullName.replace(/^(Dr\.|Prof\.|Mr\.|Ms\.|Mrs\.)\s*/i, "").trim();
   return cleaned.split(/\s+/)[0] || "there";
 }
+
+/* ── Analytics derivations ────────────────────────────────── */
+
+/** Accent assigned to each syllabus section, kept stable across the dashboard. */
+export const SECTION_TONES = ["#2468B2", "#8067D9", "#F29A38", "#55B987", "#59B6DE", "#E8786A"];
+
+export function toneForIndex(i: number) {
+  return SECTION_TONES[i % SECTION_TONES.length];
+}
+
+/** Score spread across graded attempts, bucketed into bands. Empty when nothing graded. */
+export function buildScoreDistribution(attempts: ExamAttempt[]) {
+  if (!attempts.length) return [];
+  const bands = [
+    { label: "0–39", min: 0, max: 39, tone: "#E8786A" },
+    { label: "40–59", min: 40, max: 59, tone: "#F29A38" },
+    { label: "60–74", min: 60, max: 74, tone: "#F4C542" },
+    { label: "75–89", min: 75, max: 89, tone: "#59B6DE" },
+    { label: "90–100", min: 90, max: 100, tone: "#55B987" },
+  ];
+  return bands.map((b) => ({
+    label: b.label,
+    tone: b.tone,
+    value: attempts.filter((a) => a.percentage >= b.min && a.percentage <= b.max).length,
+  }));
+}
+
+/** Submissions per day over the recent window — only days that actually have records. */
+export function buildParticipationTrend(attempts: ExamAttempt[], days = 7) {
+  if (!attempts.length) return [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const out: { label: string; value: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - i);
+    const next = new Date(day);
+    next.setDate(day.getDate() + 1);
+    const count = attempts.filter((a) => {
+      const t = new Date(a.submittedAt).getTime();
+      return t >= day.getTime() && t < next.getTime();
+    }).length;
+    out.push({ label: day.toLocaleDateString(undefined, { weekday: "short" }), value: count });
+  }
+  return out;
+}
+
+/** How far through their paper the live candidates currently are. */
+export function buildLiveCompletion(sessions: LiveSession[], totalByExam: Record<string, number>) {
+  const live = sessions.filter((s) => s.status === "in_progress");
+  if (!live.length) return null;
+  const answered = live.reduce((sum, s) => sum + Object.keys(s.answers || {}).length, 0);
+  const capacity = live.reduce((sum, s) => sum + (totalByExam[s.examId] || 0), 0);
+  return {
+    answered,
+    capacity,
+    percent: capacity > 0 ? Math.round((answered / capacity) * 100) : 0,
+    candidates: live.length,
+  };
+}
+
+/** Difficulty spread of the question bank. */
+export function buildDifficultyMix(questions: Question[]) {
+  if (!questions.length) return [];
+  const counts: Record<string, number> = {};
+  for (const q of questions) counts[q.difficulty] = (counts[q.difficulty] || 0) + 1;
+  const order = [
+    { key: "EASY", label: "Easy", tone: "#55B987" },
+    { key: "MEDIUM", label: "Medium", tone: "#59B6DE" },
+    { key: "HARD", label: "Hard", tone: "#F29A38" },
+    { key: "ACHIEVER", label: "Achiever", tone: "#8067D9" },
+  ];
+  return order
+    .filter((o) => counts[o.key])
+    .map((o) => ({ label: o.label, value: counts[o.key], tone: o.tone }));
+}

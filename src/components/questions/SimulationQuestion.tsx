@@ -97,7 +97,7 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
               {simType === "rocket_altitude" ? (
                 <Rocket className="w-6 h-6 text-[#D97706]" />
               ) : (
-                <Scale className="w-6 h-6 text-[#2563A8]" />
+                <Scale className="w-6 h-6 text-[#2468B2]" />
               )}
               {config?.parameterName || "Control Value"}
             </div>
@@ -235,12 +235,12 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
 
           <div className="py-12 flex flex-col items-center justify-center">
             <div
-              className="relative w-96 h-4 bg-[#2563A8] rounded transition-transform duration-300 shadow-md"
+              className="relative w-96 h-4 bg-[#2468B2] rounded transition-transform duration-300 shadow-md"
               style={{ transform: `rotate(${tiltAngleDeg}deg)` }}
             >
               <div className="absolute -left-4 top-4 flex flex-col items-center">
                 <div className="w-1 h-14 bg-slate-400" />
-                <div className="px-4 py-2 bg-white border-2 border-[#2563A8] rounded-xl text-[14px] font-extrabold text-[#2563A8] shadow-md">
+                <div className="px-4 py-2 bg-white border-2 border-[#2468B2] rounded-xl text-[14px] font-extrabold text-[#2468B2] shadow-md">
                   18 kg
                 </div>
               </div>
@@ -253,7 +253,7 @@ export function SimulationQuestion({ question, value, onChange, readOnly = false
               </div>
             </div>
 
-            <div className="w-0 h-0 border-l-[22px] border-l-transparent border-r-[22px] border-r-transparent border-b-[36px] border-b-[#2563A8] mt-2" />
+            <div className="w-0 h-0 border-l-[22px] border-l-transparent border-r-[22px] border-r-transparent border-b-[36px] border-b-[#2468B2] mt-2" />
             <div className="w-32 h-3 bg-slate-700 rounded" />
           </div>
 

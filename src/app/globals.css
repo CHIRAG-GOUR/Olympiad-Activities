@@ -8,8 +8,8 @@
 }
 
 body {
-  color: #172033;
-  background-color: #F6F8FB;
+  color: #182338;
+  background-color: #F4F7FB;
   font-family: var(--font-inter);
   font-size: 15px;
   line-height: 1.5;
@@ -24,16 +24,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F6F8FB;
+  background: #F4F7FB;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D3DBE6;
+  background: #D5DDE8;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #C2D4E8;
+  background: #C3D8EC;
 }
 
 @media print {
