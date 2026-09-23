@@ -2,7 +2,7 @@
 
 import DashboardView from "@/components/dashboard/DashboardView";
 
-/** Administrator dashboard. */
-export default function AdminDashboardPage() {
+/** Candidate examination portal. */
+export default function StudentDashboardPage() {
   return <DashboardView />;
 }

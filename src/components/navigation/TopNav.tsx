@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/lib/auth/rbac";
-import { Bell, ChevronDown, Menu, X, Check } from "lucide-react";
+import { ROLE_HOME } from "@/lib/auth/roleRoutes";
+import { Bell, ChevronDown, Menu, X, Check, LogOut } from "lucide-react";
 
 /**
  * Platform navigation.
@@ -24,14 +25,20 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
+  {
+    label: "Dashboard",
+    href: "__ROLE_HOME__",
+    roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"],
+    match: ["/admin/dashboard", "/teacher/dashboard", "/student/dashboard"],
+  },
   {
     label: "Examinations",
     href: "/admin/exams",
     roles: ["SUPER_ADMIN", "TEACHER"],
     match: ["/admin/exams", "/admin/live-monitor"],
   },
-  { label: "Activities", href: "/admin/activities", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
+  // Staff only: the library renders full question text, which candidates must not see.
+  { label: "Activities", href: "/admin/activities", roles: ["SUPER_ADMIN", "TEACHER"] },
   {
     label: "Question Bank",
     href: "/admin/question-bank",
@@ -66,12 +73,14 @@ function initials(name: string) {
 
 export function TopNav() {
   const pathname = usePathname();
-  const { role, user, switchRole } = useAuth();
+  const { role, user, switchRole, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
 
-  const items = NAV.filter((i) => i.roles.includes(role));
+  const items = NAV.filter((i) => i.roles.includes(role)).map((i) =>
+    i.href === "__ROLE_HOME__" ? { ...i, href: ROLE_HOME[role] } : i
+  );
 
   // Close the profile menu on outside click / Escape
   useEffect(() => {
@@ -103,7 +112,7 @@ export function TopNav() {
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-7">
         <div className="h-16 flex items-center gap-3">
           {/* Emblem + wordmark */}
-          <Link href="/admin/dashboard" className="flex items-center gap-2.5 shrink-0 group">
+          <Link href={ROLE_HOME[role]} className="flex items-center gap-2.5 shrink-0 group">
             <span className="w-9 h-9 rounded-xl bg-[#2468B2] text-white grid place-items-center font-display font-bold text-lg shadow-subtle group-hover:bg-[#1C5190] transition-colors">
               Ω
             </span>
@@ -207,6 +216,21 @@ export function TopNav() {
                       {role === r && <Check className="w-4 h-4" strokeWidth={2.4} />}
                     </button>
                   ))}
+
+                  <div className="mt-1 pt-1 border-t border-[#E1E7EF]">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        signOut();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 h-9 rounded-lg text-[13px] font-medium text-[#182338] hover:bg-[#E8786A]/10 hover:text-[#C0453C] transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" strokeWidth={2.2} />
+                      Sign out
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

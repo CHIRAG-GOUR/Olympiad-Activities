@@ -1,120 +1,98 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { UserRole, Permission, UserProfile, hasPermission, getPermissionsForRole } from "@/lib/auth/rbac";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import { UserRole, Permission, UserProfile, hasPermission } from "@/lib/auth/rbac";
+import { authService, type SignInOutcome } from "@/lib/auth/authService";
 
 export interface AuthContextType {
   user: UserProfile | null;
   role: UserRole;
   isAuthenticated: boolean;
+  /** False until the persisted session has been read — guards wait on this to avoid flicker */
+  isReady: boolean;
+  signIn: (email: string, password: string, role: UserRole) => Promise<SignInOutcome>;
+  signOut: () => void;
   switchRole: (role: UserRole) => void;
   can: (permission: Permission) => boolean;
   canAll: (permissions: Permission[]) => boolean;
   canAny: (permissions: Permission[]) => boolean;
-  loginAs: (user: Partial<UserProfile> & { role: UserRole }) => void;
   logout: () => void;
 }
-
-const DEFAULT_USERS: Record<UserRole, UserProfile> = {
-  SUPER_ADMIN: {
-    id: "usr_admin_01",
-    name: "Dr. Vikram Sethi",
-    email: "admin@olympiad.org",
-    role: "SUPER_ADMIN",
-    schoolName: "National Olympiad Council",
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  TEACHER: {
-    id: "usr_teacher_01",
-    name: "Prof. Ananya Sen",
-    email: "ananya.sen@olympiad.org",
-    role: "TEACHER",
-    schoolName: "Delhi Public School, R.K. Puram",
-    createdAt: "2024-02-15T00:00:00Z",
-  },
-  STUDENT: {
-    id: "usr_student_01",
-    name: "Rahul Sharma",
-    email: "rahul.s@student.olympiad.org",
-    role: "STUDENT",
-    schoolName: "Kendriya Vidyalaya No. 1",
-    grade: 6,
-    createdAt: "2024-03-10T00:00:00Z",
-  },
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_USERS.SUPER_ADMIN);
-  const [isMounted, setIsMounted] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    try {
-      const savedRole = localStorage.getItem("olympiad_auth_role") as UserRole | null;
-      if (savedRole && DEFAULT_USERS[savedRole]) {
-        setCurrentUser(DEFAULT_USERS[savedRole]);
-      }
-    } catch {
-      // ignore
-    }
+    let cancelled = false;
+    authService
+      .restore()
+      .then((session) => {
+        if (!cancelled && session) setCurrentUser(session.profile);
+      })
+      .finally(() => {
+        if (!cancelled) setIsReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const switchRole = (newRole: UserRole) => {
-    const newUser = DEFAULT_USERS[newRole] || DEFAULT_USERS.STUDENT;
-    setCurrentUser(newUser);
-    try {
-      localStorage.setItem("olympiad_auth_role", newRole);
-    } catch {
-      // ignore
-    }
-  };
+  const signIn = useCallback(
+    async (email: string, password: string, role: UserRole): Promise<SignInOutcome> => {
+      const outcome = await authService.signIn({ email, password, role });
+      if (outcome.ok) setCurrentUser(outcome.profile);
+      return outcome;
+    },
+    []
+  );
 
-  const loginAs = (userData: Partial<UserProfile> & { role: UserRole }) => {
-    const base = DEFAULT_USERS[userData.role] || DEFAULT_USERS.STUDENT;
-    const merged: UserProfile = {
-      ...base,
-      ...userData,
-      id: userData.id || `usr_${Date.now()}`,
-    };
-    setCurrentUser(merged);
-    try {
-      localStorage.setItem("olympiad_auth_role", merged.role);
-    } catch {
-      // ignore
-    }
-  };
+  const signOut = useCallback(() => {
+    void authService.signOut();
+    setCurrentUser(null);
+  }, []);
 
-  const logout = () => {
-    switchRole("STUDENT");
-  };
+  /** Re-opens the platform as another role without re-authenticating (demo affordance). */
+  const switchRole = useCallback(
+    (newRole: UserRole) => {
+      if (!currentUser) return;
+      const next: UserProfile = { ...currentUser, role: newRole };
+      setCurrentUser(next);
+      void authService.signIn({
+        email: currentUser.email,
+        password: "",
+        role: newRole,
+      });
+    },
+    [currentUser]
+  );
 
-  const can = (permission: Permission): boolean => {
-    return hasPermission(currentUser.role, permission);
-  };
+  const role = currentUser?.role ?? "STUDENT";
 
-  const canAll = (permissions: Permission[]): boolean => {
-    return permissions.every((p) => hasPermission(currentUser.role, p));
-  };
+  const can = useCallback(
+    (permission: Permission) => (currentUser ? hasPermission(currentUser.role, permission) : false),
+    [currentUser]
+  );
+  const canAll = useCallback((permissions: Permission[]) => permissions.every(can), [can]);
+  const canAny = useCallback((permissions: Permission[]) => permissions.some(can), [can]);
 
-  const canAny = (permissions: Permission[]): boolean => {
-    return permissions.some((p) => hasPermission(currentUser.role, p));
-  };
-
-  const value = useMemo(
+  const value = useMemo<AuthContextType>(
     () => ({
       user: currentUser,
-      role: currentUser.role,
-      isAuthenticated: true,
+      role,
+      isAuthenticated: currentUser !== null,
+      isReady,
+      signIn,
+      signOut,
       switchRole,
       can,
       canAll,
       canAny,
-      loginAs,
-      logout,
+      logout: signOut,
     }),
-    [currentUser]
+    [currentUser, role, isReady, signIn, signOut, switchRole, can, canAll, canAny]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -138,8 +116,6 @@ export function PermissionGate({
   fallback?: React.ReactNode;
 }) {
   const { can } = useAuth();
-  if (!can(permission)) {
-    return <>{fallback}</>;
-  }
+  if (!can(permission)) return <>{fallback}</>;
   return <>{children}</>;
 }

@@ -69,6 +69,41 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "panel-in": {
+          "0%": { opacity: "0", transform: "translateY(14px) scale(0.985)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        "wash-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        orbit: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "orbit-reverse": {
+          "0%": { transform: "rotate(360deg)" },
+          "100%": { transform: "rotate(0deg)" },
+        },
+        "grid-shift": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(10px, -8px)" },
+        },
+        "drift-y": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-16px)" },
+        },
+        "draw-plot": {
+          "0%": { strokeDashoffset: "1" },
+          "55%": { strokeDashoffset: "0" },
+          "85%": { strokeDashoffset: "0", opacity: "1" },
+          "100%": { strokeDashoffset: "0", opacity: "0" },
+        },
+        "toward-lamp": {
+          "0%": { transform: "translate(0, 0)", opacity: "0" },
+          "30%": { opacity: "1" },
+          "100%": { transform: "translate(var(--tx, 60px), var(--ty, -70px))", opacity: "0" },
+        },
         "orbit-slow": {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
@@ -80,6 +115,8 @@ const config: Config = {
       },
       animation: {
         "rise-in": "rise-in 0.35s ease-out both",
+        "panel-in": "panel-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "wash-in": "wash-in 0.9s ease-out both",
         "orbit-slow": "orbit-slow 28s linear infinite",
         drift: "drift 5s ease-in-out infinite",
       },

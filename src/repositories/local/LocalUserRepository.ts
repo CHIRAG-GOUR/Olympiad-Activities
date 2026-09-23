@@ -1,13 +1,14 @@
 import { IUserRepository } from "../interfaces/IUserRepository";
 import { UserProfile, UserRole } from "@/lib/auth/rbac";
 
-const LOCAL_STORAGE_KEY = "olympiad_users_repo";
+// Key bumped so the renamed administrator record replaces any previously cached copy.
+const LOCAL_STORAGE_KEY = "olympiad_users_repo_v2";
 
 const INITIAL_USERS: UserProfile[] = [
   {
     id: "usr_admin_01",
-    name: "Dr. Vikram Sethi",
-    email: "admin@olympiad.org",
+    name: "Chirag Gour",
+    email: "pa1@skillizee.io",
     role: "SUPER_ADMIN",
     schoolName: "National Olympiad Council",
     createdAt: "2024-01-01T00:00:00Z",
