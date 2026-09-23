@@ -8,9 +8,17 @@ const INITIAL_USERS: UserProfile[] = [
   {
     id: "usr_admin_swati",
     name: "Swati Ma'am",
-    email: "swati@skillizee.io",
+    email: "Swati123@gmail.com",
     role: "SUPER_ADMIN",
     schoolName: "National Olympiad Council",
+    createdAt: "2024-01-01T00:00:00Z",
+  },
+  {
+    id: "usr_admin_aarna",
+    name: "Aarna",
+    email: "aarna@cambridgecourtgroup.com",
+    role: "SUPER_ADMIN",
+    schoolName: "Cambridge Court Group",
     createdAt: "2024-01-01T00:00:00Z",
   },
   {

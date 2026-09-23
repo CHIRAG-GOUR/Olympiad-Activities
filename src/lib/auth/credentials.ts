@@ -17,34 +17,40 @@ import { UserProfile } from "./rbac";
  * the app needs to change.
  */
 
-export interface DemoCredential {
-  name: string;
+export interface Credential {
   email: string;
   password: string;
-  rolesDescription: string;
   profile: UserProfile;
 }
 
-export const TEMPORARY_CREDENTIALS: DemoCredential[] = [
+export const TEMPORARY_CREDENTIALS: Credential[] = [
   {
-    name: "Swati Ma'am",
-    email: "swati@skillizee.io",
-    password: "123456",
-    rolesDescription: "All 3 Access (Super Admin • Teacher • Student)",
+    email: "Swati123@gmail.com",
+    password: "787700",
     profile: {
       id: "usr_admin_swati",
       name: "Swati Ma'am",
-      email: "swati@skillizee.io",
+      email: "Swati123@gmail.com",
       role: "SUPER_ADMIN",
       schoolName: "National Olympiad Council",
       createdAt: "2024-01-01T00:00:00Z",
     },
   },
   {
-    name: "Chirag Gour",
+    email: "aarna@cambridgecourtgroup.com",
+    password: "787700",
+    profile: {
+      id: "usr_admin_aarna",
+      name: "Aarna",
+      email: "aarna@cambridgecourtgroup.com",
+      role: "SUPER_ADMIN",
+      schoolName: "Cambridge Court Group",
+      createdAt: "2024-01-01T00:00:00Z",
+    },
+  },
+  {
     email: "pa1@skillizee.io",
     password: "787700",
-    rolesDescription: "All 3 Access (Super Admin • Teacher • Student)",
     profile: {
       id: "usr_admin_01",
       name: "Chirag Gour",
@@ -72,7 +78,7 @@ export function verifyCredentials(email: string, password: string): SignInResult
   return { ok: true, profile: match.profile };
 }
 
-/** The account a successful sign-in lands on, used to seed the user directory. */
+/** The default account used to seed the user directory. */
 export function primaryAccount(): UserProfile {
   return TEMPORARY_CREDENTIALS[0].profile;
 }
