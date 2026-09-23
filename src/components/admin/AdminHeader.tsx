@@ -19,7 +19,7 @@ export function AdminHeader({ title, subtitle, actionButton }: AdminHeaderProps)
   const ActionIcon = actionButton?.icon || Plus;
 
   return (
-    <header className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+    <header className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl px-6 sm:px-7 py-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
       <div className="min-w-0">
         <h1 className="text-[22px] sm:text-[24px] font-bold text-[#182338] tracking-[-0.02em] leading-tight">
           {title}
@@ -32,7 +32,7 @@ export function AdminHeader({ title, subtitle, actionButton }: AdminHeaderProps)
       <div className="flex items-center gap-2.5 flex-wrap shrink-0">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338] hover:bg-[#F4F7FB] hover:border-[#C3D8EC] transition-colors"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338] hover:bg-white/70 hover:border-[#C3D8EC] transition-colors"
         >
           <Play className="w-4 h-4 text-[#F29A38]" strokeWidth={2.2} />
           <span>Candidate portal</span>
@@ -40,7 +40,7 @@ export function AdminHeader({ title, subtitle, actionButton }: AdminHeaderProps)
 
         <Link
           href="/admin/imports"
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338] hover:bg-[#F4F7FB] hover:border-[#C3D8EC] transition-colors"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338] hover:bg-white/70 hover:border-[#C3D8EC] transition-colors"
         >
           <FileSpreadsheet className="w-4 h-4 text-[#2468B2]" strokeWidth={2.2} />
           <span>Import questions</span>

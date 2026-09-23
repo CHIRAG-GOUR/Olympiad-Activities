@@ -272,7 +272,7 @@ export default function ImportsPage() {
         {/* Diagnostics Summary */}
         {parsedResults.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl p-5 shadow-sm">
+            <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl p-5">
               <div className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">
                 Total Rows Parsed
               </div>
@@ -281,7 +281,7 @@ export default function ImportsPage() {
               </div>
             </div>
 
-            <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl p-5 shadow-sm">
+            <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl p-5">
               <div className="text-[12px] font-bold text-[#2468B2] uppercase tracking-wider">
                 Valid Questions
               </div>
@@ -339,7 +339,7 @@ export default function ImportsPage() {
 
         {/* Ingested Rows Table */}
         {parsedResults.length > 0 && (
-          <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl overflow-hidden">
             <div className="px-6 py-4 bg-[#F4F7FB] border-b-2 border-[#E1E7EF]">
               <h3 className="text-base font-bold text-[#1C5190]">Parsed Question Rows</h3>
               <p className="text-[13px] text-slate-500 font-semibold">
@@ -350,7 +350,7 @@ export default function ImportsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-[14px] border-collapse">
                 <thead>
-                  <tr className="bg-[#F4F7FB] border-b border-[#E1E7EF] text-slate-600 font-bold text-[12px] uppercase tracking-wider">
+                  <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[12px] uppercase tracking-wider">
                     <th className="py-4 px-6 w-[80px]">Row</th>
                     <th className="py-4 px-6 w-[140px]">Code</th>
                     <th className="py-4 px-6 min-w-[340px]">Question Prompt</th>
@@ -362,7 +362,7 @@ export default function ImportsPage() {
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF]">
                   {parsedResults.map((item) => (
-                    <tr key={item.rowNumber} className="hover:bg-[#F4F7FB]/60 h-[72px]">
+                    <tr key={item.rowNumber} className="hover:bg-white/70 h-[72px]">
                       <td className="py-4 px-6 font-mono font-bold text-slate-400">#{item.rowNumber}</td>
                       <td className="py-4 px-6 font-mono font-bold text-[#1C5190]">
                         {item.question?.questionId}
@@ -420,7 +420,7 @@ export default function ImportsPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedPreview(null)}
-                  className="p-2 text-slate-400 hover:text-slate-900 hover:bg-[#F4F7FB] rounded-xl cursor-pointer"
+                  className="p-2 text-slate-400 hover:text-slate-900 hover:bg-white/70 rounded-xl cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>

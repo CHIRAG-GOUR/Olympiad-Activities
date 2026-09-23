@@ -6,6 +6,7 @@ import { examRepository, attemptRepository } from "@/repositories";
 import { Exam } from "@/types/exam";
 import { ExamAttempt } from "@/types/attempt";
 import { useAuth } from "@/context/AuthContext";
+import { AmbientField } from "@/components/ui/AmbientField";
 import {
   FileCheck2,
   LayoutDashboard,
@@ -45,9 +46,10 @@ export default function GatewayHomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] flex flex-col justify-between font-sans antialiased text-[#182338] select-none">
+    <div className="min-h-screen flex flex-col justify-between font-sans antialiased text-[#182338] select-none">
+      <AmbientField />
       {/* 1. Official Olympiad Header */}
-      <header className="bg-white border-b border-[#E1E7EF] sticky top-0 z-30">
+      <header className="bg-white/55 backdrop-blur-sm border-b border-white/70 sticky top-0 z-30">
         <div className="w-full max-w-[1480px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <span className="w-9 h-9 rounded-xl bg-[#2468B2] text-white grid place-items-center font-display font-bold text-lg shadow-subtle group-hover:bg-[#1C5190] transition-colors">
@@ -57,7 +59,7 @@ export default function GatewayHomePage() {
               <span className="block text-[14px] font-bold text-[#182338] tracking-[-0.01em]">
                 Olympiad
               </span>
-              <span className="hidden sm:block text-[11px] text-[#98A2B3] font-medium">
+              <span className="hidden sm:block text-[11px] text-[#77839A] font-medium">
                 Candidate Portal
               </span>
             </span>

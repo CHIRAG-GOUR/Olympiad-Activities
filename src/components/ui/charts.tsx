@@ -173,7 +173,7 @@ export function ColumnChart({
         {points.map((p) => (
           <span
             key={p.label}
-            className="flex-1 min-w-0 text-center text-[10.5px] sm:text-[11px] text-[#98A2B3] truncate"
+            className="flex-1 min-w-0 text-center text-[10.5px] sm:text-[11px] text-[#77839A] truncate"
             title={p.label}
           >
             {p.label}
@@ -239,7 +239,7 @@ export function Donut({
             </span>
           )}
           {centerLabel && (
-            <span className="mt-1 text-[10.5px] text-[#98A2B3] text-center px-3 leading-tight">
+            <span className="mt-1 text-[10.5px] text-[#77839A] text-center px-3 leading-tight">
               {centerLabel}
             </span>
           )}

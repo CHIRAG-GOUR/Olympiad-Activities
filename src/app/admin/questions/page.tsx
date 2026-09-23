@@ -92,7 +92,7 @@ export default function QuestionRepositoryPage() {
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       {/* 1. Header (Requirement 25) */}
-      <div className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Examination Item Bank</span>
@@ -110,7 +110,7 @@ export default function QuestionRepositoryPage() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin/imports"
-            className="h-9 px-3.5 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
+            className="h-9 px-3.5 bg-white/70 backdrop-blur-sm border border-white/90 hover:bg-white/95 text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Import Questions</span>
@@ -253,7 +253,7 @@ export default function QuestionRepositoryPage() {
                   {filteredQuestions.map((q) => {
                     const badge = getInteractionBadge(q.questionType);
                     return (
-                      <tr key={q.id} className="hover:bg-[#F4F7FB]/60 transition-colors">
+                      <tr key={q.id} className="hover:bg-white/70 transition-colors">
                         {/* Code */}
                         <td className="p-4 align-top">
                           <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] block text-center">

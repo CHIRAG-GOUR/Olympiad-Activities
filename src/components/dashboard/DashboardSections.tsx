@@ -78,7 +78,7 @@ export function DashboardHero({
   secondary?: { label: string; href: string };
 }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-[#D9E8F8] bg-gradient-to-br from-[#EAF2FC] via-[#F4F8FD] to-[#FDF5DF]/50 shadow-subtle">
+    <section className="relative overflow-hidden rounded-[20px] border border-white/80 bg-gradient-to-br from-[#8067D9]/[0.12] via-white/70 to-[#59B6DE]/[0.14] backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,0.8)_inset,0_10px_30px_-14px_rgba(38,45,90,0.22)]">
       <HeroBackdrop className="absolute inset-0 w-full h-full" />
 
       <div className="relative grid lg:grid-cols-[1fr_auto] gap-6 items-center">
@@ -166,7 +166,7 @@ export function MetricRow({ cards }: { cards: MetricCard[] }) {
 
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11.5px] font-semibold uppercase tracking-wider text-[#98A2B3] truncate">
+                <p className="text-[11.5px] font-semibold uppercase tracking-wider text-[#77839A] truncate">
                   {c.label}
                 </p>
                 <p className="mt-2 font-mono text-[28px] leading-none font-bold text-[#182338] tabular-nums">
@@ -277,7 +277,7 @@ export function SyllabusGrid({ sections }: { sections: SectionInsight[] }) {
                   <span className="font-mono font-semibold tabular-nums">{Math.round(coverage)}%</span>
                 </div>
                 <ProgressRule percent={coverage} tone={tone} />
-                <p className="mt-2.5 text-[11px] text-[#98A2B3]">
+                <p className="mt-2.5 text-[11px] text-[#77839A]">
                   {s.accuracy !== null
                     ? `${s.accuracy}% average accuracy so far`
                     : "Awaiting first graded attempt"}
@@ -353,7 +353,7 @@ export function ExaminationList({ exams }: { exams: ExamInsight[] }) {
                 },
               ].map((cell) => (
                 <div key={cell.t} className="min-w-0">
-                  <dt className="text-[11px] text-[#98A2B3] truncate">{cell.t}</dt>
+                  <dt className="text-[11px] text-[#77839A] truncate">{cell.t}</dt>
                   <dd className="mt-1 font-mono text-[16px] font-bold text-[#182338] tabular-nums truncate">
                     {cell.v}
                   </dd>
@@ -396,7 +396,7 @@ export function ExaminationList({ exams }: { exams: ExamInsight[] }) {
                   Pass rate <span className="font-mono font-semibold text-[#3E9E6F]">{e.passRate}%</span>
                 </span>
               ) : (
-                <span className="text-[12.5px] text-[#98A2B3]">No graded attempts yet</span>
+                <span className="text-[12.5px] text-[#77839A]">No graded attempts yet</span>
               )}
               <ActionLink href={`/exam/${e.exam.id}`} tone="secondary" className="h-11 sm:h-9 text-[12.5px]">
                 Open examination
@@ -421,7 +421,7 @@ export function LivePanel({
   const live = sessions.filter((s) => s.status === "in_progress");
 
   return (
-    <Card className="p-5 h-full flex flex-col">
+    <Card solid className="p-5 h-full flex flex-col">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-[15px] font-bold text-[#182338] tracking-[-0.01em]">Live now</h2>
@@ -465,7 +465,7 @@ export function LivePanel({
                     </p>
                     <p className="font-mono text-[11.5px] text-[#667085] tabular-nums shrink-0">
                       Q{s.currentQuestionIndex + 1}
-                      {total > 0 && <span className="text-[#98A2B3]">/{total}</span>}
+                      {total > 0 && <span className="text-[#77839A]">/{total}</span>}
                     </p>
                   </div>
                   <div className="mt-1.5">
@@ -473,7 +473,7 @@ export function LivePanel({
                   </div>
                   <div className="mt-1.5 flex items-center justify-between gap-2">
                     <StatusMark kind={remaining > 0 ? "solving" : "paused"} />
-                    <span className="font-mono text-[11px] text-[#98A2B3] tabular-nums">
+                    <span className="font-mono text-[11px] text-[#77839A] tabular-nums">
                       {formatClock(remaining)}
                     </span>
                   </div>
@@ -516,7 +516,7 @@ export function AnalyticsGrid({
   return (
     <div className="grid gap-4 lg:grid-cols-12">
       {/* Subject performance */}
-      <Card className="lg:col-span-5 p-5">
+      <Card solid className="lg:col-span-5 p-5">
         <h3 className="text-[14px] font-bold text-[#182338]">Performance by section</h3>
         <p className="text-[12px] text-[#667085] mt-0.5">Average accuracy across graded attempts</p>
         <div className="mt-5">
@@ -533,7 +533,7 @@ export function AnalyticsGrid({
       </Card>
 
       {/* Score distribution */}
-      <Card className="lg:col-span-4 p-5">
+      <Card solid className="lg:col-span-4 p-5">
         <h3 className="text-[14px] font-bold text-[#182338]">Score distribution</h3>
         <p className="text-[12px] text-[#667085] mt-0.5">
           {attemptCount > 0
@@ -550,7 +550,7 @@ export function AnalyticsGrid({
       </Card>
 
       {/* Question bank composition */}
-      <Card className="lg:col-span-3 p-5">
+      <Card solid className="lg:col-span-3 p-5">
         <h3 className="text-[14px] font-bold text-[#182338]">Question bank</h3>
         <p className="text-[12px] text-[#667085] mt-0.5">By difficulty</p>
         {difficultyMix.length > 0 ? (
@@ -573,7 +573,7 @@ export function AnalyticsGrid({
 
       {/* Participation trend */}
       {participation.length > 0 && (
-        <Card className="lg:col-span-12 p-5">
+        <Card solid className="lg:col-span-12 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div>
               <h3 className="text-[14px] font-bold text-[#182338]">Submissions this week</h3>
@@ -611,15 +611,15 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card solid className="overflow-hidden">
       {/* Desktop: ruled academic register */}
       <table className="hidden md:table w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-[#E1E7EF] bg-[#F9FBFD]">
+          <tr className="border-b border-[#E1E7EF] bg-white/70">
             {["Candidate", "Examination", "Score", "Accuracy", "Submitted", ""].map((h, i) => (
               <th
                 key={h || i}
-                className={`px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#98A2B3] ${
+                className={`px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#77839A] ${
                   i === 2 || i === 3 ? "text-center" : ""
                 } ${i === 5 ? "text-right" : ""}`}
               >
@@ -630,10 +630,10 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
         </thead>
         <tbody className="divide-y divide-[#E1E7EF]">
           {attempts.slice(0, limit).map((a) => (
-            <tr key={a.id} className="hover:bg-[#F9FBFD] transition-colors">
+            <tr key={a.id} className="hover:bg-white/80 transition-colors">
               <td className="px-5 py-3.5">
                 <div className="text-[13.5px] font-semibold text-[#182338]">{a.student.name}</div>
-                <div className="font-mono text-[11px] text-[#98A2B3]">
+                <div className="font-mono text-[11px] text-[#77839A]">
                   {a.student.studentId} · Class {a.student.grade}
                 </div>
               </td>
@@ -650,7 +650,7 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
                   <AccuracySeal percent={a.percentage} size={42} />
                 </div>
               </td>
-              <td className="px-5 py-3.5 font-mono text-[12px] text-[#98A2B3] tabular-nums whitespace-nowrap">
+              <td className="px-5 py-3.5 font-mono text-[12px] text-[#77839A] tabular-nums whitespace-nowrap">
                 {new Date(a.submittedAt).toLocaleDateString(undefined, {
                   day: "2-digit",
                   month: "short",
@@ -675,14 +675,14 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
           <li key={a.id}>
             <Link
               href={`/results/${a.id}`}
-              className="flex items-center gap-4 px-4 py-4 active:bg-[#F9FBFD] min-h-[72px]"
+              className="flex items-center gap-4 px-4 py-4 active:bg-white/80 min-h-[72px]"
             >
               <div className="min-w-0 flex-1">
                 <div className="text-[14px] font-semibold text-[#182338] truncate">
                   {a.student.name}
                 </div>
                 <div className="text-[12px] text-[#667085] truncate mt-0.5">{a.examTitle}</div>
-                <div className="font-mono text-[11px] text-[#98A2B3] mt-1">
+                <div className="font-mono text-[11px] text-[#77839A] mt-1">
                   {new Date(a.submittedAt).toLocaleDateString()}
                 </div>
               </div>
@@ -713,7 +713,7 @@ export function ContinueExamCard({
   const path = Array.from({ length: Math.min(7, totalQuestions) }, (_, i) => windowStart + i + 1);
 
   return (
-    <Card className="p-5 sm:p-6 border-[#D9E8F8] bg-gradient-to-br from-[#EAF2FC] to-white">
+    <Card className="p-5 sm:p-6 bg-gradient-to-br from-[#8067D9]/[0.10] via-white/75 to-[#2468B2]/[0.08]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11.5px] font-semibold uppercase tracking-wider text-[#2468B2]">
@@ -750,7 +750,7 @@ export function ContinueExamCard({
                       ? "bg-[#2468B2] border-[#2468B2] text-white shadow-subtle"
                       : done
                       ? "bg-[#EAF7F1] border-[#BFE6D3] text-[#3E9E6F]"
-                      : "bg-white border-[#E1E7EF] text-[#98A2B3]"
+                      : "bg-white border-[#E1E7EF] text-[#77839A]"
                   }`}
                 >
                   {done ? "✓" : n}
@@ -761,7 +761,7 @@ export function ContinueExamCard({
         </div>
       </div>
 
-      <p className="mt-3 text-[11.5px] text-[#98A2B3]">
+      <p className="mt-3 text-[11.5px] text-[#77839A]">
         Your answers and every activity you set up are saved on this device.
       </p>
     </Card>
@@ -840,14 +840,14 @@ export function StudentProgress({ attempts }: { attempts: ExamAttempt[] }) {
         <p className="text-[12px] text-[#667085]">Average accuracy</p>
         <div className="mt-2 flex items-center gap-3">
           <AccuracySeal percent={avg} size={44} />
-          <span className="text-[12px] text-[#98A2B3]">across all papers</span>
+          <span className="text-[12px] text-[#77839A]">across all papers</span>
         </div>
       </Card>
       <Card className="p-5">
         <p className="text-[12px] text-[#667085]">Best result</p>
         <div className="mt-2 flex items-center gap-3">
           <ScoreMark score={best.totalMarks} max={best.maximumMarks} />
-          <span className="text-[12px] text-[#98A2B3] truncate">{best.examTitle}</span>
+          <span className="text-[12px] text-[#77839A] truncate">{best.examTitle}</span>
         </div>
       </Card>
     </div>

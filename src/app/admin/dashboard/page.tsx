@@ -460,7 +460,7 @@ export default function DashboardPage() {
       </section>
 
       {loading && (
-        <p className="text-center text-[12.5px] text-[#98A2B3] py-2">Loading examination data…</p>
+        <p className="text-center text-[12.5px] text-[#77839A] py-2">Loading examination data…</p>
       )}
     </div>
   );

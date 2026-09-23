@@ -99,8 +99,8 @@ export function TopNav() {
   };
 
   return (
-    <header className="shrink-0 bg-white border-b border-[#E1E7EF] z-30">
-      <div className="mx-auto w-full max-w-[1480px] px-4 sm:px-6">
+    <header className="shrink-0 bg-white/45 backdrop-blur-xl border-b border-white/70 z-30">
+      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-7">
         <div className="h-16 flex items-center gap-3">
           {/* Emblem + wordmark */}
           <Link href="/admin/dashboard" className="flex items-center gap-2.5 shrink-0 group">
@@ -111,7 +111,7 @@ export function TopNav() {
               <span className="block text-[14px] font-bold text-[#182338] tracking-[-0.01em]">
                 Olympiad
               </span>
-              <span className="block text-[11px] text-[#98A2B3] font-medium">Examination Centre</span>
+              <span className="block text-[11px] text-[#77839A] font-medium">Examination Centre</span>
             </span>
           </Link>
 
@@ -147,7 +147,7 @@ export function TopNav() {
               <Link
                 href="/admin/live-monitor"
                 title="Live examination activity"
-                className="relative w-10 h-10 grid place-items-center rounded-xl text-[#667085] hover:text-[#182338] hover:bg-[#F4F7FB] transition-colors"
+                className="relative w-10 h-10 grid place-items-center rounded-xl text-[#667085] hover:text-[#182338] hover:bg-white/70 transition-colors"
               >
                 <Bell className="w-[18px] h-[18px]" strokeWidth={2} />
                 <span className="absolute top-2 right-2.5 w-1.5 h-1.5 rounded-full bg-[#F29A38]" />
@@ -160,7 +160,7 @@ export function TopNav() {
                 onClick={() => setProfileOpen((o) => !o)}
                 aria-expanded={profileOpen}
                 aria-haspopup="menu"
-                className="flex items-center gap-2 h-10 pl-1.5 pr-2 rounded-xl border border-[#E1E7EF] bg-white hover:bg-[#F4F7FB] transition-colors"
+                className="flex items-center gap-2 h-10 pl-1.5 pr-2 rounded-xl border border-[#E1E7EF] bg-white hover:bg-white/70 transition-colors"
               >
                 <span className="w-7 h-7 rounded-lg bg-[#EAF2FC] text-[#2468B2] grid place-items-center text-[11px] font-bold">
                   {initials(user?.name ?? "User")}
@@ -169,25 +169,25 @@ export function TopNav() {
                   <span className="block text-[12.5px] font-semibold text-[#182338] max-w-[130px] truncate">
                     {user?.name}
                   </span>
-                  <span className="block text-[10.5px] text-[#98A2B3]">{ROLE_LABEL[role]}</span>
+                  <span className="block text-[10.5px] text-[#77839A]">{ROLE_LABEL[role]}</span>
                 </span>
-                <ChevronDown className={`w-4 h-4 text-[#98A2B3] transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-[#77839A] transition-transform ${profileOpen ? "rotate-180" : ""}`} />
               </button>
 
               {profileOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%+8px)] w-60 bg-white border border-[#E1E7EF] rounded-2xl shadow-dropdown p-1.5 animate-rise-in"
+                  className="absolute right-0 top-[calc(100%+8px)] w-60 bg-white/95 backdrop-blur-xl border border-white/90 rounded-2xl shadow-dropdown p-1.5 animate-rise-in"
                 >
                   <div className="px-3 py-2.5 border-b border-[#E1E7EF] mb-1">
                     <div className="text-[13px] font-semibold text-[#182338] truncate">{user?.name}</div>
-                    <div className="text-[11.5px] text-[#98A2B3] truncate">{user?.email}</div>
+                    <div className="text-[11.5px] text-[#77839A] truncate">{user?.email}</div>
                     {user?.schoolName && (
                       <div className="text-[11px] text-[#667085] mt-1 truncate">{user.schoolName}</div>
                     )}
                   </div>
 
-                  <div className="px-3 pt-1 pb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-[#98A2B3]">
+                  <div className="px-3 pt-1 pb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-[#77839A]">
                     View platform as
                   </div>
                   {(["SUPER_ADMIN", "TEACHER", "STUDENT"] as UserRole[]).map((r) => (
@@ -217,7 +217,7 @@ export function TopNav() {
               onClick={() => setMobileOpen((o) => !o)}
               aria-expanded={mobileOpen}
               aria-label="Toggle navigation"
-              className="lg:hidden w-10 h-10 grid place-items-center rounded-xl border border-[#E1E7EF] text-[#182338] hover:bg-[#F4F7FB] transition-colors"
+              className="lg:hidden w-10 h-10 grid place-items-center rounded-xl border border-[#E1E7EF] text-[#182338] hover:bg-white/70 transition-colors"
             >
               {mobileOpen ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
             </button>
@@ -228,7 +228,7 @@ export function TopNav() {
       {/* Mobile navigation sheet */}
       {mobileOpen && (
         <nav
-          className="lg:hidden border-t border-[#E1E7EF] bg-white px-4 sm:px-6 py-2 animate-rise-in"
+          className="lg:hidden border-t border-white/70 bg-white/85 backdrop-blur-xl px-4 sm:px-6 py-2 animate-rise-in"
           aria-label="Main"
         >
           {items.map((item) => {

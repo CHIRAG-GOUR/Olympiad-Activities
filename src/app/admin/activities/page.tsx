@@ -113,13 +113,13 @@ export default function ActivityLibraryPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-[#98A2B3] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#77839A] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by topic, interaction or question code"
-            className="w-full h-11 pl-10 pr-4 bg-white border border-[#E1E7EF] rounded-xl text-[13.5px] text-[#182338] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2468B2] focus:ring-2 focus:ring-[#2468B2]/15 transition-shadow"
+            className="w-full h-11 pl-10 pr-4 bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-xl text-[13.5px] text-[#182338] placeholder:text-[#77839A] focus:outline-none focus:border-[#2468B2] focus:ring-2 focus:ring-[#2468B2]/15 transition-shadow"
           />
         </div>
 
@@ -130,7 +130,7 @@ export default function ActivityLibraryPage() {
             className={`h-11 px-3.5 rounded-xl text-[13px] font-semibold border transition-colors ${
               section === "all"
                 ? "bg-[#2468B2] border-[#2468B2] text-white"
-                : "bg-white border-[#E1E7EF] text-[#667085] hover:text-[#182338] hover:border-[#C3D8EC]"
+                : "bg-white/70 border-white/90 text-[#667085] hover:text-[#182338] hover:bg-white/95"
             }`}
           >
             All sections
@@ -143,7 +143,7 @@ export default function ActivityLibraryPage() {
               className={`h-11 px-3.5 rounded-xl text-[13px] font-semibold border transition-colors ${
                 section === s
                   ? "bg-[#2468B2] border-[#2468B2] text-white"
-                  : "bg-white border-[#E1E7EF] text-[#667085] hover:text-[#182338] hover:border-[#C3D8EC]"
+                  : "bg-white/70 border-white/90 text-[#667085] hover:text-[#182338] hover:bg-white/95"
               }`}
             >
               {s}
@@ -167,7 +167,7 @@ export default function ActivityLibraryPage() {
             <Card key={q.id} interactive className="group p-5 flex flex-col">
               <div className="flex items-start justify-between gap-3">
                 <InteractionMotif kind={kind} animate className="w-[72px] h-[56px] shrink-0" />
-                <span className="font-mono text-[11px] text-[#98A2B3] shrink-0">{q.questionId}</span>
+                <span className="font-mono text-[11px] text-[#77839A] shrink-0">{q.questionId}</span>
               </div>
 
               <h3 className="mt-3 text-[14.5px] font-bold text-[#182338] leading-snug">
@@ -180,7 +180,7 @@ export default function ActivityLibraryPage() {
               </p>
 
               <div className="mt-auto pt-4 flex items-center justify-between gap-3 border-t border-[#E1E7EF]">
-                <span className="text-[11.5px] text-[#98A2B3] truncate">{q.section}</span>
+                <span className="text-[11.5px] text-[#77839A] truncate">{q.section}</span>
                 {primaryExamId && (
                   <Link
                     href={`/exam/${primaryExamId}`}

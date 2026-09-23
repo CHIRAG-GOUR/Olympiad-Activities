@@ -175,7 +175,7 @@ export default function QuestionBankPage() {
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       {/* 1. Header (Requirement 27) */}
-      <div className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Standardized Curriculum Library</span>
@@ -268,7 +268,7 @@ export default function QuestionBankPage() {
                       className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-all ${
                         isSubjSelected
                           ? "bg-[#EAF2FC] text-[#1C5190] font-bold border border-[#E1E7EF]"
-                          : "hover:bg-[#F4F7FB] text-[#182338]"
+                          : "hover:bg-white/70 text-[#182338]"
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -310,7 +310,7 @@ export default function QuestionBankPage() {
                                 className={`flex items-center justify-between p-1.5 rounded-lg cursor-pointer transition-all ${
                                   isClassSelected
                                     ? "bg-[#EAF2FC] text-[#1C5190] font-bold"
-                                    : "hover:bg-[#F4F7FB] text-[#182338]"
+                                    : "hover:bg-white/70 text-[#182338]"
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -348,7 +348,7 @@ export default function QuestionBankPage() {
                                         className={`flex items-center justify-between py-1 px-2 rounded-md cursor-pointer text-[11px] transition-all ${
                                           isTopicSelected
                                             ? "bg-[#2468B2] text-white font-bold shadow-subtle"
-                                            : "hover:bg-[#F4F7FB] text-[#667085] hover:text-[#182338]"
+                                            : "hover:bg-white/70 text-[#667085] hover:text-[#182338]"
                                         }`}
                                       >
                                         <span className="truncate pr-1">• {topicName}</span>

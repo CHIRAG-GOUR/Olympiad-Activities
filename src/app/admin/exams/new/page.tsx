@@ -159,7 +159,7 @@ export default function NewExamPage() {
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       {/* 1. Header (Requirement 28) */}
-      <div className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Authoring Wizard</span>
@@ -177,7 +177,7 @@ export default function NewExamPage() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/admin/exams"
-            className="h-9 px-3.5 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
+            className="h-9 px-3.5 bg-white/70 backdrop-blur-sm border border-white/90 hover:bg-white/95 text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Cancel</span>
@@ -211,7 +211,7 @@ export default function NewExamPage() {
                     ? "bg-[#2468B2] text-white shadow-subtle"
                     : isCompleted
                     ? "bg-[#EAF2FC] text-[#1C5190]"
-                    : "text-[#667085] hover:bg-[#F4F7FB]"
+                    : "text-[#667085] hover:bg-white/70"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -347,7 +347,7 @@ export default function NewExamPage() {
                 <button
                   type="button"
                   onClick={deselectAllQuestions}
-                  className="h-8 px-3 bg-white border border-[#E1E7EF] hover:bg-[#F4F7FB] text-[#667085] rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  className="h-8 px-3 bg-white border border-[#E1E7EF] hover:bg-white/70 text-[#667085] rounded-lg text-xs font-bold transition-all cursor-pointer"
                 >
                   Deselect All
                 </button>
@@ -385,7 +385,7 @@ export default function NewExamPage() {
                     key={q.id}
                     onClick={() => toggleQuestionSelection(q.id)}
                     className={`p-3.5 flex items-start gap-3.5 cursor-pointer transition-all ${
-                      isSelected ? "bg-[#EAF2FC]/50" : "hover:bg-[#F4F7FB]"
+                      isSelected ? "bg-[#EAF2FC]/50" : "hover:bg-white/70"
                     }`}
                   >
                     <input
@@ -428,7 +428,7 @@ export default function NewExamPage() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white/70 backdrop-blur-sm border border-white/90 hover:bg-white/95 text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>
@@ -486,7 +486,7 @@ export default function NewExamPage() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white/70 backdrop-blur-sm border border-white/90 hover:bg-white/95 text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>
@@ -545,7 +545,7 @@ export default function NewExamPage() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white/70 backdrop-blur-sm border border-white/90 hover:bg-white/95 text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>
@@ -591,7 +591,7 @@ export default function NewExamPage() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(4)}
-                className="h-9 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="h-9 px-4 bg-white/70 backdrop-blur-sm border border-white/90 hover:bg-white/95 text-[#1C5190] rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Back
               </button>

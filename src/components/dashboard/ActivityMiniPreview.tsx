@@ -55,16 +55,16 @@ export function ActivityMiniPreview({
     getQuestionActivity(question.id) || getQuestionActivity(question.questionId);
 
   const motifFallback = (
-    <div className="absolute inset-0 grid place-items-center bg-[#F4F7FB]">
+    <div className="absolute inset-0 grid place-items-center bg-white/70">
       <InteractionMotif kind={kind} className="w-24 h-20" />
     </div>
   );
 
   return (
-    <article className="group relative bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle overflow-hidden transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-[2px] hover:shadow-lifted hover:border-[#C3D8EC]">
+    <article className="group relative bg-white/72 backdrop-blur-sm border border-white/80 rounded-2xl shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] overflow-hidden transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-[2px] hover:bg-white/88 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.8)_inset,0_14px_32px_-12px_rgba(38,45,90,0.22)]">
       {/* Frame: the activity is rendered at 200% width and scaled 50%, so it lands at
           exactly the card's width whatever the breakpoint. */}
-      <div className="relative h-[176px] overflow-hidden bg-[#F4F7FB] border-b border-[#E1E7EF]">
+      <div className="relative h-[176px] overflow-hidden bg-white/85 border-b border-white/80">
         {ActivityComponent ? (
           <PreviewBoundary fallback={motifFallback}>
             <div
@@ -84,7 +84,7 @@ export function ActivityMiniPreview({
         )}
 
         {/* Legibility wash at the bottom edge of the clipped frame */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#F4F7FB] to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white/90 to-transparent" />
       </div>
 
       <div className="p-4 flex items-start justify-between gap-3">

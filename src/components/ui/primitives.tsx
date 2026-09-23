@@ -20,17 +20,22 @@ export function Card({
   className = "",
   as: Tag = "div",
   interactive = false,
+  /** Denser frosting for panels that carry charts or tables, where legibility wins */
+  solid = false,
 }: {
   children: React.ReactNode;
   className?: string;
   as?: React.ElementType;
   interactive?: boolean;
+  solid?: boolean;
 }) {
   return (
     <Tag
-      className={`bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle ${
+      className={`${
+        solid ? "bg-white/90" : "bg-white/72"
+      } backdrop-blur-sm border border-white/80 rounded-2xl shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] ${
         interactive
-          ? "transition-[transform,box-shadow,border-color] duration-200 hover:border-[#C3D8EC] hover:shadow-lifted hover:-translate-y-[1px]"
+          ? "transition-[transform,box-shadow,background-color] duration-200 hover:bg-white/88 hover:shadow-[0_1px_0_0_rgba(255,255,255,0.8)_inset,0_14px_32px_-12px_rgba(38,45,90,0.22)] hover:-translate-y-[2px]"
           : ""
       } ${className}`}
     >
@@ -82,7 +87,7 @@ const BUTTON_TONES: Record<ButtonTone, string> = {
   primary:
     "bg-[#2468B2] text-white border-transparent hover:bg-[#1C5190] active:bg-[#163F71] shadow-subtle",
   secondary:
-    "bg-white text-[#182338] border-[#E1E7EF] hover:border-[#C3D8EC] hover:bg-[#F4F7FB] active:bg-[#EAF2FC]",
+    "bg-white/70 backdrop-blur-sm text-[#182338] border-white/90 hover:bg-white/95 hover:border-white active:bg-[#EAF2FC]",
   ghost:
     "bg-transparent text-[#2468B2] border-transparent hover:bg-[#EAF2FC] active:bg-[#D9E8F8]",
   yellow:
@@ -154,7 +159,7 @@ const STATUS_STYLE: Record<StatusKind, { dot: string; label: string; text: strin
   submitted: { dot: "bg-[#2468B2]", label: "Submitted", text: "text-[#2468B2]" },
   paused: { dot: "bg-[#F29A38]", label: "Paused", text: "text-[#B4701F]" },
   completed: { dot: "bg-[#667085]", label: "Completed", text: "text-[#667085]" },
-  idle: { dot: "bg-[#C3D8EC]", label: "Not started", text: "text-[#98A2B3]" },
+  idle: { dot: "bg-[#C3D8EC]", label: "Not started", text: "text-[#77839A]" },
 };
 
 /** Understated status marker: a small dot plus plain text. No loud pills. */
@@ -246,7 +251,7 @@ export function Figure({
     <div>
       <div className={`font-mono text-[26px] leading-none font-bold tabular-nums ${valueTone}`}>{value}</div>
       <div className="text-[12px] font-semibold text-[#182338] mt-1.5">{label}</div>
-      {hint && <div className="text-[11px] text-[#98A2B3] mt-0.5">{hint}</div>}
+      {hint && <div className="text-[11px] text-[#77839A] mt-0.5">{hint}</div>}
     </div>
   );
 }
@@ -301,6 +306,6 @@ export function ProgressRule({
 
 export function EmptyNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="py-10 text-center text-[13px] text-[#98A2B3] leading-relaxed">{children}</div>
+    <div className="py-10 text-center text-[13px] text-[#77839A] leading-relaxed">{children}</div>
   );
 }

@@ -167,7 +167,7 @@ export default function LiveMonitorPage() {
         </div>
 
         {/* Search & Filter Toolbar */}
-        <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="flex flex-1 items-center gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[280px]">
               <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -200,11 +200,11 @@ export default function LiveMonitorPage() {
         </div>
 
         {/* Live Surveillance Table */}
-        <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[14px] border-collapse">
               <thead>
-                <tr className="bg-[#F4F7FB] border-b border-[#E1E7EF] text-slate-600 font-bold text-[12px] uppercase tracking-wider">
+                <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[12px] uppercase tracking-wider">
                   <th className="py-4 px-6">Student Candidate</th>
                   <th className="py-4 px-6">Session ID</th>
                   <th className="py-4 px-6">Examination</th>
@@ -225,7 +225,7 @@ export default function LiveMonitorPage() {
                   </tr>
                 ) : (
                   filteredSessions.map((session) => (
-                    <tr key={session.id} className="hover:bg-[#F4F7FB]/60 transition-colors h-[76px]">
+                    <tr key={session.id} className="hover:bg-white/70 transition-colors h-[76px]">
                       {/* Candidate Name & School */}
                       <td className="py-4 px-6">
                         <div className="font-bold text-[15px] text-slate-900">
