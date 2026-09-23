@@ -45,7 +45,7 @@ export default function ExamCreateScreen() {
     subjectName: "Mathematics",
     grade: 6,
     academicYear: "2024 - 2025",
-    durationMinutes: 45,
+    durationMinutes: 60,
     totalMarks: 60,
     passingMarks: 24,
     totalQuestions: 50,
@@ -464,7 +464,7 @@ export default function ExamCreateScreen() {
                 <input
                   type="number"
                   value={formData.durationMinutes}
-                  onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 45 })}
+                  onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 60 })}
                   className="w-full h-10 px-3.5 text-xs font-mono font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] focus:bg-white"
                 />
               </div>
