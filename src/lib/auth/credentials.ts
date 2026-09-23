@@ -17,17 +17,34 @@ import { UserProfile } from "./rbac";
  * the app needs to change.
  */
 
-interface Credential {
+export interface DemoCredential {
+  name: string;
   email: string;
-  /** Temporary, client-side only — see the warning above. */
   password: string;
+  rolesDescription: string;
   profile: UserProfile;
 }
 
-const TEMPORARY_CREDENTIALS: Credential[] = [
+export const TEMPORARY_CREDENTIALS: DemoCredential[] = [
   {
+    name: "Swati Ma'am",
+    email: "swati@skillizee.io",
+    password: "123456",
+    rolesDescription: "All 3 Access (Super Admin • Teacher • Student)",
+    profile: {
+      id: "usr_admin_swati",
+      name: "Swati Ma'am",
+      email: "swati@skillizee.io",
+      role: "SUPER_ADMIN",
+      schoolName: "National Olympiad Council",
+      createdAt: "2024-01-01T00:00:00Z",
+    },
+  },
+  {
+    name: "Chirag Gour",
     email: "pa1@skillizee.io",
     password: "787700",
+    rolesDescription: "All 3 Access (Super Admin • Teacher • Student)",
     profile: {
       id: "usr_admin_01",
       name: "Chirag Gour",
@@ -59,4 +76,3 @@ export function verifyCredentials(email: string, password: string): SignInResult
 export function primaryAccount(): UserProfile {
   return TEMPORARY_CREDENTIALS[0].profile;
 }
-

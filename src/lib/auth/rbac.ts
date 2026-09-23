@@ -170,7 +170,7 @@ export interface UserProfile {
  * never acquire the switcher, and adding a privileged tester is a one-line, reviewable
  * change. When Firebase lands this becomes a custom claim.
  */
-const MULTI_ROLE_ACCOUNTS = ["pa1@skillizee.io"];
+const MULTI_ROLE_ACCOUNTS = ["pa1@skillizee.io", "swati@skillizee.io"];
 
 export function canSwitchRole(email: string | undefined | null): boolean {
   if (!email) return false;
