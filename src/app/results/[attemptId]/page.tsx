@@ -6,6 +6,11 @@ import { attemptRepository, reportRepository } from "@/repositories";
 import { ExamAttempt } from "@/types/attempt";
 import { ExamReport } from "@/types/report";
 import { RedPenScoreCircle } from "@/components/examination/RedPenScoreCircle";
+import { useAuth } from "@/context/AuthContext";
+import { canReadAttempt, canReadReport } from "@/lib/auth/dataAccess";
+import { homeFor, LOGIN_ROUTE } from "@/lib/auth/roleRoutes";
+import { AccessRestricted } from "@/components/auth/AccessRestricted";
+import { AppLoading } from "@/components/auth/AppLoading";
 import {
   ArrowLeft,
   Printer,
@@ -26,6 +31,7 @@ import {
 
 export default function ExamResultScorePage({ params }: { params: Promise<{ attemptId: string }> }) {
   const resolvedParams = use(params);
+  const { scope, isReady, isAuthenticated, activeRole } = useAuth();
   const [attempt, setAttempt] = useState<ExamAttempt | null>(null);
   const [report, setReport] = useState<ExamReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,16 +58,23 @@ export default function ExamResultScorePage({ params }: { params: Promise<{ atte
     window.print();
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center p-6 font-sans">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-[#2468B2] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-[#182338] font-bold">Evaluating Olympiad Paper & Compiling Official Ledger...</p>
-          <p className="text-xs text-[#667085]">Calculating teacher scores, topic analytics, and answer breakdowns</p>
-        </div>
-      </div>
-    );
+  // Record-level authorization. A route guard cannot know whose attempt an id refers to,
+  // so ownership is checked here against the loaded record: staff may open any paper,
+  // a candidate only their own. Changing the id in the URL is refused.
+  if (!isReady || loading) {
+    return <AppLoading label="Opening the score paper" />;
+  }
+
+  if (!isAuthenticated) {
+    return <AccessRestricted homeHref={LOGIN_ROUTE} />;
+  }
+
+  const permitted =
+    (attempt !== null && canReadAttempt(scope, attempt)) ||
+    (report !== null && canReadReport(scope, report));
+
+  if ((attempt || report) && !permitted) {
+    return <AccessRestricted homeHref={homeFor(activeRole)} />;
   }
 
   if (!attempt && !report) {

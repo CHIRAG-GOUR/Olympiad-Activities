@@ -7,6 +7,8 @@ import { ExamAttempt } from "@/types/attempt";
 import { Question } from "@/types/question";
 import { UserProfile } from "@/lib/auth/rbac";
 import { useAuth } from "@/context/AuthContext";
+import { ROLE_PREFIX, pathFor } from "@/lib/auth/sections";
+import { visibleAttempts, canSeeSystemAnalytics } from "@/lib/auth/dataAccess";
 import { Card, SectionHeading } from "@/components/ui/primitives";
 import {
   DashboardHero,
@@ -57,10 +59,11 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export default function DashboardView() {
-  const { role, user } = useAuth();
+  const { role, user, scope, can } = useAuth();
+  const base = ROLE_PREFIX[role];
 
   const [exams, setExams] = useState<Exam[]>([]);
-  const [attempts, setAttempts] = useState<ExamAttempt[]>([]);
+  const [allAttempts, setAllAttempts] = useState<ExamAttempt[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
@@ -87,7 +90,8 @@ export default function DashboardView() {
         ]);
         if (cancelled) return;
         setExams(exList);
-        setAttempts(attList);
+        // Narrowed by entitlement before anything renders.
+        setAllAttempts(attList);
         setQuestions(qList);
         setUsers(uList);
         setSessions(liveSessions);
@@ -103,6 +107,12 @@ export default function DashboardView() {
       cancelled = true;
     };
   }, []);
+
+  /**
+   * Authorization boundary: staff receive the cohort, a candidate only their own records.
+   * Every derivation below reads this, so no screen can accidentally widen the set.
+   */
+  const attempts = useMemo(() => visibleAttempts(scope, allAttempts), [scope, allAttempts]);
 
   /* ── Derivations (all from real repository data) ───────── */
 
@@ -181,7 +191,7 @@ export default function DashboardView() {
             ? "Live previews of the real activities — the student manipulates these, and the manipulation itself produces the answer."
             : "A preview of the interactions waiting in your paper."
         }
-        action={isStaff ? { label: "Activity library", href: "/admin/activities" } : undefined}
+        action={isStaff ? { label: "Activity library", href: `${base}/activities` } : undefined}
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {previewQuestions.map((q) => (
@@ -205,10 +215,8 @@ export default function DashboardView() {
       .sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime())[0];
 
     const nextExam = exams.find((e) => e.status !== "Archived") || exams[0];
-    // Only this candidate's own records — never fall back to the whole cohort.
-    const myAttempts = attempts.filter(
-      (a) => a.student?.name?.trim().toLowerCase() === (user?.name || "").trim().toLowerCase()
-    );
+    // `attempts` is already narrowed to this candidate by the data-access layer.
+    const myAttempts = attempts;
     const myAvg = myAttempts.length
       ? Math.round(myAttempts.reduce((s, a) => s + a.percentage, 0) / myAttempts.length)
       : null;
@@ -257,7 +265,7 @@ export default function DashboardView() {
         <DashboardHero
           greeting={greeting}
           name={name}
-          roleLine="Your Olympiad examination desk"
+          roleLine="My Olympiad"
           blurb="Every question here is an activity you manipulate — rotate a solid, plot a point, run a simulation — and your work produces the answer."
           facts={[
             { value: totalActivities, label: "Activities waiting", tone: "#2468B2" },
@@ -320,6 +328,7 @@ export default function DashboardView() {
             <SectionHeading
               title="Your results"
               description="Open a record for the full question-by-question report."
+              action={{ label: "All my results", href: pathFor("results", "STUDENT") }}
             />
             <ResultsLedger attempts={myAttempts} limit={5} />
           </section>
@@ -331,6 +340,7 @@ export default function DashboardView() {
   /* ── Teacher / administrator view ───────────────────────── */
 
   const isAdmin = role === "SUPER_ADMIN";
+  const showSystemAnalytics = canSeeSystemAnalytics(scope);
 
   const metrics: MetricCard[] = [
     {
@@ -378,8 +388,12 @@ export default function DashboardView() {
       <DashboardHero
         greeting={greeting}
         name={name}
-        roleLine={isAdmin ? "Your Olympiad examination centre" : "Your examination centre"}
-        blurb="Manage examinations, monitor candidates as they work, and explore the interactive question library behind every paper."
+        roleLine={isAdmin ? "Olympiad Administration" : "Teacher Examination Centre"}
+        blurb={
+          isAdmin
+            ? "Oversee every examination, candidate and question in the platform, with system-wide analytics."
+            : "Build and run your examinations, author interactive questions, and follow your candidates' results."
+        }
         facts={[
           {
             value: examInsights.length,
@@ -389,11 +403,16 @@ export default function DashboardView() {
           { value: studentCount, label: "Candidates on roll", tone: "#59B6DE" },
           { value: totalActivities, label: "Interactive activities", tone: "#8067D9" },
         ]}
-        primary={{
-          label: "Open examination",
-          href: primaryExamId ? `/exam/${primaryExamId}` : "/admin/exams",
-        }}
-        secondary={{ label: "Activity library", href: "/admin/activities" }}
+        primary={
+          isAdmin
+            ? { label: "Open examination", href: primaryExamId ? `/exam/${primaryExamId}` : `${base}/exams` }
+            : { label: "Add question", href: `${base}/questions/new` }
+        }
+        secondary={
+          isAdmin
+            ? { label: "Activity library", href: `${base}/activities` }
+            : { label: "My examinations", href: `${base}/exams` }
+        }
       />
 
       <MetricRow cards={metrics} />
@@ -403,7 +422,7 @@ export default function DashboardView() {
           icon={Layers}
           title="Your interactive Olympiad"
           description="Every question is designed as an activity, simulation, puzzle or interactive challenge."
-          action={{ label: "Question bank", href: "/admin/question-bank" }}
+          action={{ label: "Question bank", href: `${base}/question-bank` }}
         />
         <SyllabusGrid sections={sectionInsights} />
       </section>
@@ -414,7 +433,7 @@ export default function DashboardView() {
             icon={FileCheck2}
             title="Active examinations"
             description="Participation and results per paper."
-            action={{ label: "All examinations", href: "/admin/exams" }}
+            action={{ label: "All examinations", href: `${base}/exams` }}
           />
           <ExaminationList exams={examInsights} />
         </section>
@@ -438,9 +457,9 @@ export default function DashboardView() {
       <section>
         <SectionHeading
           icon={BarChart3}
-          title="Analytics"
+          title={showSystemAnalytics ? "System analytics" : "How your candidates are doing"}
           description="Measured from graded attempts and the live question bank — nothing is estimated."
-          action={{ label: "Full analytics", href: "/admin/analytics" }}
+          action={showSystemAnalytics ? { label: "Full analytics", href: `${base}/analytics` } : undefined}
         />
         <AnalyticsGrid
           sectionPoints={sectionPoints}
@@ -459,7 +478,7 @@ export default function DashboardView() {
               ? `${studentCount} ${studentCount === 1 ? "candidate" : "candidates"} on roll.`
               : "Records are entered automatically on submission."
           }
-          action={{ label: "Results ledger", href: "/admin/results" }}
+          action={{ label: "Results ledger", href: `${base}/results` }}
         />
         <ResultsLedger attempts={attempts} />
       </section>
