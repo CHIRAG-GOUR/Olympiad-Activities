@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
+import { subjectRepository } from "@/repositories";
 import { Subject } from "@/types/subject";
 import { BookOpen, FolderTree, Plus, BookCheck, Layers } from "lucide-react";
 
@@ -12,7 +12,7 @@ export default function SubjectsPage() {
 
   useEffect(() => {
     async function load() {
-      const data = await OlympiadStore.getSubjects();
+      const data = await subjectRepository.listSubjects();
       setSubjects(data);
       setLoading(false);
     }

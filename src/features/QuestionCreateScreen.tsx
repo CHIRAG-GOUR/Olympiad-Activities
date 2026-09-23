@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
+import { questionService } from "@/services";
 import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
 import { Question, QuestionType, QuestionDifficulty } from "@/types/question";
 import { evaluateAnswer } from "@/engine/answer-evaluator";
@@ -99,8 +99,8 @@ export default function QuestionCreateScreen() {
       alert("Please fill in question text and code.");
       return;
     }
-    await OlympiadStore.saveQuestion(formData as Question);
-    router.push("/admin/questions");
+    await questionService.saveQuestion(formData as Question);
+    router.push(`${roleBase}/questions`);
   };
 
   return (

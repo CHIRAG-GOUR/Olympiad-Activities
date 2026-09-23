@@ -2,6 +2,8 @@
 
 import { idbClient } from "./indexeddb";
 import type { DeviceInfo } from "@/types/session";
+import { db } from "@/services/firebase/config";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export interface AnswerState {
   questionId: string;
@@ -127,6 +129,11 @@ class ExamPersistenceServiceClass {
       }
     }
 
+    // Async cloud mirror if Firestore is configured
+    if (db) {
+      setDoc(doc(db, "examSessions", sessionId), sessionState, { merge: true }).catch(() => {});
+    }
+
     return sessionState;
   }
 
@@ -158,6 +165,11 @@ class ExamPersistenceServiceClass {
       } catch {
         // ignore
       }
+    }
+
+    // Async cloud mirror if Firestore is configured
+    if (db) {
+      setDoc(doc(db, "examSessions", updated.sessionId), updated, { merge: true }).catch(() => {});
     }
   }
 
@@ -342,6 +354,10 @@ class ExamPersistenceServiceClass {
       }
     }
 
+    if (db) {
+      setDoc(doc(db, "examSessions", sessionId), session, { merge: true }).catch(() => {});
+    }
+
     return session;
   }
 
@@ -365,6 +381,15 @@ class ExamPersistenceServiceClass {
             localStorage.removeItem("active_exam_session");
           }
         }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (db) {
+      try {
+        const { deleteDoc } = await import("firebase/firestore");
+        deleteDoc(doc(db, "examSessions", sessionId)).catch(() => {});
       } catch {
         // ignore
       }

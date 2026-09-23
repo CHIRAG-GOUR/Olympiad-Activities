@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
 import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
 import { RawImportRow, ParsedQuestionResult, ImportErrorItem } from "@/types/import";
 import { Question, QuestionType, QuestionDifficulty } from "@/types/question";

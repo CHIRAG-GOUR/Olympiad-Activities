@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "olympiad-examination",
+    "development": "olympiad-dev",
+    "production": "olympiad-examination"
+  }
+}

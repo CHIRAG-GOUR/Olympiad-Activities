@@ -6,7 +6,7 @@ import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
+import { questionService } from "@/services";
 import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
 import { Question, QuestionType } from "@/types/question";
 import { evaluateAnswer } from "@/engine/answer-evaluator";
@@ -27,7 +27,7 @@ export default function QuestionDetailScreen({ params }: { params: Promise<{ id:
 
   useEffect(() => {
     async function load() {
-      const q = await OlympiadStore.getQuestionById(resolvedParams.id);
+      const q = await questionService.getQuestion(resolvedParams.id);
       if (q) {
         setQuestion(q);
         setFormData(q);
@@ -54,11 +54,11 @@ export default function QuestionDetailScreen({ params }: { params: Promise<{ id:
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await OlympiadStore.saveQuestion({
+    await questionService.saveQuestion({
       ...(formData as Question),
       updatedAt: new Date().toISOString(),
     });
-    router.push("/admin/questions");
+    router.push(`${roleBase}/questions`);
   };
 
   const handleTestEvaluate = () => {

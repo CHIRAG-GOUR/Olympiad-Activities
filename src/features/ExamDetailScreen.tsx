@@ -5,7 +5,7 @@ import { ROLE_PREFIX } from "@/lib/auth/sections";
 import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { OlympiadStore } from "@/services/firebase/firestore";
+import { examService, questionService } from "@/services";
 import { Exam } from "@/types/exam";
 import { Question } from "@/types/question";
 import { ArrowLeft, Play, Clock, Award, Users, CheckCircle, ExternalLink } from "lucide-react";
@@ -22,8 +22,8 @@ export default function ExamDetailScreen({ params }: { params: Promise<{ id: str
   useEffect(() => {
     async function load() {
       const [e, qList] = await Promise.all([
-        OlympiadStore.getExamById(resolvedParams.id),
-        OlympiadStore.getQuestions(),
+        examService.getExam(resolvedParams.id),
+        questionService.listQuestions(),
       ]);
       setExam(e);
       if (e) {
