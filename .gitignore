@@ -21,6 +21,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 firebase-debug.log*
+.firebase
 
 # Environment variables
 .env*.local

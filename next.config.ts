@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "export",
+  images: {
+    unoptimized: true,
+  },
   reactStrictMode: true,
   transpilePackages: ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
   // Strip console.log/debug/info from production client bundles (keep error/warn so real

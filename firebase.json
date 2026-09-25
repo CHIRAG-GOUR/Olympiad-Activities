@@ -10,6 +10,7 @@
   "hosting": {
     "site": "the-olympiad-dashboard",
     "public": "out",
+    "cleanUrls": true,
     "ignore": [
       "firebase.json",
       "**/.*",
