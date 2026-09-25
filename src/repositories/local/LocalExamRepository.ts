@@ -3,7 +3,9 @@ import { Exam } from "@/types/exam";
 import { SEED_EXAMS } from "@/lib/seedData";
 import { idbClient } from "@/services/persistence/indexeddb";
 
-const LOCAL_STORAGE_KEY = "olympiad_exams_repo";
+// Key bumped when IMO 2018-19 Set A was added, so browsers holding the older single-paper
+// blob pick the new paper up instead of silently skipping the seed.
+const LOCAL_STORAGE_KEY = "olympiad_exams_repo_v2";
 
 export class LocalExamRepository implements IExamRepository {
   private inMemory: Exam[] | null = null;

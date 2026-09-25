@@ -2,7 +2,8 @@ import { ISubjectRepository } from "../interfaces/ISubjectRepository";
 import { Subject } from "@/types/subject";
 import { SEED_SUBJECTS } from "@/lib/seedData";
 
-const LOCAL_STORAGE_KEY = "olympiad_subjects_repo";
+// Bumped so the subject's question and exam counts are recomputed for both papers.
+const LOCAL_STORAGE_KEY = "olympiad_subjects_repo_v2";
 
 export class LocalSubjectRepository implements ISubjectRepository {
   private inMemory: Subject[] | null = null;

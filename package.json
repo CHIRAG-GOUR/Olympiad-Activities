@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "verify:imo6a": "npx --yes tsx --tsconfig tsconfig.json src/data/imo6a/__tests__/answerMapping.ts",
     "verify:rbac": "npx --yes tsx --tsconfig tsconfig.json src/lib/auth/__tests__/accessMatrix.ts"
   },
   "dependencies": {
