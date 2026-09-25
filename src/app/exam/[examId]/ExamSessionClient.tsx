@@ -12,6 +12,7 @@ import { getClientDeviceInfo } from "@/lib/deviceUtils";
 import { ExamPersistenceService, ExamSessionState } from "@/services/persistence/ExamPersistenceService";
 import { ExamHeader } from "@/components/examination/ExamHeader";
 import { QuestionPalette } from "@/components/examination/QuestionPalette";
+import { ExamButtonGuide } from "@/components/examination/ExamButtonGuide";
 import { ExamNavigation } from "@/components/examination/ExamNavigation";
 import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
 import { hasBespokeActivity } from "@/components/activities/ActivityRegistry";
@@ -64,6 +65,14 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [questionView, setQuestionView] = useState<"activity" | "standard">("activity");
+  // Small screens show the palette as a drawer; the guide explains every control.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const questionScrollRef = useRef<HTMLDivElement>(null);
+  // Each new question starts at its top, not wherever the previous one was scrolled to.
+  useEffect(() => {
+    questionScrollRef.current?.scrollTo({ top: 0 });
+  }, [currentIndex]);
 
   const [deviceInfo] = useState(() => getClientDeviceInfo());
 
@@ -755,11 +764,14 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
         isSaving={isSaving}
       />
 
-      <main className="flex-1 min-h-0 overflow-y-auto">
-        <div className="w-full max-w-[1750px] mx-auto px-3 sm:px-5 py-3 sm:py-4">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-            <div className="lg:col-span-8 xl:col-span-9 bg-white border-2 border-slate-300 rounded-xl shadow-md flex flex-col overflow-hidden">
-              <div className="bg-slate-100 border-b-2 border-slate-300 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+      {/* On large screens the workspace itself never scrolls: the question card scrolls
+          inside its column and the palette fills the column beside it, so no part of the
+          palette can be pushed off-screen at any window height. */}
+      <main className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
+        <div className="w-full max-w-[1750px] mx-auto px-3 sm:px-5 py-3 sm:py-4 lg:h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start lg:items-stretch lg:h-full">
+            <div className="lg:col-span-8 xl:col-span-9 bg-white border-2 border-slate-300 rounded-xl shadow-md flex flex-col overflow-hidden lg:min-h-0">
+              <div className="shrink-0 bg-slate-100 border-b-2 border-slate-300 px-4 py-2 flex items-center gap-2 overflow-x-auto">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0 mr-2">
                   Sections:
                 </span>
@@ -793,8 +805,24 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                 })}
               </div>
 
-              <div className="px-3 sm:px-5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-700">
+              <div className="shrink-0 px-3 sm:px-5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-700">
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaletteOpen(true)}
+                    className="lg:hidden h-9 px-2.5 rounded-lg bg-[#2468B2] text-white text-[11px] font-bold flex items-center gap-1"
+                    title="Open the question palette"
+                  >
+                    ☰ Questions {answeredIndices.size}/{questions.length}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGuideOpen(true)}
+                    className="lg:hidden h-9 w-9 rounded-lg border border-slate-300 bg-white text-[#2468B2] font-black"
+                    aria-label="How the controls work"
+                  >
+                    ?
+                  </button>
                   <span className="text-sm font-black text-[#2468B2]">
                     Question No. {currentIndex + 1}
                   </span>
@@ -839,7 +867,7 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                 </div>
               </div>
 
-              <div className="p-4 sm:p-5 flex-1 space-y-4">
+              <div ref={questionScrollRef} className="p-4 sm:p-5 flex-1 space-y-4 lg:min-h-0 lg:overflow-y-auto">
                 {currentQuestion ? (
                   <QuestionRenderer
                     question={currentQuestion}
@@ -857,8 +885,9 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
               </div>
             </div>
 
-            <div className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-0">
+            <div className="hidden lg:block lg:col-span-4 xl:col-span-3 lg:min-h-0">
               <QuestionPalette
+                onOpenGuide={() => setGuideOpen(true)}
                 questions={questions}
                 currentIndex={currentIndex}
                 visitedIndices={visitedIndices}
@@ -886,6 +915,35 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
         onNext={() => setCurrentIndex(Math.min(questions.length - 1, currentIndex + 1))}
         onSubmitExam={() => setShowConfirmModal(true)}
       />
+
+      {paletteOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setPaletteOpen(false)}>
+          <div className="absolute right-0 top-0 h-full w-[min(380px,94vw)] p-2" onClick={(e) => e.stopPropagation()}>
+            <QuestionPalette
+              questions={questions}
+              currentIndex={currentIndex}
+              visitedIndices={visitedIndices}
+              answeredIndices={answeredIndices}
+              markedForReviewIndices={markedForReviewIndices}
+              activeSectionId={currentSection.id}
+              onSelectIndex={(idx) => {
+                setCurrentIndex(idx);
+                setPaletteOpen(false);
+              }}
+              onSubmitExam={() => {
+                setPaletteOpen(false);
+                setShowConfirmModal(true);
+              }}
+              onOpenGuide={() => setGuideOpen(true)}
+              onClose={() => setPaletteOpen(false)}
+              candidateName={candidateName}
+              candidateId={candidateId}
+            />
+          </div>
+        </div>
+      )}
+
+      <ExamButtonGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
 
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
