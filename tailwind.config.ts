@@ -112,6 +112,10 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-4px)" },
         },
+        "slide-in-left": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
       },
       animation: {
         "rise-in": "rise-in 0.35s ease-out both",
@@ -119,6 +123,8 @@ const config: Config = {
         "wash-in": "wash-in 0.9s ease-out both",
         "orbit-slow": "orbit-slow 28s linear infinite",
         drift: "drift 5s ease-in-out infinite",
+        "fade-in": "wash-in 0.18s ease-out both",
+        "slide-in-left": "slide-in-left 0.22s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
     },
   },

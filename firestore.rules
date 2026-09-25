@@ -1,86 +1,147 @@
 rules_version = '2';
+
+// ==============================================================================
+// Olympiad Digital Examination — Firestore security rules
+// Project: olympiad-dashboard
+// ==============================================================================
+// These rules are the data layer's own copy of the application's RBAC. They must
+// hold on their own: the React UI, hidden buttons and client-side role checks are
+// not security, because anyone can call Firestore directly with the public web
+// config. Nothing here trusts the client beyond its verified auth token.
+//
+// Roles are read from a custom claim first and fall back to the user's own
+// document. Claims are preferred because they cost no read and cannot be edited
+// by the user, whereas /users/{uid} is writable by its owner.
+// ==============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions for RBAC
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function getUserData() {
+    function userDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function claimRole() {
+      return request.auth.token.role;
     }
 
     function isSuperAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email in ['pa1@skillizee.io', 'swati123@gmail.com', 'aarna@cambridgecourtgroup.com'] ||
-        request.auth.token.role == 'SUPER_ADMIN' ||
-        getUserData().role == 'SUPER_ADMIN'
+        claimRole() == 'SUPER_ADMIN' ||
+        userDoc().role == 'SUPER_ADMIN'
       );
     }
 
     function isTeacher() {
       return isAuthenticated() && (
         isSuperAdmin() ||
-        request.auth.token.role == 'TEACHER' ||
-        getUserData().role == 'TEACHER'
+        claimRole() == 'TEACHER' ||
+        userDoc().role == 'TEACHER'
       );
     }
 
-    function isStudent() {
-      return isAuthenticated() && (
-        request.auth.token.role == 'STUDENT' ||
-        getUserData().role == 'STUDENT'
-      );
+    // Staff may read cohort-wide records; candidates may only ever read their own.
+    function isStaff() {
+      return isTeacher() || isSuperAdmin();
     }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // 1. Users collection
+    // ------------------------------------------------------------------
+    // Users
+    // ------------------------------------------------------------------
+    // A user may read and amend their own profile, but must not be able to
+    // promote themselves: role and status changes are reserved to an admin.
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isSuperAdmin() || isOwner(userId);
+      allow read: if isStaff() || isOwner(userId);
+      allow create, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (
+        isOwner(userId) &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.status == resource.data.status
+      );
     }
 
-    // 2. Exams collection
+    // ------------------------------------------------------------------
+    // Exams and subjects
+    // ------------------------------------------------------------------
+    // Readable by any signed-in member of the platform — a candidate needs the
+    // paper to sit it — but never to the anonymous public.
     match /exams/{examId} {
-      allow read: if true; // Publicly readable for students/candidates
-      allow write: if isTeacher() || isSuperAdmin();
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
     }
 
-    // 3. Questions collection
-    match /questions/{questionId} {
-      allow read: if true; // Loaded for exam sessions
-      allow write: if isTeacher() || isSuperAdmin();
-    }
-
-    // 4. Subjects collection
     match /subjects/{subjectId} {
-      allow read: if true;
-      allow write: if isTeacher() || isSuperAdmin();
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
     }
 
-    // 5. Exam Sessions / Live Monitor collection
+    // ------------------------------------------------------------------
+    // Questions
+    // ------------------------------------------------------------------
+    // Question documents carry correctOptionId, so public read would publish the
+    // answer key. Signing in is the floor, not the ceiling: while scoring runs in
+    // the browser, a signed-in candidate can still read the answers. Moving
+    // evaluation into a Cloud Function and stripping the key from client reads is
+    // the outstanding piece of work here.
+    match /questions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // ------------------------------------------------------------------
+    // Live exam sessions
+    // ------------------------------------------------------------------
+    // A candidate streams progress for their own session only. Without the
+    // ownership check on create, anyone could overwrite another candidate's
+    // in-progress paper.
     match /examSessions/{sessionId} {
-      allow read: if isTeacher() || isSuperAdmin() || resource.data.studentId == request.auth.uid;
-      allow create, update: if true; // Allows candidates to stream heartbeats and telemetry
+      allow read: if isStaff() || isOwner(resource.data.studentId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.studentId);
+      allow update: if isStaff() || (
+        isOwner(resource.data.studentId) &&
+        request.resource.data.studentId == resource.data.studentId
+      );
       allow delete: if isSuperAdmin();
     }
 
-    // 6. Exam Attempts collection
+    // ------------------------------------------------------------------
+    // Attempts
+    // ------------------------------------------------------------------
+    // An attempt is a candidate's submitted paper. They may file their own and
+    // read it back; amending a submitted attempt is reserved to an admin.
     match /attempts/{attemptId} {
-      allow read: if isTeacher() || isSuperAdmin() || resource.data.student.studentId == request.auth.uid;
-      allow create: if isAuthenticated() || request.resource.data.student.studentId != null;
+      allow read: if isStaff() || isOwner(resource.data.student.studentId);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.student.studentId);
       allow update, delete: if isSuperAdmin();
     }
 
-    // 7. Exam Reports collection
+    // ------------------------------------------------------------------
+    // Reports
+    // ------------------------------------------------------------------
+    // A candidate reads their own result and nobody else's, which is what stops
+    // /results/<someone-else-id> working at the data layer rather than only in
+    // the UI.
     match /reports/{reportId} {
-      allow read: if isTeacher() || isSuperAdmin() || resource.data.studentId == request.auth.uid;
-      allow create: if isAuthenticated() || request.resource.data.studentId != null;
+      allow read: if isStaff() || isOwner(resource.data.studentId);
+      allow create: if isStaff() || (
+        isAuthenticated() && isOwner(request.resource.data.studentId)
+      );
       allow update, delete: if isSuperAdmin();
+    }
+
+    // ------------------------------------------------------------------
+    // Anything not named above is closed.
+    // ------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

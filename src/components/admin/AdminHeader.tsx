@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Plus, Play, FileSpreadsheet } from "lucide-react";
+import { Plus, Play } from "lucide-react";
 
 interface AdminHeaderProps {
   title: string;
@@ -36,14 +36,6 @@ export function AdminHeader({ title, subtitle, actionButton }: AdminHeaderProps)
         >
           <Play className="w-4 h-4 text-[#F29A38]" strokeWidth={2.2} />
           <span>Candidate portal</span>
-        </Link>
-
-        <Link
-          href="/admin/imports"
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E1E7EF] bg-white text-[13px] font-semibold text-[#182338] hover:bg-white/70 hover:border-[#C3D8EC] transition-colors"
-        >
-          <FileSpreadsheet className="w-4 h-4 text-[#2468B2]" strokeWidth={2.2} />
-          <span>Import questions</span>
         </Link>
 
         {actionButton && (

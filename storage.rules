@@ -1,34 +1,60 @@
 rules_version = '2';
+
+// ==============================================================================
+// Olympiad Digital Examination — Cloud Storage security rules
+// Project: olympiad-dashboard
+// ==============================================================================
+// Roles are resolved the same way as in firestore.rules, from a verified custom
+// claim. Storage rules cannot read Firestore, so there is no /users fallback
+// here — issuing the role claim on sign-in is what makes staff writes work.
+// ==============================================================================
+
 service firebase.storage {
   match /b/{bucket}/o {
-    // Helper functions
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function isSuperAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.email == 'pa1@skillizee.io' ||
-        request.auth.token.role == 'SUPER_ADMIN'
-      );
+      return isAuthenticated() && request.auth.token.role == 'SUPER_ADMIN';
     }
 
-    // Question media and diagrams
+    function isStaff() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'TEACHER' || request.auth.token.role == 'SUPER_ADMIN');
+    }
+
+    // Question diagrams and media. Readable by any signed-in member, since a
+    // candidate needs them to sit the paper; only staff may publish them.
     match /questions/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
     }
 
-    // Exported exam reports and score certificates
+    // Exported result documents. These are personal data, so they are never
+    // world-readable; a candidate reaches their own through a signed URL issued
+    // after the ownership check in Firestore.
     match /reports/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+      allow read: if isStaff();
+      allow write: if isStaff();
     }
 
-    // General assets
+    // Uploaded question-paper source files (scans and PDFs of past papers).
+    match /papers/{allPaths=**} {
+      allow read: if isStaff();
+      allow write: if isStaff();
+    }
+
+    // Branding and other general assets.
     match /assets/{allPaths=**} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isSuperAdmin();
+    }
+
+    // Anything not named above is closed.
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

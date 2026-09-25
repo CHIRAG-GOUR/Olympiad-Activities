@@ -62,12 +62,15 @@ export const SECTIONS: AppSection[] = [
     inNav: true,
   },
   {
+    // Retired for now at the team's request. Leaving the section declared but granted to
+    // no group keeps the pages and their permission intact while closing both the menu
+    // entry and the URL — re-enable by restoring the groups and inNav.
     id: "activities",
     label: "Activities",
     permission: "activity:view",
     segment: "activities",
-    groups: ["SUPER_ADMIN", "TEACHER"],
-    inNav: true,
+    groups: [],
+    inNav: false,
   },
   {
     id: "questions",
@@ -134,12 +137,13 @@ export const SECTIONS: AppSection[] = [
     inNav: true,
   },
   {
+    // Retired for now at the team's request — see the note on "activities".
     id: "imports",
     label: "Imports",
     permission: "question:import",
     segment: "imports",
-    groups: ["SUPER_ADMIN"],
-    inNav: true,
+    groups: [],
+    inNav: false,
   },
   {
     id: "settings",
