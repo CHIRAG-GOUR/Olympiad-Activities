@@ -8,16 +8,18 @@ import {
   IMO_CLASS6_SETB_EXAM,
 } from "@/data/sofImoClass6SetB";
 import { IMO6A_QUESTIONS, IMO6A_EXAM } from "@/data/imo6a";
+import { IMO6B2_QUESTIONS, IMO6B2_EXAM } from "@/data/imo6b2";
 
 /**
- * Seeded content: two official SOF Olympiad papers for Class 6.
+ * Seeded content: three SOF Olympiad papers for Class 6.
  *   • IMO 2018-19 Set A — transcribed from the supplied booklet, fully activity-driven.
  *   • IMO 2024-25 Set B — the paper the platform originally shipped with.
+ *   • IMO Set B #2 — 50 mini-games, keyed to the supplied Answer Key 2.
  * Both share one subject, so its counts are derived rather than hard-coded.
  */
 
-export const SEED_QUESTIONS: Question[] = [...IMO6A_QUESTIONS, ...IMO_CLASS6_SETB_QUESTIONS];
-export const SEED_EXAMS: Exam[] = [IMO6A_EXAM, IMO_CLASS6_SETB_EXAM];
+export const SEED_QUESTIONS: Question[] = [...IMO6A_QUESTIONS, ...IMO_CLASS6_SETB_QUESTIONS, ...IMO6B2_QUESTIONS];
+export const SEED_EXAMS: Exam[] = [IMO6A_EXAM, IMO_CLASS6_SETB_EXAM, IMO6B2_EXAM];
 
 export const SEED_SUBJECTS: Subject[] = [
   {

@@ -589,9 +589,10 @@ export function Q45NumberBlackboard({ question, value, activityState, onChange, 
 
   const write = (d: number) => {
     if (!w.cursor || play.readOnly) return;
-    const { row, i } = w.cursor;
-    if (i === 0 && d === 0) return; // a number never starts with 0
     play.set((p) => {
+      if (!p.cursor) return p;
+      const { row, i } = p.cursor;
+      if (i === 0 && d === 0) return p; // a number never starts with 0
       const arr = [...p.digits[row]];
       arr[i] = d;
       const n = rows.find((r) => r.id === row)!.n;

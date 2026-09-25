@@ -3,7 +3,7 @@ import { Question } from "@/types/question";
 import { SEED_QUESTIONS } from "@/lib/seedData";
 
 // Bumped with the arrival of the Set A question bank (see LocalExamRepository).
-const LOCAL_STORAGE_KEY = "olympiad_questions_repo_v3";
+const LOCAL_STORAGE_KEY = "olympiad_questions_repo_v4";
 
 export class LocalQuestionRepository implements IQuestionRepository {
   private inMemory: Question[] | null = null;

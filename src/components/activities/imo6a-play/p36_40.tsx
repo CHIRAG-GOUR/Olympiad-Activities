@@ -11,6 +11,7 @@ import { usePointerDrag, clamp } from "../kit/usePointerDrag";
 import { usePlay, cfg } from "./engine";
 import { PlayShell, Bay, Gauge, Btn } from "./PlayShell";
 import { Stage3D, Label3D, approach, Floor } from "./three";
+import { clientToSvg } from "./svgPoint";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q36 — Strawberry Packing Factory (3D)
@@ -521,11 +522,7 @@ function BedPiece({
   const size = b || drag ? side * S : 11;
   const px = drag ? drag.x : b ? 6 + b.x * S : shedPos.x;
   const py = drag ? drag.y : b ? 6 + b.y * S : shedPos.y;
-  const toVb = (cx: number, cy: number) => {
-    const r = svg.current?.getBoundingClientRect();
-    if (!r) return null;
-    return { x: ((cx - r.left) / r.width) * vb[0], y: ((cy - r.top) / r.height) * vb[1] };
-  };
+  const toVb = (cx: number, cy: number) => clientToSvg(svg.current, cx, cy);
   const { start } = usePointerDrag({
     disabled: readOnly,
     onStart: (p) => {

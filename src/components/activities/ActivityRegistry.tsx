@@ -3,6 +3,7 @@
 import React from "react";
 import type { ActivityComponentType } from "./kit/types";
 import { IMO6A_ACTIVITY_MAP } from "./imo6a-play/registry";
+import { IMO6B2_ACTIVITY_MAP } from "./imo6b2-play/registry";
 
 // 50 Bespoke Interactive Olympiad Activities
 import { DiceLabActivity } from "./DiceLabActivity";
@@ -190,8 +191,8 @@ export function getQuestionActivity(
   questionIdOrCode?: string
 ): ActivityComponentType | undefined {
   if (!questionIdOrCode) return undefined;
-  // Set A activities are code-split and load on demand; Set B is bundled as before.
-  return IMO6A_ACTIVITY_MAP[questionIdOrCode] ?? ACTIVITY_MAP[questionIdOrCode];
+  // Set A & Set B #2 activities are code-split and load on demand; Set B is bundled as before.
+  return IMO6A_ACTIVITY_MAP[questionIdOrCode] ?? IMO6B2_ACTIVITY_MAP[questionIdOrCode] ?? ACTIVITY_MAP[questionIdOrCode];
 }
 
 /**

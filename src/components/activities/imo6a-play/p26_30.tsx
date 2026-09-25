@@ -8,13 +8,11 @@ import { matchNumber, matchText, toMixedString, round } from "../imo6a/shared";
 import { usePointerDrag } from "../kit/usePointerDrag";
 import { usePlay, cfg } from "./engine";
 import { PlayShell, Bay, Gauge, Btn } from "./PlayShell";
+import { clientToSvg } from "./svgPoint";
 
 function useSvgPoint(svg: React.RefObject<SVGSVGElement | null>, vb: { x: number; y: number; w: number; h: number }) {
-  return (cx: number, cy: number) => {
-    const r = svg.current?.getBoundingClientRect();
-    if (!r || !r.width) return null;
-    return { x: vb.x + ((cx - r.left) / r.width) * vb.w, y: vb.y + ((cy - r.top) / r.height) * vb.h };
-  };
+  void vb;
+  return (cx: number, cy: number) => clientToSvg(svg.current, cx, cy);
 }
 
 /* ══════════════════════════════════════════════════════════════════════

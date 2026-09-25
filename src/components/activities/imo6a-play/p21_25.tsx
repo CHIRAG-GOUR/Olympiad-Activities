@@ -11,14 +11,13 @@ import { usePointerDrag, clamp } from "../kit/usePointerDrag";
 import { usePlay, cfg } from "./engine";
 import { PlayShell, Bay, Gauge, Btn } from "./PlayShell";
 import { Stage3D, Label3D, approach, Floor } from "./three";
+import { clientToSvg } from "./svgPoint";
 
 /** Pointer position inside an SVG, in viewBox units. */
 function useSvgPointer(svg: React.RefObject<SVGSVGElement | null>, vbW: number, vbH: number) {
-  return (clientX: number, clientY: number) => {
-    const r = svg.current?.getBoundingClientRect();
-    if (!r || !r.width) return null;
-    return { x: ((clientX - r.left) / r.width) * vbW, y: ((clientY - r.top) / r.height) * vbH };
-  };
+  void vbW;
+  void vbH;
+  return (clientX: number, clientY: number) => clientToSvg(svg.current, clientX, clientY);
 }
 
 /** A draggable SVG handle; reports positions in viewBox units. */
@@ -286,6 +285,9 @@ export function Q22ConstructionBench({ question, value, activityState, onChange,
   const c = pts[w.centre];
   const lastAng = useRef<number | null>(null);
   const [pencilAng, setPencilAng] = React.useState(-45);
+  // Re-planting the point parks the pencil where it can be grabbed: B sits near the right
+  // edge of the bench, so its pencil starts up and to the left rather than off-canvas.
+  React.useEffect(() => setPencilAng(w.centre === "B" ? 225 : -45), [w.centre]);
   const px = c.x + w.radius * CM * Math.cos((pencilAng * Math.PI) / 180);
   const py = c.y + w.radius * CM * Math.sin((pencilAng * Math.PI) / 180);
 
