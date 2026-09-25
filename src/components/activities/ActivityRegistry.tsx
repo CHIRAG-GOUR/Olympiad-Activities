@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { ActivityComponentType } from "./kit/types";
-import { IMO6A_ACTIVITY_MAP } from "./imo6a/registry";
+import { IMO6A_ACTIVITY_MAP } from "./imo6a-play/registry";
 
 // 50 Bespoke Interactive Olympiad Activities
 import { DiceLabActivity } from "./DiceLabActivity";

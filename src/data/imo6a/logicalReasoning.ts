@@ -56,6 +56,13 @@ export const IMO6A_LOGICAL_REASONING: Question[] = [
         { top: 8, left: 32, right: 18, bottom: 24, centre: null },
       ],
       dialRange: { min: 0, max: 40 },
+      // Mini-game: the student assembles a rule on gear slots from the four arms. The
+      // machine only produces the third centre once the rule reproduces both printed centres.
+      play: {
+        arms: ["top", "left", "right", "bottom"],
+        ops: ["+", "−", "×", "÷"],
+        outputs: ["whole", "units", "digitsum"],
+      },
     },
     explanation:
       "Each cross hides a relationship between its arms. Dial the centre of the third cross to the value that keeps the same relationship the first two crosses show.",
@@ -83,6 +90,20 @@ export const IMO6A_LOGICAL_REASONING: Question[] = [
       // Figure (i) -> (ii): the cross of arms rotates 45°, markers travel with it.
       source: { rotation: 0, markers: ["W", "E"] },
       target: { rotation: 45, markers: ["W", "E"] },
+      // Mini-game geometry read off the printed figures. (i) → (ii) is a quarter turn
+      // clockwise; the student decorates figure (iii) so that the same turn produces (iv).
+      play: {
+        figI: { top: "dot", left: "arrow", right: "arrow", bottom: "bar" },
+        turn: 90,
+        figIV: { NW: "plus", NE: "arrow", SE: "fork", SW: "diamond" },
+        pieces: ["plus", "arrow", "fork", "diamond", "curl"],
+        options: {
+          A: { NW: "plus", NE: "arrow", SE: "arrow", SW: "diamond" },
+          B: { NW: "arrow", NE: "curl", SE: "diamond", SW: "plus" },
+          C: { NW: "arrow", NE: "fork", SE: "diamond", SW: "plus" },
+          D: { NW: "diamond", NE: "plus", SE: "arrow", SW: "curl" },
+        },
+      },
       // The configuration each option depicts: rotation in degrees + marker arm slots.
       optionStates: {
         A: { rotation: 45, markers: ["NW", "NE"] },
@@ -161,6 +182,22 @@ export const IMO6A_LOGICAL_REASONING: Question[] = [
         C: [["c"], ["c", "t"], ["c", "s", "t"]],
         D: [["c", "t"], ["c"], ["s"]],
       },
+      // Mini-game geometry (viewBox 100 × 80) traced from the printed figure and options.
+      // The given figure's dots sit in circle+square, circle+triangle and square+triangle.
+      play: {
+        given: {
+          c: { cx: 44.6, cy: 37.5, r: 26.8 },
+          s: { x: 45.4, y: 6.4, w: 51, h: 50 },
+          t: [[3.6, 65.4], [85, 34], [78.6, 69.6]],
+          dots: [[52.5, 33.6], [38.9, 58.9], [76.8, 45]],
+        },
+        boards: {
+          A: { c: { cx: 70, cy: 48, r: 24 }, s: { x: 30, y: 30, w: 32, h: 46 }, t: [[4, 56], [24, 8], [44, 56]] },
+          B: { c: { cx: 30, cy: 50, r: 20 }, s: { x: 28, y: 4, w: 34, h: 36 }, t: [[54, 76], [74, 30], [94, 76]] },
+          C: { c: { cx: 30, cy: 66, r: 16 }, s: { x: 32, y: 36, w: 32, h: 40 }, t: [[18, 66], [40, 4], [62, 66]] },
+          D: { c: { cx: 28, cy: 40, r: 24 }, s: { x: 56, y: 18, w: 38, h: 44 }, t: [[28, 16], [7.2, 52], [48.8, 52]] },
+        },
+      },
     },
     explanation:
       "Drag each dot until it lies in the same combination of overlapping regions as in the given figure.",
@@ -229,6 +266,17 @@ export const IMO6A_LOGICAL_REASONING: Question[] = [
         B: "concentric-three",
         C: "one-inside-one-outside",
         D: "two-disjoint-inside-one",
+      },
+      // Mini-game: garden visitors that must end up inside exactly the circles they belong to.
+      play: {
+        animals: [
+          { id: "tabby", label: "Tabby cat", art: "🐈", inside: ["Cats", "Animals"] },
+          { id: "kitten", label: "Kitten", art: "🐱", inside: ["Cats", "Animals"] },
+          { id: "puppy", label: "Puppy", art: "🐶", inside: ["Dogs", "Animals"] },
+          { id: "beagle", label: "Beagle", art: "🐕", inside: ["Dogs", "Animals"] },
+          { id: "cow", label: "Cow", art: "🐄", inside: ["Animals"] },
+          { id: "parrot", label: "Parrot", art: "🦜", inside: ["Animals"] },
+        ],
       },
     },
     explanation:
@@ -342,6 +390,18 @@ export const IMO6A_LOGICAL_REASONING: Question[] = [
         ["A", "E", "D"], ["C", "F", "E"],
       ],
       countMode: true,
+      // Mini-game geometry: every line of the printed figure as a segment, in figure units
+      // (the rectangle is 4 wide and 2 tall; the lower apex sits below it). The scanner
+      // finds the intersection points itself and checks each triangle the student traces.
+      play: {
+        segments: [
+          [[0, 0], [4, 0]], [[0, 2], [4, 2]], [[0, 0], [0, 2]], [[4, 0], [4, 2]],
+          [[0, 1], [4, 1]], [[2, 0], [2, 3.3333]],
+          [[0, 1], [2, 0]], [[2, 0], [4, 1]],
+          [[0, 1], [2, 3.3333]], [[4, 1], [2, 3.3333]],
+          [[1.5, 2.75], [2.5, 2.75]],
+        ],
+      },
     },
     explanation:
       "Trace each triangle you can find. The counter records only distinct triangles, so the same one cannot be counted twice.",
@@ -486,6 +546,24 @@ export const IMO6A_LOGICAL_REASONING: Question[] = [
         B: { fold: "left-over-right" },
         C: { fold: "none" },
         D: { fold: "rotated" },
+      },
+      // Mini-game: a 3D transparent sheet. Features are placed in sheet units (-1..1, fold at
+      // x = 0). The small mark sits just left of the fold; every line is symmetric about it.
+      play: {
+        mark: { x: -0.06, y: 0, glyph: "C" },
+        rects: [
+          { id: "outer", x0: -1, x1: 1, y0: -1, y1: 1 },
+          { id: "inner", x0: -0.52, x1: 0.52, y0: -0.26, y1: 0.26 },
+          { id: "small", x0: -0.26, x1: 0.26, y0: -0.13, y1: 0.13 },
+        ],
+        diagonals: true,
+        // What each printed option shows on the half that stays put.
+        options: {
+          A: { half: "right", mark: "mirrored", lines: "single" },
+          B: { half: "right", mark: "original", lines: "single" },
+          C: { half: "right", mark: "mirrored", lines: "double" },
+          D: { half: "right", mark: "none", lines: "single" },
+        },
       },
     },
     explanation:

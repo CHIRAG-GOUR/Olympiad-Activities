@@ -1,7 +1,765 @@
 {
   "description": "Activity history — tracks all activities ever created across all papers to prevent global repetition.",
-  "version": "1.0.0",
-  "papers": {},
-  "activities": [],
-  "lastUpdated": ""
+  "version": "1.1.0",
+  "papers": {
+    "IMO-2018-G6-SETA": {
+      "title": "SOF IMO 2018-19 Class 6 Set A",
+      "activities": 50,
+      "threeD": 10,
+      "contract": "src/components/activities/imo6a-play/engine.ts"
+    }
+  },
+  "activities": [
+    {
+      "activityId": "imo6a-play-01",
+      "questionId": "IMO6A-Q01",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "The Missing Number Machine",
+      "family": "machine-mechanism",
+      "interactionType": "assemble-construct",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "gear rack builds a rule tested on three machines",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-02",
+      "questionId": "IMO6A-Q02",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Figure Transformation Lab",
+      "family": "transformation",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "fit end-pieces on figure (iii) and feed it through the (i)→(ii) turn",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-03",
+      "questionId": "IMO6A-Q03",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Secret Sports Dictionary",
+      "family": "puzzle-deduction",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "stick rename tags on real objects, hand the cricketer his tool",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-04",
+      "questionId": "IMO6A-Q04",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Laser Dot Grid",
+      "family": "spatial",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "scan region membership, drop laser dots on candidate boards",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-05",
+      "questionId": "IMO6A-Q05",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Carrom Direction Challenge",
+      "family": "navigation",
+      "interactionType": "compass-orient",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "seat players on a spinning board, fire the West beam",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-06",
+      "questionId": "IMO6A-Q06",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Animal Classification Garden",
+      "family": "classification",
+      "interactionType": "classify-sort",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "move fences and walk visitors into the right circles",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-07",
+      "questionId": "IMO6A-Q07",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Cube Folding Workshop",
+      "family": "spatial-manipulation",
+      "interactionType": "rotate",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "fold the printed net on hinges, photograph a corner",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-08",
+      "questionId": "IMO6A-Q08",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "6 Hunter",
+      "family": "investigation",
+      "interactionType": "click-select",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "inspect couplings of every 6 carriage and stamp it",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-09",
+      "questionId": "IMO6A-Q09",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Triangle Detective",
+      "family": "investigation",
+      "interactionType": "click-select",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "trace triangles on the true figure geometry",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-10",
+      "questionId": "IMO6A-Q10",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Mirror Room",
+      "family": "transformation",
+      "interactionType": "mirror-reflect",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "stand a mirror on an edge and capture the reflection",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-11",
+      "questionId": "IMO6A-Q11",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Operator Mixer Console",
+      "family": "machine-mechanism",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "plug real operations into sockets, run BODMAS",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-12",
+      "questionId": "IMO6A-Q12",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Pattern Matrix Lab",
+      "family": "visual-pattern",
+      "interactionType": "rotate",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "rotor-aim an arrow tile and fit its tail",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-13",
+      "questionId": "IMO6A-Q13",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "X-Ray Fold",
+      "family": "spatial-manipulation",
+      "interactionType": "rotate",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "swing half a transparent sheet over the fold",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-14",
+      "questionId": "IMO6A-Q14",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Pattern Builder",
+      "family": "visual-pattern",
+      "interactionType": "assemble-construct",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "fit a letter card and arc piece into the missing tile",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-15",
+      "questionId": "IMO6A-Q15",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Family Detective",
+      "family": "puzzle-deduction",
+      "interactionType": "connect-lines",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "pull relationship cords that loop back to known people",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-16",
+      "questionId": "IMO6A-Q16",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Number Forge",
+      "family": "workshop",
+      "interactionType": "drag-reorder",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "pour digit ingots into two moulds, roll to a subtractor",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-17",
+      "questionId": "IMO6A-Q17",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Factor Reactor",
+      "family": "laboratory",
+      "interactionType": "click-select",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "split 1728 with prime beams, load the HCF chamber",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-18",
+      "questionId": "IMO6A-Q18",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Roman Numeral Forge",
+      "family": "workshop",
+      "interactionType": "assemble-construct",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "melt moulds, recast results in Roman symbols, stamp CCC",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-19",
+      "questionId": "IMO6A-Q19",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Property Laboratory",
+      "family": "laboratory",
+      "interactionType": "click-toggle",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "experiment on an area model until it matches the RHS",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-20",
+      "questionId": "IMO6A-Q20",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Digit Swap Elevator",
+      "family": "physical-system",
+      "interactionType": "click-select",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "swap digit cubes on a shelf, balance weighs the numbers",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-21",
+      "questionId": "IMO6A-Q21",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Laser Line Studio",
+      "family": "graph-coordinate",
+      "interactionType": "rotate",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "move and swing three beams, count live crossings",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-22",
+      "questionId": "IMO6A-Q22",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Geometry Construction Workshop",
+      "family": "construction",
+      "interactionType": "draw-path",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "compass sweeps and ruler joins on a bench",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-23",
+      "questionId": "IMO6A-Q23",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Number Line Journey",
+      "family": "navigation",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "walk a traveller from a flag, tape measures steps",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-24",
+      "questionId": "IMO6A-Q24",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Ratio Balance",
+      "family": "physical-system",
+      "interactionType": "fill-pour",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "pour 1162 units into weighted columns until a shelf is level",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-25",
+      "questionId": "IMO6A-Q25",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Decimal to Fraction Workshop",
+      "family": "measurement",
+      "interactionType": "fill-pour",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "lock a water level and re-count it in 75 cells",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-26",
+      "questionId": "IMO6A-Q26",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Perimeter Builder",
+      "family": "construction",
+      "interactionType": "draw-path",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "fit triangles to a square, trace the outline with a bead",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-27",
+      "questionId": "IMO6A-Q27",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Algebra Control Panel",
+      "family": "machine-mechanism",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "slot value blocks into letter sockets",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-28",
+      "questionId": "IMO6A-Q28",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Mirror Painter",
+      "family": "visual-pattern",
+      "interactionType": "mirror-reflect",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "place a mirror line, paint squares until nothing breaks",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-29",
+      "questionId": "IMO6A-Q29",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Area Construction Site",
+      "family": "construction",
+      "interactionType": "click-toggle",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "saw-cut a plot into rectangles and pour concrete",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-30",
+      "questionId": "IMO6A-Q30",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Circle Statement Lab",
+      "family": "laboratory",
+      "interactionType": "draw-path",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "tethered locus walk and region builder, then verdicts",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-31",
+      "questionId": "IMO6A-Q31",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Fraction Number-Line Race",
+      "family": "graph-coordinate",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "place fraction runners, fire the gun for true spots",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-32",
+      "questionId": "IMO6A-Q32",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "3D Solid Folding Lab",
+      "family": "spatial-manipulation",
+      "interactionType": "rotate",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "fold a tetrahedron net and tap-count its faces",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-33",
+      "questionId": "IMO6A-Q33",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Divisibility Scanner",
+      "family": "machine-mechanism",
+      "interactionType": "click-select",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "digit-sum wheel and division drum, accepted crate",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-34",
+      "questionId": "IMO6A-Q34",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Number Quadrilateral Reactor",
+      "family": "puzzle-deduction",
+      "interactionType": "connect-lines",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "react chambers term by term, cable circles to neighbours",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-35",
+      "questionId": "IMO6A-Q35",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Proportion Marketplace",
+      "family": "real-world-scenario",
+      "interactionType": "balance-weight",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "unit converter and market balance per stall",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-36",
+      "questionId": "IMO6A-Q36",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Strawberry Packing Factory",
+      "family": "real-world-scenario",
+      "interactionType": "slider-adjust",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "sorting robot and packer on a 3D conveyor",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-37",
+      "questionId": "IMO6A-Q37",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Party Supply Logistics",
+      "family": "real-world-scenario",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "load packs on a truck until counters match",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-38",
+      "questionId": "IMO6A-Q38",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Garden Designer",
+      "family": "measurement",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "drag flower beds onto a scaled plot",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-39",
+      "questionId": "IMO6A-Q39",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Age Timeline",
+      "family": "graph-coordinate",
+      "interactionType": "slider-adjust",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "slide life markers, cancel factors in a ratio machine",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-40",
+      "questionId": "IMO6A-Q40",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Bed Sheet Designer",
+      "family": "construction",
+      "interactionType": "assemble-construct",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "build the breadth from algebra blocks, stretch the sheet",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-41",
+      "questionId": "IMO6A-Q41",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Temperature Elevator",
+      "family": "measurement",
+      "interactionType": "slider-adjust",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "drag the mercury and pin the evening and midnight readings",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-42",
+      "questionId": "IMO6A-Q42",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Grocery Checkout",
+      "family": "real-world-scenario",
+      "interactionType": "click-select",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "weigh, bag, pay with notes, collect change",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-43",
+      "questionId": "IMO6A-Q43",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Candy Sharing Game",
+      "family": "puzzle-deduction",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "scoop candies onto plates until the story's clues hold",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-44",
+      "questionId": "IMO6A-Q44",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Farmer Packing Challenge",
+      "family": "physical-system",
+      "interactionType": "slider-adjust",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "bag wheat from 3D silos, watch the spill",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-45",
+      "questionId": "IMO6A-Q45",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Number Blackboard",
+      "family": "workshop",
+      "interactionType": "numeric-input",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "chalk the story's numbers, run the teacher's machine",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-46",
+      "questionId": "IMO6A-Q46",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Mathematical Truth Laboratory",
+      "family": "laboratory",
+      "interactionType": "rotate",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "four experiments fill four blanks",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-47",
+      "questionId": "IMO6A-Q47",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "True/False Engineering Lab",
+      "family": "laboratory",
+      "interactionType": "measure-ruler",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "set-squares, twin scale, zero probe, integer hops",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-48",
+      "questionId": "IMO6A-Q48",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Shirt Shop Data Game",
+      "family": "data",
+      "interactionType": "click-select",
+      "dimension": "3D",
+      "technologies": [
+        "three-js",
+        "framer-motion"
+      ],
+      "visualMetaphor": "stock 3D shelves to the bar graph, fill fraction baskets",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-49",
+      "questionId": "IMO6A-Q49",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Number-Line Treasure Hunt",
+      "family": "graph-coordinate",
+      "interactionType": "drag-and-place",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "stand explorers on markers, open the chest",
+      "component": "src/components/activities/imo6a-play"
+    },
+    {
+      "activityId": "imo6a-play-50",
+      "questionId": "IMO6A-Q50",
+      "paperId": "IMO-2018-G6-SETA",
+      "title": "Ratio Matching Museum",
+      "family": "visual-pattern",
+      "interactionType": "connect-lines",
+      "dimension": "2D",
+      "technologies": [
+        "svg",
+        "framer-motion"
+      ],
+      "visualMetaphor": "scan exhibits with a wand and rope them to plaques",
+      "component": "src/components/activities/imo6a-play"
+    }
+  ],
+  "lastUpdated": "2026-09-25"
 }

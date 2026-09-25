@@ -29,8 +29,10 @@ export function Card({
   interactive?: boolean;
   solid?: boolean;
 }) {
+  // Narrowed so the three.js JSX intrinsics (which accept no children) never join the union.
+  const Frame = Tag as React.ElementType<{ className?: string; children?: React.ReactNode }>;
   return (
-    <Tag
+    <Frame
       className={`${
         solid ? "bg-white/90" : "bg-white/72"
       } backdrop-blur-sm border border-white/80 rounded-2xl shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] ${
@@ -40,7 +42,7 @@ export function Card({
       } ${className}`}
     >
       {children}
-    </Tag>
+    </Frame>
   );
 }
 

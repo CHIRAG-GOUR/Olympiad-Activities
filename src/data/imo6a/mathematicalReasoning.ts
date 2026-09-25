@@ -219,6 +219,8 @@ export const IMO6A_MATHEMATICAL_REASONING: Question[] = [
       ],
       bothOptionId: "C",
       neitherOptionId: "D",
+      // Mini-game: a known radius to set on the compass and a segment to bisect (centimetres).
+      play: { radiusCm: 3, segmentCm: 4 },
     },
     explanation:
       "Attempt each construction on the bench with only the ruler and the pair of compasses. The bench records which constructions you actually completed.",
@@ -401,6 +403,20 @@ export const IMO6A_MATHEMATICAL_REASONING: Question[] = [
         { id: "Q", col: 0, row: 4 },
       ],
       axis: "diagonal",
+      // Mini-game grid read cell by cell off the printed figure: 5 columns × 5 rows,
+      // [col, row] from the top-left. The four lettered squares are the only ones a
+      // student may paint.
+      play: {
+        cols: 5,
+        rows: 5,
+        shaded: [[4, 0], [1, 1], [3, 1], [0, 2], [2, 2], [1, 3], [2, 3], [2, 4]],
+        labelled: [
+          { id: "P", col: 1, row: 0 },
+          { id: "S", col: 1, row: 2 },
+          { id: "R", col: 3, row: 3 },
+          { id: "Q", col: 1, row: 4 },
+        ],
+      },
     },
     explanation:
       "Switch candidate squares on and off. The mirror overlay shows live whether the pattern has become symmetric about the axis.",
