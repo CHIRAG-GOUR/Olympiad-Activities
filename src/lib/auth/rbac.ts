@@ -176,6 +176,31 @@ const MULTI_ROLE_ACCOUNTS = [
   "aarna@cambridgecourtgroup.com",
 ];
 
+/**
+ * Founding administrators, by email.
+ *
+ * These are not credentials — there are no passwords here, and holding the address proves
+ * nothing. Sign-in still has to succeed against Firebase Authentication first. This only
+ * answers "which role does this verified account hold?" for the accounts that exist
+ * before anybody is in a position to grant a role, which is the bootstrap problem every
+ * new deployment has.
+ *
+ * It is consulted last: a `role` custom claim wins, then the account's /users/{uid}
+ * document, then this. Once claims are issued by the Admin SDK this list can go, and the
+ * matching allow-list in firestore.rules with it.
+ */
+const FOUNDING_ADMINS = [
+  "pa1@skillizee.io",
+  "swati123@gmail.com",
+  "aarna@cambridgecourtgroup.com",
+];
+
+/** The role a verified account starts with when nothing else has assigned one. */
+export function bootstrapRoleFor(email: string | undefined | null): UserRole | null {
+  if (!email) return null;
+  return FOUNDING_ADMINS.includes(email.trim().toLowerCase()) ? "SUPER_ADMIN" : null;
+}
+
 export function canSwitchRole(email: string | undefined | null): boolean {
   if (!email) return false;
   return MULTI_ROLE_ACCOUNTS.includes(email.trim().toLowerCase());

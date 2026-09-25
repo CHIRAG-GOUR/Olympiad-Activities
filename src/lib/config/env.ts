@@ -15,6 +15,8 @@ export interface FirebaseClientConfig {
   storageBucket?: string;
   messagingSenderId?: string;
   appId?: string;
+  /** Google Analytics stream, optional — only present when Analytics is enabled. */
+  measurementId?: string;
 }
 
 export interface AppConfig {
@@ -61,6 +63,7 @@ const firebaseConfig: FirebaseClientConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 const isFirebaseConfigured = Boolean(

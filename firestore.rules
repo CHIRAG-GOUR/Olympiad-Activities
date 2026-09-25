@@ -29,9 +29,30 @@ service cloud.firestore {
       return request.auth.token.role;
     }
 
+    // Founding administrators, by verified sign-in address.
+    //
+    // This exists to solve the bootstrap problem: before anyone holds a role, nobody is
+    // able to grant one. It is not a credential - Firebase Authentication must already
+    // have accepted the sign-in for request.auth.token.email to be populated at all.
+    //
+    // ⚠️  These three accounts MUST exist in Firebase Authentication. While an address
+    //     here has no account, anyone able to reach the public sign-up endpoint could
+    //     register it and inherit administrator rights. Create them the moment the
+    //     Email/Password provider is enabled.
+    //
+    // Remove this list once the Admin SDK issues `role` custom claims.
+    function isFoundingAdmin() {
+      return isAuthenticated() && request.auth.token.email in [
+        'pa1@skillizee.io',
+        'swati123@gmail.com',
+        'aarna@cambridgecourtgroup.com'
+      ];
+    }
+
     function isSuperAdmin() {
       return isAuthenticated() && (
         claimRole() == 'SUPER_ADMIN' ||
+        isFoundingAdmin() ||
         userDoc().role == 'SUPER_ADMIN'
       );
     }

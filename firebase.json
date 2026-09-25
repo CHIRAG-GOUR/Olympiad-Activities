@@ -1,12 +1,14 @@
 {
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
+  "//": "The Firestore block is an ARRAY on purpose. The object form deploys to the (default) database, which in this project is shared with the Minty Finance app - rules replace wholesale per database, so deploying there would have locked that app out. Naming the database confines every rules deploy to the Olympiad's own database.",
+  "firestore": [
+    {
+      "database": "olympiad",
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+    }
+  ],
   "hosting": {
+    "site": "the-olympiad-dashboard",
     "public": "out",
     "ignore": [
       "firebase.json",

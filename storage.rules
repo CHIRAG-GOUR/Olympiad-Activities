@@ -1,12 +1,27 @@
 rules_version = '2';
 
 // ==============================================================================
-// Olympiad Digital Examination — Cloud Storage security rules
+// Olympiad Digital Examination — Cloud Storage rules
 // Project: olympiad-dashboard
 // ==============================================================================
-// Roles are resolved the same way as in firestore.rules, from a verified custom
-// claim. Storage rules cannot read Firestore, so there is no /users fallback
-// here — issuing the role claim on sign-in is what makes staff writes work.
+// ⚠️  NOT WIRED INTO firebase.json, AND DEPLOYING THIS FILE ON ITS OWN WOULD BE
+//     DESTRUCTIVE.
+//
+//     Storage rules are per bucket, and this project's default bucket is shared
+//     with the Minty Finance app. A deploy replaces the bucket's rules wholesale,
+//     so publishing this file as-is would revoke that app's access.
+//
+//     Everything the Olympiad needs lives under an `olympiad/` prefix, so the
+//     match blocks below can be pasted into the bucket's existing rules
+//     alongside whatever Minty Finance already declares. The final catch-all
+//     deny is deliberately omitted for the same reason.
+//
+//     The cleaner alternative, if the Olympiad ever stores much: give it its own
+//     bucket and deploy this file to that bucket only.
+//
+// Roles come from a verified custom claim. Storage rules cannot read Firestore,
+// so unlike firestore.rules there is no /users fallback here — issuing the role
+// claim at sign-in is what makes staff writes work.
 // ==============================================================================
 
 service firebase.storage {
@@ -25,36 +40,31 @@ service firebase.storage {
         (request.auth.token.role == 'TEACHER' || request.auth.token.role == 'SUPER_ADMIN');
     }
 
-    // Question diagrams and media. Readable by any signed-in member, since a
-    // candidate needs them to sit the paper; only staff may publish them.
-    match /questions/{allPaths=**} {
+    // Question diagrams and media. Any signed-in member may read them, since a
+    // candidate needs them to sit the paper; only staff may publish.
+    match /olympiad/questions/{allPaths=**} {
       allow read: if isAuthenticated();
       allow write: if isStaff();
     }
 
-    // Exported result documents. These are personal data, so they are never
-    // world-readable; a candidate reaches their own through a signed URL issued
-    // after the ownership check in Firestore.
-    match /reports/{allPaths=**} {
+    // Exported result documents. Personal data, so never world-readable; a
+    // candidate reaches their own through a signed URL issued after the
+    // ownership check in Firestore.
+    match /olympiad/reports/{allPaths=**} {
       allow read: if isStaff();
       allow write: if isStaff();
     }
 
-    // Uploaded question-paper source files (scans and PDFs of past papers).
-    match /papers/{allPaths=**} {
+    // Uploaded question-paper sources — scans and PDFs of past papers.
+    match /olympiad/papers/{allPaths=**} {
       allow read: if isStaff();
       allow write: if isStaff();
     }
 
-    // Branding and other general assets.
-    match /assets/{allPaths=**} {
+    // Branding and other Olympiad assets.
+    match /olympiad/assets/{allPaths=**} {
       allow read: if isAuthenticated();
       allow write: if isSuperAdmin();
-    }
-
-    // Anything not named above is closed.
-    match /{allPaths=**} {
-      allow read, write: if false;
     }
   }
 }
