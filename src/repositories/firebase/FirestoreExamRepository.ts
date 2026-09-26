@@ -23,16 +23,20 @@ export class FirestoreExamRepository implements IExamRepository {
   }
 
   async listExams(): Promise<Exam[]> {
-    if (!db) return this.localFallback.listExams();
+    const local = await this.localFallback.listExams();
+    if (!db) return local;
     try {
       const snap = await getDocs(collection(db, "exams"));
       if (!snap.empty) {
-        return snap.docs.map((d) => reviveNestedArrays(d.data()) as Exam);
+        const remote = snap.docs.map((d) => reviveNestedArrays(d.data()) as Exam);
+        const remoteIds = new Set(remote.map((e) => e.id));
+        const missingLocal = local.filter((e) => !remoteIds.has(e.id));
+        return [...remote, ...missingLocal];
       }
-      return this.localFallback.listExams();
+      return local;
     } catch (e) {
       console.warn("Firestore listExams failed, fallback to local:", e);
-      return this.localFallback.listExams();
+      return local;
     }
   }
 

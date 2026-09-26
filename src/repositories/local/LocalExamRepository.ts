@@ -13,20 +13,24 @@ export class LocalExamRepository implements IExamRepository {
   private async load(): Promise<Exam[]> {
     if (this.inMemory) return this.inMemory;
 
+    let exams: Exam[] = [];
     if (typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (raw) {
-          this.inMemory = JSON.parse(raw);
-          return this.inMemory!;
+          exams = JSON.parse(raw);
         }
       } catch {
         // ignore
       }
     }
 
-    this.inMemory = [...SEED_EXAMS];
-    this.persist(this.inMemory);
+    const existingIds = new Set(exams.map((e) => e.id));
+    const missing = SEED_EXAMS.filter((e) => !existingIds.has(e.id));
+    this.inMemory = [...exams, ...missing];
+    if (missing.length > 0 || exams.length === 0) {
+      this.persist(this.inMemory);
+    }
     return this.inMemory;
   }
 

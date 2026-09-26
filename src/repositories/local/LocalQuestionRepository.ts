@@ -11,20 +11,24 @@ export class LocalQuestionRepository implements IQuestionRepository {
   private async load(): Promise<Question[]> {
     if (this.inMemory) return this.inMemory;
 
+    let questions: Question[] = [];
     if (typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (raw) {
-          this.inMemory = JSON.parse(raw);
-          return this.inMemory!;
+          questions = JSON.parse(raw);
         }
       } catch {
         // ignore
       }
     }
 
-    this.inMemory = [...SEED_QUESTIONS];
-    this.persist(this.inMemory);
+    const existingIds = new Set(questions.map((q) => q.id));
+    const missing = SEED_QUESTIONS.filter((q) => !existingIds.has(q.id));
+    this.inMemory = [...questions, ...missing];
+    if (missing.length > 0 || questions.length === 0) {
+      this.persist(this.inMemory);
+    }
     return this.inMemory;
   }
 

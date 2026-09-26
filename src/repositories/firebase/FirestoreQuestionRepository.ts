@@ -23,12 +23,16 @@ export class FirestoreQuestionRepository implements IQuestionRepository {
   }
 
   async listQuestions(filters?: QuestionFilters): Promise<Question[]> {
-    if (!db) return this.localFallback.listQuestions(filters);
+    const local = await this.localFallback.listQuestions(filters);
+    if (!db) return local;
     try {
       const colRef = collection(db, "questions");
       const snap = await getDocs(colRef);
       if (!snap.empty) {
-        let questions = snap.docs.map((d) => reviveNestedArrays(d.data()) as Question);
+        let remote = snap.docs.map((d) => reviveNestedArrays(d.data()) as Question);
+        const remoteIds = new Set(remote.map((q) => q.id));
+        const missingLocal = (await this.localFallback.listQuestions()).filter((q) => !remoteIds.has(q.id));
+        let questions = [...remote, ...missingLocal];
         if (filters) {
           if (filters.subjectId) {
             questions = questions.filter((q) => q.subjectId === filters.subjectId);
@@ -60,10 +64,10 @@ export class FirestoreQuestionRepository implements IQuestionRepository {
         }
         return questions;
       }
-      return this.localFallback.listQuestions(filters);
+      return local;
     } catch (e) {
       console.warn("Firestore listQuestions failed, fallback to local:", e);
-      return this.localFallback.listQuestions(filters);
+      return local;
     }
   }
 
