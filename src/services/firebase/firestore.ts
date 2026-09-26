@@ -137,7 +137,10 @@ export const OlympiadStore = {
       try {
         const snap = await getDocs(collection(db, "exams"));
         if (!snap.empty) {
-          return snap.docs.map((d) => d.data() as Exam);
+          const remote = snap.docs.map((d) => d.data() as Exam);
+          const remoteIds = new Set(remote.map((e) => e.id));
+          const missing = SEED_EXAMS.filter((e) => !remoteIds.has(e.id));
+          return [...remote, ...missing];
         }
       } catch (e) {
         console.warn("Firestore exam fetch fallback", e);

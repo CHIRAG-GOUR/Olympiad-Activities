@@ -1593,12 +1593,12 @@ export const IMO_CLASS6_SETB_QUESTIONS: Question[] = [
   },
 ];
 
-export const IMO_CLASS6_SETB_EXAM: Exam = {
-  id: "exam_imo_2024_g6_setb",
+export const IMO_CLASS6_SETB_2022_EXAM: Exam = {
+  id: "exam_imo_2022_g6_setb",
   code: "IMO-2022-23-G6-SETB",
-  title: "SOF International Mathematics Olympiad 2022-23 (Class 6 - Set B)",
-  subtitle: "Science Olympiad Foundation • Official Level-1 Examination Paper",
-  description: "Official Level-1 examination paper from the Science Olympiad Foundation (SOF) covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section with interactive digital question evaluation.",
+  title: "SOF International Mathematics Olympiad 2022-23 (Class 6 - Set B — 50 Interactive 3D Mini-Games)",
+  subtitle: "Science Olympiad Foundation • Official 2022-23 Level-1 Paper (3D Simulations)",
+  description: "Official Level-1 examination paper from the Science Olympiad Foundation (SOF) covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section with 50 bespoke interactive 3D mini-games.",
   subjectId: "sub_mathematics",
   subjectName: "Mathematics & Logical Reasoning",
   grade: 6,
@@ -1654,3 +1654,67 @@ export const IMO_CLASS6_SETB_EXAM: Exam = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
+
+export const IMO_CLASS6_SETB_2024_EXAM: Exam = {
+  id: "exam_imo_2024_g6_setb",
+  code: "IMO-2024-25-G6-SETB",
+  title: "SOF International Mathematics Olympiad 2024-25 (Class 6 - Set B)",
+  subtitle: "Science Olympiad Foundation • Official Level-1 Examination Paper",
+  description: "Official Level-1 examination paper from the Science Olympiad Foundation (SOF) covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section with interactive digital question evaluation.",
+  subjectId: "sub_mathematics",
+  subjectName: "Mathematics & Logical Reasoning",
+  grade: 6,
+  academicYear: "2024-25",
+  durationMinutes: 60,
+  totalQuestions: 50,
+  totalMarks: 60,
+  passingMarks: 24,
+  rules: {
+    allowBacktrack: true,
+    shuffleQuestions: false,
+    showTimer: true,
+    autoSubmitOnTimeUp: true,
+    passPercentage: 40,
+    negativeMarkingEnabled: false,
+    instructions: [
+      "The question paper comprises four sections: Logical Reasoning (15 questions), Mathematical Reasoning (20 questions), Everyday Mathematics (10 questions), and Achievers Section (5 questions).",
+      "Each question in Achievers Section carries 3 marks, whereas all other questions carry 1 mark each.",
+      "There is NO negative marking for incorrect answers. Use of calculators is strictly prohibited.",
+      "Interactive 3D / 2D Simulations: Directly manipulate the simulation environment to discover and submit solutions. Answers are derived automatically from the state of your interactive world.",
+      "You can navigate freely between questions using the Question Palette.",
+      "Timer is set for 60 minutes. Your responses will be evaluated instantly upon final submission.",
+    ],
+  },
+  sections: [
+    {
+      id: "sec_logical",
+      title: "Logical Reasoning",
+      description: "15 Questions (1 Mark each)",
+      questionIds: IMO_CLASS6_SETB_QUESTIONS.slice(0, 15).map((q) => q.id),
+    },
+    {
+      id: "sec_math",
+      title: "Mathematical Reasoning",
+      description: "20 Questions (1 Mark each)",
+      questionIds: IMO_CLASS6_SETB_QUESTIONS.slice(15, 35).map((q) => q.id),
+    },
+    {
+      id: "sec_everyday",
+      title: "Everyday Mathematics",
+      description: "10 Questions (1 Mark each)",
+      questionIds: IMO_CLASS6_SETB_QUESTIONS.slice(35, 45).map((q) => q.id),
+    },
+    {
+      id: "sec_achievers",
+      title: "Achievers Section",
+      description: "5 Questions (3 Marks each)",
+      questionIds: IMO_CLASS6_SETB_QUESTIONS.slice(45, 50).map((q) => q.id),
+    },
+  ],
+  questionIds: IMO_CLASS6_SETB_QUESTIONS.map((q) => q.id),
+  status: "Published",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+export const IMO_CLASS6_SETB_EXAM = IMO_CLASS6_SETB_2022_EXAM;
