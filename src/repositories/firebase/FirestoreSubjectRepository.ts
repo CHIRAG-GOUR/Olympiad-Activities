@@ -3,6 +3,7 @@ import { Subject } from "@/types/subject";
 import { db } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { LocalSubjectRepository } from "../local/LocalSubjectRepository";
+import { reviveNestedArrays } from "./decodeFirestore";
 
 export class FirestoreSubjectRepository implements ISubjectRepository {
   private localFallback = new LocalSubjectRepository();
@@ -12,7 +13,7 @@ export class FirestoreSubjectRepository implements ISubjectRepository {
     try {
       const snap = await getDoc(doc(db, "subjects", id));
       if (snap.exists()) {
-        return snap.data() as Subject;
+        return reviveNestedArrays(snap.data()) as Subject;
       }
       return this.localFallback.getSubject(id);
     } catch (e) {
@@ -26,7 +27,7 @@ export class FirestoreSubjectRepository implements ISubjectRepository {
     try {
       const snap = await getDocs(collection(db, "subjects"));
       if (!snap.empty) {
-        return snap.docs.map((d) => d.data() as Subject);
+        return snap.docs.map((d) => reviveNestedArrays(d.data()) as Subject);
       }
       return this.localFallback.listSubjects();
     } catch (e) {

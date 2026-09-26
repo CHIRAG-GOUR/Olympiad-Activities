@@ -3,6 +3,7 @@ import { Question } from "@/types/question";
 import { db } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, where } from "firebase/firestore";
 import { LocalQuestionRepository } from "../local/LocalQuestionRepository";
+import { reviveNestedArrays } from "./decodeFirestore";
 
 export class FirestoreQuestionRepository implements IQuestionRepository {
   private localFallback = new LocalQuestionRepository();
@@ -12,7 +13,7 @@ export class FirestoreQuestionRepository implements IQuestionRepository {
     try {
       const snap = await getDoc(doc(db, "questions", id));
       if (snap.exists()) {
-        return snap.data() as Question;
+        return reviveNestedArrays(snap.data()) as Question;
       }
       return this.localFallback.getQuestion(id);
     } catch (e) {
@@ -27,7 +28,7 @@ export class FirestoreQuestionRepository implements IQuestionRepository {
       const colRef = collection(db, "questions");
       const snap = await getDocs(colRef);
       if (!snap.empty) {
-        let questions = snap.docs.map((d) => d.data() as Question);
+        let questions = snap.docs.map((d) => reviveNestedArrays(d.data()) as Question);
         if (filters) {
           if (filters.subjectId) {
             questions = questions.filter((q) => q.subjectId === filters.subjectId);

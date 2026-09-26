@@ -3,6 +3,7 @@ import { Exam } from "@/types/exam";
 import { db } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { LocalExamRepository } from "../local/LocalExamRepository";
+import { reviveNestedArrays } from "./decodeFirestore";
 
 export class FirestoreExamRepository implements IExamRepository {
   private localFallback = new LocalExamRepository();
@@ -12,7 +13,7 @@ export class FirestoreExamRepository implements IExamRepository {
     try {
       const snap = await getDoc(doc(db, "exams", id));
       if (snap.exists()) {
-        return snap.data() as Exam;
+        return reviveNestedArrays(snap.data()) as Exam;
       }
       return this.localFallback.getExam(id);
     } catch (e) {
@@ -26,7 +27,7 @@ export class FirestoreExamRepository implements IExamRepository {
     try {
       const snap = await getDocs(collection(db, "exams"));
       if (!snap.empty) {
-        return snap.docs.map((d) => d.data() as Exam);
+        return snap.docs.map((d) => reviveNestedArrays(d.data()) as Exam);
       }
       return this.localFallback.listExams();
     } catch (e) {
