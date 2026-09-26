@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { ActivityComponentType } from "./kit/types";
+import { IMO6A_CLASSIC_ACTIVITY_MAP } from "./imo6a/registry";
 import { IMO6A_ACTIVITY_MAP } from "./imo6a-play/registry";
 import { IMO6B2_ACTIVITY_MAP } from "./imo6b2-play/registry";
 
@@ -191,8 +192,13 @@ export function getQuestionActivity(
   questionIdOrCode?: string
 ): ActivityComponentType | undefined {
   if (!questionIdOrCode) return undefined;
-  // Set A & Set B #2 activities are code-split and load on demand; Set B is bundled as before.
-  return IMO6A_ACTIVITY_MAP[questionIdOrCode] ?? IMO6B2_ACTIVITY_MAP[questionIdOrCode] ?? ACTIVITY_MAP[questionIdOrCode];
+  // All 4 Olympiad sets mapped: Classic Set A, 3D Mini-games Set A, 3D Mini-games Set B #2, and Set B
+  return (
+    IMO6A_CLASSIC_ACTIVITY_MAP[questionIdOrCode] ??
+    IMO6A_ACTIVITY_MAP[questionIdOrCode] ??
+    IMO6B2_ACTIVITY_MAP[questionIdOrCode] ??
+    ACTIVITY_MAP[questionIdOrCode]
+  );
 }
 
 /**

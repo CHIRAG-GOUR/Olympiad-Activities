@@ -4,6 +4,7 @@ export function generateStaticParams() {
   return [
     { id: "exam_imo_2024_g6_setb" },
     { id: "exam_imo_2018_g6_seta" },
+    { id: "exam_imo_2018_g6_seta_classic" },
     { id: "exam_imo_g6_setb2" },
   ];
 }
