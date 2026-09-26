@@ -1,0 +1,186 @@
+"use client";
+
+import type { ActivityComponentType } from "../kit/types";
+import {
+  Q01PatternConveyorActivity,
+  Q02TriangleScannerActivity,
+  Q03NumberFlipSortingActivity,
+  Q04NumberTriangleReactorActivity,
+  Q05WaterReflectionPoolActivity,
+} from "./p01_05";
+import {
+  Q06ShapeXRayScannerActivity,
+  Q07WordSwapLaboratoryActivity,
+  Q08BrickWallCompletionActivity,
+  Q09FoldStudioActivity,
+  Q10TwoExplorerNavigationActivity,
+} from "./p06_10";
+import {
+  Q11OperatorFactoryActivity,
+  Q12GeometricDotLaboratoryActivity,
+  Q13DictionaryConveyorActivity,
+  Q14FamilyDetectiveActivity,
+  Q15MatrixLaboratoryActivity,
+} from "./p11_15";
+import {
+  Q16RoundingRangeActivity,
+  Q17IntegerTruthLabActivity,
+  Q18PolygonDetectorActivity,
+  Q19AreaConstructionLabActivity,
+  Q20ClockAngleActivity,
+} from "./p16_20";
+import {
+  Q21TriangularPrismActivity,
+  Q22FractionSortingTableActivity,
+  Q23DecimalMatchActivity,
+  Q24AngleMatchingActivity,
+  Q25NumberLineAdditionActivity,
+} from "./p21_25";
+import {
+  Q26OddNumberProductActivity,
+  Q27NegativeTemperatureActivity,
+  Q28HeptagonDiagonalsActivity,
+  Q29EquilateralTriangleActivity,
+  Q30RomanNumeralForgeActivity,
+} from "./p26_30";
+import {
+  Q31LinesOfSymmetryActivity,
+  Q32InternationalNumberActivity,
+  Q33BarGraphActivity,
+  Q34FractionPyramidActivity,
+  Q35FiveDigitNumberActivity,
+} from "./p31_35";
+import {
+  Q36CricketBatShoppingActivity,
+  Q37LandFencingActivity,
+  Q38WorkingHoursActivity,
+  Q39MocktailMixerActivity,
+  Q40VillagePopulationActivity,
+} from "./p36_40";
+import {
+  Q41StepSynchronizationActivity,
+  Q42MetroFuelSavingsActivity,
+  Q43JourneyTrackerActivity,
+  Q44DairyFillingStationActivity,
+  Q45WeeklyMilkVendorActivity,
+} from "./p41_45";
+import {
+  Q46GeometryClassificationActivity,
+  Q47LineGraphRatioActivity,
+  Q48TrueFalseFractionActivity,
+  Q49DivisibilitySecurityActivity,
+  Q50MasterControlRoomActivity,
+} from "./p46_50";
+
+/**
+ * 50 Bespoke Interactive Olympiad Activities for IMO Class 6 Paper 3 (Set C / Level 1)
+ */
+export const IMO6P3_ACTIVITY_MAP: Record<string, ActivityComponentType> = {
+  // Section A — Logical Reasoning (Q1 - Q15)
+  q_imo6p3_01: Q01PatternConveyorActivity,
+  "IMO6P3-Q01": Q01PatternConveyorActivity,
+  q_imo6p3_02: Q02TriangleScannerActivity,
+  "IMO6P3-Q02": Q02TriangleScannerActivity,
+  q_imo6p3_03: Q03NumberFlipSortingActivity,
+  "IMO6P3-Q03": Q03NumberFlipSortingActivity,
+  q_imo6p3_04: Q04NumberTriangleReactorActivity,
+  "IMO6P3-Q04": Q04NumberTriangleReactorActivity,
+  q_imo6p3_05: Q05WaterReflectionPoolActivity,
+  "IMO6P3-Q05": Q05WaterReflectionPoolActivity,
+  q_imo6p3_06: Q06ShapeXRayScannerActivity,
+  "IMO6P3-Q06": Q06ShapeXRayScannerActivity,
+  q_imo6p3_07: Q07WordSwapLaboratoryActivity,
+  "IMO6P3-Q07": Q07WordSwapLaboratoryActivity,
+  q_imo6p3_08: Q08BrickWallCompletionActivity,
+  "IMO6P3-Q08": Q08BrickWallCompletionActivity,
+  q_imo6p3_09: Q09FoldStudioActivity,
+  "IMO6P3-Q09": Q09FoldStudioActivity,
+  q_imo6p3_10: Q10TwoExplorerNavigationActivity,
+  "IMO6P3-Q10": Q10TwoExplorerNavigationActivity,
+  q_imo6p3_11: Q11OperatorFactoryActivity,
+  "IMO6P3-Q11": Q11OperatorFactoryActivity,
+  q_imo6p3_12: Q12GeometricDotLaboratoryActivity,
+  "IMO6P3-Q12": Q12GeometricDotLaboratoryActivity,
+  q_imo6p3_13: Q13DictionaryConveyorActivity,
+  "IMO6P3-Q13": Q13DictionaryConveyorActivity,
+  q_imo6p3_14: Q14FamilyDetectiveActivity,
+  "IMO6P3-Q14": Q14FamilyDetectiveActivity,
+  q_imo6p3_15: Q15MatrixLaboratoryActivity,
+  "IMO6P3-Q15": Q15MatrixLaboratoryActivity,
+
+  // Section B — Mathematical Reasoning (Q16 - Q35)
+  q_imo6p3_16: Q16RoundingRangeActivity,
+  "IMO6P3-Q16": Q16RoundingRangeActivity,
+  q_imo6p3_17: Q17IntegerTruthLabActivity,
+  "IMO6P3-Q17": Q17IntegerTruthLabActivity,
+  q_imo6p3_18: Q18PolygonDetectorActivity,
+  "IMO6P3-Q18": Q18PolygonDetectorActivity,
+  q_imo6p3_19: Q19AreaConstructionLabActivity,
+  "IMO6P3-Q19": Q19AreaConstructionLabActivity,
+  q_imo6p3_20: Q20ClockAngleActivity,
+  "IMO6P3-Q20": Q20ClockAngleActivity,
+  q_imo6p3_21: Q21TriangularPrismActivity,
+  "IMO6P3-Q21": Q21TriangularPrismActivity,
+  q_imo6p3_22: Q22FractionSortingTableActivity,
+  "IMO6P3-Q22": Q22FractionSortingTableActivity,
+  q_imo6p3_23: Q23DecimalMatchActivity,
+  "IMO6P3-Q23": Q23DecimalMatchActivity,
+  q_imo6p3_24: Q24AngleMatchingActivity,
+  "IMO6P3-Q24": Q24AngleMatchingActivity,
+  q_imo6p3_25: Q25NumberLineAdditionActivity,
+  "IMO6P3-Q25": Q25NumberLineAdditionActivity,
+  q_imo6p3_26: Q26OddNumberProductActivity,
+  "IMO6P3-Q26": Q26OddNumberProductActivity,
+  q_imo6p3_27: Q27NegativeTemperatureActivity,
+  "IMO6P3-Q27": Q27NegativeTemperatureActivity,
+  q_imo6p3_28: Q28HeptagonDiagonalsActivity,
+  "IMO6P3-Q28": Q28HeptagonDiagonalsActivity,
+  q_imo6p3_29: Q29EquilateralTriangleActivity,
+  "IMO6P3-Q29": Q29EquilateralTriangleActivity,
+  q_imo6p3_30: Q30RomanNumeralForgeActivity,
+  "IMO6P3-Q30": Q30RomanNumeralForgeActivity,
+  q_imo6p3_31: Q31LinesOfSymmetryActivity,
+  "IMO6P3-Q31": Q31LinesOfSymmetryActivity,
+  q_imo6p3_32: Q32InternationalNumberActivity,
+  "IMO6P3-Q32": Q32InternationalNumberActivity,
+  q_imo6p3_33: Q33BarGraphActivity,
+  "IMO6P3-Q33": Q33BarGraphActivity,
+  q_imo6p3_34: Q34FractionPyramidActivity,
+  "IMO6P3-Q34": Q34FractionPyramidActivity,
+  q_imo6p3_35: Q35FiveDigitNumberActivity,
+  "IMO6P3-Q35": Q35FiveDigitNumberActivity,
+
+  // Section C — Everyday Mathematics (Q36 - Q45)
+  q_imo6p3_36: Q36CricketBatShoppingActivity,
+  "IMO6P3-Q36": Q36CricketBatShoppingActivity,
+  q_imo6p3_37: Q37LandFencingActivity,
+  "IMO6P3-Q37": Q37LandFencingActivity,
+  q_imo6p3_38: Q38WorkingHoursActivity,
+  "IMO6P3-Q38": Q38WorkingHoursActivity,
+  q_imo6p3_39: Q39MocktailMixerActivity,
+  "IMO6P3-Q39": Q39MocktailMixerActivity,
+  q_imo6p3_40: Q40VillagePopulationActivity,
+  "IMO6P3-Q40": Q40VillagePopulationActivity,
+  q_imo6p3_41: Q41StepSynchronizationActivity,
+  "IMO6P3-Q41": Q41StepSynchronizationActivity,
+  q_imo6p3_42: Q42MetroFuelSavingsActivity,
+  "IMO6P3-Q42": Q42MetroFuelSavingsActivity,
+  q_imo6p3_43: Q43JourneyTrackerActivity,
+  "IMO6P3-Q43": Q43JourneyTrackerActivity,
+  q_imo6p3_44: Q44DairyFillingStationActivity,
+  "IMO6P3-Q44": Q44DairyFillingStationActivity,
+  q_imo6p3_45: Q45WeeklyMilkVendorActivity,
+  "IMO6P3-Q45": Q45WeeklyMilkVendorActivity,
+
+  // Section D — Achievers Section (Q46 - Q50)
+  q_imo6p3_46: Q46GeometryClassificationActivity,
+  "IMO6P3-Q46": Q46GeometryClassificationActivity,
+  q_imo6p3_47: Q47LineGraphRatioActivity,
+  "IMO6P3-Q47": Q47LineGraphRatioActivity,
+  q_imo6p3_48: Q48TrueFalseFractionActivity,
+  "IMO6P3-Q48": Q48TrueFalseFractionActivity,
+  q_imo6p3_49: Q49DivisibilitySecurityActivity,
+  "IMO6P3-Q49": Q49DivisibilitySecurityActivity,
+  q_imo6p3_50: Q50MasterControlRoomActivity,
+  "IMO6P3-Q50": Q50MasterControlRoomActivity,
+};

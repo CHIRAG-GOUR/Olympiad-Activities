@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Question } from "@/types/question";
 import { getQuestionActivity } from "@/components/activities/ActivityRegistry";
+import { ActivityErrorBoundary } from "@/components/activities/ActivityErrorBoundary";
 import { FileText, Layers } from "lucide-react";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
 import { OrderingQuestion } from "./OrderingQuestion";
@@ -256,15 +257,36 @@ export function QuestionRenderer({
         {BespokeActivityComponent && activeView === "activity" ? (
           /* Keyed per question so each microworld mounts clean and tears its
              animations / listeners down when the student navigates away. */
-          <BespokeActivityComponent
+          <ActivityErrorBoundary
             key={question.id || question.questionId}
             questionId={question.id || question.questionId}
-            question={question}
-            value={value}
-            activityState={activityState}
-            onChange={onChange}
-            readOnly={readOnly}
-          />
+            fallback={
+              <div className="space-y-3">
+                <div className="p-3.5 bg-amber-50 border-2 border-amber-200 rounded-xl text-xs text-amber-900 flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-bold">
+                    Interactive simulation switched to standard question view for stability.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleToggle("standard")}
+                    className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[11px] transition-colors"
+                  >
+                    View Standard Format
+                  </button>
+                </div>
+                {renderInteractionBody()}
+              </div>
+            }
+          >
+            <BespokeActivityComponent
+              questionId={question.id || question.questionId}
+              question={question}
+              value={value}
+              activityState={activityState}
+              onChange={onChange}
+              readOnly={readOnly}
+            />
+          </ActivityErrorBoundary>
         ) : (
           renderInteractionBody()
         )}

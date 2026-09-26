@@ -5,6 +5,22 @@ import type { DeviceInfo } from "@/types/session";
 import { db, auth } from "@/services/firebase/config";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
+function sanitizePayload<T>(payload: T): T {
+  if (payload === null || payload === undefined) return payload;
+  if (typeof payload !== "object") return payload;
+  if (Array.isArray(payload)) {
+    return payload.map(sanitizePayload) as unknown as T;
+  }
+  const clean: Record<string, any> = {};
+  for (const [key, val] of Object.entries(payload as Record<string, any>)) {
+    if (val === undefined || typeof val === "function" || typeof val === "symbol") {
+      continue;
+    }
+    clean[key] = sanitizePayload(val);
+  }
+  return clean as T;
+}
+
 /**
  * Stamps the signed-in account onto a cloud document.
  *
@@ -153,25 +169,29 @@ class ExamPersistenceServiceClass {
    * Immediately saves the progress to IndexedDB with version bump
    */
   async saveProgress(state: ExamSessionState): Promise<void> {
+    if (!state || !state.sessionId) return;
+
     const updated: ExamSessionState = {
       ...state,
       lastSavedAt: new Date().toISOString(),
       version: (state.version || 0) + 1,
     };
 
-    this.inMemoryCache.set(updated.sessionId, updated);
-    await idbClient.put("sessions", updated);
+    const cleanUpdated = sanitizePayload(updated);
+
+    this.inMemoryCache.set(cleanUpdated.sessionId, cleanUpdated);
+    await idbClient.put("sessions", cleanUpdated);
 
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(
           "active_exam_session",
           JSON.stringify({
-            sessionId: updated.sessionId,
-            examId: updated.examId,
-            studentId: updated.studentId,
-            lastSavedAt: updated.lastSavedAt,
-            currentQuestionIndex: updated.currentQuestionIndex,
+            sessionId: cleanUpdated.sessionId,
+            examId: cleanUpdated.examId,
+            studentId: cleanUpdated.studentId,
+            lastSavedAt: cleanUpdated.lastSavedAt,
+            currentQuestionIndex: cleanUpdated.currentQuestionIndex,
           })
         );
       } catch {
@@ -181,7 +201,11 @@ class ExamPersistenceServiceClass {
 
     // Async cloud mirror if Firestore is configured
     if (db) {
-      setDoc(doc(db, "examSessions", updated.sessionId), withOwner(updated), { merge: true }).catch(() => {});
+      try {
+        setDoc(doc(db, "examSessions", cleanUpdated.sessionId), withOwner(cleanUpdated), { merge: true }).catch(() => {});
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -338,10 +362,16 @@ class ExamPersistenceServiceClass {
    * Calculates true remaining time based on server/start timestamp, immune to throttling
    */
   calculateTrueRemainingTime(session: ExamSessionState): number {
+    if (!session || !session.startedAt) {
+      return ((session && session.durationMinutes) || 60) * 60;
+    }
     const startTime = new Date(session.startedAt).getTime();
+    if (isNaN(startTime) || startTime <= 0) {
+      return (session.durationMinutes || 60) * 60;
+    }
     const now = Date.now();
-    const elapsedSeconds = Math.floor((now - startTime) / 1000);
-    const totalSeconds = session.durationMinutes * 60;
+    const elapsedSeconds = Math.max(0, Math.floor((now - startTime) / 1000));
+    const totalSeconds = (session.durationMinutes || 60) * 60;
     const remaining = totalSeconds - elapsedSeconds;
     return Math.max(0, remaining);
   }

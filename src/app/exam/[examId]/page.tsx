@@ -6,6 +6,7 @@ export function generateStaticParams() {
     { examId: "exam_imo_2018_g6_seta" },
     { examId: "exam_imo_2018_g6_seta_classic" },
     { examId: "exam_imo_g6_setb2" },
+    { examId: "exam_imo_g6_paper3" },
   ];
 }
 

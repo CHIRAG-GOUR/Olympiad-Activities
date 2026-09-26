@@ -104,13 +104,30 @@ class IndexedDBClient {
 
     try {
       const db = await this.getDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORES[storeName], "readwrite");
-        const store = tx.objectStore(STORES[storeName]);
-        const request = store.put(value);
+      return new Promise<void>((resolve) => {
+        try {
+          const tx = db.transaction(STORES[storeName], "readwrite");
+          const store = tx.objectStore(STORES[storeName]);
+          const request = store.put(value);
 
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve();
+          request.onerror = () => {
+            this.fallbackPut(storeName, value);
+            resolve();
+          };
+          tx.onerror = () => {
+            this.fallbackPut(storeName, value);
+            resolve();
+          };
+          tx.onabort = () => {
+            this.fallbackPut(storeName, value);
+            resolve();
+          };
+        } catch (innerErr) {
+          console.warn(`[IDB] Synchronous put failed for store ${storeName}:`, innerErr);
+          this.fallbackPut(storeName, value);
+          resolve();
+        }
       });
     } catch (err) {
       console.warn(`[IDB] Put failed for store ${storeName}:`, err);

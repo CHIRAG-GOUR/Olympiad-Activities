@@ -122,6 +122,9 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
     if (!hasStarted || !exam) return;
 
     const currentQ = questions[currentIndex];
+    const validStartTime = startTime || sessionRef.current?.startedAt || new Date().toISOString();
+    const validDuration = exam.durationMinutes || sessionRef.current?.durationMinutes || 60;
+
     const sessionObj: ExamSessionState = {
       sessionId,
       examId: exam.id,
@@ -131,8 +134,8 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
       schoolName,
       grade: exam.grade || 6,
       device: deviceInfo,
-      startedAt: startTime,
-      durationMinutes: exam.durationMinutes,
+      startedAt: validStartTime,
+      durationMinutes: validDuration,
       lastSavedAt: new Date().toISOString(),
       currentQuestionIndex: currentIndex,
       currentQuestionId: currentQ ? currentQ.id : "",
@@ -153,7 +156,7 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
       markedForReview: Array.from(markedForReviewIndices).map((idx) => questions[idx]?.id).filter(Boolean),
       timeSpentMap,
       timeRemainingSeconds,
-      totalTimeSeconds: exam.durationMinutes * 60,
+      totalTimeSeconds: validDuration * 60,
       status: "in_progress",
       version: (sessionRef.current?.version || 0) + 1,
     };
