@@ -5,6 +5,7 @@ import type { ActivityComponentType } from "./kit/types";
 import { IMO6A_CLASSIC_ACTIVITY_MAP } from "./imo6a/registry";
 import { IMO6A_ACTIVITY_MAP } from "./imo6a-play/registry";
 import { IMO6B2_ACTIVITY_MAP } from "./imo6b2-play/registry";
+import { IMO6B_PLAY_ACTIVITY_MAP } from "./imo6b-play/registry";
 import { IMO6P3_ACTIVITY_MAP } from "./imo6p3-play/registry";
 
 // 50 Bespoke Interactive Olympiad Activities
@@ -195,6 +196,7 @@ export function getQuestionActivity(
   if (!questionIdOrCode) return undefined;
   // All 5 Olympiad sets mapped: Classic Set A, 3D Mini-games Set A, 3D Mini-games Set B #2, Paper 3 (Set C), and Set B
   return (
+    IMO6B_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
     IMO6P3_ACTIVITY_MAP[questionIdOrCode] ??
     IMO6A_CLASSIC_ACTIVITY_MAP[questionIdOrCode] ??
     IMO6A_ACTIVITY_MAP[questionIdOrCode] ??
