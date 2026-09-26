@@ -2,6 +2,8 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
   type User as FirebaseUser,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -12,16 +14,13 @@ import type { AuthService, SignInRequest, SignInOutcome, StoredSession } from ".
 /**
  * Firebase Authentication implementation of `AuthService`.
  *
- * Credentials live in Firebase, not in this repository. A user's role is resolved from a
- * verified custom claim first, because a claim cannot be edited by the user and costs no
- * read; it falls back to their `/users/{uid}` document for accounts whose claim has not
- * been issued yet.
- *
- * Only the *operating* role is kept in local storage — the session itself is Firebase's,
- * so clearing local storage cannot forge one.
+ * Credentials live in Firebase, with persistent browser storage (survives tab/browser closure).
+ * A local session cache in localStorage ensures instant, zero-flicker dashboard loading
+ * on refresh and navigation.
  */
 
 const ACTIVE_ROLE_KEY = "olympiad_active_role_v1";
+const SESSION_CACHE_KEY = "olympiad_cached_session_v1";
 
 const MESSAGES = {
   empty: "Enter your email and password to continue.",
@@ -49,7 +48,50 @@ const isRole = (v: unknown): v is UserRole =>
   v === "SUPER_ADMIN" || v === "TEACHER" || v === "STUDENT";
 
 export class FirebaseAuthService implements AuthService {
+  constructor() {
+    if (auth && typeof window !== "undefined") {
+      void setPersistence(auth, browserLocalPersistence).catch(() => {});
+    }
+  }
+
+  getCachedSession(): StoredSession | null {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(SESSION_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as StoredSession;
+      if (parsed?.profile?.id && isRole(parsed?.profile?.role)) {
+        const storedRole = this.readActiveRole();
+        if (storedRole) parsed.activeRole = storedRole;
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeCachedSession(session: StoredSession) {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(session));
+    } catch {
+      // quota or private mode fallback
+    }
+  }
+
+  private clearCachedSession() {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.removeItem(SESSION_CACHE_KEY);
+      localStorage.removeItem(ACTIVE_ROLE_KEY);
+    } catch {
+      // ignore
+    }
+  }
+
   private readActiveRole(): UserRole | null {
+    if (typeof window === "undefined") return null;
     try {
       const raw = localStorage.getItem(ACTIVE_ROLE_KEY);
       return isRole(raw) ? raw : null;
@@ -59,6 +101,7 @@ export class FirebaseAuthService implements AuthService {
   }
 
   private writeActiveRole(role: UserRole) {
+    if (typeof window === "undefined") return;
     try {
       localStorage.setItem(ACTIVE_ROLE_KEY, role);
     } catch {
@@ -157,6 +200,8 @@ export class FirebaseAuthService implements AuthService {
 
     let user: FirebaseUser;
     try {
+      // Ensure local browser persistence is active so user stays logged in
+      await setPersistence(auth, browserLocalPersistence);
       const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
       user = credential.user;
     } catch (err) {
@@ -170,6 +215,7 @@ export class FirebaseAuthService implements AuthService {
     const entitled = availableRolesFor(profile.email, profile.role);
     if (!entitled.includes(role)) {
       await firebaseSignOut(auth);
+      this.clearCachedSession();
       return {
         ok: false,
         code: "role-not-permitted",
@@ -180,57 +226,121 @@ export class FirebaseAuthService implements AuthService {
     await this.touchUserDoc(profile);
     this.writeActiveRole(role);
 
+    const session: StoredSession = { profile, activeRole: role, issuedAt: new Date().toISOString() };
+    this.writeCachedSession(session);
+
     return { ok: true, profile, activeRole: role };
   }
 
   async signOut(): Promise<void> {
-    try {
-      localStorage.removeItem(ACTIVE_ROLE_KEY);
-    } catch {
-      // ignore
+    this.clearCachedSession();
+    if (auth) {
+      try {
+        await firebaseSignOut(auth);
+      } catch {
+        // ignore
+      }
     }
-    if (auth) await firebaseSignOut(auth);
   }
 
   async restore(): Promise<StoredSession | null> {
-    if (!auth) return null;
+    if (!auth) {
+      return this.getCachedSession();
+    }
 
-    // Firebase resolves persisted sessions asynchronously, so wait for the first
-    // definite answer rather than reading `currentUser` before it is populated.
-    const user = await new Promise<FirebaseUser | null>((resolve) => {
-      const stop = onAuthStateChanged(
-        auth!,
-        (u) => {
-          stop();
-          resolve(u);
-        },
-        () => {
-          stop();
-          resolve(null);
-        }
-      );
-    });
+    // 1. Wait for Firebase auth state resolution
+    try {
+      if (typeof (auth as { authStateReady?: () => Promise<void> }).authStateReady === "function") {
+        await auth.authStateReady();
+      }
+    } catch {
+      // fallback to listener
+    }
 
-    if (!user) return null;
+    let user = auth.currentUser;
+
+    if (!user) {
+      user = await new Promise<FirebaseUser | null>((resolve) => {
+        const timer = setTimeout(() => resolve(null), 2500);
+        const stop = onAuthStateChanged(
+          auth!,
+          (u) => {
+            clearTimeout(timer);
+            stop();
+            resolve(u);
+          },
+          () => {
+            clearTimeout(timer);
+            stop();
+            resolve(null);
+          }
+        );
+      });
+    }
+
+    // If Firebase reports no user, check if we had a cached session
+    if (!user) {
+      const cached = this.getCachedSession();
+      // If we are definitely offline or no Firebase session, return cached if valid
+      return cached;
+    }
 
     const profile = await this.profileFor(user);
     const stored = this.readActiveRole();
 
-    // Re-check entitlement on restore, so revoking a privileged account's multi-role
-    // status takes effect on the next load rather than persisting in an old session.
+    // Re-check entitlement on restore
     const entitled = availableRolesFor(profile.email, profile.role);
     const activeRole = stored && entitled.includes(stored) ? stored : profile.role;
     if (activeRole !== stored) this.writeActiveRole(activeRole);
 
-    return { profile, activeRole, issuedAt: new Date().toISOString() };
+    const session: StoredSession = { profile, activeRole, issuedAt: new Date().toISOString() };
+    this.writeCachedSession(session);
+    return session;
   }
 
   async setActiveRole(role: UserRole): Promise<boolean> {
-    if (!auth?.currentUser) return false;
-    const profile = await this.profileFor(auth.currentUser);
-    const entitled = availableRolesFor(profile.email, profile.role);
-    if (!entitled.includes(role)) return false;
-    this.writeActiveRole(role);
-    return true;
+    const cached = this.getCachedSession();
+    if (auth?.currentUser) {
+      const profile = await this.profileFor(auth.currentUser);
+      const entitled = availableRolesFor(profile.email, profile.role);
+      if (!entitled.includes(role)) return false;
+      this.writeActiveRole(role);
+      if (cached) {
+        this.writeCachedSession({ ...cached, activeRole: role });
+      }
+      return true;
+    } else if (cached) {
+      const entitled = availableRolesFor(cached.profile.email, cached.profile.role);
+      if (!entitled.includes(role)) return false;
+      this.writeActiveRole(role);
+      this.writeCachedSession({ ...cached, activeRole: role });
+      return true;
+    }
+    return false;
+  }
+
+  onAuthStateChanged(callback: (session: StoredSession | null) => void): () => void {
+    if (!auth) return () => {};
+
+    return onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        // If user logged out in Firebase, clear cache and notify
+        this.clearCachedSession();
+        callback(null);
+        return;
+      }
+
+      try {
+        const profile = await this.profileFor(user);
+        const stored = this.readActiveRole();
+        const entitled = availableRolesFor(profile.email, profile.role);
+        const activeRole = stored && entitled.includes(stored) ? stored : profile.role;
+        const session: StoredSession = { profile, activeRole, issuedAt: new Date().toISOString() };
+        this.writeCachedSession(session);
+        callback(session);
+      } catch {
+        // preserve current session
+      }
+    });
   }
 }

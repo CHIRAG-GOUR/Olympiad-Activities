@@ -46,24 +46,60 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [account, setAccount] = useState<UserProfile | null>(null);
-  const [activeRole, setActiveRole] = useState<UserRole>("STUDENT");
-  const [isReady, setIsReady] = useState(false);
+  // Synchronously initialize with cached session if present in browser
+  const [account, setAccount] = useState<UserProfile | null>(() => {
+    const cached = authService.getCachedSession?.();
+    return cached?.profile ?? null;
+  });
+  const [activeRole, setActiveRole] = useState<UserRole>(() => {
+    const cached = authService.getCachedSession?.();
+    return cached?.activeRole ?? cached?.profile?.role ?? "STUDENT";
+  });
+  const [isReady, setIsReady] = useState(() => {
+    return authService.getCachedSession?.() !== null && authService.getCachedSession?.() !== undefined;
+  });
 
   useEffect(() => {
     let cancelled = false;
+
+    // 1. Re-validate session in background with Firebase
     authService
       .restore()
       .then((session) => {
-        if (cancelled || !session) return;
-        setAccount(session.profile);
-        setActiveRole(session.activeRole ?? session.profile.role);
+        if (cancelled) return;
+        if (session) {
+          setAccount(session.profile);
+          setActiveRole(session.activeRole ?? session.profile.role);
+        } else {
+          // If no session found in Firebase and no local cached session
+          const cached = authService.getCachedSession?.();
+          if (!cached) {
+            setAccount(null);
+          }
+        }
+      })
+      .catch(() => {
+        // Network/offline error must NOT log user out if cached session exists
       })
       .finally(() => {
         if (!cancelled) setIsReady(true);
       });
+
+    // 2. Subscribe to real-time auth changes
+    const unsubscribe = authService.onAuthStateChanged?.((session) => {
+      if (cancelled) return;
+      if (session) {
+        setAccount(session.profile);
+        setActiveRole(session.activeRole ?? session.profile.role);
+      } else {
+        setAccount(null);
+      }
+      setIsReady(true);
+    });
+
     return () => {
       cancelled = true;
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 

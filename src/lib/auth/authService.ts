@@ -39,6 +39,8 @@ export interface AuthService {
   restore(): Promise<StoredSession | null>;
   /** Changes the operating role of the current session. Refused if not entitled. */
   setActiveRole(role: UserRole): Promise<boolean>;
+  getCachedSession?(): StoredSession | null;
+  onAuthStateChanged?(callback: (session: StoredSession | null) => void): () => void;
 }
 
 /**
