@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { initializeFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 import { getAuth, Auth } from "firebase/auth";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
@@ -44,7 +44,10 @@ try {
     process.env.NEXT_PUBLIC_FIREBASE_API_KEY
   ) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    db = getFirestore(app, FIRESTORE_DATABASE_ID);
+    // `ignoreUndefinedProperties` matters for exam sessions: an activity that has not
+    // produced an answer yet reports `undefined`, and Firestore rejects an undefined
+    // field outright, which previously failed the whole session save.
+    db = initializeFirestore(app, { ignoreUndefinedProperties: true }, FIRESTORE_DATABASE_ID);
     storage = getStorage(app);
     auth = getAuth(app);
     isRealFirebaseConfigured = true;

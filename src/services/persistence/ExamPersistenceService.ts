@@ -2,8 +2,20 @@
 
 import { idbClient } from "./indexeddb";
 import type { DeviceInfo } from "@/types/session";
-import { db } from "@/services/firebase/config";
+import { db, auth } from "@/services/firebase/config";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+
+/**
+ * Stamps the signed-in account onto a cloud document.
+ *
+ * Candidates are identified inside the paper by their roll code (STU-…), which Firestore
+ * cannot verify. `ownerUid` is the one field the security rules can check against the
+ * caller's token, so it is what ties a session or an attempt to whoever actually wrote it.
+ */
+function withOwner<T extends object>(payload: T): T & { ownerUid?: string } {
+  const uid = auth?.currentUser?.uid;
+  return uid ? { ...payload, ownerUid: uid } : payload;
+}
 
 export interface AnswerState {
   questionId: string;
@@ -131,7 +143,7 @@ class ExamPersistenceServiceClass {
 
     // Async cloud mirror if Firestore is configured
     if (db) {
-      setDoc(doc(db, "examSessions", sessionId), sessionState, { merge: true }).catch(() => {});
+      setDoc(doc(db, "examSessions", sessionId), withOwner(sessionState), { merge: true }).catch(() => {});
     }
 
     return sessionState;
@@ -169,7 +181,7 @@ class ExamPersistenceServiceClass {
 
     // Async cloud mirror if Firestore is configured
     if (db) {
-      setDoc(doc(db, "examSessions", updated.sessionId), updated, { merge: true }).catch(() => {});
+      setDoc(doc(db, "examSessions", updated.sessionId), withOwner(updated), { merge: true }).catch(() => {});
     }
   }
 
@@ -355,7 +367,7 @@ class ExamPersistenceServiceClass {
     }
 
     if (db) {
-      setDoc(doc(db, "examSessions", sessionId), session, { merge: true }).catch(() => {});
+      setDoc(doc(db, "examSessions", sessionId), withOwner(session), { merge: true }).catch(() => {});
     }
 
     return session;

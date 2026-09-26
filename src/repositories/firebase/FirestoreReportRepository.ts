@@ -1,6 +1,6 @@
 import { IReportRepository, ReportFilters } from "../interfaces/IReportRepository";
 import { ExamReport } from "@/types/report";
-import { db } from "@/services/firebase/config";
+import { db, auth } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc } from "firebase/firestore";
 import { LocalReportRepository } from "../local/LocalReportRepository";
 
@@ -61,7 +61,8 @@ export class FirestoreReportRepository implements IReportRepository {
   async saveReport(report: ExamReport): Promise<void> {
     if (db) {
       try {
-        await setDoc(doc(db, "reports", report.reportId), report);
+        const uid = auth?.currentUser?.uid;
+        await setDoc(doc(db, "reports", report.reportId), uid ? { ...report, ownerUid: uid } : report);
       } catch (e) {
         console.error("Firestore saveReport failed:", e);
       }

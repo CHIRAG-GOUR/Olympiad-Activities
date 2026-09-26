@@ -1,6 +1,6 @@
 import { IAttemptRepository, AttemptFilters } from "../interfaces/IAttemptRepository";
 import { ExamAttempt } from "@/types/attempt";
-import { db } from "@/services/firebase/config";
+import { db, auth } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc } from "firebase/firestore";
 import { LocalAttemptRepository } from "../local/LocalAttemptRepository";
 
@@ -51,7 +51,11 @@ export class FirestoreAttemptRepository implements IAttemptRepository {
   async saveAttempt(attempt: ExamAttempt): Promise<void> {
     if (db) {
       try {
-        await setDoc(doc(db, "attempts", attempt.id), attempt);
+        // ownerUid is the only field the security rules can verify against the
+        // caller's token; the roll code inside the attempt is not something
+        // Firestore can check.
+        const uid = auth?.currentUser?.uid;
+        await setDoc(doc(db, "attempts", attempt.id), uid ? { ...attempt, ownerUid: uid } : attempt);
       } catch (e) {
         console.error("Firestore saveAttempt failed:", e);
       }

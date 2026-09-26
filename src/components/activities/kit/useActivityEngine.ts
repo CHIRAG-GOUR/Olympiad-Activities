@@ -33,6 +33,26 @@ const resolveInitial = <S,>(init: S | (() => S)): S =>
   typeof init === "function" ? (init as () => S)() : init;
 
 /**
+ * Whether a persisted state still looks like the state this activity builds.
+ *
+ * Sessions outlive code. A paper can be rebuilt and an activity replaced while a
+ * candidate's saved session still holds the previous generation's state — and feeding
+ * that into a component that cannot read it throws during render, which takes down the
+ * whole exam page rather than just one question. Anything that does not match the
+ * pristine shape is discarded in favour of a clean start.
+ */
+function matchesShape(restored: unknown, pristine: unknown): boolean {
+  if (pristine === null || typeof pristine !== "object") {
+    return restored !== undefined && restored !== null && typeof restored === typeof pristine;
+  }
+  if (restored === null || typeof restored !== "object") return false;
+  if (Array.isArray(pristine) !== Array.isArray(restored)) return false;
+  if (Array.isArray(pristine)) return true;
+  // Every field the activity expects must be present; extra fields are harmless.
+  return Object.keys(pristine as object).every((k) => k in (restored as object));
+}
+
+/**
  * Single source of truth for every activity: holds the microworld state, derives the
  * answer from it, pushes both upward, and supports restore / reset / validity.
  */
@@ -48,7 +68,13 @@ export function useActivityEngine<S, A = unknown>(
   onChangeRef.current = onChange;
 
   const [state, setState] = useState<S>(() => {
-    if (activityState !== undefined && activityState !== null) return activityState;
+    if (
+      activityState !== undefined &&
+      activityState !== null &&
+      matchesShape(activityState, initialRef.current)
+    ) {
+      return activityState;
+    }
     if (value !== undefined && value !== null && deriveStateFromValue) {
       const derived = deriveStateFromValue(value);
       if (derived !== undefined) return derived;
@@ -67,7 +93,12 @@ export function useActivityEngine<S, A = unknown>(
   useEffect(() => {
     if (activityState === lastExternal.current) return;
     lastExternal.current = activityState;
-    const next = activityState === undefined || activityState === null ? initialRef.current : activityState;
+    const next =
+      activityState !== undefined &&
+      activityState !== null &&
+      matchesShape(activityState, initialRef.current)
+        ? activityState
+        : initialRef.current;
     stateRef.current = next;
     setState(next);
   }, [activityState]);

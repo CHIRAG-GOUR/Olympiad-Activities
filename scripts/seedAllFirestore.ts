@@ -63,7 +63,24 @@ function toFirestoreValue(val: any): any {
 
 async function signInStaff() {
   const staffEmail = process.env.STAFF_EMAIL || "pa1@skillizee.io";
-  const staffPassword = process.env.STAFF_PASSWORD || process.env.ADMIN_PASSWORD || process.argv[2] || "787700";
+  // Never default the password. This repository is public, so a literal here is a
+  // published Super Admin credential for a live project - which is exactly how the
+  // previous default ("787700") became an exposure.
+  const staffPassword = process.env.STAFF_PASSWORD || process.env.ADMIN_PASSWORD || process.argv[2];
+  if (!staffPassword) {
+    console.error(
+      [
+        "",
+        "  No staff password supplied.",
+        "  Pass it as an argument or set STAFF_PASSWORD:",
+        "",
+        "    npx tsx scripts/seedAllFirestore.ts '<password>'",
+        "    STAFF_PASSWORD='<password>' npx tsx scripts/seedAllFirestore.ts",
+        "",
+      ].join("\n")
+    );
+    process.exit(1);
+  }
 
   console.log(`  Authenticating as ${staffEmail}...`);
   const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${key}`, {

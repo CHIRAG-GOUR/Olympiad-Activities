@@ -123,12 +123,15 @@ service cloud.firestore {
     // A candidate streams progress for their own session only. Without the
     // ownership check on create, anyone could overwrite another candidate's
     // in-progress paper.
+    // Ownership is checked against `ownerUid`, stamped by the client from the signed-in
+    // account. The roll code inside a session (STU-...) identifies the candidate within
+    // the paper but is not something Firestore can verify, so it is not used here.
     match /examSessions/{sessionId} {
-      allow read: if isStaff() || isOwner(resource.data.studentId);
-      allow create: if isAuthenticated() && isOwner(request.resource.data.studentId);
+      allow read: if isStaff() || isOwner(resource.data.ownerUid);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.ownerUid);
       allow update: if isStaff() || (
-        isOwner(resource.data.studentId) &&
-        request.resource.data.studentId == resource.data.studentId
+        isOwner(resource.data.ownerUid) &&
+        request.resource.data.ownerUid == resource.data.ownerUid
       );
       allow delete: if isSuperAdmin();
     }
@@ -139,8 +142,8 @@ service cloud.firestore {
     // An attempt is a candidate's submitted paper. They may file their own and
     // read it back; amending a submitted attempt is reserved to an admin.
     match /attempts/{attemptId} {
-      allow read: if isStaff() || isOwner(resource.data.student.studentId);
-      allow create: if isAuthenticated() && isOwner(request.resource.data.student.studentId);
+      allow read: if isStaff() || isOwner(resource.data.ownerUid);
+      allow create: if isAuthenticated() && isOwner(request.resource.data.ownerUid);
       allow update, delete: if isSuperAdmin();
     }
 
@@ -151,9 +154,9 @@ service cloud.firestore {
     // /results/<someone-else-id> working at the data layer rather than only in
     // the UI.
     match /reports/{reportId} {
-      allow read: if isStaff() || isOwner(resource.data.studentId);
+      allow read: if isStaff() || isOwner(resource.data.ownerUid);
       allow create: if isStaff() || (
-        isAuthenticated() && isOwner(request.resource.data.studentId)
+        isAuthenticated() && isOwner(request.resource.data.ownerUid)
       );
       allow update, delete: if isSuperAdmin();
     }
