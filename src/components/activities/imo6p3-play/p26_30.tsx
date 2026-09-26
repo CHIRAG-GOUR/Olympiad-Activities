@@ -92,10 +92,10 @@ export function Q26OddNumberProductActivity({
         <Bay label="Choose the Greatest Natural Number that Always Divides the Product">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: 4, desc: "Divides product but not greatest", isCorrect: false },
-              { id: "B" as const, val: 6, desc: "Fails for n = 3 (8 is not div by 6)", isCorrect: false },
-              { id: "C" as const, val: 8, desc: "Greatest Universal Divisor (Correct)", isCorrect: true },
-              { id: "D" as const, val: 12, desc: "Fails for n = 3 (8 is not div by 12)", isCorrect: false },
+              { id: "A" as const, val: 4, desc: "Divides product but not greatest", },
+              { id: "B" as const, val: 6, desc: "Fails for n = 3 (8 is not div by 6)", },
+              { id: "C" as const, val: 8, desc: "Greatest Universal Divisor", },
+              { id: "D" as const, val: 12, desc: "Fails for n = 3 (8 is not div by 12)", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -104,10 +104,7 @@ export function Q26OddNumberProductActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -156,7 +153,7 @@ export function Q27NegativeTemperatureActivity({
       const isCorrect = w.chosenOption === "B";
       const desc =
         w.chosenOption === "B"
-          ? "Gulmarg was 3°C cooler than Srinagar (Correct)"
+          ? "Gulmarg was 3°C cooler than Srinagar"
           : w.chosenOption === "A"
           ? "Gulmarg was 3°C warmer than Srinagar"
           : w.chosenOption === "C"
@@ -213,7 +210,7 @@ export function Q27NegativeTemperatureActivity({
           {/* Srinagar */}
           <div className="flex flex-col items-center">
             <span className="text-xs font-bold text-indigo-900">Srinagar</span>
-            <div className="w-8 h-32 bg-white rounded-full border-2 border-indigo-400 my-2 relative overflow-hidden flex flex-col justify-end p-1 shadow-inner">
+            <div className="w-8 h-32 bg-white rounded-full border border-slate-200 my-2 relative overflow-hidden flex flex-col justify-end p-1 shadow-inner">
               <div className="w-full bg-indigo-500 rounded-full" style={{ height: "45%" }} />
             </div>
             <span className="font-mono text-sm font-black text-indigo-700">−1°C</span>
@@ -224,10 +221,10 @@ export function Q27NegativeTemperatureActivity({
         <Bay label="Which of the Following Statements is Correct? (A, B, C, or D)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "Gulmarg was 3°C warmer than Srinagar.", isCorrect: false },
-              { id: "B" as const, text: "Gulmarg was 3°C cooler than Srinagar.", desc: "(−1) − (−4) = 3°C cooler (Correct)", isCorrect: true },
-              { id: "C" as const, text: "Srinagar was 5°C cooler than Gulmarg.", isCorrect: false },
-              { id: "D" as const, text: "Both locations had the same temperature.", isCorrect: false },
+              { id: "A" as const, text: "Gulmarg was 3°C warmer than Srinagar.", },
+              { id: "B" as const, text: "Gulmarg was 3°C cooler than Srinagar.", desc: "(−1) − (−4) = 3°C cooler", },
+              { id: "C" as const, text: "Srinagar was 5°C cooler than Gulmarg.", },
+              { id: "D" as const, text: "Both locations had the same temperature.", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -236,10 +233,7 @@ export function Q27NegativeTemperatureActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -367,10 +361,10 @@ export function Q28HeptagonDiagonalsActivity({
         <Bay label="Select the Total Number of Diagonals in a Heptagon">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: 12, isCorrect: false },
-              { id: "B" as const, val: 10, isCorrect: false },
-              { id: "C" as const, val: 14, desc: "7 × 4 / 2 = 14 (Correct)", isCorrect: true },
-              { id: "D" as const, val: 16, isCorrect: false },
+              { id: "A" as const, val: 12, },
+              { id: "B" as const, val: 10, },
+              { id: "C" as const, val: 14, desc: "7 × 4 / 2 = 14", },
+              { id: "D" as const, val: 16, },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -379,10 +373,7 @@ export function Q28HeptagonDiagonalsActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -480,10 +471,10 @@ export function Q29EquilateralTriangleActivity({
         <Bay label="Choose the Outer Boundary Perimeter">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: "24 cm", isCorrect: false },
-              { id: "B" as const, val: "36 cm", desc: "3 × 12 = 36 cm (Correct)", isCorrect: true },
-              { id: "C" as const, val: "48 cm", isCorrect: false },
-              { id: "D" as const, val: "18 cm", isCorrect: false },
+              { id: "A" as const, val: "24 cm", },
+              { id: "B" as const, val: "36 cm", desc: "3 × 12 = 36 cm", },
+              { id: "C" as const, val: "48 cm", },
+              { id: "D" as const, val: "18 cm", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -492,10 +483,7 @@ export function Q29EquilateralTriangleActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -618,10 +606,10 @@ export function Q30RomanNumeralForgeActivity({
         <Bay label="Choose the Final Roman Numeral Result (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, roman: "CVI", arabic: "106", isCorrect: false },
-              { id: "B" as const, roman: "CXIV", arabic: "114", isCorrect: false },
-              { id: "C" as const, roman: "XCIX", arabic: "99", isCorrect: false },
-              { id: "D" as const, roman: "CIX", arabic: "109", desc: "100 + 9 = CIX (Correct)", isCorrect: true },
+              { id: "A" as const, roman: "CVI", arabic: "106", },
+              { id: "B" as const, roman: "CXIV", arabic: "114", },
+              { id: "C" as const, roman: "XCIX", arabic: "99", },
+              { id: "D" as const, roman: "CIX", arabic: "109", desc: "100 + 9 = CIX", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -630,10 +618,7 @@ export function Q30RomanNumeralForgeActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-amber-50 border-amber-500 shadow-md ring-2 ring-amber-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-amber-300 hover:bg-slate-50"
                   }`}
                 >

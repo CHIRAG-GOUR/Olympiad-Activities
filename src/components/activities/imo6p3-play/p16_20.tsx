@@ -106,10 +106,10 @@ export function Q16RoundingRangeActivity({
         <Bay label="Choose the Estimated Difference (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: 7900, desc: "16,900 − 9,000 = 7,900 (Correct)", isCorrect: true },
-              { id: "B" as const, val: 8000, desc: "17,000 − 9,000", isCorrect: false },
-              { id: "C" as const, val: 7800, desc: "16,800 − 9,000", isCorrect: false },
-              { id: "D" as const, val: 7976, desc: "Exact difference (not estimated)", isCorrect: false },
+              { id: "A" as const, val: 7900, desc: "16,900 − 9,000 = 7,900", },
+              { id: "B" as const, val: 8000, desc: "17,000 − 9,000", },
+              { id: "C" as const, val: 7800, desc: "16,800 − 9,000", },
+              { id: "D" as const, val: 7976, desc: "Exact difference (not estimated)", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -118,10 +118,7 @@ export function Q16RoundingRangeActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -238,10 +235,7 @@ export function Q17IntegerTruthLabActivity({
                   key={stmt.id}
                   onClick={() => set({ chosenOption: stmt.id })}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                    isSelected
-                      ? stmt.isTrue
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -376,10 +370,10 @@ export function Q18PolygonDetectorActivity({
         <Bay label="Which of the Given Figures is/are Simple Closed Polygons?">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, title: "Figures (i) and (ii)", isCorrect: false },
-              { id: "B" as const, title: "Figures (ii) and (iii)", isCorrect: false },
-              { id: "C" as const, title: "Only Figure (i)", isCorrect: true },
-              { id: "D" as const, title: "All figures (i), (ii) and (iii)", isCorrect: false },
+              { id: "A" as const, title: "Figures (i) and (ii)", },
+              { id: "B" as const, title: "Figures (ii) and (iii)", },
+              { id: "C" as const, title: "Only Figure (i)", },
+              { id: "D" as const, title: "All figures (i), (ii) and (iii)", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -388,10 +382,7 @@ export function Q18PolygonDetectorActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -492,10 +483,10 @@ export function Q19AreaConstructionLabActivity({
         <Bay label="Choose the Total Area of the Unshaded Region">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: "128 cm²", isCorrect: false },
-              { id: "B" as const, val: "136 cm²", isCorrect: false },
-              { id: "C" as const, val: "140 cm²", isCorrect: true },
-              { id: "D" as const, val: "140 cm²", isCorrect: true },
+              { id: "A" as const, val: "128 cm²", },
+              { id: "B" as const, val: "136 cm²", },
+              { id: "C" as const, val: "140 cm²", },
+              { id: "D" as const, val: "140 cm²", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -504,10 +495,7 @@ export function Q19AreaConstructionLabActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -629,10 +617,10 @@ export function Q20ClockAngleActivity({
         <Bay label="Choose the Smaller Angle at 10:00 O'Clock">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, deg: "30°", isCorrect: false },
-              { id: "B" as const, deg: "45°", isCorrect: false },
-              { id: "C" as const, deg: "90°", isCorrect: false },
-              { id: "D" as const, deg: "60°", desc: "2 × 30° = 60° (Correct)", isCorrect: true },
+              { id: "A" as const, deg: "30°", },
+              { id: "B" as const, deg: "45°", },
+              { id: "C" as const, deg: "90°", },
+              { id: "D" as const, deg: "60°", desc: "2 × 30° = 60°", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -641,10 +629,7 @@ export function Q20ClockAngleActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >

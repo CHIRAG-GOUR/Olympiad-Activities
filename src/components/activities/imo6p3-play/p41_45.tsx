@@ -96,10 +96,10 @@ export function Q41StepSynchronizationActivity({
         <Bay label="Choose the Minimum Distance (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, dist: "6930 cm", desc: "LCM(63, 70, 77) (Correct)", isCorrect: true },
-              { id: "B" as const, dist: "6300 cm", isCorrect: false },
-              { id: "C" as const, dist: "7700 cm", isCorrect: false },
-              { id: "D" as const, dist: "5400 cm", isCorrect: false },
+              { id: "A" as const, dist: "6930 cm", desc: "LCM(63, 70, 77)", },
+              { id: "B" as const, dist: "6300 cm", },
+              { id: "C" as const, dist: "7700 cm", },
+              { id: "D" as const, dist: "5400 cm", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -108,10 +108,7 @@ export function Q41StepSynchronizationActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -209,10 +206,10 @@ export function Q42MetroFuelSavingsActivity({
         <Bay label="Select the Fraction in Simplest Form (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, frac: "71/110", isCorrect: false },
-              { id: "B" as const, frac: "81/110", desc: "24300 / 33000 = 81/110 (Correct)", isCorrect: true },
-              { id: "C" as const, frac: "9/11", isCorrect: false },
-              { id: "D" as const, frac: "23/33", isCorrect: false },
+              { id: "A" as const, frac: "71/110", },
+              { id: "B" as const, frac: "81/110", desc: "24300 / 33000 = 81/110", },
+              { id: "C" as const, frac: "9/11", },
+              { id: "D" as const, frac: "23/33", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -221,10 +218,7 @@ export function Q42MetroFuelSavingsActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -315,7 +309,7 @@ export function Q43JourneyTrackerActivity({
               <span>Wednesday</span>
               <span className="font-bold">11.27 km</span>
             </div>
-            <div className="flex justify-between p-2.5 bg-indigo-50 border-2 border-indigo-400 text-indigo-950 font-black rounded-lg">
+            <div className="flex justify-between p-2.5 bg-indigo-50 border border-slate-200 text-indigo-950 font-black rounded-lg">
               <span>Thursday Needed (42.25 − 27.04)</span>
               <span>15.21 km</span>
             </div>
@@ -326,10 +320,10 @@ export function Q43JourneyTrackerActivity({
         <Bay label="Choose the Distance to Walk on Thursday (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, dist: "14.18 km", isCorrect: false },
-              { id: "B" as const, dist: "16.02 km", isCorrect: false },
-              { id: "C" as const, dist: "15.50 km", isCorrect: false },
-              { id: "D" as const, dist: "15.21 km", desc: "42.25 − 27.04 = 15.21 km (Correct)", isCorrect: true },
+              { id: "A" as const, dist: "14.18 km", },
+              { id: "B" as const, dist: "16.02 km", },
+              { id: "C" as const, dist: "15.50 km", },
+              { id: "D" as const, dist: "15.21 km", desc: "42.25 − 27.04 = 15.21 km", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -338,10 +332,7 @@ export function Q43JourneyTrackerActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -441,10 +432,10 @@ export function Q44DairyFillingStationActivity({
         <Bay label="Select the Number of Bottles Filled (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, b: "520 bottles", isCorrect: false },
-              { id: "B" as const, b: "540 bottles", desc: "70200 / 130 = 540 (Correct)", isCorrect: true },
-              { id: "C" as const, b: "560 bottles", isCorrect: false },
-              { id: "D" as const, b: "580 bottles", isCorrect: false },
+              { id: "A" as const, b: "520 bottles", },
+              { id: "B" as const, b: "540 bottles", desc: "70200 / 130 = 540", },
+              { id: "C" as const, b: "560 bottles", },
+              { id: "D" as const, b: "580 bottles", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -453,10 +444,7 @@ export function Q44DairyFillingStationActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -554,10 +542,10 @@ export function Q45WeeklyMilkVendorActivity({
         <Bay label="Choose the Total Money Collected in 1 Week (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, amt: "₹24,500", isCorrect: false },
-              { id: "B" as const, amt: "₹25,200", isCorrect: false },
-              { id: "C" as const, amt: "₹27,400", isCorrect: false },
-              { id: "D" as const, amt: "₹26,600", desc: "190 × 7 × 20 = ₹26,600 (Correct)", isCorrect: true },
+              { id: "A" as const, amt: "₹24,500", },
+              { id: "B" as const, amt: "₹25,200", },
+              { id: "C" as const, amt: "₹27,400", },
+              { id: "D" as const, amt: "₹26,600", desc: "190 × 7 × 20 = ₹26,600", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -566,10 +554,7 @@ export function Q45WeeklyMilkVendorActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >

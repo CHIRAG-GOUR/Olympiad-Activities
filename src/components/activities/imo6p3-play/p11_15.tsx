@@ -108,10 +108,10 @@ export function Q11OperatorFactoryActivity({
         <Bay label="Choose the Final Calculated Value (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: 7, desc: "Ignored final multiplication", isCorrect: false },
-              { id: "B" as const, val: 12, desc: "Left-to-right calculation error", isCorrect: false },
-              { id: "C" as const, val: 5, desc: "Subtracted before multiplying", isCorrect: false },
-              { id: "D" as const, val: 0, desc: "3 + 7 − 10 = 0 (Correct)", isCorrect: true },
+              { id: "A" as const, val: 7, desc: "Ignored final multiplication", },
+              { id: "B" as const, val: 12, desc: "Left-to-right calculation error", },
+              { id: "C" as const, val: 5, desc: "Subtracted before multiplying", },
+              { id: "D" as const, val: 0, desc: "3 + 7 − 10 = 0", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -120,10 +120,7 @@ export function Q11OperatorFactoryActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -229,11 +226,10 @@ export function Q12GeometricDotLaboratoryActivity({
             {[
               {
                 id: "A" as const,
-                title: "Option A (Matching)",
+                title: "Option A",
                 subtitle: "Contains both 2-shape intersections",
-                isCorrect: true,
                 renderSvg: () => (
-                  <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border-2 border-emerald-400 rounded-lg p-1">
+                  <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
                     <circle cx="35" cy="45" r="24" fill="none" stroke="#3b82f6" strokeWidth="1.8" />
                     <polygon points="50,15 90,75 10,75" fill="none" stroke="#ef4444" strokeWidth="1.8" />
                     <rect x="42" y="30" width="45" height="45" fill="none" stroke="#8b5cf6" strokeWidth="1.8" />
@@ -246,7 +242,6 @@ export function Q12GeometricDotLaboratoryActivity({
                 id: "B" as const,
                 title: "Option B",
                 subtitle: "Triangle inside Square entirely",
-                isCorrect: false,
                 renderSvg: () => (
                   <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
                     <rect x="10" y="10" width="80" height="70" fill="none" stroke="#8b5cf6" strokeWidth="1.8" />
@@ -259,7 +254,6 @@ export function Q12GeometricDotLaboratoryActivity({
                 id: "C" as const,
                 title: "Option C",
                 subtitle: "Circle and Square separated",
-                isCorrect: false,
                 renderSvg: () => (
                   <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
                     <circle cx="28" cy="45" r="20" fill="none" stroke="#3b82f6" strokeWidth="1.8" />
@@ -272,7 +266,6 @@ export function Q12GeometricDotLaboratoryActivity({
                 id: "D" as const,
                 title: "Option D",
                 subtitle: "No pure Circle-Triangle overlap",
-                isCorrect: false,
                 renderSvg: () => (
                   <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
                     <polygon points="50,15 90,75 10,75" fill="none" stroke="#ef4444" strokeWidth="1.8" />
@@ -288,20 +281,13 @@ export function Q12GeometricDotLaboratoryActivity({
                   key={opt.id}
                   onClick={() => set({ selectedOption: opt.id })}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${opt.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {opt.isCorrect ? "Match ✓" : "Active"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
 
                   {opt.renderSvg()}
@@ -417,10 +403,10 @@ export function Q13DictionaryConveyorActivity({
         <Bay label="Select the Correct Dictionary Order (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, seq: "3, 1, 4, 5, 2", desc: "Faint → Fight → Fault...", isCorrect: false },
-              { id: "B" as const, seq: "4, 3, 1, 5, 2", desc: "Fault before Faint error", isCorrect: false },
-              { id: "C" as const, seq: "3, 4, 5, 1, 2", desc: "Flick before Fight error", isCorrect: false },
-              { id: "D" as const, seq: "3, 4, 1, 5, 2", desc: "Faint → Fault → Fight → Flick → Freak (Correct)", isCorrect: true },
+              { id: "A" as const, seq: "3, 1, 4, 5, 2", desc: "Faint → Fight → Fault...", },
+              { id: "B" as const, seq: "4, 3, 1, 5, 2", desc: "Fault before Faint error", },
+              { id: "C" as const, seq: "3, 4, 5, 1, 2", desc: "Flick before Fight error", },
+              { id: "D" as const, seq: "3, 4, 1, 5, 2", desc: "Faint → Fault → Fight → Flick → Freak", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -429,10 +415,7 @@ export function Q13DictionaryConveyorActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -550,10 +533,10 @@ export function Q14FamilyDetectiveActivity({
         <Bay label="How is Amar Related to the Girl's Mother?">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, rel: "Father", isCorrect: false },
-              { id: "B" as const, rel: "Uncle", isCorrect: false },
-              { id: "C" as const, rel: "Maternal Uncle", desc: "Relation to girl (not mother)", isCorrect: false },
-              { id: "D" as const, rel: "Brother", desc: "Amar is her Brother (Correct)", isCorrect: true },
+              { id: "A" as const, rel: "Father", },
+              { id: "B" as const, rel: "Uncle", },
+              { id: "C" as const, rel: "Maternal Uncle", desc: "Relation to girl (not mother)", },
+              { id: "D" as const, rel: "Brother", desc: "Amar is her Brother", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -562,10 +545,7 @@ export function Q14FamilyDetectiveActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -614,7 +594,7 @@ export function Q15MatrixLaboratoryActivity({
       const isCorrect = w.selectedCell === "C";
       const desc =
         w.selectedCell === "C"
-          ? "Diamond with shaded right sector & central cross (Correct Matrix Pattern)"
+          ? "Diamond with shaded right sector & central cross"
           : w.selectedCell === "A"
           ? "Circle with 2 top dots"
           : w.selectedCell === "B"
@@ -743,10 +723,10 @@ export function Q15MatrixLaboratoryActivity({
               },
               {
                 id: "C" as const,
-                title: "Option C (Matching)",
+                title: "Option C",
                 subtitle: "Diamond + Shaded Right Sector & Cross",
                 renderSvg: () => (
-                  <svg viewBox="0 0 60 60" className="w-14 h-14 bg-emerald-50 border-2 border-emerald-400 rounded-lg p-1">
+                  <svg viewBox="0 0 60 60" className="w-14 h-14 bg-emerald-50 border border-slate-200 rounded-lg p-1">
                     <rect x="15" y="15" width="30" height="30" transform="rotate(45 30 30)" fill="none" stroke="#059669" strokeWidth="2.5" />
                     <polygon points="30,9 51,30 30,30" fill="#10b981" />
                     <line x1="30" y1="12" x2="30" y2="48" stroke="#059669" strokeWidth="1.5" />
@@ -774,20 +754,13 @@ export function Q15MatrixLaboratoryActivity({
                   key={opt.id}
                   onClick={() => set({ selectedCell: opt.id })}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? isC
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isC ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {isC ? "Match ✓" : "Active"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
 
                   {opt.renderSvg()}

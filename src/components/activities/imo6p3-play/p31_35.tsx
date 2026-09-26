@@ -82,7 +82,6 @@ export function Q31LinesOfSymmetryActivity({
                 title: "Option A",
                 name: "Equilateral Triangle",
                 lines: "3 Lines of Symmetry",
-                isCorrect: false,
                 renderSvg: () => (
                   <svg viewBox="0 0 80 80" className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg p-1">
                     <polygon points="40,10 70,68 10,68" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2" />
@@ -97,7 +96,6 @@ export function Q31LinesOfSymmetryActivity({
                 title: "Option B",
                 name: "Square",
                 lines: "4 Lines of Symmetry",
-                isCorrect: false,
                 renderSvg: () => (
                   <svg viewBox="0 0 80 80" className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg p-1">
                     <rect x="15" y="15" width="50" height="50" fill="#fce7f3" stroke="#ec4899" strokeWidth="2" />
@@ -113,7 +111,6 @@ export function Q31LinesOfSymmetryActivity({
                 title: "Option C",
                 name: "Scalene Triangle",
                 lines: "0 Lines of Symmetry",
-                isCorrect: false,
                 renderSvg: () => (
                   <svg viewBox="0 0 80 80" className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg p-1">
                     <polygon points="20,15 72,60 10,70" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2" />
@@ -122,12 +119,11 @@ export function Q31LinesOfSymmetryActivity({
               },
               {
                 id: "D" as const,
-                title: "Option D (Matching)",
+                title: "Option D",
                 name: "Rectangle (non-square)",
                 lines: "Exactly 2 Lines of Symmetry",
-                isCorrect: true,
                 renderSvg: () => (
-                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-emerald-50 border-2 border-emerald-400 rounded-lg p-1">
+                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-emerald-50 border border-slate-200 rounded-lg p-1">
                     <rect x="10" y="24" width="60" height="32" fill="#d1fae5" stroke="#059669" strokeWidth="2.5" />
                     <line x1="40" y1="20" x2="40" y2="60" stroke="#ef4444" strokeWidth="2" strokeDasharray="2 2" />
                     <line x1="6" y1="40" x2="74" y2="40" stroke="#ef4444" strokeWidth="2" strokeDasharray="2 2" />
@@ -141,20 +137,13 @@ export function Q31LinesOfSymmetryActivity({
                   key={opt.id}
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${opt.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {opt.isCorrect ? "Match ✓" : "Active"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
 
                   {opt.renderSvg()}
@@ -204,7 +193,7 @@ export function Q32InternationalNumberActivity({
       const isCorrect = w.chosenOption === "B";
       const wordName =
         w.chosenOption === "B"
-          ? "Seven million two hundred fifty thousand three hundred seventy-one (Correct)"
+          ? "Seven million two hundred fifty thousand three hundred seventy-one"
           : w.chosenOption === "A"
           ? "Seventy-two lakh fifty thousand three hundred seventy-one (Indian System)"
           : w.chosenOption === "C"
@@ -268,10 +257,10 @@ export function Q32InternationalNumberActivity({
         <Bay label="Choose the Correct International Word Name">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "Seventy-two lakh fifty thousand three hundred seventy-one", desc: "Indian Numeration System", isCorrect: false },
-              { id: "B" as const, text: "Seven million two hundred fifty thousand three hundred seventy-one", desc: "International System (Correct)", isCorrect: true },
-              { id: "C" as const, text: "Seven million twenty-five thousand three hundred seventy-one", desc: "Represents 7,025,371", isCorrect: false },
-              { id: "D" as const, text: "Seven hundred twenty-five thousand three hundred seventy-one", desc: "Represents 725,371", isCorrect: false },
+              { id: "A" as const, text: "Seventy-two lakh fifty thousand three hundred seventy-one", desc: "Indian Numeration System", },
+              { id: "B" as const, text: "Seven million two hundred fifty thousand three hundred seventy-one", desc: "International System", },
+              { id: "C" as const, text: "Seven million twenty-five thousand three hundred seventy-one", desc: "Represents 7,025,371", },
+              { id: "D" as const, text: "Seven hundred twenty-five thousand three hundred seventy-one", desc: "Represents 725,371", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -280,20 +269,13 @@ export function Q32InternationalNumberActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${opt.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {opt.isCorrect ? "Correct ✓" : "Selected"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
                   <span className="text-xs font-bold text-slate-800">{opt.text}</span>
                   <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>
@@ -404,10 +386,10 @@ export function Q33BarGraphActivity({
         <Bay label="Select the Difference in Total Cars Washed">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: "8 cars", isCorrect: false },
-              { id: "B" as const, val: "10 cars", isCorrect: false },
-              { id: "C" as const, val: "12 cars", desc: "32 − 20 = 12 (Correct)", isCorrect: true },
-              { id: "D" as const, val: "14 cars", isCorrect: false },
+              { id: "A" as const, val: "8 cars", },
+              { id: "B" as const, val: "10 cars", },
+              { id: "C" as const, val: "12 cars", desc: "32 − 20 = 12", },
+              { id: "D" as const, val: "14 cars", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -416,10 +398,7 @@ export function Q33BarGraphActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -522,10 +501,10 @@ export function Q34FractionPyramidActivity({
         <Bay label="Choose the Fraction that Replaces (?)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, frac: "1/6", isCorrect: false },
-              { id: "B" as const, frac: "1/4", isCorrect: false },
-              { id: "C" as const, frac: "1/3", desc: "4/12 = 1/3 (Correct)", isCorrect: true },
-              { id: "D" as const, frac: "5/12", isCorrect: false },
+              { id: "A" as const, frac: "1/6", },
+              { id: "B" as const, frac: "1/4", },
+              { id: "C" as const, frac: "1/3", desc: "4/12 = 1/3", },
+              { id: "D" as const, frac: "5/12", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -534,10 +513,7 @@ export function Q34FractionPyramidActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -621,7 +597,7 @@ export function Q35FiveDigitNumberActivity({
             {["1", "0", "2", "4", "5"].map((d, i) => (
               <div
                 key={i}
-                className="w-12 h-14 bg-white border-2 border-indigo-400 rounded-xl flex flex-col items-center justify-center font-mono font-black text-xl text-indigo-900 shadow-xs"
+                className="w-12 h-14 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center font-mono font-black text-xl text-indigo-900 shadow-xs"
               >
                 <span>{d}</span>
               </div>
@@ -637,10 +613,10 @@ export function Q35FiveDigitNumberActivity({
         <Bay label="Select the Sum of its Predecessor and Successor">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: 20490, desc: "10,244 + 10,246 = 20,490 (Correct)", isCorrect: true },
-              { id: "B" as const, val: 20492, isCorrect: false },
-              { id: "C" as const, val: 20488, isCorrect: false },
-              { id: "D" as const, val: 10245, desc: "The number itself", isCorrect: false },
+              { id: "A" as const, val: 20490, desc: "10,244 + 10,246 = 20,490", },
+              { id: "B" as const, val: 20492, },
+              { id: "C" as const, val: 20488, },
+              { id: "D" as const, val: 10245, desc: "The number itself", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -649,10 +625,7 @@ export function Q35FiveDigitNumberActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >

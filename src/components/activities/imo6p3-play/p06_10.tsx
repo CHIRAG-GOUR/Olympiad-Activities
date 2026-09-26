@@ -103,20 +103,13 @@ export function Q06ShapeXRayScannerActivity({
                 key={cand}
                 onClick={() => set({ activeCandidate: cand })}
                 className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center flex flex-col items-center justify-between ${
-                  isSelected
-                    ? isMatch
-                      ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                      : "bg-indigo-50/80 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                  isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                     : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-sm"
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-1.5">
                   <span className="font-mono text-xs font-bold text-slate-700">Option {cand}</span>
-                  {isSelected && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${isMatch ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                      {isMatch ? "Match ✓" : "Active"}
-                    </span>
-                  )}
+                  {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                 </div>
 
                 <svg viewBox="0 0 90 90" className="w-24 h-24 bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-200 rounded-lg p-1.5 my-1">
@@ -194,7 +187,7 @@ export function Q07WordSwapLaboratoryActivity({
     { from: "Clock", to: "Television", realJob: "Telling Time" },
     { from: "Television", to: "Radio", realJob: "Video Broadcast" },
     { from: "Radio", to: "Oven", realJob: "Audio Broadcast" },
-    { from: "Oven", to: "Grinder", realJob: "Baking a Cake" },
+    { from: "Oven", to: "Grinder", realJob: "Heating Appliance" },
     { from: "Grinder", to: "Iron", realJob: "Grinding Spices" },
   ];
 
@@ -208,7 +201,7 @@ export function Q07WordSwapLaboratoryActivity({
     derive: (w) => {
       const isCorrect = w.activeChoice === "Grinder";
       return {
-        value: `${w.activeChoice} ${isCorrect ? "(Correct: Oven is called Grinder)" : ""}`,
+        value: w.activeChoice,
         optionId:
           w.activeChoice === "Grinder"
             ? matchOption(question, "A") ?? "A"
@@ -244,7 +237,6 @@ export function Q07WordSwapLaboratoryActivity({
         <Bay label="Semantic Substitution Chain">
           <div className="flex flex-wrap items-center justify-center gap-2 py-3">
             {CHAIN.map((link, idx) => {
-              const isBaking = link.from === "Oven";
               const isChosen = world.activeChoice === link.to;
 
               return (
@@ -256,19 +248,17 @@ export function Q07WordSwapLaboratoryActivity({
                       }
                     }}
                     className={`p-2.5 sm:p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center min-w-[96px] ${
-                      isBaking
-                        ? "bg-amber-50 border-amber-500 shadow-md ring-2 ring-amber-200"
-                        : isChosen
-                        ? "bg-indigo-50 border-indigo-500 shadow-md"
+                      isChosen
+                        ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                         : "bg-white border-slate-200 hover:border-slate-300"
                     }`}
                   >
                     <span className="text-[10px] font-mono text-slate-500 font-bold">
-                      {isBaking ? "🎂 Cake Baking" : link.realJob}
+                      {link.realJob}
                     </span>
                     <span className="font-bold text-xs text-slate-800">{link.from}</span>
                     <span className="text-[10px] text-indigo-600 font-black my-0.5">is called ↓</span>
-                    <span className={`font-black text-xs px-2 py-0.5 rounded ${isBaking ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-800"}`}>
+                    <span className="font-black text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-800">
                       {link.to}
                     </span>
                   </div>
@@ -286,10 +276,10 @@ export function Q07WordSwapLaboratoryActivity({
         <Bay label="Choose the Appliance for Baking a Cake">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { id: "A", name: "Grinder", label: "Option A — Grinder (Oven → Grinder)" },
-              { id: "B", name: "Iron", label: "Option B — Iron (Grinder → Iron)" },
-              { id: "C", name: "Radio", label: "Option C — Radio (Television → Radio)" },
-              { id: "D", name: "Clock", label: "Option D — Clock" },
+              { id: "A", name: "Grinder" },
+              { id: "B", name: "Iron" },
+              { id: "C", name: "Radio" },
+              { id: "D", name: "Clock" },
             ].map((opt) => (
               <button
                 key={opt.id}
@@ -478,10 +468,10 @@ export function Q08BrickWallCompletionActivity({
               },
               {
                 id: "B" as const,
-                title: "Option B (Matching)",
+                title: "Option B",
                 subtitle: "Staggered Running Bond",
                 renderSvg: () => (
-                  <svg viewBox="0 0 100 65" className="w-full h-16 bg-[#b45309] rounded-lg border-2 border-emerald-400 p-1 shadow-inner">
+                  <svg viewBox="0 0 100 65" className="w-full h-16 bg-[#b45309] rounded-lg border border-slate-200 p-1 shadow-inner">
                     <rect x="2" y="2" width="48" height="28" fill="#f59e0b" stroke="#fde68a" strokeWidth="1.5" />
                     <rect x="54" y="2" width="44" height="28" fill="#f59e0b" stroke="#fde68a" strokeWidth="1.5" />
                     <rect x="2" y="33" width="22" height="30" fill="#f59e0b" stroke="#fde68a" strokeWidth="1.5" />
@@ -521,20 +511,13 @@ export function Q08BrickWallCompletionActivity({
                   key={opt.id}
                   onClick={() => set({ placedPiece: opt.id })}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? isB
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-amber-50 border-amber-500 shadow-md ring-2 ring-amber-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-amber-300 hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1.5">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isB ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
-                        {isB ? "Fits ✓" : "Active"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
 
                   {opt.renderSvg()}
@@ -721,10 +704,10 @@ export function Q09FoldStudioActivity({
               },
               {
                 id: "D" as const,
-                title: "Option D (Matching)",
+                title: "Option D",
                 subtitle: "Square + Inscribed Circle & Star Triangles",
                 renderSvg: () => (
-                  <svg viewBox="0 0 100 100" className="w-20 h-20 bg-indigo-50/60 rounded-lg border-2 border-indigo-400 p-1">
+                  <svg viewBox="0 0 100 100" className="w-20 h-20 bg-indigo-50/60 rounded-lg border border-slate-200 p-1">
                     <rect x="20" y="10" width="60" height="80" fill="#e0e7ff" fillOpacity="0.4" stroke="#6366f1" strokeWidth="1.5" />
                     <rect x="35" y="20" width="30" height="30" fill="#f59e0b" stroke="#d97706" strokeWidth="1" />
                     <circle cx="50" cy="35" r="12" fill="#3b82f6" fillOpacity="0.7" stroke="#1d4ed8" strokeWidth="1.5" />
@@ -742,20 +725,13 @@ export function Q09FoldStudioActivity({
                   key={opt.id}
                   onClick={() => set((prev) => ({ ...prev, chosenOption: opt.id }))}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? isD
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isD ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {isD ? "Match ✓" : "Active"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
 
                   {opt.renderSvg()}
@@ -875,10 +851,10 @@ export function Q10TwoExplorerNavigationActivity({
         <Bay label="Select Shortest Distance Between Starting Points">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { id: "A" as const, dist: "25 metres", isCorrect: false },
-              { id: "B" as const, dist: "30 metres", isCorrect: false },
-              { id: "C" as const, dist: "35 metres", isCorrect: true },
-              { id: "D" as const, dist: "40 metres", isCorrect: false },
+              { id: "A" as const, dist: "25 metres", },
+              { id: "B" as const, dist: "30 metres", },
+              { id: "C" as const, dist: "35 metres", },
+              { id: "D" as const, dist: "40 metres", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -888,9 +864,7 @@ export function Q10TwoExplorerNavigationActivity({
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 font-bold text-xs transition-all flex flex-col items-center gap-1 ${
                     isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-600 text-white border-emerald-700 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-200"
+                      ? "bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-200"
                       : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                   }`}
                 >

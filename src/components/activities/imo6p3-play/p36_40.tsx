@@ -69,7 +69,7 @@ export function Q36CricketBatShoppingActivity({
       <div className="space-y-4">
         {/* Dual Store Comparison Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl shadow-xs">
+          <div className="p-4 bg-emerald-50 border border-slate-200 rounded-xl shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-emerald-900 uppercase">Shop A (Bulk Pack)</span>
               <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">Best Deal ✓</span>
@@ -93,10 +93,10 @@ export function Q36CricketBatShoppingActivity({
         <Bay label="Choose the Total Savings (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, sav: "₹980", isCorrect: false },
-              { id: "B" as const, sav: "₹1080", desc: "₹6200 − ₹5120 = ₹1080 (Correct)", isCorrect: true },
-              { id: "C" as const, sav: "₹1120", isCorrect: false },
-              { id: "D" as const, sav: "₹1240", isCorrect: false },
+              { id: "A" as const, sav: "₹980", },
+              { id: "B" as const, sav: "₹1080", desc: "₹6200 − ₹5120 = ₹1080", },
+              { id: "C" as const, sav: "₹1120", },
+              { id: "D" as const, sav: "₹1240", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -105,10 +105,7 @@ export function Q36CricketBatShoppingActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -206,10 +203,10 @@ export function Q37LandFencingActivity({
         <Bay label="Choose the Total Length of Wire Required (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, len: "28 metres", desc: "2 rounds only", isCorrect: false },
-              { id: "B" as const, len: "56 metres", desc: "4 × 14 = 56 m (Correct)", isCorrect: true },
-              { id: "C" as const, len: "42 metres", desc: "3 rounds only", isCorrect: false },
-              { id: "D" as const, len: "70 metres", desc: "5 rounds", isCorrect: false },
+              { id: "A" as const, len: "28 metres", desc: "2 rounds only", },
+              { id: "B" as const, len: "56 metres", desc: "4 × 14 = 56 m", },
+              { id: "C" as const, len: "42 metres", desc: "3 rounds only", },
+              { id: "D" as const, len: "70 metres", desc: "5 rounds", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -218,10 +215,7 @@ export function Q37LandFencingActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50"
                   }`}
                 >
@@ -319,10 +313,10 @@ export function Q38WorkingHoursActivity({
         <Bay label="Choose the Total Hours Worked (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, hrs: "175 hours", desc: "160 reg + 15 ot = 175 hrs (Correct)", isCorrect: true },
-              { id: "B" as const, hrs: "160 hours", desc: "Regular hours only", isCorrect: false },
-              { id: "C" as const, hrs: "180 hours", isCorrect: false },
-              { id: "D" as const, hrs: "190 hours", isCorrect: false },
+              { id: "A" as const, hrs: "175 hours", desc: "160 reg + 15 ot = 175 hrs", },
+              { id: "B" as const, hrs: "160 hours", desc: "Regular hours only", },
+              { id: "C" as const, hrs: "180 hours", },
+              { id: "D" as const, hrs: "190 hours", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -331,10 +325,7 @@ export function Q38WorkingHoursActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -434,10 +425,10 @@ export function Q39MocktailMixerActivity({
         <Bay label="Choose the Total Volume of Mocktail (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, vol: "4 ⅔ litres", isCorrect: false },
-              { id: "B" as const, vol: "5 ⅓ litres", isCorrect: false },
-              { id: "C" as const, vol: "6 litres", isCorrect: false },
-              { id: "D" as const, vol: "5 ⅚ litres", desc: "35/6 = 5 5/6 L (Correct)", isCorrect: true },
+              { id: "A" as const, vol: "4 ⅔ litres", },
+              { id: "B" as const, vol: "5 ⅓ litres", },
+              { id: "C" as const, vol: "6 litres", },
+              { id: "D" as const, vol: "5 ⅚ litres", desc: "35/6 = 5 5/6 L", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -446,10 +437,7 @@ export function Q39MocktailMixerActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -540,7 +528,7 @@ export function Q40VillagePopulationActivity({
               <span>− People who left during 2016</span>
               <span>−9,242</span>
             </div>
-            <div className="flex justify-between p-2.5 bg-indigo-50 border-2 border-indigo-400 text-indigo-950 font-black rounded-lg text-sm">
+            <div className="flex justify-between p-2.5 bg-indigo-50 border border-slate-200 text-indigo-950 font-black rounded-lg text-sm">
               <span>Net Population in Jan 2017</span>
               <span>100,323</span>
             </div>
@@ -551,10 +539,10 @@ export function Q40VillagePopulationActivity({
         <Bay label="Choose the Population in January 2017 (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, pop: "98,420", isCorrect: false },
-              { id: "B" as const, pop: "101,250", isCorrect: false },
-              { id: "C" as const, pop: "100,323", desc: "105,250 + 4,315 − 9,242 = 100,323 (Correct)", isCorrect: true },
-              { id: "D" as const, pop: "102,143", isCorrect: false },
+              { id: "A" as const, pop: "98,420", },
+              { id: "B" as const, pop: "101,250", },
+              { id: "C" as const, pop: "100,323", desc: "105,250 + 4,315 − 9,242 = 100,323", },
+              { id: "D" as const, pop: "102,143", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -563,10 +551,7 @@ export function Q40VillagePopulationActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >

@@ -41,7 +41,7 @@ export function Q46GeometryClassificationActivity({
       const isCorrect = w.chosenOption === "D";
       const desc =
         w.chosenOption === "D"
-          ? "(P) Parallel, (Q) 3, (R) Diameter, (S) 54° (Correct Classification)"
+          ? "(P) Parallel, (Q) 3, (R) Diameter, (S) 54°"
           : w.chosenOption === "A"
           ? "(P) Intersecting, (Q) 4, (R) Radius, (S) 60°"
           : w.chosenOption === "B"
@@ -105,10 +105,10 @@ export function Q46GeometryClassificationActivity({
         <Bay label="Choose the Correct Combination of Blank Values (A, B, C, or D)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "(P) Intersecting, (Q) 4, (R) Radius, (S) 60°", isCorrect: false },
-              { id: "B" as const, text: "(P) Parallel, (Q) 4, (R) Diameter, (S) 45°", isCorrect: false },
-              { id: "C" as const, text: "(P) Intersecting, (Q) 3, (R) Chord, (S) 54°", isCorrect: false },
-              { id: "D" as const, text: "(P) Parallel, (Q) 3, (R) Diameter, (S) 54°", desc: "All 4 axioms exact (Correct)", isCorrect: true },
+              { id: "A" as const, text: "(P) Intersecting, (Q) 4, (R) Radius, (S) 60°", },
+              { id: "B" as const, text: "(P) Parallel, (Q) 4, (R) Diameter, (S) 45°", },
+              { id: "C" as const, text: "(P) Intersecting, (Q) 3, (R) Chord, (S) 54°", },
+              { id: "D" as const, text: "(P) Parallel, (Q) 3, (R) Diameter, (S) 54°", desc: "All 4 axioms exact", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -117,20 +117,13 @@ export function Q46GeometryClassificationActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${opt.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {opt.isCorrect ? "Correct ✓" : "Selected"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
                   <span className="text-xs font-mono font-bold text-slate-800">{opt.text}</span>
                   {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}
@@ -246,10 +239,10 @@ export function Q47LineGraphRatioActivity({
         <Bay label="Select the Simplified Ratio (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, ratio: "2 : 3", desc: "800 : 1200 = 2:3 (Correct)", isCorrect: true },
-              { id: "B" as const, ratio: "3 : 2", desc: "Inverted ratio error", isCorrect: false },
-              { id: "C" as const, ratio: "4 : 5", isCorrect: false },
-              { id: "D" as const, ratio: "3 : 4", isCorrect: false },
+              { id: "A" as const, ratio: "2 : 3", desc: "800 : 1200 = 2:3", },
+              { id: "B" as const, ratio: "3 : 2", desc: "Inverted ratio error", },
+              { id: "C" as const, ratio: "4 : 5", },
+              { id: "D" as const, ratio: "3 : 4", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -258,10 +251,7 @@ export function Q47LineGraphRatioActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -374,10 +364,10 @@ export function Q48TrueFalseFractionActivity({
         <Bay label="Choose the Correct T/F Sequence (A, B, C, or D)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, seq: "(P) T, (Q) F, (R) F, (S) T", desc: "True, False, False, True (Correct)", isCorrect: true },
-              { id: "B" as const, seq: "(P) T, (Q) T, (R) F, (S) F", isCorrect: false },
-              { id: "C" as const, seq: "(P) F, (Q) F, (R) T, (S) T", isCorrect: false },
-              { id: "D" as const, seq: "(P) T, (Q) F, (R) T, (S) F", isCorrect: false },
+              { id: "A" as const, seq: "(P) T, (Q) F, (R) F, (S) T", desc: "True, False, False, True", },
+              { id: "B" as const, seq: "(P) T, (Q) T, (R) F, (S) F", },
+              { id: "C" as const, seq: "(P) F, (Q) F, (R) T, (S) T", },
+              { id: "D" as const, seq: "(P) T, (Q) F, (R) T, (S) F", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -386,20 +376,13 @@ export function Q48TrueFalseFractionActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${opt.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {opt.isCorrect ? "Correct ✓" : "Selected"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
                   <span className="text-xs font-mono font-bold text-slate-800">{opt.seq}</span>
                   {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}
@@ -438,7 +421,7 @@ export function Q49DivisibilitySecurityActivity({
       const isCorrect = w.chosenOption === "C";
       const desc =
         w.chosenOption === "C"
-          ? "Both Statement I and II are true, and Statement I explains Statement II (Correct)"
+          ? "Both Statement I and II are true, and Statement I explains Statement II"
           : w.chosenOption === "A"
           ? "Statement I is true and Statement II is false"
           : w.chosenOption === "B"
@@ -494,10 +477,10 @@ export function Q49DivisibilitySecurityActivity({
         <Bay label="Choose the Correct Logical Relationship (A, B, C, or D)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "Statement I is true and Statement II is false.", isCorrect: false },
-              { id: "B" as const, text: "Statement I is false and Statement II is true.", isCorrect: false },
-              { id: "C" as const, text: "Both Statement I and Statement II are true, and Statement I is the correct explanation for Statement II.", desc: "Both True & Logically Connected (Correct)", isCorrect: true },
-              { id: "D" as const, text: "Both Statement I and Statement II are false.", isCorrect: false },
+              { id: "A" as const, text: "Statement I is true and Statement II is false.", },
+              { id: "B" as const, text: "Statement I is false and Statement II is true.", },
+              { id: "C" as const, text: "Both Statement I and Statement II are true, and Statement I is the correct explanation for Statement II.", desc: "Both True & Logically Connected", },
+              { id: "D" as const, text: "Both Statement I and Statement II are false.", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -506,20 +489,13 @@ export function Q49DivisibilitySecurityActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${opt.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {opt.isCorrect ? "Correct ✓" : "Selected"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
                   <span className="text-xs font-bold text-slate-800">{opt.text}</span>
                   {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}
@@ -622,10 +598,10 @@ export function Q50MasterControlRoomActivity({
         <Bay label="Choose the Matching Set for Column I → Column II (A, B, C, or D)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "(P)→1, (Q)→72, (R)→4, (S)→48 cm", isCorrect: false },
-              { id: "B" as const, text: "(P)→0, (Q)→72, (R)→6, (S)→56 cm", isCorrect: false },
-              { id: "C" as const, text: "(P)→1, (Q)→81, (R)→4, (S)→28 cm", isCorrect: false },
-              { id: "D" as const, text: "(P)→0, (Q)→81, (R)→6, (S)→56 cm", desc: "P=0, Q=81, R=6, S=56 cm (Correct)", isCorrect: true },
+              { id: "A" as const, text: "(P)→1, (Q)→72, (R)→4, (S)→48 cm", },
+              { id: "B" as const, text: "(P)→0, (Q)→72, (R)→6, (S)→56 cm", },
+              { id: "C" as const, text: "(P)→1, (Q)→81, (R)→4, (S)→28 cm", },
+              { id: "D" as const, text: "(P)→0, (Q)→81, (R)→6, (S)→56 cm", desc: "P=0, Q=81, R=6, S=56 cm", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -634,20 +610,13 @@ export function Q50MasterControlRoomActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${opt.isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {opt.isCorrect ? "Correct ✓" : "Selected"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
                   <span className="text-xs font-mono font-bold text-slate-800">{opt.text}</span>
                   {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}

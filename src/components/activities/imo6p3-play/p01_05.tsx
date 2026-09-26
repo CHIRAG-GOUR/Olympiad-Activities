@@ -43,7 +43,7 @@ export function Q01PatternConveyorActivity({
       const isCorrect = w.chosenOption === "D";
       const desc = `Figure ${w.chosenOption} — ${
         w.chosenOption === "D"
-          ? "Right arrow, bottom square & clockwise 45° rotation (Correct Series Continuation)"
+          ? "Right arrow, bottom square & clockwise 45° rotation"
           : w.chosenOption === "A"
           ? "Top arrow and left diamond"
           : w.chosenOption === "B"
@@ -204,10 +204,10 @@ export function Q01PatternConveyorActivity({
               },
               {
                 id: "D" as const,
-                title: "Option D (Matching)",
+                title: "Option D",
                 subtitle: "180° Diamond + South Arrow + Square",
                 renderSvg: () => (
-                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-indigo-50 border-2 border-indigo-400 rounded-lg p-1">
+                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-indigo-50 border border-slate-200 rounded-lg p-1">
                     <rect x="20" y="20" width="40" height="40" transform="rotate(45 40 40)" fill="#e0e7ff" stroke="#4f46e5" strokeWidth="2.5" />
                     <rect x="33" y="33" width="14" height="14" fill="#4f46e5" />
                     <line x1="40" y1="68" x2="40" y2="76" stroke="#4f46e5" strokeWidth="3" />
@@ -223,20 +223,13 @@ export function Q01PatternConveyorActivity({
                   key={opt.id}
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? isD
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isD ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"}`}>
-                        {isD ? "Match ✓" : "Active"}
-                      </span>
-                    )}
+                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
                   </div>
 
                   {opt.renderSvg()}
@@ -407,10 +400,10 @@ export function Q02TriangleScannerActivity({
         <Bay label="Select Total Count of Triangles (Option A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, count: "18 Triangles", desc: "8 Small + 4 Inner + 4 Mid + 2 Outer", isCorrect: true },
-              { id: "B" as const, count: "16 Triangles", desc: "Missing outer diagonal halves", isCorrect: false },
-              { id: "C" as const, count: "20 Triangles", desc: "Overcounted overlapping pairs", isCorrect: false },
-              { id: "D" as const, count: "14 Triangles", desc: "Inner squares only", isCorrect: false },
+              { id: "A" as const, count: "18 Triangles", desc: "8 Small + 4 Inner + 4 Mid + 2 Outer", },
+              { id: "B" as const, count: "16 Triangles", desc: "Missing outer diagonal halves", },
+              { id: "C" as const, count: "20 Triangles", desc: "Overcounted overlapping pairs", },
+              { id: "D" as const, count: "14 Triangles", desc: "Inner squares only", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -419,10 +412,7 @@ export function Q02TriangleScannerActivity({
                   type="button"
                   onClick={() => set((prev) => ({ ...prev, chosenOption: opt.id }))}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -576,10 +566,10 @@ export function Q03NumberFlipSortingActivity({
         <Bay label="What is the Middle Digit of the Middle Number (498)?">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, digit: "9", desc: "Middle digit of 498 (Correct)", isCorrect: true },
-              { id: "B" as const, digit: "5", desc: "Middle digit of 452", isCorrect: false },
-              { id: "C" as const, digit: "3", desc: "Middle digit of 934", isCorrect: false },
-              { id: "D" as const, digit: "7", desc: "Middle digit of 176", isCorrect: false },
+              { id: "A" as const, digit: "9", desc: "Middle digit of 498", },
+              { id: "B" as const, digit: "5", desc: "Middle digit of 452", },
+              { id: "C" as const, digit: "3", desc: "Middle digit of 934", },
+              { id: "D" as const, digit: "7", desc: "Middle digit of 176", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -588,10 +578,7 @@ export function Q03NumberFlipSortingActivity({
                   type="button"
                   onClick={() => set((prev) => ({ ...prev, chosenOption: opt.id }))}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -670,7 +657,7 @@ export function Q04NumberTriangleReactorActivity({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Triangle 1 */}
           <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-3 rounded-xl border border-indigo-200 flex flex-col items-center shadow-xs">
-            <span className="text-[10px] text-slate-500 font-mono font-bold">Triangle 1 (Known)</span>
+            <span className="text-[10px] text-slate-500 font-mono font-bold">Triangle 1</span>
             <svg viewBox="0 0 160 140" className="w-36 h-32 my-1">
               <polygon points="80,20 145,120 15,120" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2.5" />
               <circle cx="80" cy="80" r="20" fill="#4f46e5" />
@@ -679,12 +666,11 @@ export function Q04NumberTriangleReactorActivity({
               <text x="12" y="130" fill="#4338ca" fontSize="13" fontWeight="bold" textAnchor="middle">3</text>
               <text x="148" y="130" fill="#4338ca" fontSize="13" fontWeight="bold" textAnchor="middle">5</text>
             </svg>
-            <span className="text-[10px] text-indigo-700 font-mono font-bold">(3 + 5) × 6 = 48</span>
           </div>
 
           {/* Triangle 2 */}
           <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-3 rounded-xl border border-indigo-200 flex flex-col items-center shadow-xs">
-            <span className="text-[10px] text-slate-500 font-mono font-bold">Triangle 2 (Known)</span>
+            <span className="text-[10px] text-slate-500 font-mono font-bold">Triangle 2</span>
             <svg viewBox="0 0 160 140" className="w-36 h-32 my-1">
               <polygon points="80,20 145,120 15,120" fill="#fce7f3" stroke="#ec4899" strokeWidth="2.5" />
               <circle cx="80" cy="80" r="20" fill="#db2777" />
@@ -693,12 +679,11 @@ export function Q04NumberTriangleReactorActivity({
               <text x="12" y="130" fill="#be185d" fontSize="13" fontWeight="bold" textAnchor="middle">4</text>
               <text x="148" y="130" fill="#be185d" fontSize="13" fontWeight="bold" textAnchor="middle">6</text>
             </svg>
-            <span className="text-[10px] text-pink-700 font-mono font-bold">(4 + 6) × 5 = 50</span>
           </div>
 
           {/* Triangle 3 */}
           <div className="bg-amber-50 text-slate-800 p-3 rounded-xl border-2 border-amber-400 flex flex-col items-center shadow-sm">
-            <span className="text-[10px] text-amber-700 font-bold font-mono">Triangle 3 (Derive ?)</span>
+            <span className="text-[10px] text-amber-700 font-bold font-mono">Triangle 3</span>
             <svg viewBox="0 0 160 140" className="w-36 h-32 my-1">
               <polygon points="80,20 145,120 15,120" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2.5" />
               <circle cx="80" cy="80" r="22" fill="#d97706" />
@@ -709,7 +694,6 @@ export function Q04NumberTriangleReactorActivity({
               <text x="12" y="130" fill="#b45309" fontSize="13" fontWeight="bold" textAnchor="middle">2</text>
               <text x="148" y="130" fill="#b45309" fontSize="13" fontWeight="bold" textAnchor="middle">7</text>
             </svg>
-            <span className="text-[10px] text-amber-800 font-mono font-bold">(2 + 7) × 6 = 54</span>
           </div>
         </div>
 
@@ -717,10 +701,10 @@ export function Q04NumberTriangleReactorActivity({
         <Bay label="Choose the Missing Number for Triangle 3 (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, val: 48, desc: "(2 + 6) × 6", isCorrect: false },
-              { id: "B" as const, val: 54, desc: "(2 + 7) × 6 = 54 (Correct)", isCorrect: true },
-              { id: "C" as const, val: 60, desc: "(3 + 7) × 6", isCorrect: false },
-              { id: "D" as const, val: 36, desc: "2 × 7 + 6", isCorrect: false },
+              { id: "A" as const, val: 48 },
+              { id: "B" as const, val: 54 },
+              { id: "C" as const, val: 60 },
+              { id: "D" as const, val: 36 },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -729,16 +713,12 @@ export function Q04NumberTriangleReactorActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.val}</span>
-                  <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>
+                  <span className="text-2xl font-black text-slate-800 my-2">{opt.val}</span>
                   <span
                     className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
                       isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
@@ -783,7 +763,7 @@ export function Q05WaterReflectionPoolActivity({
       const isCorrect = w.chosenOption === "C";
       const desc = `Option ${w.chosenOption} — ${
         w.chosenOption === "C"
-          ? "И ∩ C ⅂ E ∀ ᴚ ∂ 9 (Accurate Inverted Water Image)"
+          ? "И ∩ C ⅂ E ∀ ᴚ ∂ 9"
           : w.chosenOption === "A"
           ? "И ∩ C Г E ∀ B ∂ e"
           : w.chosenOption === "B"
@@ -848,10 +828,10 @@ export function Q05WaterReflectionPoolActivity({
         <Bay label="Select the Correct Water Image Figure (A, B, C, or D)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "И ∩ C Г E ∀ B ∂ e", label: "Option A", isCorrect: false },
-              { id: "B" as const, text: "N U C L E A R 9 6", label: "Option B (Uninverted)", isCorrect: false },
-              { id: "C" as const, text: "И ∩ C ⅂ E ∀ ᴚ ∂ 9", label: "Option C (Accurate Water Image)", isCorrect: true },
-              { id: "D" as const, text: "И U C ⅂ E A R 6 9", label: "Option D (Partial Inversion)", isCorrect: false },
+              { id: "A" as const, text: "И ∩ C Г E ∀ B ∂ e", label: "Option A", },
+              { id: "B" as const, text: "N U C L E A R 9 6", label: "Option B (Uninverted)", },
+              { id: "C" as const, text: "И ∩ C ⅂ E ∀ ᴚ ∂ 9", label: "Option C", },
+              { id: "D" as const, text: "И U C ⅂ E A R 6 9", label: "Option D (Partial Inversion)", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -859,10 +839,7 @@ export function Q05WaterReflectionPoolActivity({
                   key={opt.id}
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-sky-300 hover:shadow-xs"
                   }`}
                 >
@@ -878,7 +855,7 @@ export function Q05WaterReflectionPoolActivity({
                       isSelected ? "bg-blue-600 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                     }`}
                   >
-                    {isSelected ? "Selected ✓" : "Pick " + opt.id}
+                    {isSelected ? "Selected" : "Pick " + opt.id}
                   </button>
                 </div>
               );

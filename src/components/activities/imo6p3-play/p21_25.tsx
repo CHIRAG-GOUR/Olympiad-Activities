@@ -42,7 +42,7 @@ export function Q21TriangularPrismActivity({
       const isCorrect = w.chosenOption === "D";
       const desc =
         w.chosenOption === "D"
-          ? "P = 5 faces, Q = 6 vertices, R = 9 edges (Correct Topology)"
+          ? "P = 5 faces, Q = 6 vertices, R = 9 edges"
           : w.chosenOption === "A"
           ? "P = 4, Q = 4, R = 6 (Tetrahedron)"
           : w.chosenOption === "B"
@@ -145,10 +145,10 @@ export function Q21TriangularPrismActivity({
         <Bay label="Choose the Correct Values of P, Q, and R (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, text: "P = 4, Q = 4, R = 6", isCorrect: false },
-              { id: "B" as const, text: "P = 6, Q = 8, R = 12", isCorrect: false },
-              { id: "C" as const, text: "P = 5, Q = 5, R = 8", isCorrect: false },
-              { id: "D" as const, text: "P = 5, Q = 6, R = 9", desc: "Triangular Prism (Correct)", isCorrect: true },
+              { id: "A" as const, text: "P = 4, Q = 4, R = 6", },
+              { id: "B" as const, text: "P = 6, Q = 8, R = 12", },
+              { id: "C" as const, text: "P = 5, Q = 5, R = 8", },
+              { id: "D" as const, text: "P = 5, Q = 6, R = 9", desc: "Triangular Prism", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -157,10 +157,7 @@ export function Q21TriangularPrismActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -273,10 +270,10 @@ export function Q22FractionSortingTableActivity({
         <Bay label="Select the Ascending Order of Shaded Fractions (A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, seq: "S < R < Q < P", desc: "Descending order error", isCorrect: false },
-              { id: "B" as const, seq: "P < Q < R < S", desc: "3/8 < 4/8 < 5/8 < 6/8 (Correct)", isCorrect: true },
-              { id: "C" as const, seq: "Q < P < S < R", isCorrect: false },
-              { id: "D" as const, seq: "R < S < P < Q", isCorrect: false },
+              { id: "A" as const, seq: "S < R < Q < P", desc: "Descending order error", },
+              { id: "B" as const, seq: "P < Q < R < S", desc: "3/8 < 4/8 < 5/8 < 6/8", },
+              { id: "C" as const, seq: "Q < P < S < R", },
+              { id: "D" as const, seq: "R < S < P < Q", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -285,10 +282,7 @@ export function Q22FractionSortingTableActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -337,7 +331,7 @@ export function Q23DecimalMatchActivity({
       const isCorrect = w.chosenOption === "C";
       const desc =
         w.chosenOption === "C"
-          ? "Sixteen and two tenths → 16.2 (Correct Match)"
+          ? "Sixteen and two tenths → 16.2"
           : w.chosenOption === "A"
           ? "Twelve and thirty-nine thousandths → 12.420 (Incorrect: should be 12.039)"
           : w.chosenOption === "B"
@@ -378,29 +372,21 @@ export function Q23DecimalMatchActivity({
                 id: "A" as const,
                 words: "Twelve and thirty-nine thousandths",
                 num: "12.420",
-                correctForm: "12.039",
-                isCorrect: false,
               },
               {
                 id: "B" as const,
                 words: "Four and forty hundredths",
                 num: "4.004",
-                correctForm: "4.40",
-                isCorrect: false,
               },
               {
                 id: "C" as const,
                 words: "Sixteen and two tenths",
                 num: "16.2",
-                correctForm: "16.2",
-                isCorrect: true,
               },
               {
                 id: "D" as const,
                 words: "Eight and five hundredths",
                 num: "80.50",
-                correctForm: "8.05",
-                isCorrect: false,
               },
             ].map((item) => {
               const isSelected = world.chosenOption === item.id;
@@ -409,30 +395,23 @@ export function Q23DecimalMatchActivity({
                   key={item.id}
                   onClick={() => set({ chosenOption: item.id })}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                    isSelected
-                      ? item.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-bold text-xs text-slate-700">Option {item.id}</span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        item.isCorrect
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-rose-100 text-rose-800"
-                      }`}
-                    >
-                      {item.isCorrect ? "Correct Match ✓" : "Incorrect Match ✗"}
-                    </span>
+                    {isSelected && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                        Selected
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-xs text-slate-800 font-semibold">{item.words}</p>
-                  <div className="my-2 p-2 bg-slate-50 rounded border border-slate-200 font-mono text-xs flex justify-between">
-                    <span>Given: <b>{item.num}</b></span>
-                    <span>True: <b className="text-indigo-600">{item.correctForm}</b></span>
+                  <div className="my-2 p-2 bg-slate-50 rounded border border-slate-200 font-mono text-xs flex items-center justify-between">
+                    <span className="text-slate-500 text-[11px]">Denoted Number:</span>
+                    <span className="font-black text-slate-900 text-sm">{item.num}</span>
                   </div>
 
                   <button
@@ -541,10 +520,10 @@ export function Q24AngleMatchingActivity({
         <Bay label="Select the Correct Matching (A, B, C, or D)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "(P)→(i), (Q)→(ii), (R)→(iii), (S)→(iv)", isCorrect: false },
-              { id: "B" as const, text: "(P)→(ii), (Q)→(iv), (R)→(i), (S)→(iii)", isCorrect: false },
-              { id: "C" as const, text: "(P)→(iv), (Q)→(i), (R)→(ii), (S)→(iii)", isCorrect: false },
-              { id: "D" as const, text: "(P)→(ii), (Q)→(i), (R)→(iv), (S)→(iii)", desc: "40°=Acute, 90°=Right, 130°=Obtuse, 180°=Straight (Correct)", isCorrect: true },
+              { id: "A" as const, text: "(P)→(i), (Q)→(ii), (R)→(iii), (S)→(iv)", },
+              { id: "B" as const, text: "(P)→(ii), (Q)→(iv), (R)→(i), (S)→(iii)", },
+              { id: "C" as const, text: "(P)→(iv), (Q)→(i), (R)→(ii), (S)→(iii)", },
+              { id: "D" as const, text: "(P)→(ii), (Q)→(i), (R)→(iv), (S)→(iii)", desc: "40°=Acute, 90°=Right, 130°=Obtuse, 180°=Straight", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -553,10 +532,7 @@ export function Q24AngleMatchingActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
@@ -605,7 +581,7 @@ export function Q25NumberLineAdditionActivity({
       const isCorrect = w.chosenOption === "C";
       const desc =
         w.chosenOption === "C"
-          ? "Number line starting at −5 with an arrow moving 8 units to the right to 3 (Correct)"
+          ? "Number line starting at −5 with an arrow moving 8 units to the right to 3"
           : w.chosenOption === "A"
           ? "Number line starting at 0 moving to −5 then −8"
           : w.chosenOption === "B"
@@ -678,10 +654,10 @@ export function Q25NumberLineAdditionActivity({
         <Bay label="Which Number Line Correctly Represents (-5) + 8 = 3?">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A" as const, text: "Number line starting at 0 moving to −5 then −8", isCorrect: false },
-              { id: "B" as const, text: "Number line starting at 8 moving 5 units left to 3", isCorrect: false },
-              { id: "C" as const, text: "Starting at −5 with arrow moving 8 units to the right to 3", desc: "(−5) + 8 = 3 (Correct)", isCorrect: true },
-              { id: "D" as const, text: "Number line starting at 3 moving 8 units right", isCorrect: false },
+              { id: "A" as const, text: "Number line starting at 0 moving to −5 then −8", },
+              { id: "B" as const, text: "Number line starting at 8 moving 5 units left to 3", },
+              { id: "C" as const, text: "Starting at −5 with arrow moving 8 units to the right to 3", desc: "(−5) + 8 = 3", },
+              { id: "D" as const, text: "Number line starting at 3 moving 8 units right", },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
@@ -690,10 +666,7 @@ export function Q25NumberLineAdditionActivity({
                   type="button"
                   onClick={() => set({ chosenOption: opt.id })}
                   className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected
-                      ? opt.isCorrect
-                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
-                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
