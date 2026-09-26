@@ -3,17 +3,19 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Search,
-  ArrowRight,
+  Compass,
   Layers,
   MapPin,
-  Compass,
-  Navigation,
-  CheckCircle2,
   FolderSync,
+  Building2,
+  Navigation,
   Eye,
-  RotateCw,
+  Crosshair,
   Sparkles,
+  Zap,
+  Play,
+  RotateCcw,
+  CheckCircle2,
 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText, matchOption } from "../imo6a/shared";
@@ -21,9 +23,12 @@ import { usePlay } from "../imo6a-play/engine";
 import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q6 — 🔍 Shape X-Ray Scanner (Embedded Figure)
+   Q6 — ⚓ Embedded Figure UV X-Ray Scanner
    ══════════════════════════════════════════════════════════════════════ */
 interface Q6World {
+  scannerX: number;
+  scannerY: number;
+  uvIntensity: number; // 0..100
   activeCandidate: "A" | "B" | "C" | "D";
 }
 
@@ -40,28 +45,49 @@ export function Q06ShapeXRayScannerActivity({
     value,
     onChange,
     readOnly,
-    initial: { activeCandidate: "A" },
+    initial: {
+      scannerX: 130,
+      scannerY: 120,
+      uvIntensity: 85,
+      activeCandidate: "A",
+    },
     derive: (w) => {
-      const isMatch = w.activeCandidate === "A";
-      const desc = isMatch
-        ? "Figure A (Exact Substructure Match)"
-        : `Figure ${w.activeCandidate} (Non-matching structure)`;
-
+      const desc = `Candidate Figure ${w.activeCandidate}`;
       return {
         value: desc,
         optionId: matchOption(question, w.activeCandidate) ?? matchText(question, w.activeCandidate) ?? w.activeCandidate,
-        note: isMatch
-          ? "Target Figure (X) is embedded inside Option A!"
-          : "Target Figure (X) is not embedded in this figure.",
+        note: `Submitted selection: Figure ${w.activeCandidate}`,
       };
     },
   });
 
+  const selectCandidate = (cand: "A" | "B" | "C" | "D") => {
+    let x = 130;
+    let y = 120;
+    if (cand === "B") {
+      x = 70;
+      y = 70;
+    } else if (cand === "C") {
+      x = 190;
+      y = 70;
+    } else if (cand === "D") {
+      x = 130;
+      y = 170;
+    }
+
+    set((prev) => ({
+      ...prev,
+      scannerX: x,
+      scannerY: y,
+      activeCandidate: cand,
+    }));
+  };
+
   return (
     <PlayShell
-      title="Shape X-Ray Scanner"
-      mission="Scan the four candidate figures with the X-Ray lens to find where Figure X is embedded."
-      icon={Search}
+      title="Embedded Figure Scanner"
+      mission="Identify which candidate figure is embedded as an exact sub-structure inside the main geometric matrix Figure (X)."
+      icon={Crosshair}
       dim="2D"
       question={question}
       derived={derived}
@@ -70,107 +96,159 @@ export function Q06ShapeXRayScannerActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
-      live={<Gauge label="Inspected Candidate" value={`Figure ${world.activeCandidate}`} />}
+      live={
+        <>
+          <Gauge label="UV Scanner Focus" value={`(${world.scannerX}, ${world.scannerY})`} />
+          <Gauge label="Target Figure" value={`Option ${world.activeCandidate}`} />
+        </>
+      }
     >
       <div className="space-y-4">
-        {/* Target Figure X Header */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-indigo-600 text-white font-bold text-xs shadow-sm">
-              Target Figure (X)
-            </div>
-            <p className="text-xs text-slate-600">
-              Find this connected geometric anchor motif embedded inside one of the figures below:
-            </p>
+        {/* Main Matrix with Interactive UV Reticle */}
+        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 rounded-xl border border-indigo-200 flex flex-col items-center justify-center relative shadow-sm">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between w-full max-w-sm">
+            <span>Main Matrix: Figure (X)</span>
+            <span className="text-indigo-600 font-mono">UV Filter: {world.uvIntensity}%</span>
           </div>
-          <svg viewBox="0 0 80 80" className="w-16 h-16 bg-white rounded-lg border-2 border-indigo-300 p-1 shadow-inner shrink-0">
-            <line x1="20" y1="20" x2="60" y2="20" stroke="#6366f1" strokeWidth="3.5" strokeLinecap="round" />
-            <line x1="20" y1="20" x2="40" y2="55" stroke="#6366f1" strokeWidth="3.5" strokeLinecap="round" />
-            <line x1="60" y1="20" x2="40" y2="55" stroke="#6366f1" strokeWidth="3.5" strokeLinecap="round" />
-            <line x1="40" y1="55" x2="40" y2="72" stroke="#6366f1" strokeWidth="3.5" strokeLinecap="round" />
-            <line x1="26" y1="72" x2="54" y2="72" stroke="#6366f1" strokeWidth="3.5" strokeLinecap="round" />
-          </svg>
+
+          <div className="w-full max-w-xs aspect-square relative">
+            <svg viewBox="0 0 260 260" className="w-full h-full drop-shadow-md bg-white rounded-xl border-2 border-slate-200 p-2">
+              <defs>
+                <radialGradient id="uvBeam" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#818cf8" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* Complex Matrix Geometry */}
+              <rect x="20" y="20" width="220" height="220" fill="#f8fafc" stroke="#64748b" strokeWidth="2.5" />
+              <line x1="20" y1="20" x2="240" y2="240" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1="240" y1="20" x2="20" y2="240" stroke="#94a3b8" strokeWidth="1.5" />
+              <circle cx="130" cy="130" r="80" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
+              <circle cx="130" cy="130" r="40" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
+              <line x1="130" y1="20" x2="130" y2="240" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 4" />
+              <line x1="20" y1="130" x2="240" y2="130" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="4 4" />
+
+              {/* Embedded Anchor Motif in Lower-Central Sector */}
+              <g className="transition-opacity duration-300">
+                {/* Horizontal crossbar */}
+                <line x1="70" y1="80" x2="190" y2="80" stroke={world.activeCandidate === "A" ? "#4f46e5" : "#475569"} strokeWidth={world.activeCandidate === "A" ? "4" : "2"} strokeLinecap="round" />
+                {/* Diagonal anchor struts */}
+                <line x1="70" y1="80" x2="130" y2="180" stroke={world.activeCandidate === "A" ? "#4f46e5" : "#475569"} strokeWidth={world.activeCandidate === "A" ? "4" : "2"} strokeLinecap="round" />
+                <line x1="190" y1="80" x2="130" y2="180" stroke={world.activeCandidate === "A" ? "#4f46e5" : "#475569"} strokeWidth={world.activeCandidate === "A" ? "4" : "2"} strokeLinecap="round" />
+                {/* Vertical center stem */}
+                <line x1="130" y1="180" x2="130" y2="225" stroke={world.activeCandidate === "A" ? "#4f46e5" : "#475569"} strokeWidth={world.activeCandidate === "A" ? "4" : "2"} strokeLinecap="round" />
+                {/* Bottom foot bar */}
+                <line x1="95" y1="225" x2="165" y2="225" stroke={world.activeCandidate === "A" ? "#4f46e5" : "#475569"} strokeWidth={world.activeCandidate === "A" ? "4" : "2"} strokeLinecap="round" />
+              </g>
+
+              {/* Interactive UV Spotlight Reticle */}
+              <circle cx={world.scannerX} cy={world.scannerY} r="65" fill="url(#uvBeam)" />
+              <circle cx={world.scannerX} cy={world.scannerY} r="32" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeDasharray="3 3" />
+              <line x1={world.scannerX - 40} y1={world.scannerY} x2={world.scannerX + 40} y2={world.scannerY} stroke="#4f46e5" strokeWidth="1" />
+              <line x1={world.scannerX} y1={world.scannerY - 40} x2={world.scannerX} y2={world.scannerY + 40} stroke="#4f46e5" strokeWidth="1" />
+            </svg>
+          </div>
         </div>
 
-        {/* 4 Candidate Options */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {(["A", "B", "C", "D"] as const).map((cand) => {
-            const isSelected = world.activeCandidate === cand;
-            const isMatch = cand === "A";
-
-            return (
-              <div
-                key={cand}
-                onClick={() => set({ activeCandidate: cand })}
-                className={`p-3 rounded-xl border-2 cursor-pointer transition-all text-center flex flex-col items-center justify-between ${
-                  isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                    : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-sm"
-                }`}
-              >
-                <div className="flex items-center justify-between w-full mb-1.5">
-                  <span className="font-mono text-xs font-bold text-slate-700">Option {cand}</span>
-                  {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                </div>
-
-                <svg viewBox="0 0 90 90" className="w-24 h-24 bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-200 rounded-lg p-1.5 my-1">
-                  {cand === "A" && (
-                    <>
-                      <rect x="8" y="8" width="74" height="74" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
-                      <line x1="8" y1="45" x2="82" y2="45" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="3 3" />
-                      <line x1="22" y1="22" x2="68" y2="22" stroke={isSelected ? "#4f46e5" : "#64748b"} strokeWidth={isSelected ? "3.5" : "2"} strokeLinecap="round" />
-                      <line x1="22" y1="22" x2="45" y2="58" stroke={isSelected ? "#4f46e5" : "#64748b"} strokeWidth={isSelected ? "3.5" : "2"} strokeLinecap="round" />
-                      <line x1="68" y1="22" x2="45" y2="58" stroke={isSelected ? "#4f46e5" : "#64748b"} strokeWidth={isSelected ? "3.5" : "2"} strokeLinecap="round" />
-                      <line x1="45" y1="58" x2="45" y2="76" stroke={isSelected ? "#4f46e5" : "#64748b"} strokeWidth={isSelected ? "3.5" : "2"} strokeLinecap="round" />
-                      <line x1="30" y1="76" x2="60" y2="76" stroke={isSelected ? "#4f46e5" : "#64748b"} strokeWidth={isSelected ? "3.5" : "2"} strokeLinecap="round" />
-                      <line x1="8" y1="8" x2="22" y2="22" stroke="#94a3b8" strokeWidth="1.5" />
-                      <line x1="82" y1="8" x2="68" y2="22" stroke="#94a3b8" strokeWidth="1.5" />
-                    </>
-                  )}
-                  {cand === "B" && (
-                    <>
-                      <circle cx="45" cy="45" r="36" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
-                      <line x1="20" y1="20" x2="70" y2="70" stroke="#64748b" strokeWidth="2" />
-                      <line x1="70" y1="20" x2="20" y2="70" stroke="#64748b" strokeWidth="2" />
-                      <polygon points="45,15 75,70 15,70" fill="none" stroke="#64748b" strokeWidth="2" />
-                    </>
-                  )}
-                  {cand === "C" && (
-                    <>
-                      <polygon points="45,10 80,75 10,75" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
-                      <line x1="45" y1="10" x2="45" y2="75" stroke="#64748b" strokeWidth="2" />
-                      <line x1="25" y1="45" x2="65" y2="45" stroke="#64748b" strokeWidth="2" />
-                      <circle cx="45" cy="50" r="14" fill="none" stroke="#64748b" strokeWidth="1.5" />
-                    </>
-                  )}
-                  {cand === "D" && (
-                    <>
-                      <rect x="15" y="15" width="60" height="60" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
-                      <line x1="15" y1="45" x2="75" y2="45" stroke="#64748b" strokeWidth="2" />
-                      <line x1="45" y1="15" x2="45" y2="75" stroke="#64748b" strokeWidth="2" />
-                      <polygon points="45,20 70,45 45,70 20,45" fill="none" stroke="#64748b" strokeWidth="1.5" />
-                    </>
-                  )}
-                </svg>
-
-                <button
-                  type="button"
-                  className={`mt-2 text-[10px] font-bold px-2 py-1 rounded w-full transition-colors ${
-                    isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+        {/* 4 Candidate Option Cards */}
+        <Bay label="Candidate Figures (Select Option A, B, C, or D)">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                id: "A" as const,
+                title: "Option A",
+                subtitle: "T-Anchor with Base Bar",
+                renderSvg: () => (
+                  <svg viewBox="0 0 90 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1.5 my-1">
+                    <rect x="8" y="8" width="74" height="74" fill="none" stroke="#cbd5e1" strokeWidth="1" />
+                    <line x1="22" y1="22" x2="68" y2="22" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
+                    <line x1="22" y1="22" x2="45" y2="58" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
+                    <line x1="68" y1="22" x2="45" y2="58" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
+                    <line x1="45" y1="58" x2="45" y2="76" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
+                    <line x1="30" y1="76" x2="60" y2="76" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                ),
+              },
+              {
+                id: "B" as const,
+                title: "Option B",
+                subtitle: "Circle with Inscribed X",
+                renderSvg: () => (
+                  <svg viewBox="0 0 90 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1.5 my-1">
+                    <circle cx="45" cy="45" r="34" fill="none" stroke="#64748b" strokeWidth="1.5" />
+                    <line x1="22" y1="22" x2="68" y2="68" stroke="#64748b" strokeWidth="2" />
+                    <line x1="68" y1="22" x2="22" y2="68" stroke="#64748b" strokeWidth="2" />
+                  </svg>
+                ),
+              },
+              {
+                id: "C" as const,
+                title: "Option C",
+                subtitle: "Triangle with Circle Center",
+                renderSvg: () => (
+                  <svg viewBox="0 0 90 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1.5 my-1">
+                    <polygon points="45,12 78,72 12,72" fill="none" stroke="#64748b" strokeWidth="2" />
+                    <circle cx="45" cy="50" r="14" fill="none" stroke="#64748b" strokeWidth="1.5" />
+                  </svg>
+                ),
+              },
+              {
+                id: "D" as const,
+                title: "Option D",
+                subtitle: "Cross in Diamond Frame",
+                renderSvg: () => (
+                  <svg viewBox="0 0 90 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1.5 my-1">
+                    <rect x="18" y="18" width="54" height="54" transform="rotate(45 45 45)" fill="none" stroke="#64748b" strokeWidth="2" />
+                    <line x1="18" y1="45" x2="72" y2="45" stroke="#64748b" strokeWidth="2" />
+                    <line x1="45" y1="18" x2="45" y2="72" stroke="#64748b" strokeWidth="2" />
+                  </svg>
+                ),
+              },
+            ].map((opt) => {
+              const isSelected = world.activeCandidate === opt.id;
+              return (
+                <div
+                  key={opt.id}
+                  onClick={() => selectCandidate(opt.id)}
+                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
+                    isSelected
+                      ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
+                      : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
                   }`}
                 >
-                  {isSelected ? "Selected" : "Choose " + cand}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="font-bold text-xs text-slate-800">{opt.title}</span>
+                    {isSelected && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                        Selected
+                      </span>
+                    )}
+                  </div>
+
+                  {opt.renderSvg()}
+
+                  <span className="text-[10px] text-slate-500 font-medium">{opt.subtitle}</span>
+                  <button
+                    type="button"
+                    className={`mt-2 text-[10px] font-bold px-2 py-1 rounded w-full transition-colors ${
+                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    {isSelected ? "Selected" : "Choose " + opt.id}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </Bay>
       </div>
     </PlayShell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q7 — 🏷️ Word-Swap Laboratory
+   Q7 — 🏷️ Word-Swap Semantic Switchboard
    ══════════════════════════════════════════════════════════════════════ */
 interface Q7World {
   activeChoice: "Grinder" | "Iron" | "Radio" | "Clock";
@@ -199,7 +277,6 @@ export function Q07WordSwapLaboratoryActivity({
     readOnly,
     initial: { activeChoice: "Grinder" },
     derive: (w) => {
-      const isCorrect = w.activeChoice === "Grinder";
       return {
         value: w.activeChoice,
         optionId:
@@ -210,9 +287,7 @@ export function Q07WordSwapLaboratoryActivity({
             : w.activeChoice === "Radio"
             ? matchOption(question, "C") ?? "C"
             : matchOption(question, "D") ?? "D",
-        note: isCorrect
-          ? "A woman bakes a cake in an Oven, and Oven is called Grinder!"
-          : `A cake is baked in an Oven. Find what Oven is renamed to in the chain.`,
+        note: `Submitted alias: ${w.activeChoice}`,
       };
     },
   });
@@ -230,7 +305,7 @@ export function Q07WordSwapLaboratoryActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
-      live={<Gauge label="Selected Answer" value={world.activeChoice} />}
+      live={<Gauge label="Selected Alias" value={world.activeChoice} />}
     >
       <div className="space-y-4">
         {/* Visual Substitution Chain */}
@@ -264,7 +339,7 @@ export function Q07WordSwapLaboratoryActivity({
                   </div>
 
                   {idx < CHAIN.length - 1 && (
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="text-slate-400 font-bold">→</span>
                   )}
                 </div>
               );
@@ -303,7 +378,7 @@ export function Q07WordSwapLaboratoryActivity({
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q8 — 🧱 Brick Wall Completion (Rich Textured Pattern Completion)
+   Q8 — 🧱 Brick Wall Restoration Studio (Draggable Masonry Simulator)
    ══════════════════════════════════════════════════════════════════════ */
 interface Q8World {
   placedPiece: "A" | "B" | "C" | "D";
@@ -324,23 +399,11 @@ export function Q08BrickWallCompletionActivity({
     readOnly,
     initial: { placedPiece: "B" },
     derive: (w) => {
-      const isCorrect = w.placedPiece === "B";
-      const desc = `Piece ${w.placedPiece} — ${
-        w.placedPiece === "B"
-          ? "Matched Horizontal Mortar Joints with Staggered Header Bond"
-          : w.placedPiece === "A"
-          ? "Vertical Offset Joints"
-          : w.placedPiece === "C"
-          ? "Diagonal Joints"
-          : "Solid Unbonded Block"
-      }`;
-
+      const desc = `Piece ${w.placedPiece}`;
       return {
         value: desc,
         optionId: matchOption(question, w.placedPiece) ?? matchText(question, w.placedPiece) ?? w.placedPiece,
-        note: isCorrect
-          ? "Correct! Piece B perfectly restores the structural brick bond and mortar lines."
-          : "Mortar joints and brick lines do not align with the surrounding wall.",
+        note: `Submitted brick piece: Piece ${w.placedPiece}`,
       };
     },
   });
@@ -361,61 +424,61 @@ export function Q08BrickWallCompletionActivity({
       live={<Gauge label="Placed Piece" value={`Piece ${world.placedPiece}`} />}
     >
       <div className="space-y-4">
-        {/* Wall Diagram Canvas */}
+        {/* Realistic Masonry Wall Canvas */}
         <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 p-4 rounded-xl border border-amber-200 flex flex-col items-center shadow-sm">
           <div className="w-full max-w-md relative">
             <svg viewBox="0 0 320 200" className="w-full h-auto bg-gradient-to-b from-[#b45309] to-[#92400e] rounded-xl border-4 border-[#78350f] shadow-md">
               <defs>
-                <linearGradient id="brickGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <linearGradient id="brickGradMain" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#d97706" />
                   <stop offset="50%" stopColor="#b45309" />
                   <stop offset="100%" stopColor="#92400e" />
                 </linearGradient>
-                <linearGradient id="pieceBGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <linearGradient id="brickGradSlot" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#f59e0b" />
                   <stop offset="100%" stopColor="#b45309" />
                 </linearGradient>
               </defs>
 
               {/* Row 1 */}
-              <rect x="5" y="5" width="70" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-              <rect x="80" y="5" width="75" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-              <rect x="160" y="5" width="75" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-              <rect x="240" y="5" width="75" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="5" y="5" width="70" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="80" y="5" width="75" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="160" y="5" width="75" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="240" y="5" width="75" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
 
               {/* Row 2 */}
-              <rect x="5" y="52" width="110" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-              <rect x="120" y="52" width="80" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-              <rect x="205" y="52" width="110" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="5" y="52" width="110" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="120" y="52" width="80" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="205" y="52" width="110" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
 
-              {/* Row 3 - Left section fixed */}
-              <rect x="5" y="99" width="75" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-              <rect x="85" y="99" width="70" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              {/* Row 3 - Left fixed */}
+              <rect x="5" y="99" width="75" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="85" y="99" width="70" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
 
-              {/* Row 4 - Left section fixed */}
-              <rect x="5" y="146" width="115" height="48" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-              <rect x="125" y="146" width="30" height="48" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              {/* Row 4 - Left fixed */}
+              <rect x="5" y="146" width="115" height="48" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+              <rect x="125" y="146" width="30" height="48" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
 
-              {/* Missing Quadrant Slot (Bottom Right: x=160, y=99, w=155, h=95) */}
+              {/* Missing Quadrant Slot (x=160, y=99, w=155, h=95) */}
               <g transform="translate(160, 99)">
                 <rect x="0" y="0" width="155" height="95" fill="#451a03" stroke="#facc15" strokeWidth="2.5" strokeDasharray="5 5" rx="3" />
 
                 {world.placedPiece === "A" && (
                   <g>
-                    <rect x="3" y="3" width="70" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2" />
-                    <rect x="78" y="3" width="74" height="42" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2" />
-                    <rect x="3" y="48" width="70" height="44" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2" />
-                    <rect x="78" y="48" width="74" height="44" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2" />
+                    <rect x="3" y="3" width="70" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2" />
+                    <rect x="78" y="3" width="74" height="42" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2" />
+                    <rect x="3" y="48" width="70" height="44" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2" />
+                    <rect x="78" y="48" width="74" height="44" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2" />
                   </g>
                 )}
 
                 {world.placedPiece === "B" && (
                   <g>
-                    <rect x="3" y="3" width="74" height="42" fill="url(#pieceBGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-                    <rect x="82" y="3" width="70" height="42" fill="url(#pieceBGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-                    <rect x="3" y="48" width="35" height="44" fill="url(#pieceBGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-                    <rect x="43" y="48" width="74" height="44" fill="url(#pieceBGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
-                    <rect x="122" y="48" width="30" height="44" fill="url(#pieceBGrad)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+                    <rect x="3" y="3" width="74" height="42" fill="url(#brickGradSlot)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+                    <rect x="82" y="3" width="70" height="42" fill="url(#brickGradSlot)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+                    <rect x="3" y="48" width="35" height="44" fill="url(#brickGradSlot)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+                    <rect x="43" y="48" width="74" height="44" fill="url(#brickGradSlot)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
+                    <rect x="122" y="48" width="30" height="44" fill="url(#brickGradSlot)" stroke="#fde68a" strokeWidth="2.5" rx="2" />
                   </g>
                 )}
 
@@ -430,9 +493,9 @@ export function Q08BrickWallCompletionActivity({
 
                 {world.placedPiece === "D" && (
                   <g>
-                    <rect x="3" y="3" width="149" height="89" fill="url(#brickGrad)" stroke="#fde68a" strokeWidth="2" rx="2" />
+                    <rect x="3" y="3" width="149" height="89" fill="url(#brickGradMain)" stroke="#fde68a" strokeWidth="2" rx="2" />
                     <text x="77" y="50" fill="#fef3c7" fontSize="11" fontWeight="bold" textAnchor="middle">
-                      Solid Block (No Mortar)
+                      Solid Block
                     </text>
                   </g>
                 )}
@@ -445,7 +508,7 @@ export function Q08BrickWallCompletionActivity({
             </svg>
           </div>
           <p className="text-xs text-amber-800 font-medium mt-2">
-            Click any candidate brick piece below to test if it restores the staggered masonry bond:
+            Click any candidate brick piece below to test if it restores the masonry bond:
           </p>
         </div>
 
@@ -504,20 +567,23 @@ export function Q08BrickWallCompletionActivity({
               },
             ].map((opt) => {
               const isSelected = world.placedPiece === opt.id;
-              const isB = opt.id === "B";
-
               return (
                 <div
                   key={opt.id}
                   onClick={() => set({ placedPiece: opt.id })}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
+                    isSelected
+                      ? "bg-amber-50 border-amber-600 shadow-md ring-2 ring-amber-200"
                       : "bg-white border-slate-200 hover:border-amber-300 hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1.5">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
+                    {isSelected && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                        Selected
+                      </span>
+                    )}
                   </div>
 
                   {opt.renderSvg()}
@@ -542,7 +608,7 @@ export function Q08BrickWallCompletionActivity({
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q9 — 📄 Transparent Fold Studio
+   Q9 — 📄 3D Transparent Folding Studio
    ══════════════════════════════════════════════════════════════════════ */
 interface Q9World {
   foldPercent: number;
@@ -564,15 +630,11 @@ export function Q09FoldStudioActivity({
     readOnly,
     initial: { foldPercent: 100, chosenOption: "D" },
     derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const desc = `Folded Sheet ${w.chosenOption} — Superimposed corner triangle with dual circle overlap`;
-
+      const desc = `Folded Figure ${w.chosenOption}`;
       return {
         value: desc,
         optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! When folded along the dotted vertical crease, the right shapes superimpose directly over the left shapes."
-          : `Inspect the overlap of shapes on Option ${w.chosenOption}.`,
+        note: `Submitted folded pattern: Option ${w.chosenOption}`,
       };
     },
   });
@@ -598,38 +660,40 @@ export function Q09FoldStudioActivity({
       }
     >
       <div className="space-y-4">
-        {/* Interactive Folding Simulation Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-6 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <div className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2">
-            <span>Original Unfolded Sheet with Crease</span>
-            <span className="text-indigo-600 font-mono">(Fold Right onto Left)</span>
+        {/* 3D Transparent Folding Stage */}
+        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-6 rounded-xl border border-indigo-200 flex flex-col items-center justify-center relative shadow-sm">
+          <div className="w-full max-w-xs flex justify-center py-2">
+            <svg viewBox="0 0 200 160" className="w-56 h-44 drop-shadow-md">
+              <defs>
+                <linearGradient id="transSheet" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#e0e7ff" stopOpacity="0.4" />
+                </linearGradient>
+              </defs>
+
+              {/* Left Fixed Half */}
+              <rect x="20" y="20" width="80" height="120" fill="url(#transSheet)" stroke="#6366f1" strokeWidth="2" rx="2" />
+              {/* Left Static Shapes */}
+              <rect x="45" y="40" width="30" height="30" fill="#f59e0b" stroke="#d97706" strokeWidth="1.5" />
+              <polygon points="60,90 40,125 80,125" fill="#10b981" stroke="#059669" strokeWidth="1.5" />
+
+              {/* Central Fold Crease */}
+              <line x1="100" y1="15" x2="100" y2="145" stroke="#6366f1" strokeWidth="2.5" strokeDasharray="5 4" />
+
+              {/* Right Folding Flap */}
+              <g
+                transform={`translate(100, 0) scale(${1 - (world.foldPercent / 100) * 2}, 1) translate(-100, 0)`}
+                opacity={Math.max(0.2, 1 - (world.foldPercent / 100) * 0.4)}
+              >
+                <rect x="100" y="20" width="80" height="120" fill="url(#transSheet)" stroke="#6366f1" strokeWidth="2" rx="2" />
+                <circle cx="140" cy="55" r="14" fill="#3b82f6" fillOpacity="0.75" stroke="#1d4ed8" strokeWidth="1.5" />
+                <polygon points="140,125 120,90 160,90" fill="#ec4899" fillOpacity="0.75" stroke="#be185d" strokeWidth="1.5" />
+              </g>
+            </svg>
           </div>
 
-          <svg viewBox="0 0 240 180" className="w-64 h-48 bg-white/90 rounded-xl border-2 border-indigo-300 shadow-md">
-            <rect x="20" y="20" width="100" height="140" fill="#e0e7ff" fillOpacity="0.4" stroke="#6366f1" strokeWidth="2" rx="2" />
-            <rect x="50" y="40" width="35" height="35" fill="#f59e0b" stroke="#d97706" strokeWidth="1.5" />
-            <polygon points="67,95 90,140 45,140" fill="#10b981" stroke="#059669" strokeWidth="1.5" />
-
-            <line x1="120" y1="15" x2="120" y2="165" stroke="#ef4444" strokeWidth="2.5" strokeDasharray="5 4" />
-
-            {world.foldPercent < 100 && (
-              <g opacity={(100 - world.foldPercent) / 100}>
-                <rect x="120" y="20" width="100" height="140" fill="#e0e7ff" fillOpacity="0.4" stroke="#6366f1" strokeWidth="2" rx="2" />
-                <circle cx="170" cy="57" r="16" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="1.5" />
-                <polygon points="170,140 190,95 150,95" fill="#ec4899" stroke="#be185d" strokeWidth="1.5" />
-              </g>
-            )}
-
-            {world.foldPercent > 0 && (
-              <g opacity={world.foldPercent / 100}>
-                <circle cx="67" cy="57" r="16" fill="#3b82f6" fillOpacity="0.65" stroke="#1d4ed8" strokeWidth="2" />
-                <polygon points="67,140 47,95 87,95" fill="#ec4899" fillOpacity="0.65" stroke="#be185d" strokeWidth="2" />
-              </g>
-            )}
-          </svg>
-
-          {/* Slider and Quick Action Buttons */}
-          <div className="w-full max-w-xs mt-4 flex flex-col items-center gap-2">
+          {/* Fold Progress Controls */}
+          <div className="w-full max-w-sm flex flex-col items-center gap-2 mt-2">
             <div className="flex items-center justify-between w-full text-xs font-bold text-slate-600">
               <span>Unfolded (0%)</span>
               <span className="text-indigo-600">{world.foldPercent}% Folded</span>
@@ -662,38 +726,38 @@ export function Q09FoldStudioActivity({
           </div>
         </div>
 
-        {/* 4 Folded Option Cards */}
-        <Bay label="Candidate Result Figures (Select matching Option A, B, C, or D)">
+        {/* 4 Candidate Option Cards */}
+        <Bay label="Candidate Superimposed Figures (Select A, B, C, or D)">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               {
                 id: "A" as const,
                 title: "Option A",
-                subtitle: "Triangle Left Overlap",
+                subtitle: "Circle and Square Apart",
                 renderSvg: () => (
                   <svg viewBox="0 0 100 100" className="w-20 h-20 bg-slate-50 rounded-lg border border-slate-200 p-1">
                     <rect x="20" y="10" width="60" height="80" fill="#e0e7ff" fillOpacity="0.4" stroke="#6366f1" strokeWidth="1.5" />
-                    <polygon points="50,20 75,50 25,50" fill="#10b981" />
-                    <circle cx="50" cy="70" r="12" fill="#3b82f6" />
+                    <rect x="35" y="20" width="30" height="30" fill="#f59e0b" stroke="#d97706" strokeWidth="1" />
+                    <circle cx="50" cy="70" r="12" fill="#3b82f6" fillOpacity="0.7" stroke="#1d4ed8" strokeWidth="1.5" />
                   </svg>
                 ),
               },
               {
                 id: "B" as const,
                 title: "Option B",
-                subtitle: "Double Inverted Square",
+                subtitle: "Opposite Diagonal Halves",
                 renderSvg: () => (
                   <svg viewBox="0 0 100 100" className="w-20 h-20 bg-slate-50 rounded-lg border border-slate-200 p-1">
                     <rect x="20" y="10" width="60" height="80" fill="#e0e7ff" fillOpacity="0.4" stroke="#6366f1" strokeWidth="1.5" />
-                    <rect x="35" y="20" width="30" height="30" fill="#f59e0b" />
-                    <rect x="40" y="55" width="20" height="20" fill="#3b82f6" />
+                    <polygon points="50,20 70,50 30,50" fill="#10b981" stroke="#059669" strokeWidth="1" />
+                    <polygon points="50,60 70,90 30,90" fill="#ec4899" stroke="#be185d" strokeWidth="1" />
                   </svg>
                 ),
               },
               {
                 id: "C" as const,
                 title: "Option C",
-                subtitle: "Symmetric Cross",
+                subtitle: "Single Crossed Triangle",
                 renderSvg: () => (
                   <svg viewBox="0 0 100 100" className="w-20 h-20 bg-slate-50 rounded-lg border border-slate-200 p-1">
                     <rect x="20" y="10" width="60" height="80" fill="#e0e7ff" fillOpacity="0.4" stroke="#6366f1" strokeWidth="1.5" />
@@ -718,20 +782,23 @@ export function Q09FoldStudioActivity({
               },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
-              const isD = opt.id === "D";
-
               return (
                 <div
                   key={opt.id}
                   onClick={() => set((prev) => ({ ...prev, chosenOption: opt.id }))}
                   className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
+                    isSelected
+                      ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
                       : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-sm"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
+                    {isSelected && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">
+                        Selected
+                      </span>
+                    )}
                   </div>
 
                   {opt.renderSvg()}
@@ -756,7 +823,7 @@ export function Q09FoldStudioActivity({
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q10 — 🗺️ Two-Explorer Navigation
+   Q10 — 🧭 GPS Radar & Coordinate Navigation Simulator
    ══════════════════════════════════════════════════════════════════════ */
 interface Q10World {
   chosenOption: "A" | "B" | "C" | "D";
@@ -777,23 +844,20 @@ export function Q10TwoExplorerNavigationActivity({
     readOnly,
     initial: { chosenOption: "C" },
     derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const dist = w.chosenOption === "A" ? 25 : w.chosenOption === "B" ? 30 : w.chosenOption === "C" ? 35 : 40;
+      const dist = w.chosenOption === "C" ? 35 : w.chosenOption === "A" ? 25 : w.chosenOption === "B" ? 30 : 40;
       return {
         value: `${dist} metres`,
         optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, dist) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Distance between Vansh (0,0) and Puneet (15,-30) coordinates equals 35 metres along vector path."
-          : `Selected ${dist} metres. Track both explorers' turns to determine starting positions.`,
+        note: `Submitted distance: ${dist} metres`,
       };
     },
   });
 
   return (
     <PlayShell
-      title="Two-Explorer Navigation"
-      mission="Trace the coordinate paths of Vansh and Puneet to calculate the distance between their starting points."
-      icon={Navigation}
+      title="Coordinate Navigation Simulator"
+      mission="Trace the paths of two explorers moving across cardinal coordinates and determine the straight-line distance between them."
+      icon={Compass}
       dim="2D"
       question={question}
       derived={derived}
@@ -802,59 +866,66 @@ export function Q10TwoExplorerNavigationActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
-      live={<Gauge label="Start Distance" value={world.chosenOption === "C" ? "35 metres (Option C)" : world.chosenOption === "A" ? "25 metres (Option A)" : world.chosenOption === "B" ? "30 metres (Option B)" : "40 metres (Option D)"} />}
+      live={<Gauge label="Measured Distance" value={world.chosenOption === "C" ? "35 metres (Option C)" : world.chosenOption === "A" ? "25 metres (Option A)" : world.chosenOption === "B" ? "30 metres (Option B)" : "40 metres (Option D)"} />}
     >
       <div className="space-y-4">
-        {/* Navigation Grid Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 320 200" className="w-full max-w-md h-48 bg-white border border-slate-300 rounded-lg shadow-inner">
-            {/* Grid lines */}
-            {Array.from({ length: 16 }).map((_, i) => (
-              <line key={`x-${i}`} x1={i * 20} y1="0" x2={i * 20} y2="200" stroke="#f1f5f9" strokeWidth="1" />
-            ))}
-            {Array.from({ length: 10 }).map((_, i) => (
-              <line key={`y-${i}`} x1="0" y1={i * 20} x2="320" y2={i * 20} stroke="#f1f5f9" strokeWidth="1" />
-            ))}
+        {/* Radar Screen Navigation Canvas */}
+        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 rounded-xl border border-indigo-500/30 text-white flex flex-col items-center shadow-lg relative">
+          <div className="text-xs font-mono font-bold text-cyan-400 mb-2 flex items-center justify-between w-full max-w-md">
+            <span className="flex items-center gap-1.5">
+              <Navigation className="w-3.5 h-3.5" /> GPS Vector Tracking
+            </span>
+            <span className="text-emerald-400">Scale: 1 grid = 5 metres</span>
+          </div>
 
-            {/* Vansh Path: Start (40, 60) -> North 20m -> East 30m -> South 35m -> Point C (160, 140) */}
-            <circle cx="40" cy="60" r="6" fill="#3b82f6" />
-            <text x="40" y="50" fill="#1d4ed8" fontSize="10" fontWeight="bold" textAnchor="middle">
-              Vansh Start
-            </text>
+          <div className="w-full max-w-md aspect-[4/3] relative">
+            <svg viewBox="0 0 320 240" className="w-full h-full bg-slate-950/60 rounded-xl border border-cyan-500/30">
+              <defs>
+                <pattern id="radarGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#0369a1" strokeWidth="0.5" strokeOpacity="0.4" />
+                </pattern>
+              </defs>
 
-            {/* Puneet Start (100, 180) -> East 15m -> North 15m -> Point C (160, 140) */}
-            <circle cx="100" cy="170" r="6" fill="#ec4899" />
-            <text x="100" y="190" fill="#be185d" fontSize="10" fontWeight="bold" textAnchor="middle">
-              Puneet Start
-            </text>
+              <rect width="320" height="240" fill="url(#radarGrid)" />
 
-            {/* Meeting Point C */}
-            <circle cx="160" cy="140" r="7" fill="#f59e0b" stroke="#b45309" strokeWidth="2" />
-            <text x="160" y="130" fill="#92400e" fontSize="10" fontWeight="black" textAnchor="middle">
-              Point C
-            </text>
+              {/* Cardinal Compass Directions */}
+              <text x="160" y="18" fill="#38bdf8" fontSize="11" fontWeight="bold" textAnchor="middle">NORTH</text>
+              <text x="160" y="234" fill="#38bdf8" fontSize="11" fontWeight="bold" textAnchor="middle">SOUTH</text>
+              <text x="12" y="124" fill="#38bdf8" fontSize="11" fontWeight="bold">WEST</text>
+              <text x="282" y="124" fill="#38bdf8" fontSize="11" fontWeight="bold">EAST</text>
 
-            {/* Paths */}
-            <polyline points="40,60 40,20 160,20 160,140" fill="none" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 3" />
-            <polyline points="100,170 160,170 160,140" fill="none" stroke="#ec4899" strokeWidth="2" strokeDasharray="4 3" />
+              {/* Origin Point O */}
+              <circle cx="100" cy="120" r="4" fill="#f59e0b" />
+              <text x="88" y="124" fill="#fcd34d" fontSize="10" fontWeight="black">O (Start)</text>
 
-            {/* Distance line between Start Points */}
-            <line x1="40" y1="60" x2="100" y2="170" stroke="#8b5cf6" strokeWidth="3" />
-            <rect x="50" y="105" width="60" height="20" rx="4" fill="#7c3aed" />
-            <text x="80" y="119" fill="#ffffff" fontSize="10" fontWeight="black" textAnchor="middle">
-              35 m
-            </text>
-          </svg>
+              {/* Path 1: Person A (North 20m, then East 15m) */}
+              <path d="M 100 120 L 100 40 L 160 40" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="160" cy="40" r="5" fill="#38bdf8" />
+              <text x="170" y="44" fill="#38bdf8" fontSize="10" fontWeight="bold">Person A (North+East)</text>
+
+              {/* Path 2: Person B (South 15m, then East 20m) */}
+              <path d="M 100 120 L 100 180 L 180 180" fill="none" stroke="#f43f5e" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="180" cy="180" r="5" fill="#f43f5e" />
+              <text x="190" y="184" fill="#f43f5e" fontSize="10" fontWeight="bold">Person B (South+East)</text>
+
+              {/* Dynamic Laser Rangefinder Line */}
+              <line x1="160" y1="40" x2="180" y2="180" stroke="#facc15" strokeWidth="2.5" strokeDasharray="5 4" />
+              <circle cx="170" cy="110" r="16" fill="#1e1b4b" stroke="#facc15" strokeWidth="1.5" />
+              <text x="170" y="114" fill="#facc15" fontSize="10" fontWeight="black" textAnchor="middle">
+                {world.chosenOption === "C" ? "35m" : world.chosenOption === "A" ? "25m" : world.chosenOption === "B" ? "30m" : "40m"}
+              </text>
+            </svg>
+          </div>
         </div>
 
-        {/* 4 Option Buttons */}
-        <Bay label="Select Shortest Distance Between Starting Points">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {/* 4 Candidate Option Cards */}
+        <Bay label="Select the Distance Between Both Persons (A, B, C, or D)">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: "A" as const, dist: "25 metres", },
-              { id: "B" as const, dist: "30 metres", },
-              { id: "C" as const, dist: "35 metres", },
-              { id: "D" as const, dist: "40 metres", },
+              { id: "A" as const, dist: "25 metres" },
+              { id: "B" as const, dist: "30 metres" },
+              { id: "C" as const, dist: "35 metres" },
+              { id: "D" as const, dist: "40 metres" },
             ].map((opt) => {
               const isSelected = world.chosenOption === opt.id;
               return (
