@@ -96,6 +96,34 @@ export function matchText(q: Question | undefined, target: string | undefined) {
   return options(q).find((o) => normalise(o.text) === want)?.id;
 }
 
+/** Option whose ID, letter index, or text denotation matches `keyOrLetter`. */
+export function matchOption(q: Question | undefined, keyOrLetter: string | undefined): string | undefined {
+  if (!keyOrLetter) return undefined;
+  const opts = options(q);
+  if (opts.length === 0) return keyOrLetter;
+
+  // 1. Direct ID match
+  const directId = opts.find((o) => o.id.toLowerCase() === keyOrLetter.toLowerCase());
+  if (directId) return directId.id;
+
+  // 2. Direct single letter A/B/C/D mapping to 0/1/2/3 index if available
+  const upper = keyOrLetter.toUpperCase();
+  const letterMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+  if (letterMap[upper] !== undefined) {
+    const idx = letterMap[upper];
+    if (opts[idx]) return opts[idx].id;
+  }
+
+  // 3. Option text starts with or contains
+  const textMatch = opts.find((o) =>
+    o.text.trim().toLowerCase().startsWith(keyOrLetter.toLowerCase()) ||
+    normalise(o.text) === normalise(keyOrLetter)
+  );
+  if (textMatch) return textMatch.id;
+
+  return keyOrLetter;
+}
+
 /** Option whose text contains every fragment given — for multi-part options. */
 export function matchAllFragments(q: Question | undefined, fragments: (string | undefined)[]) {
   if (fragments.some((f) => !f)) return undefined;

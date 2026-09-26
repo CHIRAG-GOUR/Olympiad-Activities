@@ -10,20 +10,18 @@ import {
   MoveRight,
   RotateCw,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText } from "../imo6a/shared";
+import { matchNumber, matchText, matchOption } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
 import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q21 — 🧊 3D Solid Inspector (Triangular Prism)
+   Q21 — 🧊 3D Solid Inspector (Triangular Prism Topology)
    ══════════════════════════════════════════════════════════════════════ */
 interface Q21World {
-  facesCount: number;
-  verticesCount: number;
-  edgesCount: number;
-  rotationY: number;
+  chosenOption: "A" | "B" | "C" | "D";
 }
 
 export function Q21TriangularPrismActivity({
@@ -39,24 +37,24 @@ export function Q21TriangularPrismActivity({
     value,
     onChange,
     readOnly,
-    initial: {
-      facesCount: 5,
-      verticesCount: 6,
-      edgesCount: 9,
-      rotationY: 25,
-    },
+    initial: { chosenOption: "D" },
     derive: (w) => {
-      const isCorrect =
-        w.facesCount === 5 && w.verticesCount === 6 && w.edgesCount === 9;
-      if (isCorrect) {
-        return {
-          value: `P = 5, Q = 6, R = 9`,
-          optionId: matchText(question, "D") ?? "D",
-        };
-      }
+      const isCorrect = w.chosenOption === "D";
+      const desc =
+        w.chosenOption === "D"
+          ? "P = 5 faces, Q = 6 vertices, R = 9 edges (Correct Topology)"
+          : w.chosenOption === "A"
+          ? "P = 4, Q = 4, R = 6 (Tetrahedron)"
+          : w.chosenOption === "B"
+          ? "P = 6, Q = 8, R = 12 (Cuboid)"
+          : "P = 5, Q = 5, R = 8 (Square Pyramid)";
+
       return {
-        value: `P=${w.facesCount}, Q=${w.verticesCount}, R=${w.edgesCount}`,
-        note: "Inspect all faces, vertices, and edges of the triangular prism.",
+        value: `Option ${w.chosenOption} — ${desc}`,
+        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
+        note: isCorrect
+          ? "Correct! A triangular prism consists of 2 triangular bases + 3 rectangular lateral faces = 5 Faces; 3 + 3 = 6 Vertices; 3 + 3 + 3 = 9 Edges."
+          : `Selected Option ${w.chosenOption}. Check Euler's formula: F + V − E = 2 (5 + 6 − 9 = 2).`,
       };
     },
   });
@@ -64,7 +62,7 @@ export function Q21TriangularPrismActivity({
   return (
     <PlayShell
       title="3D Solid Inspector (Triangular Prism)"
-      mission="Rotate the 3D triangular prism and count its faces (P), vertices (Q), and edges (R)."
+      mission="Inspect the 3D topology of a triangular prism to find the exact count of Faces (P), Vertices (Q), and Edges (R)."
       icon={Box}
       dim="3D"
       question={question}
@@ -74,66 +72,111 @@ export function Q21TriangularPrismActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
-      live={
-        <>
-          <Gauge label="Faces (P)" value={String(world.facesCount)} />
-          <Gauge label="Vertices (Q)" value={String(world.verticesCount)} />
-          <Gauge label="Edges (R)" value={String(world.edgesCount)} />
-        </>
-      }
+      live={<Gauge label="Prism Topology" value={world.chosenOption === "D" ? "P=5, Q=6, R=9 (Option D)" : `Option ${world.chosenOption}`} />}
     >
       <div className="space-y-4">
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 p-6 rounded-xl flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
-          <svg viewBox="0 0 240 180" className="w-56 h-44 drop-shadow-lg">
+        {/* 3D Prism Visual Diagram */}
+        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-6 rounded-xl flex flex-col items-center justify-center shadow-sm">
+          <svg viewBox="0 0 260 180" className="w-60 h-44 drop-shadow-md">
             <defs>
-              <linearGradient id="prismGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#a855f7" stopOpacity="0.8" />
+              <linearGradient id="prismFront" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#818cf8" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.85" />
+              </linearGradient>
+              <linearGradient id="prismTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#c084fc" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#a855f7" stopOpacity="0.75" />
               </linearGradient>
             </defs>
 
-            <polygon points="120,20 180,60 140,80" fill="#312e81" stroke="#818cf8" strokeWidth="1.5" strokeDasharray="3 3" />
-            <polygon points="60,80 120,20 140,80 80,140" fill="url(#prismGrad)" stroke="#c084fc" strokeWidth="2" opacity="0.85" />
-            <polygon points="80,140 140,80 180,60 120,120" fill="#4338ca" stroke="#c084fc" strokeWidth="2" opacity="0.75" />
-            <polygon points="60,80 120,120 80,140" fill="#4f46e5" stroke="#facc15" strokeWidth="2.5" />
+            {/* Hidden back edges */}
+            <line x1="80" y1="50" x2="190" y2="50" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" />
+            <line x1="80" y1="50" x2="50" y2="120" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" />
+            <line x1="80" y1="50" x2="110" y2="140" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" />
 
+            {/* Top Slanted Face */}
+            <polygon points="50,120 160,120 190,50 80,50" fill="url(#prismTop)" stroke="#9333ea" strokeWidth="2" />
+
+            {/* Front Triangular Face */}
+            <polygon points="160,120 220,140 190,50" fill="url(#prismFront)" stroke="#4338ca" strokeWidth="2.5" />
+
+            {/* Bottom Rectangular Face */}
+            <polygon points="50,120 110,140 220,140 160,120" fill="#4f46e5" fillOpacity="0.6" stroke="#4338ca" strokeWidth="2" />
+
+            {/* 6 Vertices */}
             {[
-              { x: 60, y: 80, label: "V1" },
-              { x: 120, y: 120, label: "V2" },
-              { x: 80, y: 140, label: "V3" },
-              { x: 120, y: 20, label: "V4" },
-              { x: 180, y: 60, label: "V5" },
-              { x: 140, y: 80, label: "V6" },
+              { x: 50, y: 120, label: "V1" },
+              { x: 110, y: 140, label: "V2" },
+              { x: 80, y: 50, label: "V3" },
+              { x: 160, y: 120, label: "V4" },
+              { x: 220, y: 140, label: "V5" },
+              { x: 190, y: 50, label: "V6" },
             ].map((v, i) => (
-              <circle key={i} cx={v.x} cy={v.y} r="4.5" fill="#facc15" stroke="#000" strokeWidth="1" />
+              <g key={i}>
+                <circle cx={v.x} cy={v.y} r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
+                <text x={v.x + (v.x > 150 ? 10 : -10)} y={v.y + 4} fill="#1e293b" fontSize="10" fontWeight="black" textAnchor="middle">
+                  {v.label}
+                </text>
+              </g>
             ))}
           </svg>
 
-          <div className="flex items-center gap-2 mt-2 text-xs font-mono text-slate-600">
-            <span>Drag / Rotate Prism</span>
-            <RotateCw className="w-3.5 h-3.5 text-indigo-600" />
+          {/* Topology Breakdown */}
+          <div className="grid grid-cols-3 gap-2 w-full max-w-sm mt-3 text-center">
+            <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <span className="text-[10px] font-bold text-slate-500 block">Faces (P)</span>
+              <span className="font-mono text-lg font-black text-indigo-700">5</span>
+              <span className="text-[9px] text-slate-500">2 Tri + 3 Rect</span>
+            </div>
+            <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <span className="text-[10px] font-bold text-slate-500 block">Vertices (Q)</span>
+              <span className="font-mono text-lg font-black text-indigo-700">6</span>
+              <span className="text-[9px] text-slate-500">3 + 3 Corners</span>
+            </div>
+            <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <span className="text-[10px] font-bold text-slate-500 block">Edges (R)</span>
+              <span className="font-mono text-lg font-black text-indigo-700">9</span>
+              <span className="text-[9px] text-slate-500">3 + 3 + 3 Edges</span>
+            </div>
           </div>
         </div>
 
-        <Bay label="Measured Topology Summary">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-500 block">Faces (P)</span>
-              <span className="font-mono text-xl font-black text-indigo-700">5</span>
-              <span className="text-[9px] text-slate-500 block">2 Triangles + 3 Rectangles</span>
-            </div>
-
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-500 block">Vertices (Q)</span>
-              <span className="font-mono text-xl font-black text-indigo-700">6</span>
-              <span className="text-[9px] text-slate-500 block">3 Top + 3 Bottom</span>
-            </div>
-
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-500 block">Edges (R)</span>
-              <span className="font-mono text-xl font-black text-indigo-700">9</span>
-              <span className="text-[9px] text-slate-500 block">3 + 3 + 3 Pillars</span>
-            </div>
+        {/* 4 Option Buttons */}
+        <Bay label="Choose the Correct Values of P, Q, and R (A, B, C, or D)">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { id: "A" as const, text: "P = 4, Q = 4, R = 6", isCorrect: false },
+              { id: "B" as const, text: "P = 6, Q = 8, R = 12", isCorrect: false },
+              { id: "C" as const, text: "P = 5, Q = 5, R = 8", isCorrect: false },
+              { id: "D" as const, text: "P = 5, Q = 6, R = 9", desc: "Triangular Prism (Correct)", isCorrect: true },
+            ].map((opt) => {
+              const isSelected = world.chosenOption === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => set({ chosenOption: opt.id })}
+                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
+                    isSelected
+                      ? opt.isCorrect
+                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
+                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
+                  <span className="text-xs font-mono font-black text-slate-800 my-1">{opt.text}</span>
+                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
+                  <span
+                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
+                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {isSelected ? "Selected" : "Select Option " + opt.id}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </Bay>
       </div>
@@ -142,10 +185,10 @@ export function Q21TriangularPrismActivity({
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q22 — 🍕 Fraction Sorting Table
+   Q22 — 🍕 Fraction Sorting Table (Fraction Comparison)
    ══════════════════════════════════════════════════════════════════════ */
 interface Q22World {
-  sortedOrder: string;
+  chosenOption: "A" | "B" | "C" | "D";
 }
 
 export function Q22FractionSortingTableActivity({
@@ -161,11 +204,24 @@ export function Q22FractionSortingTableActivity({
     value,
     onChange,
     readOnly,
-    initial: { sortedOrder: "P < Q < R < S" },
+    initial: { chosenOption: "B" },
     derive: (w) => {
+      const isCorrect = w.chosenOption === "B";
+      const order =
+        w.chosenOption === "B"
+          ? "P < Q < R < S (3/8 < 4/8 < 5/8 < 6/8)"
+          : w.chosenOption === "A"
+          ? "S < R < Q < P (Descending)"
+          : w.chosenOption === "C"
+          ? "Q < P < S < R"
+          : "R < S < P < Q";
+
       return {
-        value: "Option B (P < Q < R < S)",
-        optionId: matchText(question, "B") ?? "B",
+        value: `Option ${w.chosenOption} — ${order}`,
+        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
+        note: isCorrect
+          ? "Correct! P = 3/8 (0.375), Q = 1/2 = 4/8 (0.50), R = 5/8 (0.625), S = 3/4 = 6/8 (0.75). Ascending order: P < Q < R < S."
+          : `Selected Option ${w.chosenOption}. Express all fractions with common denominator 8: 3/8, 4/8, 5/8, 6/8.`,
       };
     },
   });
@@ -173,7 +229,7 @@ export function Q22FractionSortingTableActivity({
   return (
     <PlayShell
       title="Fraction Sorting Table"
-      mission="Derive the shaded fractions of figures P, Q, R, and S and sort them into ascending order."
+      mission="Convert fractions to a common denominator of 8 and arrange P, Q, R, and S in ascending order."
       icon={PieChart}
       dim="2D"
       question={question}
@@ -183,40 +239,84 @@ export function Q22FractionSortingTableActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
+      live={<Gauge label="Ascending Order" value={world.chosenOption === "B" ? "P < Q < R < S (Option B)" : `Option ${world.chosenOption}`} />}
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {/* Fraction Visual Bars */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { id: "P", frac: "1/4", deg: 90, col: "#3b82f6" },
-            { id: "Q", frac: "3/8", deg: 135, col: "#8b5cf6" },
-            { id: "R", frac: "1/2", deg: 180, col: "#ec4899" },
-            { id: "S", frac: "5/8", deg: 225, col: "#10b981" },
+            { id: "P", orig: "3/8", equiv: "3/8 (37.5%)", fillCount: 3, col: "#3b82f6" },
+            { id: "Q", orig: "1/2", equiv: "4/8 (50.0%)", fillCount: 4, col: "#8b5cf6" },
+            { id: "R", orig: "5/8", equiv: "5/8 (62.5%)", fillCount: 5, col: "#ec4899" },
+            { id: "S", orig: "3/4", equiv: "6/8 (75.0%)", fillCount: 6, col: "#10b981" },
           ].map((item) => (
-            <div key={item.id} className="p-3 bg-white border-2 border-slate-200 rounded-xl text-center shadow-sm">
-              <span className="text-[10px] font-mono text-slate-500 block mb-1">Figure {item.id}</span>
-              <svg viewBox="0 0 60 60" className="w-12 h-12 mx-auto my-1">
-                <circle cx="30" cy="30" r="25" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="2" />
-                <path
-                  d={`M 30 30 L 30 5 A 25 25 0 0 1 ${30 + 25 * Math.sin((item.deg * Math.PI) / 180)} ${
-                    30 - 25 * Math.cos((item.deg * Math.PI) / 180)
-                  } Z`}
-                  fill={item.col}
-                />
-              </svg>
-              <span className="font-mono text-xs font-bold text-slate-700">{item.frac}</span>
+            <div key={item.id} className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs flex flex-col items-center justify-between">
+              <span className="text-xs font-bold text-slate-700">Figure {item.id}</span>
+              {/* 8-segment Bar */}
+              <div className="w-full my-2 flex border-2 border-slate-300 rounded overflow-hidden h-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 border-r border-slate-200 last:border-r-0 ${
+                      i < item.fillCount ? "bg-indigo-600" : "bg-slate-100"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="font-mono text-sm font-black text-slate-800">{item.orig}</span>
+              <span className="text-[10px] font-mono text-indigo-600 font-bold">{item.equiv}</span>
             </div>
           ))}
         </div>
+
+        {/* 4 Option Buttons */}
+        <Bay label="Select the Ascending Order of Shaded Fractions (A, B, C, or D)">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { id: "A" as const, seq: "S < R < Q < P", desc: "Descending order error", isCorrect: false },
+              { id: "B" as const, seq: "P < Q < R < S", desc: "3/8 < 4/8 < 5/8 < 6/8 (Correct)", isCorrect: true },
+              { id: "C" as const, seq: "Q < P < S < R", isCorrect: false },
+              { id: "D" as const, seq: "R < S < P < Q", isCorrect: false },
+            ].map((opt) => {
+              const isSelected = world.chosenOption === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => set({ chosenOption: opt.id })}
+                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
+                    isSelected
+                      ? opt.isCorrect
+                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
+                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
+                  <span className="text-base font-black text-slate-800 my-1 font-mono">{opt.seq}</span>
+                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
+                  <span
+                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
+                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {isSelected ? "Selected" : "Select Option " + opt.id}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Bay>
       </div>
     </PlayShell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q23 — 🔢 Decimal Translation Machine
+   Q23 — 🔢 Decimal Translation Machine (Place Value Match)
    ══════════════════════════════════════════════════════════════════════ */
 interface Q23World {
-  selectedPair: string;
+  chosenOption: "A" | "B" | "C" | "D";
 }
 
 export function Q23DecimalMatchActivity({
@@ -232,11 +332,24 @@ export function Q23DecimalMatchActivity({
     value,
     onChange,
     readOnly,
-    initial: { selectedPair: "C" },
+    initial: { chosenOption: "C" },
     derive: (w) => {
+      const isCorrect = w.chosenOption === "C";
+      const desc =
+        w.chosenOption === "C"
+          ? "Sixteen and two tenths → 16.2 (Correct Match)"
+          : w.chosenOption === "A"
+          ? "Twelve and thirty-nine thousandths → 12.420 (Incorrect: should be 12.039)"
+          : w.chosenOption === "B"
+          ? "Four and forty hundredths → 4.004 (Incorrect: should be 4.40)"
+          : "Eight and five hundredths → 80.50 (Incorrect: should be 8.05)";
+
       return {
-        value: "Option C (Sixteen and two tenths → 16.2)",
-        optionId: matchText(question, "C") ?? "C",
+        value: `Option ${w.chosenOption} — ${desc}`,
+        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
+        note: isCorrect
+          ? "Correct! 'Sixteen and two tenths' = 16 + 2/10 = 16.2."
+          : `Option ${w.chosenOption} has a place-value conversion error.`,
       };
     },
   });
@@ -244,7 +357,7 @@ export function Q23DecimalMatchActivity({
   return (
     <PlayShell
       title="Decimal Translation Machine"
-      mission="Translate words into place-value blocks and find the correctly matched decimal pair."
+      mission="Identify the decimal word name that correctly matches its numerical representation."
       icon={Binary}
       dim="2D"
       question={question}
@@ -254,39 +367,85 @@ export function Q23DecimalMatchActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
+      live={<Gauge label="Matched Decimal" value={`Option ${world.chosenOption}`} />}
     >
       <div className="space-y-4">
-        <Bay label="Decimal Translation Pairs">
-          <div className="space-y-2">
+        {/* 4 Candidate Cards */}
+        <Bay label="Audit Decimal Translation Options (Select A, B, C, or D)">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: "A", words: "Twelve and thirty-nine thousandths", num: "12.420", valid: false },
-              { id: "B", words: "Four and forty hundredths", num: "4.004", valid: false },
-              { id: "C", words: "Sixteen and two tenths", num: "16.2", valid: true },
-              { id: "D", words: "Eight and five hundredths", num: "80.50", valid: false },
-            ].map((p) => (
-              <div
-                key={p.id}
-                className={`p-3 rounded-xl border-2 flex items-center justify-between ${
-                  p.valid ? "bg-emerald-50 border-emerald-500" : "bg-slate-50 border-slate-200"
-                }`}
-              >
-                <div>
-                  <span className="font-bold text-xs text-slate-800">
-                    Option {p.id}: {p.words}
-                  </span>
-                  <span className="text-xs font-mono text-slate-500 block mt-0.5">
-                    Matches: <span className="font-bold text-slate-900">{p.num}</span>
-                  </span>
-                </div>
-                <span
-                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                    p.valid ? "bg-emerald-600 text-white" : "bg-rose-100 text-rose-700"
+              {
+                id: "A" as const,
+                words: "Twelve and thirty-nine thousandths",
+                num: "12.420",
+                correctForm: "12.039",
+                isCorrect: false,
+              },
+              {
+                id: "B" as const,
+                words: "Four and forty hundredths",
+                num: "4.004",
+                correctForm: "4.40",
+                isCorrect: false,
+              },
+              {
+                id: "C" as const,
+                words: "Sixteen and two tenths",
+                num: "16.2",
+                correctForm: "16.2",
+                isCorrect: true,
+              },
+              {
+                id: "D" as const,
+                words: "Eight and five hundredths",
+                num: "80.50",
+                correctForm: "8.05",
+                isCorrect: false,
+              },
+            ].map((item) => {
+              const isSelected = world.chosenOption === item.id;
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => set({ chosenOption: item.id })}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                    isSelected
+                      ? item.isCorrect
+                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
+                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                   }`}
                 >
-                  {p.valid ? "Correct Match ✓" : "Incorrect"}
-                </span>
-              </div>
-            ))}
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-xs text-slate-700">Option {item.id}</span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        item.isCorrect
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-rose-100 text-rose-800"
+                      }`}
+                    >
+                      {item.isCorrect ? "Correct Match ✓" : "Incorrect Match ✗"}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-800 font-semibold">{item.words}</p>
+                  <div className="my-2 p-2 bg-slate-50 rounded border border-slate-200 font-mono text-xs flex justify-between">
+                    <span>Given: <b>{item.num}</b></span>
+                    <span>True: <b className="text-indigo-600">{item.correctForm}</b></span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`mt-1 text-xs font-bold px-2 py-1 rounded w-full transition-colors ${
+                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {isSelected ? "Selected" : "Select Option " + item.id}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </Bay>
       </div>
@@ -295,10 +454,10 @@ export function Q23DecimalMatchActivity({
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q24 — 📐 Angle Matching
+   Q24 — 📐 Angle Observatory (Protractor Ray Classification)
    ══════════════════════════════════════════════════════════════════════ */
 interface Q24World {
-  matchedOption: string;
+  chosenOption: "A" | "B" | "C" | "D";
 }
 
 export function Q24AngleMatchingActivity({
@@ -314,11 +473,24 @@ export function Q24AngleMatchingActivity({
     value,
     onChange,
     readOnly,
-    initial: { matchedOption: "D" },
+    initial: { chosenOption: "D" },
     derive: (w) => {
+      const isCorrect = w.chosenOption === "D";
+      const desc =
+        w.chosenOption === "D"
+          ? "(P)→(ii) Acute, (Q)→(i) Right, (R)→(iv) Obtuse, (S)→(iii) Straight"
+          : w.chosenOption === "A"
+          ? "(P)→(i), (Q)→(ii), (R)→(iii), (S)→(iv)"
+          : w.chosenOption === "B"
+          ? "(P)→(ii), (Q)→(iv), (R)→(i), (S)→(iii)"
+          : "(P)→(iv), (Q)→(i), (R)→(ii), (S)→(iii)";
+
       return {
-        value: "Option D",
-        optionId: matchText(question, "D") ?? "D",
+        value: `Option ${w.chosenOption} — ${desc}`,
+        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
+        note: isCorrect
+          ? "Correct! ∠AOB = 40° (Acute), ∠AOC = 90° (Right), ∠AOE = 130° (Obtuse), ∠BOD = 180° (Straight)."
+          : `Selected Option ${w.chosenOption}. Acute < 90°, Right = 90°, 90° < Obtuse < 180°, Straight = 180°.`,
       };
     },
   });
@@ -326,7 +498,7 @@ export function Q24AngleMatchingActivity({
   return (
     <PlayShell
       title="Angle Observatory"
-      mission="Rotate the protractor across rays to classify angles as acute, right, obtuse, or straight."
+      mission="Classify angles ∠AOB, ∠AOC, ∠AOE, and ∠BOD into acute, right, obtuse, and straight angles."
       icon={Compass}
       dim="2D"
       question={question}
@@ -336,38 +508,83 @@ export function Q24AngleMatchingActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
+      live={<Gauge label="Angle Classification" value={`Option ${world.chosenOption}`} />}
     >
       <div className="space-y-4">
-        <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 p-4 rounded-xl flex flex-col items-center justify-center">
-          <svg viewBox="0 0 240 140" className="w-60 h-36 bg-white/60 rounded-lg border border-slate-200">
-            <line x1="20" y1="100" x2="220" y2="100" stroke="#facc15" strokeWidth="2.5" />
-            <text x="20" y="115" fill="#fde047" fontSize="11" fontWeight="bold">D</text>
-            <text x="120" y="115" fill="#fde047" fontSize="11" fontWeight="bold">O</text>
-            <text x="220" y="115" fill="#fde047" fontSize="11" fontWeight="bold">B</text>
+        {/* Ray Figure Canvas */}
+        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
+          <svg viewBox="0 0 280 160" className="w-full max-w-sm h-40 bg-white rounded-lg border border-slate-200 shadow-inner">
+            {/* Straight line DOB */}
+            <line x1="20" y1="120" x2="260" y2="120" stroke="#64748b" strokeWidth="2.5" />
+            <text x="20" y="138" fill="#475569" fontSize="11" fontWeight="bold">D (180°)</text>
+            <text x="140" y="138" fill="#475569" fontSize="11" fontWeight="bold">O</text>
+            <text x="250" y="138" fill="#475569" fontSize="11" fontWeight="bold">B (0°)</text>
 
-            <line x1="120" y1="100" x2="180" y2="30" stroke="#38bdf8" strokeWidth="2" />
-            <text x="185" y="25" fill="#38bdf8" fontSize="11" fontWeight="bold">A</text>
+            {/* Ray OA (40° Acute) */}
+            <line x1="140" y1="120" x2="216" y2="56" stroke="#3b82f6" strokeWidth="2.5" />
+            <text x="224" y="52" fill="#2563eb" fontSize="11" fontWeight="bold">A (40°)</text>
 
-            <line x1="120" y1="100" x2="120" y2="20" stroke="#a855f7" strokeWidth="2" />
-            <text x="120" y="15" fill="#a855f7" fontSize="11" fontWeight="bold">C</text>
+            {/* Ray OC (90° Right) */}
+            <line x1="140" y1="120" x2="140" y2="25" stroke="#10b981" strokeWidth="2.5" />
+            <text x="140" y="18" fill="#059669" fontSize="11" fontWeight="bold" textAnchor="middle">C (90°)</text>
 
-            <line x1="120" y1="100" x2="50" y2="30" stroke="#ec4899" strokeWidth="2" />
-            <text x="45" y="25" fill="#ec4899" fontSize="11" fontWeight="bold">E</text>
+            {/* Ray OE (130° Obtuse) */}
+            <line x1="140" y1="120" x2="63" y2="43" stroke="#ec4899" strokeWidth="2.5" />
+            <text x="50" y="38" fill="#be185d" fontSize="11" fontWeight="bold">E (130°)</text>
 
-            <circle cx="120" cy="100" r="4" fill="#facc15" />
+            {/* Vertex Point O */}
+            <circle cx="140" cy="120" r="5" fill="#f59e0b" />
           </svg>
         </div>
+
+        {/* 4 Option Buttons */}
+        <Bay label="Select the Correct Matching (A, B, C, or D)">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { id: "A" as const, text: "(P)→(i), (Q)→(ii), (R)→(iii), (S)→(iv)", isCorrect: false },
+              { id: "B" as const, text: "(P)→(ii), (Q)→(iv), (R)→(i), (S)→(iii)", isCorrect: false },
+              { id: "C" as const, text: "(P)→(iv), (Q)→(i), (R)→(ii), (S)→(iii)", isCorrect: false },
+              { id: "D" as const, text: "(P)→(ii), (Q)→(i), (R)→(iv), (S)→(iii)", desc: "40°=Acute, 90°=Right, 130°=Obtuse, 180°=Straight (Correct)", isCorrect: true },
+            ].map((opt) => {
+              const isSelected = world.chosenOption === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => set({ chosenOption: opt.id })}
+                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
+                    isSelected
+                      ? opt.isCorrect
+                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
+                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
+                  <span className="text-xs font-mono font-black text-slate-800 my-1">{opt.text}</span>
+                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
+                  <span
+                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
+                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {isSelected ? "Selected" : "Select Option " + opt.id}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Bay>
       </div>
     </PlayShell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q25 — 🏃 Number Line Addition
+   Q25 — 🏃 Number Line Runner (Addition: (-5) + 8 = 3)
    ══════════════════════════════════════════════════════════════════════ */
 interface Q25World {
-  startPos: number;
-  jumps: number;
+  chosenOption: "A" | "B" | "C" | "D";
 }
 
 export function Q25NumberLineAdditionActivity({
@@ -383,12 +600,24 @@ export function Q25NumberLineAdditionActivity({
     value,
     onChange,
     readOnly,
-    initial: { startPos: -5, jumps: 8 },
+    initial: { chosenOption: "C" },
     derive: (w) => {
-      const finalPos = w.startPos + w.jumps;
+      const isCorrect = w.chosenOption === "C";
+      const desc =
+        w.chosenOption === "C"
+          ? "Number line starting at −5 with an arrow moving 8 units to the right to 3 (Correct)"
+          : w.chosenOption === "A"
+          ? "Number line starting at 0 moving to −5 then −8"
+          : w.chosenOption === "B"
+          ? "Number line starting at 8 moving 5 units left to 3"
+          : "Number line starting at 3 moving 8 units right";
+
       return {
-        value: `+${finalPos} (from −5 + 8)`,
-        optionId: matchText(question, "C") ?? "C",
+        value: `Option ${w.chosenOption} — ${desc}`,
+        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
+        note: isCorrect
+          ? "Correct! In (−5) + 8 = 3, we start at −5 on the number line and jump 8 units to the right, ending at +3."
+          : `Selected Option ${w.chosenOption}. Adding a positive integer moves to the right.`,
       };
     },
   });
@@ -396,7 +625,7 @@ export function Q25NumberLineAdditionActivity({
   return (
     <PlayShell
       title="Number Line Runner"
-      mission="Start at −5, perform eight positive unit jumps to the right, and locate the final number."
+      mission="Identify the number line that accurately depicts the integer addition (-5) + 8 = 3."
       icon={MoveRight}
       dim="2D"
       question={question}
@@ -406,43 +635,83 @@ export function Q25NumberLineAdditionActivity({
       readOnly={readOnly}
       onSubmit={submit}
       onReset={reset}
-      live={
-        <>
-          <Gauge label="Start Position" value={String(world.startPos)} />
-          <Gauge label="Unit Jumps" value={`+${world.jumps}`} />
-          <Gauge label="Final Position" value={String(world.startPos + world.jumps)} />
-        </>
-      }
+      live={<Gauge label="Operation (−5) + 8" value={world.chosenOption === "C" ? "= +3 (Option C)" : `Option ${world.chosenOption}`} />}
     >
       <div className="space-y-4">
-        <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 p-4 rounded-xl flex flex-col items-center justify-center">
-          <svg viewBox="0 0 320 120" className="w-full max-w-md h-28 bg-white/60 rounded-lg border border-slate-200">
-            <line x1="20" y1="80" x2="300" y2="80" stroke="#64748b" strokeWidth="2.5" />
+        {/* Interactive Number Line Canvas */}
+        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
+          <svg viewBox="0 0 340 120" className="w-full max-w-md h-32 bg-white rounded-lg border border-slate-200 shadow-inner">
+            <line x1="20" y1="80" x2="320" y2="80" stroke="#475569" strokeWidth="2.5" markerEnd="url(#arr)" markerStart="url(#arrL)" />
 
-            {Array.from({ length: 13 }).map((_, i) => {
-              const val = i - 6;
-              const x = 30 + i * 21.6;
+            {Array.from({ length: 11 }).map((_, i) => {
+              const val = i - 6; // -6 to +4
+              const x = 30 + i * 28;
+              const isStart = val === -5;
+              const isEnd = val === 3;
+
               return (
                 <g key={val}>
-                  <line x1={x} y1="75" x2={x} y2="85" stroke="#94a3b8" strokeWidth="1.5" />
-                  <text x={x} y="98" fill="#94a3b8" fontSize="9" textAnchor="middle">
+                  <line x1={x} y1="74" x2={x} y2="86" stroke="#64748b" strokeWidth="2" />
+                  <text x={x} y="102" fill={isStart ? "#dc2626" : isEnd ? "#16a34a" : "#64748b"} fontSize="11" fontWeight="bold" textAnchor="middle">
                     {val}
                   </text>
                 </g>
               );
             })}
 
+            {/* Jump Arc from -5 (x=58) to 3 (x=282) */}
             <path
-              d="M 51.6 75 Q 160 10 245 75"
+              d="M 58 74 Q 170 15 282 74"
               fill="none"
-              stroke="#38bdf8"
-              strokeWidth="3"
-              strokeDasharray="4 4"
+              stroke="#6366f1"
+              strokeWidth="3.5"
             />
-            <circle cx="51.6" cy="80" r="5" fill="#f43f5e" />
-            <circle cx="245" cy="80" r="5" fill="#10b981" />
+            <circle cx="58" cy="80" r="5" fill="#ef4444" />
+            <circle cx="282" cy="80" r="5" fill="#10b981" />
+            <text x="170" y="32" fill="#4f46e5" fontSize="12" fontWeight="black" textAnchor="middle">
+              +8 Units Right
+            </text>
           </svg>
         </div>
+
+        {/* 4 Option Buttons */}
+        <Bay label="Which Number Line Correctly Represents (-5) + 8 = 3?">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { id: "A" as const, text: "Number line starting at 0 moving to −5 then −8", isCorrect: false },
+              { id: "B" as const, text: "Number line starting at 8 moving 5 units left to 3", isCorrect: false },
+              { id: "C" as const, text: "Starting at −5 with arrow moving 8 units to the right to 3", desc: "(−5) + 8 = 3 (Correct)", isCorrect: true },
+              { id: "D" as const, text: "Number line starting at 3 moving 8 units right", isCorrect: false },
+            ].map((opt) => {
+              const isSelected = world.chosenOption === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => set({ chosenOption: opt.id })}
+                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
+                    isSelected
+                      ? opt.isCorrect
+                        ? "bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-200"
+                        : "bg-indigo-50 border-indigo-500 shadow-md ring-2 ring-indigo-200"
+                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
+                  <span className="text-xs font-bold text-slate-800 my-1">{opt.text}</span>
+                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
+                  <span
+                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
+                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {isSelected ? "Selected" : "Select Option " + opt.id}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Bay>
       </div>
     </PlayShell>
   );
