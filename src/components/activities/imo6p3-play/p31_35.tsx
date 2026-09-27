@@ -1,650 +1,315 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Sparkles,
-  Globe,
-  BarChart3,
-  Scale,
-  Hammer,
-  CheckCircle2,
-} from "lucide-react";
+import { FlipHorizontal2, MessageSquareText, ChartColumn, Triangle, Hammer } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { matchNumber, matchText } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Shell, Board, Stepper, Pt, polyPath, optStarting } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q31 — 🪞 Symmetry Mirror Studio (Lines of Symmetry)
+   Q31 — Symmetry Mirror Studio
+   The student lays a mirror across each shape along one of eight lines through its
+   centre and records every line where the reflection lands exactly on the shape. After
+   all eight lines are tried on every shape, the shape with exactly two lines is found.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q31World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q31LinesOfSymmetryActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q31World>({
+const Q31_SHAPES: Record<string, Pt[]> = {
+  "Equilateral triangle": [[0, -26], [22.5, 13], [-22.5, 13]],
+  Square: [[-22, -22], [22, -22], [22, 22], [-22, 22]],
+  "Scalene triangle": [[-26, 18], [24, 18], [-6, -22]],
+  Rectangle: [[-30, -16], [30, -16], [30, 16], [-30, 16]],
+};
+const MIRRORS = [0, 30, 45, 60, 90, 120, 135, 150];
+const reflect = ([x, y]: Pt, deg: number): Pt => {
+  const t = (2 * deg * Math.PI) / 180;
+  return [x * Math.cos(t) + y * Math.sin(t), x * Math.sin(t) - y * Math.cos(t)];
+};
+const hits = (pts: Pt[], deg: number) => {
+  const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+  const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  const c = pts.map(([x, y]) => [x - cx, y - cy] as Pt);
+  return c.map((p) => reflect(p, deg)).every((r) => c.some((q) => Math.hypot(q[0] - r[0], q[1] - r[1]) < 0.6));
+};
+
+export function Q31LinesOfSymmetryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const names = Object.keys(Q31_SHAPES);
+  const play = usePlay<{ fig: string; mirror: number | null; tried: Record<string, number[]>; lines: Record<string, number[]> }>({
     question,
+    initial: { fig: names[0], mirror: null, tried: {}, lines: {} },
+    derive: (w) => {
+      if (names.some((n) => (w.tried[n] ?? []).length < MIRRORS.length)) return { note: "Try all eight mirror lines on every shape." };
+      const two = names.filter((n) => (w.lines[n] ?? []).length === 2);
+      if (two.length !== 1) return { note: "Record every line of symmetry you find." };
+      return { value: `${two[0]} has exactly 2 lines`, optionId: optStarting(question, two[0]) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const desc =
-        w.chosenOption === "D"
-          ? "Rectangle (non-square) — Exactly 2 lines of symmetry (Horizontal & Vertical)"
-          : w.chosenOption === "A"
-          ? "Equilateral triangle — 3 lines of symmetry"
-          : w.chosenOption === "B"
-          ? "Square — 4 lines of symmetry"
-          : "Scalene triangle — 0 lines of symmetry";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! A non-square rectangle has exactly 2 lines of symmetry (connecting opposite midpoint pairs). Diagonals are not lines of symmetry."
-          : `Selected Option ${w.chosenOption}. Check how many reflection axes divide the figure symmetrically.`,
-      };
-    },
   });
+  const w = play.world;
+  const pts = Q31_SHAPES[w.fig];
+  const hit = w.mirror !== null && hits(pts, w.mirror);
+  const rad = ((w.mirror ?? 0) * Math.PI) / 180;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Symmetry Mirror Studio"
-      mission="Identify the geometric figure that possesses exactly 2 lines of symmetry."
-      icon={Sparkles}
+      mission="Pick a shape and lay the mirror along each of the eight lines. When the reflection (dashed) lands exactly on the shape, record that line. Try every line on every shape."
+      icon={FlipHorizontal2}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="2 Lines of Symmetry" value={world.chosenOption === "D" ? "Rectangle (Option D)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the shape"
+      live={<>{names.map((n) => <Gauge key={n} label={n} value={`${(w.lines[n] ?? []).length} lines · ${(w.tried[n] ?? []).length}/8 tried`} tone={(w.tried[n] ?? []).length === 8 ? "emerald" : "slate"} />)}</>}
     >
-      <div className="space-y-4">
-        {/* 4 Candidate Shape Cards with Symmetry Lines */}
-        <Bay label="Audit Geometric Figures (Select Option A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                id: "A" as const,
-                title: "Option A",
-                name: "Equilateral Triangle",
-                lines: "3 Lines of Symmetry",
-                renderSvg: () => (
-                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <polygon points="40,10 70,68 10,68" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2" />
-                    <line x1="40" y1="10" x2="40" y2="68" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                    <line x1="10" y1="68" x2="55" y2="39" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                    <line x1="70" y1="68" x2="25" y2="39" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                  </svg>
-                ),
-              },
-              {
-                id: "B" as const,
-                title: "Option B",
-                name: "Square",
-                lines: "4 Lines of Symmetry",
-                renderSvg: () => (
-                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <rect x="15" y="15" width="50" height="50" fill="#fce7f3" stroke="#ec4899" strokeWidth="2" />
-                    <line x1="40" y1="15" x2="40" y2="65" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                    <line x1="15" y1="40" x2="65" y2="40" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                    <line x1="15" y1="15" x2="65" y2="65" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                    <line x1="65" y1="15" x2="15" y2="65" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="2 2" />
-                  </svg>
-                ),
-              },
-              {
-                id: "C" as const,
-                title: "Option C",
-                name: "Scalene Triangle",
-                lines: "0 Lines of Symmetry",
-                renderSvg: () => (
-                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <polygon points="20,15 72,60 10,70" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2" />
-                  </svg>
-                ),
-              },
-              {
-                id: "D" as const,
-                title: "Option D",
-                name: "Rectangle (non-square)",
-                lines: "Exactly 2 Lines of Symmetry",
-                renderSvg: () => (
-                  <svg viewBox="0 0 80 80" className="w-16 h-16 bg-emerald-50 border border-slate-200 rounded-lg p-1">
-                    <rect x="10" y="24" width="60" height="32" fill="#d1fae5" stroke="#059669" strokeWidth="2.5" />
-                    <line x1="40" y1="20" x2="40" y2="60" stroke="#ef4444" strokeWidth="2" strokeDasharray="2 2" />
-                    <line x1="6" y1="40" x2="74" y2="40" stroke="#ef4444" strokeWidth="2" strokeDasharray="2 2" />
-                  </svg>
-                ),
-              },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-
-                  {opt.renderSvg()}
-
-                  <span className="text-[11px] font-bold text-slate-800 mt-1">{opt.name}</span>
-                  <span className="text-[10px] text-indigo-600 font-bold">{opt.lines}</span>
-                  <button
-                    type="button"
-                    className={`mt-2 text-[10px] font-bold px-2 py-1 rounded w-full transition-colors ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q32 — 🌎 Place-Value City (International Numeration System)
-   ══════════════════════════════════════════════════════════════════════ */
-interface Q32World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
-
-export function Q32InternationalNumberActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q32World>({
-    question,
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const wordName =
-        w.chosenOption === "B"
-          ? "Seven million two hundred fifty thousand three hundred seventy-one"
-          : w.chosenOption === "A"
-          ? "Seventy-two lakh fifty thousand three hundred seventy-one (Indian System)"
-          : w.chosenOption === "C"
-          ? "Seven million twenty-five thousand three hundred seventy-one"
-          : "Seven hundred twenty-five thousand three hundred seventy-one";
-
-      return {
-        value: `Option ${w.chosenOption} — ${wordName}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 7,250,371 is grouped into periods of 3 digits: 7 (Millions) + 250 (Thousands) + 371 (Units)."
-          : `Selected Option ${w.chosenOption}. In International system: 7,250,371 = 7 million 250 thousand 371.`,
-      };
-    },
-  });
-
-  return (
-    <PlayShell
-      title="Place-Value City"
-      mission="Group 7,250,371 into 3-digit periods to express the number in the International numeration system."
-      icon={Globe}
-      dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="International Name" value={`Option ${world.chosenOption}`} />}
-    >
-      <div className="space-y-4">
-        {/* International Place Value Chart */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm flex flex-col items-center">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">
-            International 3-Digit Period Grouping for 7,250,371:
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 w-full max-w-md my-2 text-center">
-            <div className="p-3 bg-indigo-100/80 border border-indigo-300 rounded-xl">
-              <span className="text-[10px] font-bold text-indigo-700 block uppercase">Millions Period</span>
-              <span className="font-mono text-3xl font-black text-indigo-900 my-1 block">7</span>
-              <span className="text-[10px] text-slate-600">Seven Million</span>
-            </div>
-
-            <div className="p-3 bg-purple-100/80 border border-purple-300 rounded-xl">
-              <span className="text-[10px] font-bold text-purple-700 block uppercase">Thousands Period</span>
-              <span className="font-mono text-3xl font-black text-purple-900 my-1 block">250</span>
-              <span className="text-[10px] text-slate-600">Two Hundred Fifty Thousand</span>
-            </div>
-
-            <div className="p-3 bg-emerald-100/80 border border-emerald-300 rounded-xl">
-              <span className="text-[10px] font-bold text-emerald-700 block uppercase">Units Period</span>
-              <span className="font-mono text-3xl font-black text-emerald-900 my-1 block">371</span>
-              <span className="text-[10px] text-slate-600">Three Hundred Seventy-One</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Correct International Word Name">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, text: "Seventy-two lakh fifty thousand three hundred seventy-one", desc: "Indian Numeration System", },
-              { id: "B" as const, text: "Seven million two hundred fifty thousand three hundred seventy-one", desc: "International System", },
-              { id: "C" as const, text: "Seven million twenty-five thousand three hundred seventy-one", desc: "Represents 7,025,371", },
-              { id: "D" as const, text: "Seven hundred twenty-five thousand three hundred seventy-one", desc: "Represents 725,371", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-                  <span className="text-xs font-bold text-slate-800">{opt.text}</span>
-                  <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q33 — 🚗 Car Wash Dashboard (Bar Graph Interpretation)
-   ══════════════════════════════════════════════════════════════════════ */
-interface Q33World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
-
-export function Q33BarGraphActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q33World>({
-    question,
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const diff = w.chosenOption === "A" ? 8 : w.chosenOption === "B" ? 10 : w.chosenOption === "C" ? 12 : 14;
-
-      return {
-        value: `${diff} cars ((18 + 14) − (12 + 8) = 12)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, diff) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! (Trishi + Sam) = 18 + 14 = 32. (Mohit + Mini) = 12 + 8 = 20. Difference = 32 − 20 = 12 cars."
-          : `Selected ${diff} cars. (Trishi 18 + Sam 14) − (Mohit 12 + Mini 8) = 32 − 20.`,
-      };
-    },
-  });
-
-  return (
-    <PlayShell
-      title="Car Wash Dashboard"
-      mission="Calculate the difference between the total cars washed by (Trishi + Sam) and (Mohit + Mini)."
-      icon={BarChart3}
-      dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Difference" value={world.chosenOption === "C" ? "12 cars (Option C)" : `Option ${world.chosenOption}`} />}
-    >
-      <div className="space-y-4">
-        {/* Bar Graph Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 border border-indigo-200 p-4 rounded-xl shadow-sm">
-          <svg viewBox="0 0 320 160" className="w-full max-w-md h-40 mx-auto">
-            {/* Grid lines */}
-            {[0, 5, 10, 15, 20].map((val) => {
-              const y = 130 - (val / 20) * 110;
-              return (
-                <g key={val}>
-                  <line x1="35" y1={y} x2="310" y2={y} stroke="#e2e8f0" strokeWidth="1" />
-                  <text x="28" y={y + 3} fill="#94a3b8" fontSize="8" textAnchor="end">{val}</text>
-                </g>
-              );
-            })}
-
-            {/* 5 Children Bars */}
-            {[
-              { name: "Trishi", val: 18, col: "#3b82f6", x: 45 },
-              { name: "Sam", val: 14, col: "#6366f1", x: 100 },
-              { name: "Mohit", val: 12, col: "#ec4899", x: 155 },
-              { name: "Mini", val: 8, col: "#f43f5e", x: 210 },
-              { name: "Aarav", val: 16, col: "#10b981", x: 265 },
-            ].map((bar) => {
-              const h = (bar.val / 20) * 110;
-              return (
-                <g key={bar.name}>
-                  <rect x={bar.x} y={130 - h} width="35" height={h} fill={bar.col} rx="3" />
-                  <text x={bar.x + 17.5} y={124 - h} fill="#1e293b" fontSize="10" fontWeight="black" textAnchor="middle">
-                    {bar.val}
-                  </text>
-                  <text x={bar.x + 17.5} y={145} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="middle">
-                    {bar.name}
-                  </text>
-                </g>
-              );
-            })}
+      <div className="flex flex-wrap gap-1.5 mb-2">{names.map((n) => <Btn key={n} active={w.fig === n} tone={w.fig === n ? "violet" : "slate"} onClick={() => play.patch({ fig: n, mirror: null })}>{n}</Btn>)}</div>
+      <div className="grid md:grid-cols-2 gap-3">
+        <Board>
+          <svg viewBox="-45 -45 90 90" className="w-full max-h-64">
+            <path d={polyPath(pts)} fill="#e0e7ff" stroke="#4338ca" strokeWidth={1} />
+            {w.mirror !== null && (() => {
+              const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+              const rp = pts.map(([x, y]) => { const r = reflect([x - cx, y - cy], w.mirror!); return [r[0] + cx, r[1] + cy] as Pt; });
+              return (<><path d={polyPath(rp)} fill="none" stroke={hit ? "#10b981" : "#e11d48"} strokeWidth={1} strokeDasharray="2 1.5" /><line x1={cx - 42 * Math.cos(rad)} y1={cy - 42 * Math.sin(rad)} x2={cx + 42 * Math.cos(rad)} y2={cy + 42 * Math.sin(rad)} stroke="#0ea5e9" strokeWidth={1.2} /></>);
+            })()}
           </svg>
-
-          <div className="mt-2 text-center text-xs font-mono text-indigo-900 font-bold">
-            Group 1: (18 + 14 = 32) &nbsp;|&nbsp; Group 2: (12 + 8 = 20) &nbsp;→&nbsp; Difference = <b>32 − 20 = 12</b>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Difference in Total Cars Washed">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: "8 cars", },
-              { id: "B" as const, val: "10 cars", },
-              { id: "C" as const, val: "12 cars", desc: "32 − 20 = 12", },
-              { id: "D" as const, val: "14 cars", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.val}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        </Board>
+        <Bay label="Mirror lines" tone="violet">
+          <div className="grid grid-cols-4 gap-1">{MIRRORS.map((m) => <Btn key={m} className="px-1 min-h-[34px]" active={w.mirror === m} tone={w.mirror === m ? "sky" : (w.lines[w.fig] ?? []).includes(m) ? "emerald" : "slate"} disabled={play.readOnly} onClick={() => play.set((p) => ({ ...p, mirror: m, tried: { ...p.tried, [p.fig]: Array.from(new Set([...(p.tried[p.fig] ?? []), m])) } }))} ariaLabel={`mirror ${m}`}>{m}°</Btn>)}</div>
+          <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !hit || (w.lines[w.fig] ?? []).includes(w.mirror!)} onClick={() => play.patch({ lines: { ...w.lines, [w.fig]: [...(w.lines[w.fig] ?? []), w.mirror!] } })}>Record this line</Btn>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q34 — 🧪 Fraction Balance Pyramid (Sum to 1)
+   Q32 — Place-Value City
+   The digits stand in a row with a comma slot between each pair. The student places the
+   commas; the city names the groups from the right as ones, thousands and millions and
+   reads the number aloud from the grouping.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q34World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q34FractionPyramidActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q34World>({
+const ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const words = (n: number): string => (n < 20 ? ONES[n] : n < 100 ? TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "") : `${ONES[Math.floor(n / 100)]} hundred${n % 100 ? ` ${words(n % 100)}` : ""}`);
+const INTL = ["", "thousand", "million", "billion"];
+const LAKH = ["", "thousand", "lakh", "crore"];
+export function Q32InternationalNumberActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const digits = String(cfg<number>(question, "number", 0));
+  const read = (commas: boolean[], sys: string[]) => {
+    const groups: string[] = [];
+    let cur = "";
+    digits.split("").forEach((d, i) => { cur += d; if (commas[i]) { groups.push(cur); cur = ""; } });
+    groups.push(cur);
+    if (groups.length > sys.length || groups.some((g) => g.length > 3)) return null;
+    const t = [...groups].reverse().map((g, i) => ({ v: Number(g), n: sys[i] })).reverse().filter((p) => p.v).map((p) => `${words(p.v)}${p.n ? ` ${p.n}` : ""}`).join(" ");
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  };
+  const play = usePlay<{ commas: boolean[]; sys: "intl" | "indian"; spoken: boolean }>({
     question,
+    initial: { commas: Array(Math.max(0, digits.length - 1)).fill(false), sys: "indian", spoken: false },
+    derive: (w) => {
+      if (!w.spoken) return { note: "Place the commas, choose the system and let the city read it." };
+      const t = read(w.commas, w.sys === "intl" ? INTL : LAKH);
+      if (!t) return { note: "That grouping cannot be read." };
+      return { value: t, optionId: matchText(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const frac = w.chosenOption === "A" ? "1/6" : w.chosenOption === "B" ? "1/4" : w.chosenOption === "C" ? "1/3" : "5/12";
-
-      return {
-        value: `${frac} (Missing Fraction in Row 2)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, frac) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 1/4 + (?) + 5/12 = 1. With common denominator 12: 3/12 + 5/12 + (?) = 1 => 8/12 + (?) = 12/12 => (?) = 4/12 = 1/3."
-          : `Selected ${frac}. Row sum: 3/12 + (?) + 5/12 = 12/12.`,
-      };
-    },
   });
+  const w = play.world;
+  const t = read(w.commas, w.sys === "intl" ? INTL : LAKH);
 
   return (
-    <PlayShell
-      title="Fraction Balance Pyramid"
-      mission="Determine the missing fraction (?) in row 2 such that the sum of all fractions in the row equals 1."
-      icon={Scale}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Missing Fraction (?)" value={world.chosenOption === "C" ? "1/3 (Option C)" : `Option ${world.chosenOption}`} />}
+      title="Place-Value City"
+      mission="Tap the gaps between digits to place the commas, and choose the number system. The city reads the number from your grouping — make it read the number the International way."
+      icon={MessageSquareText}
+      dim="2D"
+      submitLabel="Submit the reading"
+      live={<Gauge label="Written" value={digits.split("").map((d, i) => d + (w.commas[i] ? "," : "")).join("")} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Fraction Pyramid Visual Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-6 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          {/* Row 1 */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-mono font-bold text-slate-500 mr-2">Row 1 (Sum = 1):</span>
-            <div className="px-3 py-1.5 bg-white border-2 border-indigo-300 rounded-lg font-mono font-black text-indigo-900">1/2</div>
-            <span className="font-bold text-slate-400">+</span>
-            <div className="px-3 py-1.5 bg-white border-2 border-indigo-300 rounded-lg font-mono font-black text-indigo-900">1/2</div>
-            <span className="font-bold text-emerald-600 text-xs ml-2">= 1 ✓</span>
-          </div>
-
-          {/* Row 2 */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold text-slate-500 mr-2">Row 2 (Sum = 1):</span>
-            <div className="px-3 py-1.5 bg-white border-2 border-indigo-300 rounded-lg font-mono font-bold text-indigo-900">1/4 (3/12)</div>
-            <span className="font-bold text-slate-400">+</span>
-            <div className="px-4 py-1.5 bg-amber-100 border-2 border-amber-500 rounded-lg font-mono font-black text-amber-900">
-              {world.chosenOption === "C" ? "1/3 (4/12)" : world.chosenOption === "A" ? "1/6" : world.chosenOption === "B" ? "1/4" : "5/12"}
-            </div>
-            <span className="font-bold text-slate-400">+</span>
-            <div className="px-3 py-1.5 bg-white border-2 border-indigo-300 rounded-lg font-mono font-bold text-indigo-900">5/12</div>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Fraction that Replaces (?)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, frac: "1/6", },
-              { id: "B" as const, frac: "1/4", },
-              { id: "C" as const, frac: "1/3", desc: "4/12 = 1/3", },
-              { id: "D" as const, frac: "5/12", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1 font-mono">{opt.frac}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        <Btn active={w.sys === "intl"} tone={w.sys === "intl" ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ sys: "intl", spoken: false })}>🌍 International system</Btn>
+        <Btn active={w.sys === "indian"} tone={w.sys === "indian" ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ sys: "indian", spoken: false })}>🇮🇳 Indian system</Btn>
       </div>
-    </PlayShell>
+      <Board>
+        <div className="flex flex-wrap justify-center items-center gap-0.5">
+          {digits.split("").map((d, i) => (
+            <React.Fragment key={i}>
+              <span className="w-10 h-12 rounded-lg bg-white border border-indigo-200 grid place-items-center font-mono text-2xl font-black text-indigo-900">{d}</span>
+              {i < digits.length - 1 && <button type="button" disabled={play.readOnly} aria-label={`comma after digit ${i + 1}`} onClick={() => play.set((p) => ({ ...p, spoken: false, commas: p.commas.map((c, j) => (j === i ? !c : c)) }))} className={`w-5 h-12 rounded border-2 border-dashed font-black text-xl ${w.commas[i] ? "border-indigo-500 text-indigo-700 bg-indigo-50" : "border-slate-200 text-transparent"}`}>,</button>}
+            </React.Fragment>
+          ))}
+        </div>
+        <p className="text-center font-bold text-slate-700 mt-2">{w.spoken ? (t ? `“${t}”` : "⚠ can't read that grouping") : "…"}</p>
+      </Board>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ spoken: true })}>🔊 Read it aloud</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q35 — 🔢 Number Construction Crane (Digits 1, 4, 0, 2, 5)
+   Q33 — Car Wash Dashboard
+   The bar graph is live. The student drags children's bars into two groups on the
+   dashboard; each group's total is read from the bars and the difference is shown.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q35World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q35FiveDigitNumberActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q35World>({
+const Q33_BARS: Record<string, number> = { Trishi: 18, Sam: 14, Mohit: 12, Mini: 8, Aarav: 16 };
+export function Q33BarGraphActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ g: Record<string, 1 | 2 | undefined>; compared: boolean }>({
     question,
+    initial: { g: {}, compared: false },
+    derive: (w) => {
+      const s = (k: 1 | 2) => Object.keys(Q33_BARS).filter((n) => w.g[n] === k);
+      if (!w.compared || !s(1).length || !s(2).length) return { note: "Fill both groups and compare them." };
+      const d = Math.abs(s(1).reduce((a, n) => a + Q33_BARS[n], 0) - s(2).reduce((a, n) => a + Q33_BARS[n], 0));
+      return { value: `${d} cars`, optionId: matchNumber(question, d) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "A" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "A";
-      const sum = w.chosenOption === "A" ? 20490 : w.chosenOption === "B" ? 20492 : w.chosenOption === "C" ? 20488 : 10245;
-
-      return {
-        value: `${sum} (Predecessor 10,244 + Successor 10,246)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, sum) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Smallest 5-digit number using 1,4,0,2,5 once is 10,245. Predecessor = 10,244; Successor = 10,246. Sum = 10,244 + 10,246 = 20,490."
-          : `Selected ${sum}. First construct the smallest 5-digit number (10,245), then calculate (N−1) + (N+1) = 2N.`,
-      };
-    },
   });
+  const w = play.world;
+  const tot = (k: 1 | 2) => Object.keys(Q33_BARS).filter((n) => w.g[n] === k).reduce((a, n) => a + Q33_BARS[n], 0);
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
+      title="Car Wash Dashboard"
+      mission="Read the bars. Tap a child's group button to put their bar in group 1 or group 2 (tap again to take it out). Put the two pairs the question compares in the two groups, then compare."
+      icon={ChartColumn}
+      dim="2D"
+      submitLabel="Submit the difference"
+      live={<><Gauge label="Group 1" value={tot(1)} tone="violet" /><Gauge label="Group 2" value={tot(2)} tone="amber" /></>}
+    >
+      <Board>
+        <div className="flex items-end gap-3 h-40 px-2">
+          {Object.entries(Q33_BARS).map(([n, v]) => (
+            <div key={n} className="flex-1 text-center">
+              <div className="text-[10px] font-black text-slate-600">{v}</div>
+              <div className={`mx-auto w-8 rounded-t ${w.g[n] === 1 ? "bg-indigo-500" : w.g[n] === 2 ? "bg-amber-400" : "bg-slate-300"}`} style={{ height: v * 6 }} />
+              <div className="text-[10px] font-bold text-slate-700">{n}</div>
+              <div className="flex justify-center gap-0.5 mt-0.5">
+                {([1, 2] as const).map((k) => <button key={k} type="button" disabled={play.readOnly} aria-label={`${n} group ${k}`} onClick={() => play.set((p) => ({ compared: false, g: { ...p.g, [n]: p.g[n] === k ? undefined : k } }))} className={`w-6 h-6 rounded text-[10px] font-black ${w.g[n] === k ? (k === 1 ? "bg-indigo-600 text-white" : "bg-amber-500 text-white") : "bg-slate-100 text-slate-600"}`}>{k}</button>)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Board>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ compared: true })}>Compare the groups</Btn>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q34 — Fraction Balance Pyramid
+   Each row of the pyramid must add up to 1. The student dials the missing fraction in
+   twelfths; the row's balance lamp lights when it sums to exactly 1.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q34FractionPyramidActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ n: number; set: boolean }>({
+    question,
+    initial: { n: 1, set: false },
+    derive: (w) => {
+      if (!w.set) return { note: "Dial the missing fraction and lock it in." };
+      if (3 + w.n + 5 !== 12) return { note: `The row adds to ${3 + w.n + 5}/12, not 1.` };
+      return { value: `${w.n}/12`, optionId: matchNumber(question, w.n / 12, 1e-9) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const sum = 3 + w.n + 5;
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Fraction Balance Pyramid"
+      mission="Every row must add up to 1. Row 2 holds 1/4 (= 3/12), the missing block and 5/12. Dial the missing block in twelfths until the row's lamp lights, then lock it in."
+      icon={Triangle}
+      dim="2D"
+      submitLabel="Submit the missing fraction"
+      live={<Gauge label="Row 2" value={`3/12 + ${w.n}/12 + 5/12 = ${sum}/12`} tone={sum === 12 ? "emerald" : "amber"} />}
+    >
+      <Board>
+        <div className="space-y-1.5 text-center">
+          <div className="flex justify-center gap-1">{["1/2", "1/2"].map((t, i) => <span key={i} className="w-28 h-10 grid place-items-center rounded bg-indigo-100 border border-indigo-300 font-mono font-black">{t}</span>)}<span className="self-center text-xs font-black text-emerald-700 ml-2">= 1 ✓</span></div>
+          <div className="flex justify-center gap-1">
+            <span className="w-24 h-10 grid place-items-center rounded bg-sky-100 border border-sky-300 font-mono font-black">1/4</span>
+            <span className={`w-24 h-10 grid place-items-center rounded border-2 font-mono font-black ${sum === 12 ? "bg-emerald-100 border-emerald-400" : "bg-amber-50 border-amber-400"}`}>{w.n}/12</span>
+            <span className="w-24 h-10 grid place-items-center rounded bg-sky-100 border border-sky-300 font-mono font-black">5/12</span>
+            <span className={`self-center text-xs font-black ml-2 ${sum === 12 ? "text-emerald-700" : "text-rose-600"}`}>= {sum}/12 {sum === 12 ? "✓" : ""}</span>
+          </div>
+        </div>
+      </Board>
+      <div className="flex flex-wrap gap-2 mt-2">
+        <Stepper label="Missing block (twelfths)" value={w.n} min={0} max={12} disabled={play.readOnly} onStep={(d) => play.patch({ n: w.n + d, set: false })} />
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ set: true })}>Lock it in</Btn>
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q35 — Number Construction Crane
+   The crane lowers digit blocks into five slots; a number can't start with 0. Once built,
+   the student steps to the predecessor and the successor and the crane adds them.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q35FiveDigitNumberActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const digits = [1, 4, 0, 2, 5];
+  const play = usePlay<{ order: number[]; pred: boolean; succ: boolean }>({
+    question,
+    initial: { order: [], pred: false, succ: false },
+    derive: (w) => {
+      if (w.order.length < 5) return { note: "Build the number with all five digits." };
+      if (!w.pred || !w.succ) return { note: "Find its predecessor and successor." };
+      const n = Number(w.order.map((i) => digits[i]).join(""));
+      return { value: `${n - 1} + ${n + 1} = ${2 * n}`, optionId: matchNumber(question, 2 * n) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const n = w.order.length === 5 ? Number(w.order.map((i) => digits[i]).join("")) : null;
+
+  return (
+    <Shell
+      play={play}
+      question={question}
       title="Number Construction Crane"
-      mission="Form the smallest 5-digit number from digits 1, 4, 0, 2, 5 and sum its predecessor and successor."
+      mission="Lower the digit blocks into the slots, left to right, to build the smallest 5-digit number (a number can't start with 0). Then step back one to its predecessor and forward one to its successor; the crane adds the two."
       icon={Hammer}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Predecessor + Successor" value={world.chosenOption === "A" ? "20,490 (Option A)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the sum"
+      live={<Gauge label="Built" value={n ?? "…"} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Digit Placement Visual */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm flex flex-col items-center">
-          <span className="text-xs font-mono font-bold text-slate-500 mb-2">
-            Smallest 5-Digit Number (Non-zero leading digit):
-          </span>
-          <div className="flex gap-2 py-1">
-            {["1", "0", "2", "4", "5"].map((d, i) => (
-              <div
-                key={i}
-                className="w-12 h-14 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center font-mono font-black text-xl text-indigo-900 shadow-xs"
-              >
-                <span>{d}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3 p-2 bg-emerald-50 border border-emerald-300 rounded-lg text-center font-mono text-xs text-emerald-900 font-bold">
-            10,244 (Predecessor) + 10,246 (Successor) = <b>20,490</b>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Sum of its Predecessor and Successor">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: 20490, desc: "10,244 + 10,246 = 20,490", },
-              { id: "B" as const, val: 20492, },
-              { id: "C" as const, val: 20488, },
-              { id: "D" as const, val: 10245, desc: "The number itself", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.val}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="flex flex-wrap gap-1.5">{digits.map((d, i) => <Btn key={i} className="px-3" tone="slate" disabled={play.readOnly || w.order.includes(i) || (w.order.length === 0 && d === 0)} onClick={() => play.patch({ order: [...w.order, i], pred: false, succ: false })} ariaLabel={`digit ${d}`}>{d}</Btn>)}<Btn tone="slate" disabled={play.readOnly || !w.order.length} onClick={() => play.patch({ order: [], pred: false, succ: false })}>clear</Btn></div>
+      <Board className="mt-2">
+        <div className="flex justify-center gap-1">{Array.from({ length: 5 }, (_, k) => <span key={k} className="w-11 h-12 grid place-items-center rounded-lg bg-white border border-indigo-200 font-mono text-2xl font-black text-indigo-900">{w.order[k] !== undefined ? digits[w.order[k]] : ""}</span>)}</div>
+        {n !== null && <p className="text-center font-mono font-black text-indigo-900 mt-2">{w.pred ? n - 1 : "?"} + {w.succ ? n + 1 : "?"} = {w.pred && w.succ ? 2 * n : "?"}</p>}
+      </Board>
+      <div className="flex gap-2 mt-2">
+        <Btn disabled={play.readOnly || n === null} onClick={() => play.patch({ pred: true })}>◀ Step back 1 (predecessor)</Btn>
+        <Btn disabled={play.readOnly || n === null} onClick={() => play.patch({ succ: true })}>Step forward 1 (successor) ▶</Btn>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }

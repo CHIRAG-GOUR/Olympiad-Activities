@@ -1,579 +1,268 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Footprints,
-  Train,
-  MapPin,
-  Milk,
-  Truck,
-  CheckCircle2,
-  Sparkles,
-} from "lucide-react";
+import { Footprints, Fuel, Route, Milk, Truck } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
+import { matchNumber, matchText, gcd } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Shell, Board, Stepper, inr, r4, toggle } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q41 — 🏃 Marching Synchronizer (Step Lengths & LCM)
+   Q41 — Step Synchronization
+   Three walkers step towards a finish line the student places. Each shows whether the
+   line falls on one of their footsteps. The least distance where all three land exactly
+   is the answer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q41World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q41StepSynchronizationActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q41World>({
+const STEPS = [63, 70, 77];
+export function Q41StepSynchronizationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ d: number; stop: boolean }>({
     question,
+    initial: { d: 1000, stop: false },
+    derive: (w) => {
+      if (!w.stop) return { note: "Place the finish line and stop there." };
+      if (!STEPS.every((s) => w.d % s === 0)) return { note: `Not everyone lands exactly on ${w.d} cm.` };
+      return { value: `${w.d} cm`, optionId: matchNumber(question, w.d) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "A" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "A";
-      const dist = w.chosenOption === "A" ? "6930 cm" : w.chosenOption === "B" ? "6300 cm" : w.chosenOption === "C" ? "7700 cm" : "5400 cm";
-
-      return {
-        value: `${dist} (LCM of 63, 70, 77)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, dist) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 63 = 7 × 9, 70 = 7 × 10, 77 = 7 × 11. LCM(63, 70, 77) = 7 × 9 × 10 × 11 = 6,930 cm."
-          : `Selected ${dist}. Find the Lowest Common Multiple (LCM) of 63, 70, and 77 cm.`,
-      };
-    },
   });
+  const w = play.world;
 
   return (
-    <PlayShell
-      title="Marching Synchronizer"
-      mission="Calculate the minimum distance where three friends with step lengths 63 cm, 70 cm, and 77 cm complete whole steps."
+    <Shell
+      play={play}
+      question={question}
+      title="Step Synchronization"
+      mission="Move the finish line. Each walker shows whether it lands exactly on a footstep, and how much is left over. Find the shortest distance where all three finish in complete steps."
       icon={Footprints}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Sync Distance" value={world.chosenOption === "A" ? "6,930 cm (Option A)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the distance"
+      live={<Gauge label="Landing exactly" value={`${STEPS.filter((s) => w.d % s === 0).length}/3`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Prime Factorization LCM Workbench */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">Step Synchronization Factorization:</div>
-          <div className="grid grid-cols-3 gap-2 text-center my-2">
-            <div className="p-2.5 bg-white border border-indigo-200 rounded-lg">
-              <span className="text-[10px] font-bold text-slate-500 block">Friend 1 (63 cm)</span>
-              <span className="font-mono text-sm font-black text-indigo-700">7 × 3²</span>
-              <span className="text-[10px] text-slate-500 block">110 steps</span>
-            </div>
-            <div className="p-2.5 bg-white border border-indigo-200 rounded-lg">
-              <span className="text-[10px] font-bold text-slate-500 block">Friend 2 (70 cm)</span>
-              <span className="font-mono text-sm font-black text-indigo-700">7 × 2 × 5</span>
-              <span className="text-[10px] text-slate-500 block">99 steps</span>
-            </div>
-            <div className="p-2.5 bg-white border border-indigo-200 rounded-lg">
-              <span className="text-[10px] font-bold text-slate-500 block">Friend 3 (77 cm)</span>
-              <span className="font-mono text-sm font-black text-indigo-700">7 × 11</span>
-              <span className="text-[10px] text-slate-500 block">90 steps</span>
-            </div>
+      <Stepper label="Finish line" value={w.d} min={1} max={20000} steps={[1, 10, 100, 1000]} unit=" cm" disabled={play.readOnly} onStep={(d) => play.patch({ d: w.d + d, stop: false })} />
+      <div className="space-y-1.5 mt-2">
+        {STEPS.map((s) => (
+          <div key={s} className={`rounded-lg px-2 py-1 text-xs font-black ${w.d % s === 0 ? "bg-emerald-100 text-emerald-800" : "bg-white border border-slate-200 text-slate-600"}`}>
+            👣 {s} cm steps: {Math.floor(w.d / s)} steps {w.d % s === 0 ? "exactly" : `+ ${w.d % s} cm left over`}
           </div>
-          <div className="mt-2 p-2 bg-emerald-50 border border-emerald-300 rounded-lg text-center font-mono text-xs font-bold text-emerald-900">
-            LCM = 7 × 9 × 10 × 11 = <b>6,930 cm</b> (69 m 30 cm)
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Minimum Distance (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, dist: "6930 cm", desc: "LCM(63, 70, 77)", },
-              { id: "B" as const, dist: "6300 cm", },
-              { id: "C" as const, dist: "7700 cm", },
-              { id: "D" as const, dist: "5400 cm", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1 font-mono">{opt.dist}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+        ))}
       </div>
-    </PlayShell>
+      <Btn tone="amber" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ stop: true })}>🏁 Stop here</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q42 — 🚇 Metro Sustainability Dashboard (Fuel Savings Fraction)
+   Q42 — Metro Fuel Savings
+   The student loads the fuels that belong on top of the fraction and the one that goes
+   underneath, then cuts common factors out of both until nothing more divides them.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q42World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q42MetroFuelSavingsActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q42World>({
+const FUELS: Record<string, number> = { CNG: 33000, Diesel: 3300, Petrol: 21000 };
+const CUT = [2, 3, 5, 7, 11, 13];
+export function Q42MetroFuelSavingsActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const play = usePlay<{ top: string[]; bot: string[]; frac: [number, number] | null }>({
     question,
+    initial: { top: [], bot: [], frac: null },
+    derive: (w) => {
+      if (!w.frac) return { note: "Load the fuels and build the fraction." };
+      if (gcd(w.frac[0], w.frac[1]) !== 1) return { note: "Keep cutting common factors." };
+      const t = `${w.frac[0]}/${w.frac[1]}`;
+      return { value: t, optionId: matchText(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const frac = w.chosenOption === "A" ? "71/110" : w.chosenOption === "B" ? "81/110" : w.chosenOption === "C" ? "9/11" : "23/33";
-
-      return {
-        value: `${frac} ((3300 + 21000) / 33000)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, frac) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Total diesel + petrol = 3,300 + 21,000 = 24,300 tonnes. Ratio to CNG = 24,300 ÷ 33,000 = 243/330 = 81/110 (dividing by 3)."
-          : `Selected ${frac}. (3300 + 21000)/33000 = 24300/33000 = 81/110.`,
-      };
-    },
   });
+  const w = play.world;
+  const sum = (ks: string[]) => ks.reduce((s, k) => s + FUELS[k], 0);
 
   return (
-    <PlayShell
-      title="Metro Sustainability Dashboard"
-      mission="Compute the fraction of (diesel + petrol saved) to CNG saved in simplest reduced form."
-      icon={Train}
+    <Shell
+      play={play}
+      question={question}
+      title="Metro Fuel Savings"
+      mission="Load the fuels that go on top of the fraction and the one that goes underneath, then build it. Cut common factors out of the top and bottom until the fraction is in its simplest form."
+      icon={Fuel}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Simplest Fraction" value={world.chosenOption === "B" ? "81/110 (Option B)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the fraction"
+      live={<Gauge label="Fraction" value={w.frac ? `${w.frac[0]}/${w.frac[1]}` : `${sum(w.top)}/${sum(w.bot)}`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Fuel Volume Tonnages */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="p-3 bg-white border-2 border-emerald-300 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">CNG Saved</span>
-            <span className="font-mono text-lg font-black text-emerald-700 my-1 block">33,000 t</span>
-            <span className="text-[10px] text-slate-500">Denominator</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Diesel Saved</span>
-            <span className="font-mono text-lg font-black text-indigo-700 my-1 block">3,300 t</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Petrol Saved</span>
-            <span className="font-mono text-lg font-black text-indigo-700 my-1 block">21,000 t</span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Fraction in Simplest Form (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, frac: "71/110", },
-              { id: "B" as const, frac: "81/110", desc: "24300 / 33000 = 81/110", },
-              { id: "C" as const, frac: "9/11", },
-              { id: "D" as const, frac: "23/33", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1 font-mono">{opt.frac}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="grid sm:grid-cols-2 gap-2">
+        {(["top", "bot"] as const).map((k) => (
+          <Bay key={k} label={k === "top" ? "Top of the fraction" : "Bottom of the fraction"}>
+            <div className="flex flex-wrap gap-1">{Object.keys(FUELS).map((f) => <Btn key={f} className="px-2 min-h-[34px]" active={w[k].includes(f)} tone={w[k].includes(f) ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set((p) => ({ ...p, frac: null, [k]: toggle(p[k], f) }))} ariaLabel={`${k} ${f}`}>{f} {FUELS[f].toLocaleString("en-IN")} t</Btn>)}</div>
+          </Bay>
+        ))}
       </div>
-    </PlayShell>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.top.length || !w.bot.length} onClick={() => play.patch({ frac: [sum(w.top), sum(w.bot)] })}>Build {sum(w.top)}/{sum(w.bot)}</Btn>
+      {w.frac && (
+        <Board className="mt-2">
+          <div className="text-center font-mono text-2xl font-black text-indigo-900">{w.frac[0]} / {w.frac[1]}</div>
+          <div className="flex flex-wrap justify-center gap-1 mt-1">
+            {CUT.map((c) => <Btn key={c} className="px-2 min-h-[34px]" tone="slate" disabled={play.readOnly} onClick={() => {
+              if (w.frac![0] % c || w.frac![1] % c) return setMsg(`÷${c} doesn't divide both.`);
+              setMsg(null);
+              play.patch({ frac: [w.frac![0] / c, w.frac![1] / c] });
+            }} ariaLabel={`cut ${c}`}>÷{c}</Btn>)}
+          </div>
+          {msg && <p className="text-center text-xs font-bold text-rose-600">{msg}</p>}
+        </Board>
+      )}
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q43 — 🥾 Journey Tracker (Multi-Day Trek Distance)
+   Q43 — Journey Tracker
+   The trek odometer logs Monday to Wednesday. The student dials Thursday's distance until
+   the four days add up to the planned total.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q43World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q43JourneyTrackerActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q43World>({
+const DAYS = [8.25, 7.52, 11.27];
+export function Q43JourneyTrackerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const total = 42.25;
+  const play = usePlay<{ th: number; logged: boolean }>({
     question,
+    initial: { th: 10, logged: false },
+    derive: (w) => {
+      const s = r4(DAYS.reduce((a, b) => a + b, 0) + w.th);
+      if (!w.logged) return { note: "Dial Thursday's distance and log it." };
+      if (Math.abs(s - total) > 1e-9) return { note: `The four days make ${s} km, not ${total} km.` };
+      return { value: `${w.th} km`, optionId: matchNumber(question, w.th, 1e-9) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const dist = w.chosenOption === "A" ? "14.18 km" : w.chosenOption === "B" ? "16.02 km" : w.chosenOption === "C" ? "15.50 km" : "15.21 km";
-
-      return {
-        value: `${dist} (Thursday Walk Distance)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, dist) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Distance covered Mon–Wed = 8.25 + 7.52 + 11.27 = 27.04 km. Remaining Thursday distance = 42.25 − 27.04 = 15.21 km."
-          : `Selected ${dist}. Thursday distance = 42.25 − (8.25 + 7.52 + 11.27).`,
-      };
-    },
   });
+  const w = play.world;
+  const s = r4(DAYS.reduce((a, b) => a + b, 0) + w.th);
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Journey Tracker"
-      mission="Find the distance Suresh must walk on Thursday to complete the 42.25 km total trek."
-      icon={MapPin}
+      mission={`The odometer already holds Monday, Tuesday and Wednesday. Dial Thursday's distance until the four days add up to ${total} km, then log it.`}
+      icon={Route}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Thursday Trek" value={world.chosenOption === "D" ? "15.21 km (Option D)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit Thursday's distance"
+      live={<Gauge label="Four days" value={`${s} km`} tone={Math.abs(s - total) < 1e-9 ? "emerald" : "amber"} />}
     >
-      <div className="space-y-4">
-        {/* 4-Day Trek Ledger */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">Daily Trekking Ledger:</div>
-          <div className="space-y-2 text-xs font-mono">
-            <div className="flex justify-between p-2 bg-white border border-slate-200 rounded-lg">
-              <span>Monday</span>
-              <span className="font-bold">8.25 km</span>
-            </div>
-            <div className="flex justify-between p-2 bg-white border border-slate-200 rounded-lg">
-              <span>Tuesday</span>
-              <span className="font-bold">7.52 km</span>
-            </div>
-            <div className="flex justify-between p-2 bg-white border border-slate-200 rounded-lg">
-              <span>Wednesday</span>
-              <span className="font-bold">11.27 km</span>
-            </div>
-            <div className="flex justify-between p-2.5 bg-indigo-50 border border-slate-200 text-indigo-950 font-black rounded-lg">
-              <span>Thursday Needed (42.25 − 27.04)</span>
-              <span>15.21 km</span>
-            </div>
-          </div>
+      <Board>
+        <div className="flex h-8 rounded overflow-hidden border border-indigo-200">
+          {[...DAYS, w.th].map((d, i) => <div key={i} className={["bg-indigo-300", "bg-sky-300", "bg-violet-300", "bg-amber-300"][i]} style={{ width: `${(d / Math.max(s, total)) * 100}%` }} />)}
         </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Distance to Walk on Thursday (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, dist: "14.18 km", },
-              { id: "B" as const, dist: "16.02 km", },
-              { id: "C" as const, dist: "15.50 km", },
-              { id: "D" as const, dist: "15.21 km", desc: "42.25 − 27.04 = 15.21 km", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1 font-mono">{opt.dist}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+        <p className="text-xs font-mono mt-1">{DAYS.join(" + ")} + {w.th} = {s} km (plan {total} km)</p>
+      </Board>
+      <div className="flex flex-wrap gap-2 mt-2">
+        <Stepper label="Thursday" value={w.th} min={0} steps={[0.01, 0.1, 1]} unit=" km" disabled={play.readOnly} onStep={(d) => play.patch({ th: r4(w.th + d), logged: false })} />
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ logged: true })}>Log Thursday</Btn>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q44 — 🥛 Dairy Filling Station (Capacity Division)
+   Q44 — Dairy Filling Station
+   The barrel's reading must first be converted to millilitres. Then the student fills
+   bottles in batches; the station refuses a batch it cannot fill completely.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q44World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q44DairyFillingStationActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q44World>({
+export function Q44DairyFillingStationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const bottle = 130;
+  const play = usePlay<{ ml: number | null; filled: number; closed: boolean }>({
     question,
+    initial: { ml: null, filled: 0, closed: false },
+    derive: (w) => {
+      if (w.ml === null) return { note: "Convert the barrel to millilitres." };
+      if (!w.closed) return { note: "Fill bottles until no more full bottle fits, then close the station." };
+      return { value: `${w.filled} bottles`, optionId: matchNumber(question, w.filled) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const b = w.chosenOption === "A" ? "520 bottles" : w.chosenOption === "B" ? "540 bottles" : w.chosenOption === "C" ? "560 bottles" : "580 bottles";
-
-      return {
-        value: `${b} (70,200 mL ÷ 130 mL)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, b) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 70 L 200 mL = 70,200 mL. Total bottles = 70,200 ÷ 130 = 540 bottles."
-          : `Selected ${b}. Convert total volume to millilitres: (70 × 1000) + 200 = 70,200 mL. Then divide by 130 mL.`,
-      };
-    },
   });
+  const w = play.world;
+  const left = w.ml === null ? null : w.ml - w.filled * bottle;
+  const fill = (n: number) => left !== null && left >= n * bottle && play.patch({ filled: w.filled + n, closed: false });
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Dairy Filling Station"
-      mission="Convert 70 L 200 mL into mL and calculate the number of 130 mL bottles filled."
+      mission="The barrel holds 70 L 200 mL. Convert it to millilitres first. Then fill 130 mL bottles in batches of 100, 10 or 1 — a batch is refused if there isn't enough milk left. Close the station when not even one more bottle can be filled."
       icon={Milk}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Bottles Filled" value={world.chosenOption === "B" ? "540 bottles (Option B)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the bottle count"
+      live={<><Gauge label="In the barrel" value={left === null ? "70 L 200 mL" : `${left} mL`} tone="sky" /><Gauge label="Bottles" value={w.filled} tone="violet" /></>}
     >
-      <div className="space-y-4">
-        {/* Barrel to Bottle Conversion Display */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm flex flex-col items-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md my-2">
-            <div className="p-3 bg-white border border-indigo-200 rounded-xl text-center">
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Barrel Capacity</span>
-              <span className="font-mono text-xl font-black text-indigo-900 my-1 block">70 L 200 mL</span>
-              <span className="text-[10px] font-mono text-indigo-600 font-bold">= 70,200 mL</span>
-            </div>
-
-            <div className="p-3 bg-white border border-indigo-200 rounded-xl text-center">
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Single Bottle</span>
-              <span className="font-mono text-xl font-black text-indigo-900 my-1 block">130 mL</span>
-              <span className="text-[10px] text-slate-500">Per unit capacity</span>
-            </div>
-          </div>
-
-          <div className="p-2 bg-emerald-50 border border-emerald-300 rounded-lg text-center font-mono text-xs font-bold text-emerald-900 w-full max-w-md">
-            70,200 ÷ 130 = <b>540 Bottles Completely Filled</b>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Number of Bottles Filled (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, b: "520 bottles", },
-              { id: "B" as const, b: "540 bottles", desc: "70200 / 130 = 540", },
-              { id: "C" as const, b: "560 bottles", },
-              { id: "D" as const, b: "580 bottles", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.b}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="flex flex-wrap gap-1.5">
+        {[[70200, "1 L = 1000 mL → 70,200 mL"], [70020, "1 L = 1000 mL → 70,020 mL"], [7200, "1 L = 100 mL → 7,200 mL"]].map(([v, l]) => (
+          <Btn key={v} active={w.ml === v} tone={w.ml === v ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set({ ml: v as number, filled: 0, closed: false })}>{l}</Btn>
+        ))}
       </div>
-    </PlayShell>
+      <Board className="mt-2">
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {[100, 10, 1].map((n) => <Btn key={n} tone="emerald" disabled={play.readOnly || left === null || left < n * bottle} onClick={() => fill(n)} ariaLabel={`fill ${n}`}>🍼 Fill {n}</Btn>)}
+          <Btn tone="amber" disabled={play.readOnly || left === null || left >= bottle} onClick={() => play.patch({ closed: true })}>Close the station</Btn>
+        </div>
+      </Board>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q45 — 🚚 Milk Delivery Route (Weekly Revenue)
+   Q45 — Milk Delivery Route
+   The van makes the morning and evening runs each day. The student loads each run,
+   drives the route for as many days as the question covers, and the till prices every
+   litre delivered.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q45World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q45WeeklyMilkVendorActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q45World>({
+export function Q45WeeklyMilkVendorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ morning: number; evening: number; days: number; billed: boolean }>({
     question,
+    initial: { morning: 0, evening: 0, days: 1, billed: false },
+    derive: (w) => {
+      if (!w.billed) return { note: "Load both runs, set the days and bill it." };
+      const t = (w.morning + w.evening) * w.days * 20;
+      return { value: inr(t), optionId: matchNumber(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const amt = w.chosenOption === "A" ? "₹24,500" : w.chosenOption === "B" ? "₹25,200" : w.chosenOption === "C" ? "₹27,400" : "₹26,600";
-
-      return {
-        value: `${amt} (1,330 Litres × ₹20)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, amt) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Daily milk = 105 + 85 = 190 L. Weekly volume (7 days) = 190 × 7 = 1,330 L. Total revenue = 1,330 × ₹20 = ₹26,600."
-          : `Selected ${amt}. Daily: 105 + 85 = 190 L. Weekly (7 days) = 1,330 L. Total cost = 1,330 × ₹20 = ₹26,600.`,
-      };
-    },
   });
+  const w = play.world;
+  const set = (k: "morning" | "evening" | "days", d: number) => play.set((p) => ({ ...p, billed: false, [k]: p[k] + d }));
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Milk Delivery Route"
-      mission="Calculate the vendor's weekly collection for delivering 105 L morning and 85 L evening daily at ₹20/L."
+      mission="Load the van for the morning run and the evening run, set how many days it drives the route, and bill the litres at ₹20 each."
       icon={Truck}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Weekly Revenue" value={world.chosenOption === "D" ? "₹26,600 (Option D)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the money due"
+      live={<Gauge label="Bill" value={inr((w.morning + w.evening) * w.days * 20)} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Weekly Revenue Breakdown */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">Weekly Milk Billing Calculation:</div>
-          <div className="space-y-2 text-xs font-mono">
-            <div className="flex justify-between p-2 bg-white border border-slate-200 rounded-lg">
-              <span>Daily Volume (105 L Morning + 85 L Evening)</span>
-              <span className="font-bold text-slate-800">190 L / day</span>
-            </div>
-            <div className="flex justify-between p-2 bg-white border border-slate-200 rounded-lg">
-              <span>Weekly Volume (7 Days × 190 L)</span>
-              <span className="font-bold text-slate-800">1,330 Litres</span>
-            </div>
-            <div className="flex justify-between p-2.5 bg-emerald-50 border border-emerald-300 text-emerald-950 font-black rounded-lg text-sm">
-              <span>Total Weekly Revenue (1,330 L × ₹20 / L)</span>
-              <span>₹26,600</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Total Money Collected in 1 Week (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, amt: "₹24,500", },
-              { id: "B" as const, amt: "₹25,200", },
-              { id: "C" as const, amt: "₹27,400", },
-              { id: "D" as const, amt: "₹26,600", desc: "190 × 7 × 20 = ₹26,600", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.amt}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="grid sm:grid-cols-3 gap-2">
+        <Bay label="Morning run"><Stepper label="Morning litres" value={w.morning} min={0} steps={[1, 10, 100]} disabled={play.readOnly} onStep={(d) => set("morning", d)} /></Bay>
+        <Bay label="Evening run"><Stepper label="Evening litres" value={w.evening} min={0} steps={[1, 10, 100]} disabled={play.readOnly} onStep={(d) => set("evening", d)} /></Bay>
+        <Bay label="Route"><Stepper label="Days" value={w.days} min={1} max={31} disabled={play.readOnly} onStep={(d) => set("days", d)} /></Bay>
       </div>
-    </PlayShell>
+      <p className="text-xs font-mono mt-1">({w.morning} + {w.evening}) L × {w.days} days × ₹20</p>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ billed: true })}>🧾 Bill the route</Btn>
+    </Shell>
   );
 }

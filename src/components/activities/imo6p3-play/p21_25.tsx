@@ -2,690 +2,323 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Box,
-  PieChart,
-  Binary,
-  Compass,
-  MoveRight,
-  RotateCw,
-  CheckCircle2,
-  Sparkles,
-} from "lucide-react";
+import { Box, ChartPie, SpellCheck, Compass, MoveHorizontal } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { matchNumberList, matchText } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Shell, Board, Stepper, Pt, polyPath, toggle } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q21 — 🧊 3D Solid Inspector (Triangular Prism Topology)
+   Q21 — Triangular Prism Inspector
+   The prism is drawn with its hidden edges dashed. The student switches between counting
+   faces, corners and edges and taps each one to tag it. The three tallies are the answer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q21World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q21TriangularPrismActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q21World>({
+const V: Pt[] = [[15, 75], [60, 75], [37, 38], [50, 55], [95, 55], [72, 18]]; // front triangle 0-1-2, back 3-4-5 (drawn up and to the right)
+const EDGES: [number, number, boolean][] = [[0, 1, false], [1, 2, false], [2, 0, false], [3, 4, true], [4, 5, false], [5, 3, true], [0, 3, true], [1, 4, false], [2, 5, false]];
+const FACES: { pts: number[]; hidden: boolean }[] = [
+  { pts: [0, 1, 2], hidden: false },
+  { pts: [3, 4, 5], hidden: true },
+  { pts: [0, 1, 4, 3], hidden: true },
+  { pts: [1, 2, 5, 4], hidden: false },
+  { pts: [2, 0, 3, 5], hidden: false },
+];
+export function Q21TriangularPrismActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const [mode, setMode] = useState<"faces" | "verts" | "edges">("faces");
+  const [xray, setXray] = useState(false);
+  const play = usePlay<{ faces: number[]; verts: number[]; edges: number[] }>({
     question,
+    initial: { faces: [], verts: [], edges: [] },
+    derive: (w) =>
+      !w.faces.length || !w.verts.length || !w.edges.length
+        ? { note: "Tag the faces, the corners and the edges." }
+        : { value: `${w.faces.length} faces, ${w.verts.length} vertices, ${w.edges.length} edges`, optionId: matchNumberList(question, [w.faces.length, w.verts.length, w.edges.length]) },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const desc =
-        w.chosenOption === "D"
-          ? "P = 5 faces, Q = 6 vertices, R = 9 edges"
-          : w.chosenOption === "A"
-          ? "P = 4, Q = 4, R = 6 (Tetrahedron)"
-          : w.chosenOption === "B"
-          ? "P = 6, Q = 8, R = 12 (Cuboid)"
-          : "P = 5, Q = 5, R = 8 (Square Pyramid)";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! A triangular prism consists of 2 triangular bases + 3 rectangular lateral faces = 5 Faces; 3 + 3 = 6 Vertices; 3 + 3 + 3 = 9 Edges."
-          : `Selected Option ${w.chosenOption}. Check Euler's formula: F + V − E = 2 (5 + 6 − 9 = 2).`,
-      };
-    },
   });
+  const w = play.world;
+  const tag = (k: "faces" | "verts" | "edges", i: number) => !play.readOnly && play.set((p) => ({ ...p, [k]: toggle(p[k], i) }));
 
   return (
-    <PlayShell
-      title="3D Solid Inspector (Triangular Prism)"
-      mission="Inspect the 3D topology of a triangular prism to find the exact count of Faces (P), Vertices (Q), and Edges (R)."
+    <Shell
+      play={play}
+      question={question}
+      title="Triangular Prism Inspector"
+      mission="Switch on X-ray to see the hidden back of the prism. Choose what to count, then tap each face, corner or edge once to tag it. Tag them all."
       icon={Box}
-      dim="3D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Prism Topology" value={world.chosenOption === "D" ? "P=5, Q=6, R=9 (Option D)" : `Option ${world.chosenOption}`} />}
-    >
-      <div className="space-y-4">
-        {/* 3D Prism Visual Diagram */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-6 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 260 180" className="w-60 h-44 drop-shadow-md">
-            <defs>
-              <linearGradient id="prismFront" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#818cf8" stopOpacity="0.85" />
-                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.85" />
-              </linearGradient>
-              <linearGradient id="prismTop" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#c084fc" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#a855f7" stopOpacity="0.75" />
-              </linearGradient>
-            </defs>
-
-            {/* Hidden back edges */}
-            <line x1="80" y1="50" x2="190" y2="50" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" />
-            <line x1="80" y1="50" x2="50" y2="120" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" />
-            <line x1="80" y1="50" x2="110" y2="140" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" />
-
-            {/* Top Slanted Face */}
-            <polygon points="50,120 160,120 190,50 80,50" fill="url(#prismTop)" stroke="#9333ea" strokeWidth="2" />
-
-            {/* Front Triangular Face */}
-            <polygon points="160,120 220,140 190,50" fill="url(#prismFront)" stroke="#4338ca" strokeWidth="2.5" />
-
-            {/* Bottom Rectangular Face */}
-            <polygon points="50,120 110,140 220,140 160,120" fill="#4f46e5" fillOpacity="0.6" stroke="#4338ca" strokeWidth="2" />
-
-            {/* 6 Vertices */}
-            {[
-              { x: 50, y: 120, label: "V1" },
-              { x: 110, y: 140, label: "V2" },
-              { x: 80, y: 50, label: "V3" },
-              { x: 160, y: 120, label: "V4" },
-              { x: 220, y: 140, label: "V5" },
-              { x: 190, y: 50, label: "V6" },
-            ].map((v, i) => (
-              <g key={i}>
-                <circle cx={v.x} cy={v.y} r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
-                <text x={v.x + (v.x > 150 ? 10 : -10)} y={v.y + 4} fill="#1e293b" fontSize="10" fontWeight="black" textAnchor="middle">
-                  {v.label}
-                </text>
-              </g>
-            ))}
-          </svg>
-
-          {/* Topology Breakdown */}
-          <div className="grid grid-cols-3 gap-2 w-full max-w-sm mt-3 text-center">
-            <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <span className="text-[10px] font-bold text-slate-500 block">Faces (P)</span>
-              <span className="font-mono text-lg font-black text-indigo-700">5</span>
-              <span className="text-[9px] text-slate-500">2 Tri + 3 Rect</span>
-            </div>
-            <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <span className="text-[10px] font-bold text-slate-500 block">Vertices (Q)</span>
-              <span className="font-mono text-lg font-black text-indigo-700">6</span>
-              <span className="text-[9px] text-slate-500">3 + 3 Corners</span>
-            </div>
-            <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <span className="text-[10px] font-bold text-slate-500 block">Edges (R)</span>
-              <span className="font-mono text-lg font-black text-indigo-700">9</span>
-              <span className="text-[9px] text-slate-500">3 + 3 + 3 Edges</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Correct Values of P, Q, and R (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, text: "P = 4, Q = 4, R = 6", },
-              { id: "B" as const, text: "P = 6, Q = 8, R = 12", },
-              { id: "C" as const, text: "P = 5, Q = 5, R = 8", },
-              { id: "D" as const, text: "P = 5, Q = 6, R = 9", desc: "Triangular Prism", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xs font-mono font-black text-slate-800 my-1">{opt.text}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q22 — 🍕 Fraction Sorting Table (Fraction Comparison)
-   ══════════════════════════════════════════════════════════════════════ */
-interface Q22World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
-
-export function Q22FractionSortingTableActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q22World>({
-    question,
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const order =
-        w.chosenOption === "B"
-          ? "P < Q < R < S (3/8 < 4/8 < 5/8 < 6/8)"
-          : w.chosenOption === "A"
-          ? "S < R < Q < P (Descending)"
-          : w.chosenOption === "C"
-          ? "Q < P < S < R"
-          : "R < S < P < Q";
-
-      return {
-        value: `Option ${w.chosenOption} — ${order}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! P = 3/8 (0.375), Q = 1/2 = 4/8 (0.50), R = 5/8 (0.625), S = 3/4 = 6/8 (0.75). Ascending order: P < Q < R < S."
-          : `Selected Option ${w.chosenOption}. Express all fractions with common denominator 8: 3/8, 4/8, 5/8, 6/8.`,
-      };
-    },
-  });
-
-  return (
-    <PlayShell
-      title="Fraction Sorting Table"
-      mission="Convert fractions to a common denominator of 8 and arrange P, Q, R, and S in ascending order."
-      icon={PieChart}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Ascending Order" value={world.chosenOption === "B" ? "P < Q < R < S (Option B)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit P, Q and R"
+      live={<><Gauge label="Faces (P)" value={w.faces.length} tone={mode === "faces" ? "violet" : "slate"} /><Gauge label="Vertices (Q)" value={w.verts.length} tone={mode === "verts" ? "violet" : "slate"} /><Gauge label="Edges (R)" value={w.edges.length} tone={mode === "edges" ? "violet" : "slate"} /></>}
     >
-      <div className="space-y-4">
-        {/* Fraction Visual Bars */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { id: "P", orig: "3/8", equiv: "3/8 (37.5%)", fillCount: 3, col: "#3b82f6" },
-            { id: "Q", orig: "1/2", equiv: "4/8 (50.0%)", fillCount: 4, col: "#8b5cf6" },
-            { id: "R", orig: "5/8", equiv: "5/8 (62.5%)", fillCount: 5, col: "#ec4899" },
-            { id: "S", orig: "3/4", equiv: "6/8 (75.0%)", fillCount: 6, col: "#10b981" },
-          ].map((item) => (
-            <div key={item.id} className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs flex flex-col items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">Figure {item.id}</span>
-              {/* 8-segment Bar */}
-              <div className="w-full my-2 flex border-2 border-slate-300 rounded overflow-hidden h-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`flex-1 border-r border-slate-200 last:border-r-0 ${
-                      i < item.fillCount ? "bg-indigo-600" : "bg-slate-100"
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="font-mono text-sm font-black text-slate-800">{item.orig}</span>
-              <span className="text-[10px] font-mono text-indigo-600 font-bold">{item.equiv}</span>
-            </div>
+      <Board>
+        <svg viewBox="0 0 120 80" className="w-full max-h-72">
+          {FACES.map((f, i) =>
+            f.hidden && !xray ? null : (
+              <path key={i} d={polyPath(f.pts.map((k) => V[k]))} fill={w.faces.includes(i) ? "#a78bfa" : "#eef2ff"} fillOpacity={f.hidden ? 0.5 : 0.85} stroke="none" role="button" aria-label={`face ${i + 1}`} style={{ cursor: mode === "faces" ? "pointer" : "default" }} onClick={() => mode === "faces" && tag("faces", i)} />
+            )
+          )}
+          {EDGES.map(([a, b, hid], i) => (
+            <line key={i} x1={V[a][0]} y1={V[a][1]} x2={V[b][0]} y2={V[b][1]} stroke={w.edges.includes(i) ? "#f59e0b" : "#312e81"} strokeWidth={mode === "edges" ? 2.4 : 1.2} strokeDasharray={hid ? "2 1.5" : undefined} role="button" aria-label={`edge ${i + 1}`} style={{ cursor: mode === "edges" ? "pointer" : "default" }} onClick={() => mode === "edges" && tag("edges", i)} />
           ))}
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Ascending Order of Shaded Fractions (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, seq: "S < R < Q < P", desc: "Descending order error", },
-              { id: "B" as const, seq: "P < Q < R < S", desc: "3/8 < 4/8 < 5/8 < 6/8", },
-              { id: "C" as const, seq: "Q < P < S < R", },
-              { id: "D" as const, seq: "R < S < P < Q", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-base font-black text-slate-800 my-1 font-mono">{opt.seq}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+          {V.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r={mode === "verts" ? 3 : 1.6} fill={w.verts.includes(i) ? "#e11d48" : "#312e81"} role="button" aria-label={`vertex ${i + 1}`} style={{ cursor: mode === "verts" ? "pointer" : "default" }} onClick={() => mode === "verts" && tag("verts", i)} />)}
+        </svg>
+      </Board>
+      <div className="flex flex-wrap gap-1.5 mt-2">
+        {(["faces", "verts", "edges"] as const).map((m) => <Btn key={m} active={mode === m} tone={mode === m ? "violet" : "slate"} onClick={() => setMode(m)}>Count {m === "verts" ? "vertices" : m}</Btn>)}
+        <Btn active={xray} tone={xray ? "sky" : "slate"} onClick={() => setXray(!xray)}>🩻 X-ray {xray ? "on" : "off"}</Btn>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q23 — 🔢 Decimal Translation Machine (Place Value Match)
+   Q22 — Fraction Sorting Table
+   Each figure goes under the counter: the student taps every region to count it and the
+   counter reads the shaded fraction. Counted figures are placed on the sorting table from
+   least shaded to most shaded.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q23World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q23DecimalMatchActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q23World>({
+const Q22_FIGS: Record<string, { parts: number; shaded: number[] }> = { P: { parts: 8, shaded: [0, 3, 6] }, Q: { parts: 4, shaded: [0, 2] }, R: { parts: 8, shaded: [0, 1, 3, 5, 6] }, S: { parts: 4, shaded: [0, 1, 3] } };
+export function Q22FractionSortingTableActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const [open, setOpen] = useState("P");
+  const play = usePlay<{ counted: Record<string, number[]>; table: string[] }>({
     question,
+    initial: { counted: {}, table: [] },
+    derive: (w) => {
+      if (w.table.length < 4) return { note: "Count every figure and place all four on the table." };
+      const text = w.table.join(" < ");
+      return { value: text, optionId: question?.multipleChoiceConfig?.options.find((o) => o.text.replace(/\s/g, "") === text.replace(/\s/g, ""))?.id };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const desc =
-        w.chosenOption === "C"
-          ? "Sixteen and two tenths → 16.2"
-          : w.chosenOption === "A"
-          ? "Twelve and thirty-nine thousandths → 12.420 (Incorrect: should be 12.039)"
-          : w.chosenOption === "B"
-          ? "Four and forty hundredths → 4.004 (Incorrect: should be 4.40)"
-          : "Eight and five hundredths → 80.50 (Incorrect: should be 8.05)";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 'Sixteen and two tenths' = 16 + 2/10 = 16.2."
-          : `Option ${w.chosenOption} has a place-value conversion error.`,
-      };
-    },
   });
+  const w = play.world;
+  const f = Q22_FIGS[open];
+  const c = w.counted[open] ?? [];
+  const done = (k: string) => (w.counted[k] ?? []).length === Q22_FIGS[k].parts;
+  const frac = (k: string) => `${(w.counted[k] ?? []).filter((i) => Q22_FIGS[k].shaded.includes(i)).length}/${(w.counted[k] ?? []).length}`;
+  const sector = (i: number, n: number) => {
+    const a0 = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
+    return `M 50 50 L ${50 + 40 * Math.cos(a0)} ${50 + 40 * Math.sin(a0)} A 40 40 0 0 1 ${50 + 40 * Math.cos(a1)} ${50 + 40 * Math.sin(a1)} Z`;
+  };
 
   return (
-    <PlayShell
-      title="Decimal Translation Machine"
-      mission="Identify the decimal word name that correctly matches its numerical representation."
-      icon={Binary}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Matched Decimal" value={`Option ${world.chosenOption}`} />}
+      title="Fraction Sorting Table"
+      mission="Put a figure under the counter and tap every region once to count it — the counter reads shaded regions over all regions. Place counted figures on the table from the least shaded to the most shaded."
+      icon={ChartPie}
+      dim="2D"
+      submitLabel="Submit the order"
+      live={<><Gauge label={`Figure ${open}`} value={frac(open)} tone="violet" /><Gauge label="Table" value={w.table.join(" < ") || "empty"} tone="amber" /></>}
     >
-      <div className="space-y-4">
-        {/* 4 Candidate Cards */}
-        <Bay label="Audit Decimal Translation Options (Select A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              {
-                id: "A" as const,
-                words: "Twelve and thirty-nine thousandths",
-                num: "12.420",
-              },
-              {
-                id: "B" as const,
-                words: "Four and forty hundredths",
-                num: "4.004",
-              },
-              {
-                id: "C" as const,
-                words: "Sixteen and two tenths",
-                num: "16.2",
-              },
-              {
-                id: "D" as const,
-                words: "Eight and five hundredths",
-                num: "80.50",
-              },
-            ].map((item) => {
-              const isSelected = world.chosenOption === item.id;
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => set({ chosenOption: item.id })}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs text-slate-700">Option {item.id}</span>
-                    {isSelected && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">
-                        Selected
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-xs text-slate-800 font-semibold">{item.words}</p>
-                  <div className="my-2 p-2 bg-slate-50 rounded border border-slate-200 font-mono text-xs flex items-center justify-between">
-                    <span className="text-slate-500 text-[11px]">Denoted Number:</span>
-                    <span className="font-black text-slate-900 text-sm">{item.num}</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={`mt-1 text-xs font-bold px-2 py-1 rounded w-full transition-colors ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + item.id}
-                  </button>
-                </div>
-              );
-            })}
+      <div className="flex gap-1.5 mb-2">{Object.keys(Q22_FIGS).map((k) => <Btn key={k} active={open === k} tone={open === k ? "violet" : done(k) ? "emerald" : "slate"} onClick={() => setOpen(k)}>Figure {k}</Btn>)}</div>
+      <div className="grid md:grid-cols-2 gap-3">
+        <Board>
+          <svg viewBox="0 0 100 100" className="w-full max-h-60">
+            {Array.from({ length: f.parts }, (_, i) => <path key={i} d={sector(i, f.parts)} fill={f.shaded.includes(i) ? "#6366f1" : "#fff"} stroke={c.includes(i) ? "#f59e0b" : "#312e81"} strokeWidth={c.includes(i) ? 2 : 0.8} role="button" aria-label={`region ${i + 1}`} style={{ cursor: "pointer" }} onClick={() => !play.readOnly && play.set((p) => ({ table: p.table.filter((x) => x !== open), counted: { ...p.counted, [open]: toggle(p.counted[open] ?? [], i) } }))} />)}
+          </svg>
+        </Board>
+        <Bay label="Sorting table (least → most shaded)" tone="violet">
+          <div className="flex gap-1 min-h-[48px]">{w.table.map((k) => <span key={k} className="w-12 h-12 rounded-lg bg-amber-100 border border-amber-300 grid place-items-center font-black text-indigo-900">{k}<span className="text-[9px]">{frac(k)}</span></span>)}</div>
+          <div className="flex gap-1.5 mt-2">
+            <Btn tone="emerald" disabled={play.readOnly || !done(open) || w.table.includes(open)} onClick={() => play.patch({ table: [...w.table, open] })}>Place figure {open}</Btn>
+            <Btn tone="slate" disabled={play.readOnly || !w.table.length} onClick={() => play.patch({ table: [] })}>Clear table</Btn>
           </div>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q24 — 📐 Angle Observatory (Protractor Ray Classification)
+   Q23 — Decimal Translation Machine
+   For each word name the student builds the number on a place-value board, digit by
+   digit. The machine compares the built number with the printed one. After all four are
+   built, the one printed correctly is the answer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q24World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q24AngleMatchingActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q24World>({
+const COLS = ["tens", "ones", "tenths", "hundredths", "thousandths"];
+const W_ = [10, 1, 0.1, 0.01, 0.001];
+export function Q23DecimalMatchActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const rows = (question?.multipleChoiceConfig?.options ?? []).map((o) => {
+    const [name, num] = o.text.split("→").map((s) => s.trim());
+    return { id: o.id, name, num: Number(num) };
+  });
+  const play = usePlay<{ d: Record<string, number[]>; built: string[] }>({
     question,
+    initial: { d: {}, built: [] },
+    derive: (w) => {
+      if (w.built.length < rows.length) return { note: "Build every word name on the board." };
+      const hits = rows.filter((r) => Math.abs(val(w, r.id) - r.num) < 1e-9);
+      if (hits.length !== 1) return { note: hits.length ? "More than one row matched." : "No row matched its printed number." };
+      return { value: `${hits[0].name} = ${hits[0].num}`, optionId: hits[0].id };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const desc =
-        w.chosenOption === "D"
-          ? "(P)→(ii) Acute, (Q)→(i) Right, (R)→(iv) Obtuse, (S)→(iii) Straight"
-          : w.chosenOption === "A"
-          ? "(P)→(i), (Q)→(ii), (R)→(iii), (S)→(iv)"
-          : w.chosenOption === "B"
-          ? "(P)→(ii), (Q)→(iv), (R)→(i), (S)→(iii)"
-          : "(P)→(iv), (Q)→(i), (R)→(ii), (S)→(iii)";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! ∠AOB = 40° (Acute), ∠AOC = 90° (Right), ∠AOE = 130° (Obtuse), ∠BOD = 180° (Straight)."
-          : `Selected Option ${w.chosenOption}. Acute < 90°, Right = 90°, 90° < Obtuse < 180°, Straight = 180°.`,
-      };
-    },
   });
+  function val(w: { d: Record<string, number[]> }, id: string) {
+    return Math.round((w.d[id] ?? [0, 0, 0, 0, 0]).reduce((s, x, i) => s + x * W_[i], 0) * 1000) / 1000;
+  }
+  const w = play.world;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
+      title="Decimal Translation Machine"
+      mission="For each word name, set the digits in the place-value columns (tens, ones · tenths, hundredths, thousandths) and build it. The machine compares your number with the printed one."
+      icon={SpellCheck}
+      dim="2D"
+      submitLabel="Submit the correct match"
+      live={<Gauge label="Built" value={w.built.map((id) => `${id}: ${val(w, id)}`).join("  ") || "—"} tone="violet" />}
+    >
+      <div className="space-y-2">
+        {rows.map((r) => {
+          const d = w.d[r.id] ?? [0, 0, 0, 0, 0];
+          return (
+            <Bay key={r.id} label={`${r.id} · “${r.name}” printed as ${r.num}`}>
+              <div className="flex flex-wrap items-end gap-1">
+                {COLS.map((c, i) => (
+                  <div key={c} className={`text-center ${i === 2 ? "border-l-4 border-l-rose-300 pl-1" : ""}`}>
+                    <div className="text-[9px] font-black text-slate-500">{c}</div>
+                    <button type="button" disabled={play.readOnly} aria-label={`${r.id} ${c}`} onClick={() => play.set((p) => ({ built: p.built.filter((x) => x !== r.id), d: { ...p.d, [r.id]: d.map((x, j) => (j === i ? (x + 1) % 10 : x)) } }))} className="w-9 h-10 rounded bg-white border border-indigo-200 font-mono text-xl font-black text-indigo-900">{d[i]}</button>
+                  </div>
+                ))}
+                <span className="font-mono font-black ml-2 text-indigo-700">= {val(w, r.id)}</span>
+                <Btn className="ml-auto px-2 min-h-[34px]" tone="emerald" disabled={play.readOnly || w.built.includes(r.id)} onClick={() => play.patch({ built: [...w.built, r.id] })} ariaLabel={`build ${r.id}`}>Build</Btn>
+              </div>
+            </Bay>
+          );
+        })}
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q24 — Angle Observatory
+   The protractor arm starts on OA. For each angle the student swings the arm onto the
+   other ray and records the reading; the observatory names the angle from the reading.
+   The four names make the matching.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const RAYS: Record<string, number> = { A: 0, B: 40, C: 90, E: 130, D: 220 };
+const Q24_ANGLES = [
+  { k: "P", name: "∠AOB", from: "A", to: "B" },
+  { k: "Q", name: "∠AOC", from: "A", to: "C" },
+  { k: "R", name: "∠AOE", from: "A", to: "E" },
+  { k: "S", name: "∠BOD", from: "B", to: "D" },
+];
+const kindOf = (deg: number) => (deg === 90 ? "(i)" : deg < 90 ? "(ii)" : deg === 180 ? "(iii)" : "(iv)");
+export function Q24AngleMatchingActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const [sel, setSel] = useState(0);
+  const play = usePlay<{ arm: number; rec: Record<string, number> }>({
+    question,
+    initial: { arm: 0, rec: {} },
+    derive: (w) => {
+      if (Q24_ANGLES.some((a) => w.rec[a.k] === undefined)) return { note: "Measure all four angles." };
+      const text = Q24_ANGLES.map((a) => `(${a.k})→${kindOf(w.rec[a.k])}`).join(", ");
+      return { value: text, optionId: matchText(question, text) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const a = Q24_ANGLES[sel];
+  const base = RAYS[a.from];
+  const on = Object.entries(RAYS).find(([, d]) => d === (base + w.arm) % 360)?.[0];
+  const ray = (deg: number, r = 40): Pt => [60 + r * Math.cos((deg * Math.PI) / 180), 50 - r * Math.sin((deg * Math.PI) / 180)];
+
+  return (
+    <Shell
+      play={play}
+      question={question}
       title="Angle Observatory"
-      mission="Classify angles ∠AOB, ∠AOC, ∠AOE, and ∠BOD into acute, right, obtuse, and straight angles."
+      mission="Pick an angle. The protractor arm starts on its first ray; swing it round until it lies on the second ray, then record the reading. The observatory names each angle from its measure."
       icon={Compass}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Angle Classification" value={`Option ${world.chosenOption}`} />}
+      submitLabel="Submit the matching"
+      live={<><Gauge label={a.name} value={`${w.arm}° · arm on ${on ? `O${on}` : "—"}`} tone="violet" /><Gauge label="Recorded" value={Q24_ANGLES.map((x) => `${x.k}:${w.rec[x.k] ?? "—"}`).join(" ")} /></>}
     >
-      <div className="space-y-4">
-        {/* Ray Figure Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 280 160" className="w-full max-w-sm h-40 bg-white rounded-lg border border-slate-200 shadow-inner">
-            {/* Straight line DOB */}
-            <line x1="20" y1="120" x2="260" y2="120" stroke="#64748b" strokeWidth="2.5" />
-            <text x="20" y="138" fill="#475569" fontSize="11" fontWeight="bold">D (180°)</text>
-            <text x="140" y="138" fill="#475569" fontSize="11" fontWeight="bold">O</text>
-            <text x="250" y="138" fill="#475569" fontSize="11" fontWeight="bold">B (0°)</text>
-
-            {/* Ray OA (40° Acute) */}
-            <line x1="140" y1="120" x2="216" y2="56" stroke="#3b82f6" strokeWidth="2.5" />
-            <text x="224" y="52" fill="#2563eb" fontSize="11" fontWeight="bold">A (40°)</text>
-
-            {/* Ray OC (90° Right) */}
-            <line x1="140" y1="120" x2="140" y2="25" stroke="#10b981" strokeWidth="2.5" />
-            <text x="140" y="18" fill="#059669" fontSize="11" fontWeight="bold" textAnchor="middle">C (90°)</text>
-
-            {/* Ray OE (130° Obtuse) */}
-            <line x1="140" y1="120" x2="63" y2="43" stroke="#ec4899" strokeWidth="2.5" />
-            <text x="50" y="38" fill="#be185d" fontSize="11" fontWeight="bold">E (130°)</text>
-
-            {/* Vertex Point O */}
-            <circle cx="140" cy="120" r="5" fill="#f59e0b" />
-          </svg>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Correct Matching (A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, text: "(P)→(i), (Q)→(ii), (R)→(iii), (S)→(iv)", },
-              { id: "B" as const, text: "(P)→(ii), (Q)→(iv), (R)→(i), (S)→(iii)", },
-              { id: "C" as const, text: "(P)→(iv), (Q)→(i), (R)→(ii), (S)→(iii)", },
-              { id: "D" as const, text: "(P)→(ii), (Q)→(i), (R)→(iv), (S)→(iii)", desc: "40°=Acute, 90°=Right, 130°=Obtuse, 180°=Straight", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xs font-mono font-black text-slate-800 my-1">{opt.text}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="flex flex-wrap gap-1.5 mb-2">{Q24_ANGLES.map((x, i) => <Btn key={x.k} active={sel === i} tone={sel === i ? "violet" : w.rec[x.k] !== undefined ? "emerald" : "slate"} onClick={() => { setSel(i); play.patch({ arm: 0 }); }}>({x.k}) {x.name}</Btn>)}</div>
+      <Board>
+        <svg viewBox="0 0 120 100" className="w-full max-h-64">
+          {Object.entries(RAYS).map(([k, d]) => { const [x, y] = ray(d); const [tx, ty] = ray(d, 46); return <g key={k}><line x1={60} y1={50} x2={x} y2={y} stroke="#312e81" strokeWidth={1} /><text x={tx} y={ty + 2} fontSize={5} fontWeight={900} textAnchor="middle">{k}</text></g>; })}
+          <motion.line x1={60} y1={50} animate={{ x2: ray(base + w.arm, 36)[0], y2: ray(base + w.arm, 36)[1] }} stroke="#f59e0b" strokeWidth={2.4} />
+          <text x={63} y={57} fontSize={4} fontWeight={900}>O</text>
+        </svg>
+      </Board>
+      <div className="flex flex-wrap gap-1.5 mt-2">
+        {[-10, 10, 45].map((d) => <Btn key={d} tone="slate" disabled={play.readOnly} onClick={() => play.patch({ arm: Math.max(0, Math.min(350, w.arm + d)) })}>{d > 0 ? `+${d}°` : `${d}°`}</Btn>)}
+        <Btn tone="emerald" disabled={play.readOnly || on !== a.to} onClick={() => play.patch({ rec: { ...w.rec, [a.k]: w.arm } })}>{on === a.to ? `Record ${a.name} = ${w.arm}°` : "Swing the arm onto the second ray"}</Btn>
       </div>
-    </PlayShell>
+      <p className="text-[11px] text-slate-600 mt-1">Column II: (i) right angle · (ii) acute angle · (iii) straight angle · (iv) obtuse angle</p>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q25 — 🏃 Number Line Runner (Addition: (-5) + 8 = 3)
+   Q25 — Number Line Runner
+   The runner stands on the number line. The student places the start marker and makes one
+   jump; the jump arrow is drawn on the line. The start and jump are compared with the four
+   printed number lines.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q25World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q25NumberLineAdditionActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q25World>({
+const Q25_STATES: Record<string, { start: number; jump: number }> = { A: { start: 0, jump: -5 }, B: { start: 8, jump: -5 }, C: { start: -5, jump: 8 }, D: { start: 3, jump: 8 } };
+export function Q25NumberLineAdditionActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ start: number; jump: number; jumped: boolean }>({
     question,
+    initial: { start: 0, jump: 0, jumped: false },
+    derive: (w) => {
+      if (!w.jumped) return { note: "Place the start marker and make the jump." };
+      const opt = Object.keys(Q25_STATES).find((k) => Q25_STATES[k].start === w.start && Q25_STATES[k].jump === w.jump);
+      return { value: `Start ${w.start}, jump ${w.jump > 0 ? "+" : ""}${w.jump}, land on ${w.start + w.jump}`, optionId: opt };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const desc =
-        w.chosenOption === "C"
-          ? "Number line starting at −5 with an arrow moving 8 units to the right to 3"
-          : w.chosenOption === "A"
-          ? "Number line starting at 0 moving to −5 then −8"
-          : w.chosenOption === "B"
-          ? "Number line starting at 8 moving 5 units left to 3"
-          : "Number line starting at 3 moving 8 units right";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! In (−5) + 8 = 3, we start at −5 on the number line and jump 8 units to the right, ending at +3."
-          : `Selected Option ${w.chosenOption}. Adding a positive integer moves to the right.`,
-      };
-    },
   });
+  const w = play.world;
+  const X = (n: number) => 8 + (n + 8) * 6;
 
   return (
-    <PlayShell
-      title="Number Line Runner"
-      mission="Identify the number line that accurately depicts the integer addition (-5) + 8 = 3."
-      icon={MoveRight}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Operation (−5) + 8" value={world.chosenOption === "C" ? "= +3 (Option C)" : `Option ${world.chosenOption}`} />}
+      title="Number Line Runner"
+      mission="(−5) + 8: place the runner where the sum starts, set how far and which way to jump, and make the jump. The arrow is drawn on the line."
+      icon={MoveHorizontal}
+      dim="2D"
+      submitLabel="Submit the number line"
+      live={<Gauge label="Run" value={`${w.start} ${w.jump >= 0 ? "+" : "−"} ${Math.abs(w.jump)} = ${w.start + w.jump}`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Interactive Number Line Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 340 120" className="w-full max-w-md h-32 bg-white rounded-lg border border-slate-200 shadow-inner">
-            <line x1="20" y1="80" x2="320" y2="80" stroke="#475569" strokeWidth="2.5" markerEnd="url(#arr)" markerStart="url(#arrL)" />
-
-            {Array.from({ length: 11 }).map((_, i) => {
-              const val = i - 6; // -6 to +4
-              const x = 30 + i * 28;
-              const isStart = val === -5;
-              const isEnd = val === 3;
-
-              return (
-                <g key={val}>
-                  <line x1={x} y1="74" x2={x} y2="86" stroke="#64748b" strokeWidth="2" />
-                  <text x={x} y="102" fill={isStart ? "#dc2626" : isEnd ? "#16a34a" : "#64748b"} fontSize="11" fontWeight="bold" textAnchor="middle">
-                    {val}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Jump Arc from -5 (x=58) to 3 (x=282) */}
-            <path
-              d="M 58 74 Q 170 15 282 74"
-              fill="none"
-              stroke="#6366f1"
-              strokeWidth="3.5"
-            />
-            <circle cx="58" cy="80" r="5" fill="#ef4444" />
-            <circle cx="282" cy="80" r="5" fill="#10b981" />
-            <text x="170" y="32" fill="#4f46e5" fontSize="12" fontWeight="black" textAnchor="middle">
-              +8 Units Right
-            </text>
-          </svg>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Which Number Line Correctly Represents (-5) + 8 = 3?">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, text: "Number line starting at 0 moving to −5 then −8", },
-              { id: "B" as const, text: "Number line starting at 8 moving 5 units left to 3", },
-              { id: "C" as const, text: "Starting at −5 with arrow moving 8 units to the right to 3", desc: "(−5) + 8 = 3", },
-              { id: "D" as const, text: "Number line starting at 3 moving 8 units right", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xs font-bold text-slate-800 my-1">{opt.text}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <Board>
+        <svg viewBox="0 0 112 40" className="w-full">
+          <line x1={4} x2={108} y1={28} y2={28} stroke="#312e81" strokeWidth={0.8} />
+          {Array.from({ length: 17 }, (_, i) => i - 8).map((n) => <g key={n}><line x1={X(n)} x2={X(n)} y1={26} y2={30} stroke="#312e81" strokeWidth={0.5} /><text x={X(n)} y={36} fontSize={3.2} textAnchor="middle">{n}</text></g>)}
+          {w.jumped && <path d={`M ${X(w.start)} 26 Q ${(X(w.start) + X(w.start + w.jump)) / 2} ${6} ${X(w.start + w.jump)} 26`} fill="none" stroke="#f59e0b" strokeWidth={1.2} markerEnd="url(#q25a)" />}
+          <defs><marker id="q25a" markerWidth={4} markerHeight={4} refX={2} refY={2} orient="auto"><path d="M0,0 L4,2 L0,4 Z" fill="#f59e0b" /></marker></defs>
+          <motion.text animate={{ x: X(w.jumped ? w.start + w.jump : w.start) }} y={22} fontSize={6} textAnchor="middle">🏃</motion.text>
+        </svg>
+      </Board>
+      <div className="flex flex-wrap gap-4 mt-2">
+        <Stepper label="Start" value={w.start} min={-8} max={8} disabled={play.readOnly} onStep={(d) => play.patch({ start: w.start + d, jumped: false })} />
+        <Stepper label="Jump" value={w.jump} min={-10} max={10} disabled={play.readOnly} onStep={(d) => play.patch({ jump: w.jump + d, jumped: false })} />
+        <Btn tone="emerald" disabled={play.readOnly || !w.jump} onClick={() => play.patch({ jumped: true })}>Jump!</Btn>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }

@@ -1,785 +1,405 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Cog,
-  Target,
-  BookOpen,
-  Users,
-  Grid,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  ListOrdered,
-  Layers,
-} from "lucide-react";
+import { Factory, CircleDot, BookA, Users, Grid3x3 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { matchNumber, matchText } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { clientToSvg } from "../imo6a-play/svgPoint";
+import { Shell, Board, Pt, polyPath } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q11 — ⚙️ Operator Factory (Mathematical Substitution)
+   Q11 — Operator Factory
+   Each code letter is a socket; the student plugs the real operator into it. The factory
+   then evaluates the expression one operation at a time, and only accepts the operation
+   the order-of-operations rules allow next.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q11World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q11OperatorFactoryActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q11World>({
+const Q11_EXPR = ["24", "R", "8", "S", "7", "M", "2", "P", "5"];
+const REAL: Record<string, string> = { P: "×", R: "÷", M: "−", S: "+" };
+const f = (op: string, a: number, b: number) => (op === "×" ? a * b : op === "÷" ? a / b : op === "+" ? a + b : a - b);
+export function Q11OperatorFactoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const play = usePlay<{ plug: Record<string, string>; toks: string[] | null }>({
     question,
+    initial: { plug: {}, toks: null },
+    derive: (w) => {
+      if (!w.toks) return { note: "Plug an operator into every letter, then start the factory." };
+      if (w.toks.length > 1) return { note: "Keep running operations until one number is left." };
+      const v = Number(w.toks[0]);
+      return { value: String(v), optionId: matchNumber(question, v, 1e-9) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const val = w.chosenOption === "A" ? 7 : w.chosenOption === "B" ? 12 : w.chosenOption === "C" ? 5 : 0;
-
-      return {
-        value: `${val} (24 ÷ 8 + 7 − 2 × 5 = ${val})`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, val) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 24 ÷ 8 + 7 − 2 × 5 = 3 + 7 − 10 = 10 − 10 = 0."
-          : `Selected ${val}. Apply BODMAS order: division and multiplication before addition and subtraction.`,
-      };
-    },
   });
+  const w = play.world;
+  const letters = ["P", "R", "M", "S"];
+  const ready = letters.every((l) => w.plug[l]);
+  const nextIdx = (t: string[]) => {
+    const md = t.findIndex((s) => s === "×" || s === "÷");
+    return md >= 0 ? md : t.findIndex((s) => s === "+" || s === "−");
+  };
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Operator Factory"
-      mission="Substitute each letter with its mathematical operator and evaluate the expression using BODMAS."
-      icon={Cog}
+      mission="Plug the operator each letter stands for into its socket. Start the factory, then tap the operation that must be done next — × and ÷ before + and −, left to right. Keep going until one number remains."
+      icon={Factory}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Evaluated Result" value={world.chosenOption === "D" ? "0 (Option D)" : world.chosenOption === "A" ? "7 (Option A)" : world.chosenOption === "B" ? "12 (Option B)" : "5 (Option C)"} />}
+      submitLabel="Submit the value"
+      live={<Gauge label="Line" value={(w.toks ?? Q11_EXPR.map((t) => w.plug[t] ?? t)).join(" ")} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Operator Mapping & Expression Dashboard */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm flex flex-col items-center">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">Original Alphanumeric Expression:</div>
-          <div className="font-mono text-2xl sm:text-3xl font-black text-slate-800 tracking-wider py-1">
-            24 <span className="text-indigo-600">R</span> 8{" "}
-            <span className="text-emerald-600">S</span> 7{" "}
-            <span className="text-rose-600">M</span> 2{" "}
-            <span className="text-amber-600">P</span> 5
-          </div>
-
-          {/* Rule Key */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-lg my-3">
-            <div className="p-2 bg-indigo-100/70 border border-indigo-300 rounded-lg text-center">
-              <span className="text-xs font-mono font-bold text-indigo-900">R = ÷ (Divide)</span>
+      <div className="grid sm:grid-cols-4 gap-2">
+        {letters.map((l) => (
+          <Bay key={l} label={`letter ${l}`}>
+            <div className="flex gap-1">
+              {["×", "÷", "+", "−"].map((o) => (
+                <Btn key={o} className="px-2 min-h-[34px]" active={w.plug[l] === o} tone={w.plug[l] === o ? "violet" : "slate"} disabled={play.readOnly || !!w.toks} onClick={() => play.patch({ plug: { ...w.plug, [l]: o } })} ariaLabel={`${l} as ${o}`}>{o}</Btn>
+              ))}
             </div>
-            <div className="p-2 bg-emerald-100/70 border border-emerald-300 rounded-lg text-center">
-              <span className="text-xs font-mono font-bold text-emerald-900">S = + (Add)</span>
-            </div>
-            <div className="p-2 bg-rose-100/70 border border-rose-300 rounded-lg text-center">
-              <span className="text-xs font-mono font-bold text-rose-900">M = − (Subtract)</span>
-            </div>
-            <div className="p-2 bg-amber-100/70 border border-amber-300 rounded-lg text-center">
-              <span className="text-xs font-mono font-bold text-amber-900">P = × (Multiply)</span>
-            </div>
-          </div>
-
-          <div className="w-full max-w-md border-t border-indigo-200 pt-3 text-center">
-            <div className="text-xs font-mono text-slate-500 mb-1">Step-by-Step BODMAS Proof:</div>
-            <div className="font-mono text-sm text-slate-700 font-bold">
-              24 ÷ 8 + 7 − (2 × 5) &nbsp;=&nbsp; 3 + 7 − 10 &nbsp;=&nbsp; 10 − 10 &nbsp;=&nbsp; <span className="text-indigo-600 font-black">0</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Final Calculated Value (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: 7, desc: "Ignored final multiplication", },
-              { id: "B" as const, val: 12, desc: "Left-to-right calculation error", },
-              { id: "C" as const, val: 5, desc: "Subtracted before multiplying", },
-              { id: "D" as const, val: 0, desc: "3 + 7 − 10 = 0", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.val}</span>
-                  <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+          </Bay>
+        ))}
       </div>
-    </PlayShell>
+      <Board className="mt-2">
+        <div className="flex flex-wrap items-center gap-1 justify-center">
+          {(w.toks ?? Q11_EXPR.map((t) => w.plug[t] ?? t)).map((t, i) =>
+            w.toks && ["×", "÷", "+", "−"].includes(t) ? (
+              <button key={i} type="button" disabled={play.readOnly} aria-label={`operation ${i}`} className="w-9 h-9 rounded-lg bg-indigo-600 text-white font-black" onClick={() => {
+                const t0 = w.toks!;
+                if (nextIdx(t0) !== i) return setMsg("Not yet — × and ÷ come first, left to right.");
+                setMsg(null);
+                const v = f(t, Number(t0[i - 1]), Number(t0[i + 1]));
+                play.patch({ toks: [...t0.slice(0, i - 1), String(+v.toFixed(6)), ...t0.slice(i + 2)] });
+              }}>{t}</button>
+            ) : (
+              <span key={i} className="font-mono text-xl font-black text-indigo-900 px-1">{t}</span>
+            )
+          )}
+        </div>
+      </Board>
+      {msg && <p className="text-xs font-bold text-rose-600">{msg}</p>}
+      <div className="flex gap-2 mt-2">
+        <Btn tone="emerald" disabled={play.readOnly || !ready || !!w.toks} onClick={() => play.patch({ toks: Q11_EXPR.map((t) => w.plug[t] ?? t) })}>▶ Start the factory</Btn>
+        <Btn tone="slate" disabled={play.readOnly || !w.toks} onClick={() => play.patch({ toks: null })}>Stop and re-plug</Btn>
+      </div>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q12 — 🎯 Geometric Dot Laboratory (Dot Situation)
+   Q12 — Geometric Dot Laboratory
+   The student places the two dots in a candidate figure; the scanner reports exactly which
+   shapes each dot is inside. A candidate can be locked only when both dots satisfy
+   Figure (X)'s conditions.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q12World {
-  selectedOption: "A" | "B" | "C" | "D";
-}
 
-export function Q12GeometricDotLaboratoryActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q12World>({
+interface Fig { c: [number, number, number]; s: [number, number, number]; t: Pt[] }
+const Q12_FIGS: Record<string, Fig> = {
+  A: { c: [35, 55, 16], s: [52, 50, 28], t: [[50, 10], [15, 85], [85, 85]] },
+  B: { c: [50, 52, 12], s: [30, 30, 42], t: [[50, 15], [20, 82], [80, 82]] },
+  C: { c: [20, 25, 14], s: [62, 60, 28], t: [[45, 40], [25, 90], [65, 90]] },
+  D: { c: [45, 50, 20], s: [50, 32, 35], t: [[22, 8], [8, 40], [36, 40]] },
+};
+const inside = (g: Fig, [x, y]: Pt) => {
+  const [[x1, y1], [x2, y2], [x3, y3]] = g.t;
+  const d = (ax: number, ay: number, bx: number, by: number) => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+  const a = d(x1, y1, x2, y2), b = d(x2, y2, x3, y3), c = d(x3, y3, x1, y1);
+  return {
+    circle: (x - g.c[0]) ** 2 + (y - g.c[1]) ** 2 <= g.c[2] ** 2,
+    triangle: (a >= 0 && b >= 0 && c >= 0) || (a <= 0 && b <= 0 && c <= 0),
+    square: x >= g.s[0] && x <= g.s[0] + g.s[2] && y >= g.s[1] && y <= g.s[1] + g.s[2],
+  };
+};
+const RULES = [
+  { dot: 1, want: { circle: true, triangle: true, square: false }, label: "circle and triangle only" },
+  { dot: 2, want: { circle: false, triangle: true, square: true }, label: "triangle and square only" },
+];
+
+export function Q12GeometricDotLaboratoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const [dot, setDot] = useState(1);
+  const svg = React.useRef<SVGSVGElement>(null);
+  const play = usePlay<{ fig: string; dots: Record<string, Record<number, Pt>>; locked: string | null }>({
     question,
+    initial: { fig: "A", dots: {}, locked: null },
+    derive: (w) => (!w.locked ? { note: "Place both dots correctly in a figure and lock it." } : { value: `Both dots fit in figure ${w.locked}`, optionId: w.locked }),
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { selectedOption: "A" },
-    derive: (w) => {
-      const isCorrect = w.selectedOption === "A";
-      return {
-        value: `Figure ${w.selectedOption} — ${
-          isCorrect
-            ? "Dot in (Circle ∩ Triangle only) AND (Triangle ∩ Square only)"
-            : "Does not contain both specified overlap regions"
-        }`,
-        optionId: matchOption(question, w.selectedOption) ?? matchText(question, w.selectedOption) ?? w.selectedOption,
-        note: isCorrect
-          ? "Correct! Figure A provides independent intersection regions for (Circle ∩ Triangle outside Square) and (Triangle ∩ Square outside Circle)."
-          : `Option ${w.selectedOption} fails one of the required dot placement conditions.`,
-      };
-    },
   });
+  const w = play.world;
+  const g = Q12_FIGS[w.fig];
+  const here = w.dots[w.fig] ?? {};
+  const ok = (r: (typeof RULES)[number]) => {
+    const p = here[r.dot];
+    if (!p) return false;
+    const s = inside(g, p);
+    return s.circle === r.want.circle && s.triangle === r.want.triangle && s.square === r.want.square;
+  };
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Geometric Dot Laboratory"
-      mission="Inspect the dot containment conditions in Figure (X) and identify the matching figure from the options."
-      icon={Target}
+      mission="In Figure (X) one dot is inside the circle and the triangle only, and the other inside the triangle and the square only. Pick a candidate, choose a dot and tap where it goes. Lock the candidate where both dots can sit correctly."
+      icon={CircleDot}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Selected Figure" value={`Option ${world.selectedOption}`} />}
+      submitLabel="Submit the figure"
+      live={<>{RULES.map((r) => <Gauge key={r.dot} label={`Dot ${r.dot} (${r.label})`} value={ok(r) ? "✓" : "✗"} tone={ok(r) ? "emerald" : "slate"} />)}</>}
     >
-      <div className="space-y-4">
-        {/* Figure X Reference Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-          <div>
-            <div className="inline-block bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded shadow-xs mb-1">
-              Reference Figure (X)
-            </div>
-            <p className="text-xs text-slate-600 font-medium max-w-sm">
-              Contains 2 Dots:
-              <br />• <b>Dot 1</b>: Inside <b>Circle & Triangle only</b> (outside square).
-              <br />• <b>Dot 2</b>: Inside <b>Triangle & Square only</b> (outside circle).
-            </p>
-          </div>
-          <svg viewBox="0 0 100 80" className="w-28 h-24 bg-white rounded-lg border-2 border-indigo-300 p-1 shadow-inner shrink-0">
-            <circle cx="35" cy="40" r="22" fill="none" stroke="#3b82f6" strokeWidth="2" />
-            <polygon points="50,15 85,65 15,65" fill="none" stroke="#ef4444" strokeWidth="2" />
-            <rect x="40" y="25" width="45" height="45" fill="none" stroke="#8b5cf6" strokeWidth="2" />
-            {/* Dot 1 (Circle & Triangle only) */}
-            <circle cx="34" cy="46" r="3.5" fill="#f59e0b" stroke="#b45309" strokeWidth="1" />
-            {/* Dot 2 (Triangle & Square only) */}
-            <circle cx="62" cy="52" r="3.5" fill="#f59e0b" stroke="#b45309" strokeWidth="1" />
-          </svg>
-        </div>
-
-        {/* 4 Candidate Option Cards with Full SVG Artwork */}
-        <Bay label="Candidate Figures (Select Option A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                id: "A" as const,
-                title: "Option A",
-                subtitle: "Contains both 2-shape intersections",
-                renderSvg: () => (
-                  <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <circle cx="35" cy="45" r="24" fill="none" stroke="#3b82f6" strokeWidth="1.8" />
-                    <polygon points="50,15 90,75 10,75" fill="none" stroke="#ef4444" strokeWidth="1.8" />
-                    <rect x="42" y="30" width="45" height="45" fill="none" stroke="#8b5cf6" strokeWidth="1.8" />
-                    <circle cx="32" cy="52" r="3" fill="#f59e0b" />
-                    <circle cx="65" cy="56" r="3" fill="#f59e0b" />
-                  </svg>
-                ),
-              },
-              {
-                id: "B" as const,
-                title: "Option B",
-                subtitle: "Triangle inside Square entirely",
-                renderSvg: () => (
-                  <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <rect x="10" y="10" width="80" height="70" fill="none" stroke="#8b5cf6" strokeWidth="1.8" />
-                    <polygon points="50,20 80,65 20,65" fill="none" stroke="#ef4444" strokeWidth="1.8" />
-                    <circle cx="50" cy="45" r="18" fill="none" stroke="#3b82f6" strokeWidth="1.8" />
-                  </svg>
-                ),
-              },
-              {
-                id: "C" as const,
-                title: "Option C",
-                subtitle: "Circle and Square separated",
-                renderSvg: () => (
-                  <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <circle cx="28" cy="45" r="20" fill="none" stroke="#3b82f6" strokeWidth="1.8" />
-                    <rect x="52" y="25" width="40" height="40" fill="none" stroke="#8b5cf6" strokeWidth="1.8" />
-                    <polygon points="50,10 85,80 15,80" fill="none" stroke="#ef4444" strokeWidth="1.8" />
-                  </svg>
-                ),
-              },
-              {
-                id: "D" as const,
-                title: "Option D",
-                subtitle: "No pure Circle-Triangle overlap",
-                renderSvg: () => (
-                  <svg viewBox="0 0 100 90" className="w-20 h-20 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <polygon points="50,15 90,75 10,75" fill="none" stroke="#ef4444" strokeWidth="1.8" />
-                    <circle cx="50" cy="48" r="16" fill="none" stroke="#3b82f6" strokeWidth="1.8" />
-                    <rect x="25" y="25" width="50" height="50" fill="none" stroke="#8b5cf6" strokeWidth="1.8" />
-                  </svg>
-                ),
-              },
-            ].map((opt) => {
-              const isSelected = world.selectedOption === opt.id;
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() => set({ selectedOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-
-                  {opt.renderSvg()}
-
-                  <span className="text-[10px] text-slate-500 font-medium mt-1">{opt.subtitle}</span>
-                  <button
-                    type="button"
-                    className={`mt-2 text-[10px] font-bold px-2 py-1 rounded w-full transition-colors ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {Object.keys(Q12_FIGS).map((k) => <Btn key={k} active={w.fig === k} tone={w.fig === k ? "violet" : "slate"} onClick={() => play.patch({ fig: k, locked: null })}>Figure {k}</Btn>)}
+        {RULES.map((r) => <Btn key={r.dot} active={dot === r.dot} tone={dot === r.dot ? "amber" : "slate"} onClick={() => setDot(r.dot)}>Dot {r.dot}</Btn>)}
       </div>
-    </PlayShell>
+      <Board>
+        <svg ref={svg} viewBox="0 0 100 100" className="w-full max-h-80" onClick={(e) => {
+          if (play.readOnly) return;
+          const q = clientToSvg(svg.current, e.clientX, e.clientY);
+          if (!q) return;
+          play.set((s) => ({ ...s, locked: null, dots: { ...s.dots, [s.fig]: { ...(s.dots[s.fig] ?? {}), [dot]: [Math.round(q.x), Math.round(q.y)] } } }));
+        }}>
+          <circle cx={g.c[0]} cy={g.c[1]} r={g.c[2]} fill="#38bdf833" stroke="#0284c7" strokeWidth={0.8} />
+          <rect x={g.s[0]} y={g.s[1]} width={g.s[2]} height={g.s[2]} fill="#f59e0b22" stroke="#d97706" strokeWidth={0.8} />
+          <path d={polyPath(g.t)} fill="#8b5cf622" stroke="#7c3aed" strokeWidth={0.8} />
+          {Object.entries(here).map(([k, p]) => (
+            <g key={k}>
+              <circle cx={p[0]} cy={p[1]} r={2} fill={ok(RULES[Number(k) - 1]) ? "#10b981" : "#e11d48"} stroke="#fff" strokeWidth={0.5} />
+              <text x={p[0] + 2.5} y={p[1] - 2} fontSize={4} fontWeight={900} fill="#1e1b4b">{k}</text>
+            </g>
+          ))}
+        </svg>
+      </Board>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !RULES.every(ok)} onClick={() => play.patch({ locked: w.fig })}>🔒 Lock figure {w.fig}</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q13 — 📚 Dictionary Conveyor
+   Q13 — Dictionary Conveyor
+   The student loads the word cards onto the conveyor in the order they would appear in a
+   dictionary. The conveyor reads back their numbers in that order.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q13World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q13DictionaryConveyorActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const WORDS = [
-    { num: 1, word: "Fight" },
-    { num: 2, word: "Freak" },
-    { num: 3, word: "Faint" },
-    { num: 4, word: "Fault" },
-    { num: 5, word: "Flick" },
-  ];
-
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q13World>({
+export function Q13DictionaryConveyorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const words = cfg<string[]>(question, "words", []);
+  const play = usePlay<{ belt: number[] }>({
     question,
+    initial: { belt: [] },
+    derive: (w) => {
+      if (w.belt.length < words.length) return { note: "Load every word onto the conveyor." };
+      const text = w.belt.map((i) => i + 1).join(", ");
+      return { value: text, optionId: matchText(question, text) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const seq =
-        w.chosenOption === "A"
-          ? "3, 1, 4, 5, 2"
-          : w.chosenOption === "B"
-          ? "4, 3, 1, 5, 2"
-          : w.chosenOption === "C"
-          ? "3, 4, 5, 1, 2"
-          : "3, 4, 1, 5, 2";
-
-      return {
-        value: `${seq} (Faint → Fault → Fight → Flick → Freak)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Alphabetical order: 3. Faint (F-a-i) → 4. Fault (F-a-u) → 1. Fight (F-i) → 5. Flick (F-l) → 2. Freak (F-r) = 3, 4, 1, 5, 2."
-          : `Selected sequence ${seq}. Compare prefixes 'Fa-', 'Fi-', 'Fl-', 'Fr-'.`,
-      };
-    },
   });
+  const w = play.world;
+  const letterAt = (k: number) => {
+    // the first letter position where the loaded neighbours differ, to show the student why
+    if (k === 0) return -1;
+    const a = words[w.belt[k - 1]], b = words[w.belt[k]];
+    let i = 0;
+    while (i < Math.min(a.length, b.length) && a[i].toLowerCase() === b[i].toLowerCase()) i++;
+    return i;
+  };
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Dictionary Conveyor"
-      mission="Arrange the five words in standard alphabetical dictionary order."
-      icon={BookOpen}
+      mission="Tap the word cards in the order they appear in a dictionary. Compare letter by letter — the conveyor highlights the first letter where each word differs from the one before it."
+      icon={BookA}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Dictionary Sequence" value={world.chosenOption === "D" ? "3, 4, 1, 5, 2 (Option D)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the order"
+      live={<Gauge label="Order" value={w.belt.map((i) => i + 1).join(", ") || "—"} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Word Cards Display */}
-        <Bay label="Original Word List with Number IDs">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center py-2">
-            {WORDS.map((item) => (
-              <div
-                key={item.num}
-                className="p-3 bg-white border-2 border-indigo-200 rounded-xl shadow-xs flex flex-col items-center justify-between"
-              >
-                <span className="text-[10px] font-mono text-indigo-600 font-bold">
-                  Word #{item.num}
-                </span>
-                <span className="font-mono font-black text-base text-slate-800 my-1">
-                  {item.word}
-                </span>
-                <span className="text-[9px] text-slate-500 font-mono">
-                  Pref: {item.word.slice(0, 3)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Bay>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Correct Dictionary Order (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, seq: "3, 1, 4, 5, 2", desc: "Faint → Fight → Fault...", },
-              { id: "B" as const, seq: "4, 3, 1, 5, 2", desc: "Fault before Faint error", },
-              { id: "C" as const, seq: "3, 4, 5, 1, 2", desc: "Flick before Fight error", },
-              { id: "D" as const, seq: "3, 4, 1, 5, 2", desc: "Faint → Fault → Fight → Flick → Freak", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-base font-black text-slate-800 my-1 font-mono">{opt.seq}</span>
-                  <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="flex flex-wrap gap-2">
+        {words.map((wd, i) => (
+          <Btn key={wd} tone={w.belt.includes(i) ? "emerald" : "slate"} disabled={play.readOnly || w.belt.includes(i)} onClick={() => play.patch({ belt: [...w.belt, i] })} ariaLabel={`word ${wd}`}>
+            {i + 1}. {wd}
+          </Btn>
+        ))}
       </div>
-    </PlayShell>
+      <Board className="mt-2">
+        <div className="flex flex-wrap gap-2 min-h-[48px]">
+          {w.belt.map((i, k) => {
+            const d = letterAt(k);
+            return (
+              <span key={i} className="px-3 py-2 rounded-lg bg-white border border-indigo-200 font-mono text-lg font-black text-indigo-900">
+                {words[i].split("").map((c, j) => <span key={j} className={j === d ? "bg-amber-200 rounded" : ""}>{c}</span>)}
+                <sup className="text-[10px] text-slate-500 ml-1">{i + 1}</sup>
+              </span>
+            );
+          })}
+        </div>
+      </Board>
+      <Btn tone="slate" className="mt-2" disabled={play.readOnly || !w.belt.length} onClick={() => play.patch({ belt: [] })}>Empty the conveyor</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q14 — 👨‍👩‍👧 Family Detective (Blood Relations)
+   Q14 — Family Detective
+   Person cards go into a family tree. When the clue in Amar's sentence lights up, the
+   detective reads Amar's relation to the girl's mother from the tree.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q14World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q14FamilyDetectiveActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q14World>({
+const PEOPLE = [
+  { id: "Amar", g: "M" },
+  { id: "Amar's mother", g: "F" },
+  { id: "Girl's mother", g: "F" },
+  { id: "Girl", g: "F" },
+];
+export function Q14FamilyDetectiveActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const [held, setHeld] = useState<string | null>(null);
+  const play = usePlay<{ at: Record<string, string> }>({
     question,
+    initial: { at: {} },
+    derive: (w) => {
+      const lit = w.at["Amar's mother"] === "top" && ["c1", "c2"].includes(w.at["Amar"]) && ["c1", "c2"].includes(w.at["Girl's mother"]) && w.at["Girl"] === `${w.at["Girl's mother"]}k`;
+      if (!lit) return { note: "Build the tree so the clue lights up." };
+      return { value: "Amar and the girl's mother are children of the same mother", optionId: matchText(question, "Brother") };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const rel =
-        w.chosenOption === "A"
-          ? "Father"
-          : w.chosenOption === "B"
-          ? "Uncle"
-          : w.chosenOption === "C"
-          ? "Maternal Uncle"
-          : "Brother";
-
-      return {
-        value: `${rel} (Amar is Brother to Girl's Mother)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, rel) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 'Only daughter of my mother' = Amar's sister (who is the girl's mother). Therefore, Amar is the Brother of the girl's mother."
-          : `Selected ${rel}. Note: The question asks for Amar's relation to the girl's MOTHER, not to the girl herself.`,
-      };
-    },
   });
+  const w = play.world;
+  const who = (s: string) => Object.keys(w.at).find((k) => w.at[k] === s);
+  const place = (s: string) => {
+    if (!held || play.readOnly) return;
+    play.set((p) => {
+      const at = { ...p.at };
+      Object.keys(at).forEach((k) => at[k] === s && delete at[k]);
+      at[held] = s;
+      return { at };
+    });
+    setHeld(null);
+  };
+  const Slot = ({ s, label }: { s: string; label: string }) => (
+    <button type="button" onClick={() => place(s)} aria-label={`slot ${label}`} className={`h-12 w-full rounded-xl border-2 text-xs font-black ${who(s) ? "bg-white border-indigo-400 text-indigo-900" : "border-dashed border-slate-300 text-slate-400"}`}>
+      {who(s) ?? label}
+    </button>
+  );
+  const lit = w.at["Amar's mother"] === "top" && ["c1", "c2"].includes(w.at["Amar"] ?? "") && ["c1", "c2"].includes(w.at["Girl's mother"] ?? "") && w.at["Girl"] === `${w.at["Girl's mother"]}k`;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Family Detective"
-      mission="Trace the blood relations in Amar's statement: 'Her mother is the only daughter of my mother.'"
+      mission="“Her mother is the only daughter of my mother.” Tap a card, then a place in the tree: the top is a mother, the next row her children, and the bottom a child of the person above it. When the clue lights, read how Amar is related to the girl's mother."
       icon={Users}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Relation to Girl's Mother" value={world.chosenOption === "D" ? "Brother (Option D)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the relation"
+      live={<Gauge label="Clue" value={lit ? "lit" : "not yet"} tone={lit ? "emerald" : "slate"} />}
     >
-      <div className="space-y-4">
-        {/* Family Tree Diagram */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 flex flex-col items-center shadow-sm">
-          <svg viewBox="0 0 320 160" className="w-full max-w-md h-40 bg-white rounded-lg border border-slate-200 shadow-inner">
-            {/* Generation 1: Amar's Mother */}
-            <circle cx="160" cy="30" r="18" fill="#a855f7" />
-            <text x="160" y="34" fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">Amar's Mother</text>
-
-            {/* Generation 2: Amar & Sister (Girl's Mother) */}
-            <circle cx="80" cy="95" r="18" fill="#3b82f6" />
-            <text x="80" y="99" fill="white" fontSize="10" fontWeight="bold" textAnchor="middle">Amar</text>
-
-            <circle cx="240" cy="95" r="18" fill="#ec4899" />
-            <text x="240" y="99" fill="white" fontSize="8.5" fontWeight="bold" textAnchor="middle">Girl's Mother</text>
-
-            {/* Generation 3: Girl */}
-            <circle cx="240" cy="140" r="12" fill="#f43f5e" />
-            <text x="240" y="143" fill="white" fontSize="8" fontWeight="bold" textAnchor="middle">Girl</text>
-
-            {/* Tree Lines */}
-            <line x1="160" y1="48" x2="80" y2="77" stroke="#94a3b8" strokeWidth="2" />
-            <line x1="160" y1="48" x2="240" y2="77" stroke="#94a3b8" strokeWidth="2" />
-            <line x1="240" y1="113" x2="240" y2="128" stroke="#94a3b8" strokeWidth="2" />
-
-            {/* Sibling Relation Line */}
-            <line x1="98" y1="95" x2="222" y2="95" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="3 3" />
-            <rect x="125" y="85" width="70" height="20" rx="4" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1" />
-            <text x="160" y="98" fill="#b45309" fontSize="9" fontWeight="black" textAnchor="middle">
-              Siblings (Brother)
-            </text>
-          </svg>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="How is Amar Related to the Girl's Mother?">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, rel: "Father", },
-              { id: "B" as const, rel: "Uncle", },
-              { id: "C" as const, rel: "Maternal Uncle", desc: "Relation to girl (not mother)", },
-              { id: "D" as const, rel: "Brother", desc: "Amar is her Brother", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-base font-black text-slate-800 my-1">{opt.rel}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {PEOPLE.map((p) => <Btn key={p.id} active={held === p.id} tone={held === p.id ? "amber" : "slate"} disabled={play.readOnly} onClick={() => setHeld(p.id)} ariaLabel={`person ${p.id}`}>{p.g === "M" ? "👦" : "👩"} {p.id}</Btn>)}
       </div>
-    </PlayShell>
+      <Board>
+        <div className="max-w-sm mx-auto space-y-2">
+          <Slot s="top" label="mother" />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2"><Slot s="c1" label="child 1" /><Slot s="c1k" label="child of child 1" /></div>
+            <div className="space-y-2"><Slot s="c2" label="child 2" /><Slot s="c2k" label="child of child 2" /></div>
+          </div>
+        </div>
+      </Board>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q15 — 🧩 Figure Matrix (Visual 3×3 Grid)
+   Q15 — Matrix Laboratory
+   Along each row the shaded sector turns a quarter turn clockwise, and the third column
+   carries a cross. The student builds the missing cell — shape, shaded sector and cross —
+   and the built cell is compared with the options.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q15World {
-  selectedCell: "A" | "B" | "C" | "D";
-}
 
-export function Q15MatrixLaboratoryActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q15World>({
+const SHAPES = ["circle", "square", "diamond"] as const;
+const SECT = ["left", "top", "right", "bottom"] as const;
+const Q15_STATES: Record<string, { shape: string; sector: string; cross: boolean }> = {
+  A: { shape: "circle", sector: "top", cross: false },
+  B: { shape: "square", sector: "bottom", cross: false },
+  C: { shape: "diamond", sector: "right", cross: true },
+  D: { shape: "circle", sector: "right", cross: true },
+};
+function Cell({ shape, sector, cross }: { shape: string | null; sector: string | null; cross: boolean }) {
+  const clip = shape === "circle" ? <circle cx={20} cy={20} r={15} /> : shape === "square" ? <rect x={6} y={6} width={28} height={28} /> : <polygon points="20,4 36,20 20,36 4,20" />;
+  const wedge: Record<string, string> = { left: "M20 20 L0 0 L0 40 Z", top: "M20 20 L0 0 L40 0 Z", right: "M20 20 L40 0 L40 40 Z", bottom: "M20 20 L0 40 L40 40 Z" };
+  const id = `cl${shape}${sector}${cross}`;
+  return (
+    <svg viewBox="0 0 40 40" className="w-full h-full">
+      <rect width={40} height={40} fill="#fff" />
+      {shape && (
+        <>
+          <defs><clipPath id={id}>{clip}</clipPath></defs>
+          {sector && <path d={wedge[sector]} fill="#6366f1" clipPath={`url(#${id})`} />}
+          {React.cloneElement(clip, { fill: "none", stroke: "#312e81", strokeWidth: 1.2 })}
+          {cross && <path d="M14 20 H26 M20 14 V26" stroke="#e11d48" strokeWidth={1.4} />}
+        </>
+      )}
+    </svg>
+  );
+}
+export function Q15MatrixLaboratoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ shape: string | null; sector: string | null; cross: boolean; placed: boolean }>({
     question,
+    initial: { shape: null, sector: null, cross: false, placed: false },
+    derive: (w) => {
+      if (!w.placed || !w.shape || !w.sector) return { note: "Build the missing cell and slot it in." };
+      const opt = Object.keys(Q15_STATES).find((k) => Q15_STATES[k].shape === w.shape && Q15_STATES[k].sector === w.sector && Q15_STATES[k].cross === w.cross);
+      return { value: `${w.shape}, ${w.sector} sector${w.cross ? ", cross" : ""}`, optionId: opt };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { selectedCell: "C" },
-    derive: (w) => {
-      const isCorrect = w.selectedCell === "C";
-      const desc =
-        w.selectedCell === "C"
-          ? "Diamond with shaded right sector & central cross"
-          : w.selectedCell === "A"
-          ? "Circle with 2 top dots"
-          : w.selectedCell === "B"
-          ? "Square with bottom triangle"
-          : "Dual concentric circle";
-
-      return {
-        value: `Option ${w.selectedCell} — ${desc}`,
-        optionId: matchOption(question, w.selectedCell) ?? matchText(question, w.selectedCell) ?? w.selectedCell,
-        note: isCorrect
-          ? "Correct! Row 3 combines diamond outer geometry with clockwise 90° sector shading progression and inner cross."
-          : `Option ${w.selectedCell} does not complete the row-column geometry progression.`,
-      };
-    },
   });
+  const w = play.world;
 
   return (
-    <PlayShell
-      title="Figure Matrix Laboratory"
-      mission="Analyze row and column transformations to construct the missing 9th cell in the 3×3 matrix."
-      icon={Grid}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="9th Cell Figure" value={`Option ${world.selectedCell}`} />}
+      title="Matrix Laboratory"
+      mission="Study the rows and columns. Build the missing cell: pick its shape, the shaded sector and whether it carries the cross. Slot it into the matrix."
+      icon={Grid3x3}
+      dim="2D"
+      submitLabel="Submit the cell"
+      live={<Gauge label="Your cell" value={`${w.shape ?? "?"} · ${w.sector ?? "?"}${w.cross ? " · cross" : ""}`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* 3×3 Visual Matrix Canvas */}
-        <div className="bg-gradient-to-br from-violet-50 via-white to-indigo-50 border border-violet-200 p-4 rounded-xl flex justify-center shadow-sm">
-          <div className="grid grid-cols-3 gap-2.5 max-w-sm w-full">
-            {/* Row 1: Circles */}
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <circle cx="20" cy="20" r="16" fill="none" stroke="#6366f1" strokeWidth="2" />
-                <path d="M 20 20 L 20 4 A 16 16 0 0 1 36 20 Z" fill="#818cf8" />
-              </svg>
-            </div>
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <circle cx="20" cy="20" r="16" fill="none" stroke="#6366f1" strokeWidth="2" />
-                <path d="M 20 20 L 36 20 A 16 16 0 0 1 20 36 Z" fill="#818cf8" />
-              </svg>
-            </div>
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <circle cx="20" cy="20" r="16" fill="none" stroke="#6366f1" strokeWidth="2" />
-                <path d="M 20 20 L 20 36 A 16 16 0 0 1 4 20 Z" fill="#818cf8" />
-              </svg>
-            </div>
-
-            {/* Row 2: Squares */}
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <rect x="6" y="6" width="28" height="28" fill="none" stroke="#ec4899" strokeWidth="2" />
-                <polygon points="6,6 20,20 6,34" fill="#f472b6" />
-              </svg>
-            </div>
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <rect x="6" y="6" width="28" height="28" fill="none" stroke="#ec4899" strokeWidth="2" />
-                <polygon points="6,6 34,6 20,20" fill="#f472b6" />
-              </svg>
-            </div>
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <rect x="6" y="6" width="28" height="28" fill="none" stroke="#ec4899" strokeWidth="2" />
-                <polygon points="34,6 34,34 20,20" fill="#f472b6" />
-              </svg>
-            </div>
-
-            {/* Row 3: Diamonds */}
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <rect x="10" y="10" width="20" height="20" transform="rotate(45 20 20)" fill="none" stroke="#10b981" strokeWidth="2" />
-                <polygon points="20,6 20,20 6,20" fill="#34d399" />
-              </svg>
-            </div>
-            <div className="aspect-square bg-white rounded-lg border border-slate-300 p-2 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-9 h-9">
-                <rect x="10" y="10" width="20" height="20" transform="rotate(45 20 20)" fill="none" stroke="#10b981" strokeWidth="2" />
-                <polygon points="20,6 34,20 20,20" fill="#34d399" />
-              </svg>
-            </div>
-
-            {/* Cell 9 (Interactive ?) */}
-            <div className="aspect-square bg-indigo-100/90 border-2 border-indigo-500 rounded-lg p-2 flex flex-col items-center justify-center shadow-md">
-              <span className="text-[10px] text-indigo-700 font-black">Cell ?</span>
-              <span className="font-mono text-xs font-bold text-indigo-900">
-                Opt {world.selectedCell}
-              </span>
-            </div>
-          </div>
+      <div className="grid md:grid-cols-[auto_1fr] gap-3 items-start">
+        <div className="grid grid-cols-3 w-60 h-60 gap-0.5 bg-indigo-200 p-0.5 rounded-lg">
+          {SHAPES.flatMap((sh, r) =>
+            [0, 1, 2].map((c) =>
+              r === 2 && c === 2 ? (
+                <div key={`${r}${c}`} className="bg-amber-50 grid place-items-center">{w.placed ? <Cell shape={w.shape} sector={w.sector} cross={w.cross} /> : <span className="text-3xl text-amber-600 font-black">?</span>}</div>
+              ) : (
+                <Cell key={`${r}${c}`} shape={sh} sector={SECT[c]} cross={c === 2} />
+              )
+            )
+          )}
         </div>
-
-        {/* 4 Candidate Figure Cards */}
-        <Bay label="Candidate Figures for the 9th Cell (Select A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                id: "A" as const,
-                title: "Option A",
-                subtitle: "Circle with 2 Dots",
-                renderSvg: () => (
-                  <svg viewBox="0 0 60 60" className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <circle cx="30" cy="30" r="22" fill="none" stroke="#64748b" strokeWidth="2" />
-                    <circle cx="22" cy="22" r="3" fill="#64748b" />
-                    <circle cx="38" cy="22" r="3" fill="#64748b" />
-                  </svg>
-                ),
-              },
-              {
-                id: "B" as const,
-                title: "Option B",
-                subtitle: "Square + Triangle",
-                renderSvg: () => (
-                  <svg viewBox="0 0 60 60" className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <rect x="10" y="10" width="40" height="40" fill="none" stroke="#64748b" strokeWidth="2" />
-                    <polygon points="30,30 45,45 15,45" fill="#64748b" />
-                  </svg>
-                ),
-              },
-              {
-                id: "C" as const,
-                title: "Option C",
-                subtitle: "Diamond + Shaded Right Sector & Cross",
-                renderSvg: () => (
-                  <svg viewBox="0 0 60 60" className="w-14 h-14 bg-emerald-50 border border-slate-200 rounded-lg p-1">
-                    <rect x="15" y="15" width="30" height="30" transform="rotate(45 30 30)" fill="none" stroke="#059669" strokeWidth="2.5" />
-                    <polygon points="30,9 51,30 30,30" fill="#10b981" />
-                    <line x1="30" y1="12" x2="30" y2="48" stroke="#059669" strokeWidth="1.5" />
-                    <line x1="12" y1="30" x2="48" y2="30" stroke="#059669" strokeWidth="1.5" />
-                  </svg>
-                ),
-              },
-              {
-                id: "D" as const,
-                title: "Option D",
-                subtitle: "Dual Concentric Circle",
-                renderSvg: () => (
-                  <svg viewBox="0 0 60 60" className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-lg p-1">
-                    <circle cx="30" cy="30" r="22" fill="none" stroke="#64748b" strokeWidth="2" />
-                    <circle cx="30" cy="30" r="12" fill="none" stroke="#64748b" strokeWidth="2" />
-                  </svg>
-                ),
-              },
-            ].map((opt) => {
-              const isSelected = world.selectedCell === opt.id;
-              const isC = opt.id === "C";
-
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() => set({ selectedCell: opt.id })}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="font-bold text-xs text-slate-800">{opt.title}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-
-                  {opt.renderSvg()}
-
-                  <span className="text-[10px] text-slate-500 font-medium mt-1">{opt.subtitle}</span>
-                  <button
-                    type="button"
-                    className={`mt-2 text-[10px] font-bold px-2 py-1 rounded w-full transition-colors ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Pick " + opt.id}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+        <Bay label="Cell builder" tone="violet">
+          <div className="flex flex-wrap gap-1 mb-1">{SHAPES.map((s) => <Btn key={s} className="px-2 min-h-[34px]" active={w.shape === s} tone={w.shape === s ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ shape: s, placed: false })}>{s}</Btn>)}</div>
+          <div className="flex flex-wrap gap-1 mb-1">{SECT.map((s) => <Btn key={s} className="px-2 min-h-[34px]" active={w.sector === s} tone={w.sector === s ? "sky" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ sector: s, placed: false })} ariaLabel={`sector ${s}`}>shade {s}</Btn>)}</div>
+          <Btn className="px-2 min-h-[34px]" active={w.cross} tone={w.cross ? "rose" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ cross: !w.cross, placed: false })}>✚ cross {w.cross ? "on" : "off"}</Btn>
+          <div className="w-20 h-20 mt-2 border border-indigo-200 rounded"><Cell shape={w.shape} sector={w.sector} cross={w.cross} /></div>
+          <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.shape || !w.sector} onClick={() => play.patch({ placed: true })}>Slot it in</Btn>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }

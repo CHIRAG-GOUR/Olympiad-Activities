@@ -251,7 +251,7 @@ export const IMO6P3_QUESTIONS: Question[] = [
     foldDirection: "right_to_left",
   }),
 
-  q(10, "Direction & Distance Sense", "Vansh walks 20 m North, turns right and walks 30 m, then turns right again and walks 35 m to reach Point C. Puneet walks 15 m East, turns left and walks 15 m to reach Point C. Find the shortest distance between their starting points.", [
+  q(10, "Direction & Distance Sense", "Vansh starts at A and walks 20 m North, turns right and walks 30 m, then turns right again and walks 35 m to reach point C. Puneet starts at B and walks 20 m North, turns right and walks 30 m to reach the same point C. Find the shortest distance between their starting points A and B.", [
     "25 metres",
     "30 metres",
     "35 metres",
@@ -259,8 +259,9 @@ export const IMO6P3_QUESTIONS: Question[] = [
   ], {
     game: "Two-Explorer Navigation",
     vanshStart: [0, 0],
-    puneetStart: [15, 20],
+    puneetStart: [0, 35],
     distance: 35,
+    fixed: "Puneet's route was changed: as first written the two starting points were 33.5 m apart, which matched no option.",
   }),
 
   q(11, "Mathematical Operations Substitution", "If 'P' denotes '×', 'R' denotes '÷', 'M' denotes '−', and 'S' denotes '+', then find the value of:\n24 R 8 S 7 M 2 P 5", [
@@ -351,17 +352,18 @@ export const IMO6P3_QUESTIONS: Question[] = [
     polygonFigures: ["(i)"],
   }),
 
-  q(19, "Area of Overlapping Shapes", "Two squares of sides 10 cm and 8 cm overlap as shown in the figure, with an overlapping rectangular area of dimensions 4 cm × 3 cm. Find the total area of the unshaded region.", [
+  q(19, "Area of Overlapping Shapes", "Two squares of sides 10 cm and 8 cm overlap as shown, and the overlapping part is a rectangle 4 cm × 3 cm. Find the total area covered by the two squares together.", [
     "128 cm²",
     "136 cm²",
-    "140 cm²",
-    "140 cm²"
+    "164 cm²",
+    "152 cm²"
   ], {
     game: "Area Construction Lab",
     sq1: 100,
     sq2: 64,
     overlap: 12,
-    unshaded: 140,
+    covered: 152,
+    fixed: "Options C and D were both 140 cm²; the question now asks for the area covered (100 + 64 − 12 = 152).",
   }),
 
   q(20, "Clock Angles", "Find the smaller angle formed between the hour hand and the minute hand of a clock at 10:00 o'clock.", [
@@ -585,10 +587,10 @@ export const IMO6P3_QUESTIONS: Question[] = [
   }),
 
   q(39, "Liquid Capacity Addition", "Ashima prepared a mocktail by mixing 2⅓ litres of soda, 1⅔ litres of lime syrup, and 1⅚ litres of sparkling water. What is the total volume of the mocktail prepared?", [
-    "4 ⅔ litres",
-    "5 ⅓ litres",
+    "4 2/3 litres",
+    "5 1/3 litres",
     "6 litres",
-    "5 ⅚ litres"
+    "5 5/6 litres"
   ], {
     game: "Mocktail Laboratory",
     v1: 7/3,

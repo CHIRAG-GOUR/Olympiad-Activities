@@ -248,6 +248,7 @@ export function Btn({
   tone = "violet",
   className = "",
   title,
+  ariaLabel,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
@@ -256,6 +257,7 @@ export function Btn({
   tone?: "violet" | "slate" | "emerald" | "amber" | "rose" | "sky";
   className?: string;
   title?: string;
+  ariaLabel?: string;
 }) {
   const on = {
     violet: "bg-violet-600 border-violet-700 text-white",
@@ -269,6 +271,7 @@ export function Btn({
     <button
       type="button"
       title={title}
+      aria-label={ariaLabel}
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}

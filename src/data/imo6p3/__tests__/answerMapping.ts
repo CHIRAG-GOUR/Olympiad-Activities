@@ -29,7 +29,7 @@ function runAudit() {
     const act = IMO6P3_ACTIVITY_MAP[q.id];
 
     if (!act) {
-      throw new Error(`Missing bespoke interactive activity for ${q.id} (${q.code})`);
+      throw new Error(`Missing bespoke interactive activity for ${q.id} (${q.questionId})`);
     }
 
     const correctOptionId = q.multipleChoiceConfig?.correctOptionId;
@@ -38,10 +38,10 @@ function runAudit() {
     }
 
     const cfg = q.customConfig as Record<string, unknown> | undefined;
-    if (cfg?.answerKeyStatus === "conflict" || cfg?.sourceAnswerDiscrepancy) {
+    if (cfg?.answerKeyStatus === "conflict" || cfg?.sourceAnswerDiscrepancy || cfg?.discrepancy || cfg?.fixed) {
       discrepanciesFlagged++;
       console.log(
-        `[AUDIT FLAG] Q${qNum} (${q.code}): Verified Option = ${q.correctOptionId}, Source Key = ${cfg.sourceAnswerKey}. Reason: ${cfg.discrepancyNote ?? cfg.auditReason}`
+        `[AUDIT FLAG] Q${qNum} (${q.questionId}): Verified Option = ${correctOptionId}, Source Key = ${cfg.sourceAnswerKey}. Reason: ${cfg.discrepancyNote ?? cfg.auditReason ?? cfg.discrepancy ?? cfg.fixed}`
       );
     }
 

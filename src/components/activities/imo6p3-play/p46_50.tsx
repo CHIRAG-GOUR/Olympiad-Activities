@@ -1,631 +1,304 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Cpu,
-  TrendingUp,
-  FlaskConical,
-  ShieldCheck,
-  Trophy,
-  CheckCircle2,
-  Sparkles,
-} from "lucide-react";
+import React from "react";
+import { MonitorCheck, ChartLine, ClipboardCheck, ShieldCheck, Cpu } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
+import { matchText, gcd } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Shell, Board, Stepper, toggle } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q46 — 🧠 Geometry Control Room (HOTS Geometry Fundamentals)
+   Q46 — Geometry Control Room (Achievers)
+   Four stations. (P) turn one line until it never meets the other, and name the pair.
+   (Q) add segments until a closed figure forms. (R) slide a chord until it passes through
+   the centre, and name it. (S) take 3/5 of a right angle on the slicer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q46World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q46GeometryClassificationActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q46World>({
+export function Q46GeometryClassificationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ tilt: number; segs: number; chord: number; slices: number; taken: number; done: string[] }>({
     question,
+    initial: { tilt: 30, segs: 1, chord: 20, slices: 1, taken: 0, done: [] },
+    derive: (w) => {
+      if (w.done.length < 4) return { note: "Complete all four stations." };
+      const P = w.tilt === 0 ? "Parallel" : "Intersecting";
+      const R = w.chord === 0 ? "Diameter" : "Chord";
+      const S = +(90 * (w.taken / w.slices)).toFixed(2);
+      const t = `(P) ${P}, (Q) ${w.segs}, (R) ${R}, (S) ${S}°`;
+      return { value: t, optionId: matchText(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const desc =
-        w.chosenOption === "D"
-          ? "(P) Parallel, (Q) 3, (R) Diameter, (S) 54°"
-          : w.chosenOption === "A"
-          ? "(P) Intersecting, (Q) 4, (R) Radius, (S) 60°"
-          : w.chosenOption === "B"
-          ? "(P) Parallel, (Q) 4, (R) Diameter, (S) 45°"
-          : "(P) Intersecting, (Q) 3, (R) Chord, (S) 54°";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! (P) Non-intersecting lines in a plane = Parallel. (Q) Minimum polygon sides = 3 (triangle). (R) Chord through centre = Diameter. (S) 3/5 × 90° = 54°."
-          : `Selected Option ${w.chosenOption}. Check 4 geometric axioms: Parallel, 3 sides, Diameter, 54°.`,
-      };
-    },
   });
+  const w = play.world;
+  const mark = (k: string) => play.patch({ done: w.done.includes(k) ? w.done : [...w.done, k] });
+  const set = (p: Partial<typeof w>, k: string) => play.set((s) => ({ ...s, ...p, done: s.done.filter((x) => x !== k) }));
+  const closed = w.segs >= 3;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Geometry Control Room"
-      mission="Audit all 4 higher-order geometric definitions (Parallel, Polygon, Chord, Angle) to select the correct set."
-      icon={Cpu}
+      mission="Work each station and lock it. (P) Tilt the second line until the two lines never meet. (Q) Add segments one at a time until they close a figure. (R) Slide the chord until it passes through the centre. (S) Cut a right angle into equal slices and take 3 of 5."
+      icon={MonitorCheck}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Geometry State" value={world.chosenOption === "D" ? "(P) Parallel, (Q) 3, (R) Diameter, (S) 54°" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit all four blanks"
+      live={<Gauge label="Stations locked" value={`${w.done.length}/4`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* 4 Statement Inspection Nodes */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Statement (P)</span>
-            <span className="text-xs font-semibold text-slate-600 block mt-1">Non-intersecting lines</span>
-            <span className="font-mono text-sm font-black text-indigo-700 mt-2 block">Parallel</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Statement (Q)</span>
-            <span className="text-xs font-semibold text-slate-600 block mt-1">Min lines for polygon</span>
-            <span className="font-mono text-sm font-black text-indigo-700 mt-2 block">3 (Triangle)</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Statement (R)</span>
-            <span className="text-xs font-semibold text-slate-600 block mt-1">Chord through centre</span>
-            <span className="font-mono text-sm font-black text-indigo-700 mt-2 block">Diameter</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Statement (S)</span>
-            <span className="text-xs font-semibold text-slate-600 block mt-1">3/5 of a right angle</span>
-            <span className="font-mono text-sm font-black text-indigo-700 mt-2 block">54°</span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Correct Combination of Blank Values (A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, text: "(P) Intersecting, (Q) 4, (R) Radius, (S) 60°", },
-              { id: "B" as const, text: "(P) Parallel, (Q) 4, (R) Diameter, (S) 45°", },
-              { id: "C" as const, text: "(P) Intersecting, (Q) 3, (R) Chord, (S) 54°", },
-              { id: "D" as const, text: "(P) Parallel, (Q) 3, (R) Diameter, (S) 54°", desc: "All 4 axioms exact", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-                  <span className="text-xs font-mono font-bold text-slate-800">{opt.text}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}
-                </button>
-              );
-            })}
-          </div>
+      <div className="grid md:grid-cols-2 gap-2">
+        <Bay label="P · two lines">
+          <svg viewBox="0 0 100 40" className="w-full h-20 bg-white rounded"><line x1={5} y1={12} x2={95} y2={12} stroke="#4338ca" strokeWidth={1.4} /><line x1={5} y1={30 + w.tilt * 0.3} x2={95} y2={30 - w.tilt * 0.3} stroke="#f59e0b" strokeWidth={1.4} /></svg>
+          <div className="flex items-center gap-1"><Stepper label="tilt" value={w.tilt} min={-30} max={30} steps={[10]} disabled={play.readOnly} onStep={(d) => set({ tilt: w.tilt + d }, "P")} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly} onClick={() => mark("P")}>Lock</Btn></div>
+          <p className="text-[11px] font-bold text-slate-600">{w.tilt === 0 ? "They never meet: parallel lines." : "They meet somewhere: intersecting lines."}</p>
         </Bay>
-      </div>
-    </PlayShell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q47 — 📈 Toy Store Analytics (Line Graph Ratio)
-   ══════════════════════════════════════════════════════════════════════ */
-interface Q47World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
-
-export function Q47LineGraphRatioActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q47World>({
-    question,
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    initial: { chosenOption: "A" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "A";
-      const ratio = w.chosenOption === "A" ? "2 : 3" : w.chosenOption === "B" ? "3 : 2" : w.chosenOption === "C" ? "4 : 5" : "3 : 4";
-
-      return {
-        value: `${ratio} ((April 350 + June 450) : (August 650 + July 550))`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, ratio) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! (April 350 + June 450) = 800. (August 650 + July 550) = 1,200. Ratio = 800 : 1,200 = 8 : 12 = 2 : 3."
-          : `Selected ${ratio}. (350 + 450) : (650 + 550) = 800 : 1200 = 2 : 3.`,
-      };
-    },
-  });
-
-  return (
-    <PlayShell
-      title="Toy Store Analytics"
-      mission="Read sales figures from the line graph and find the ratio of (April + June) to (August + July) in simplest form."
-      icon={TrendingUp}
-      dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Sales Ratio" value={world.chosenOption === "A" ? "2 : 3 (Option A)" : `Option ${world.chosenOption}`} />}
-    >
-      <div className="space-y-4">
-        {/* Line Graph Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 border border-indigo-200 p-4 rounded-xl shadow-sm">
-          <svg viewBox="0 0 320 160" className="w-full max-w-md h-40 mx-auto">
-            {/* Grid lines */}
-            {[200, 400, 600, 800].map((val) => {
-              const y = 130 - (val / 800) * 110;
-              return (
-                <g key={val}>
-                  <line x1="35" y1={y} x2="310" y2={y} stroke="#e2e8f0" strokeWidth="1" />
-                  <text x="30" y={y + 3} fill="#94a3b8" fontSize="8" textAnchor="end">{val}</text>
-                </g>
-              );
-            })}
-
-            {/* Line Graph Path */}
-            <polyline
-              points="55,82 110,61 165,68 220,54 275,41"
-              fill="none"
-              stroke="#4f46e5"
-              strokeWidth="3"
-            />
-
-            {/* 5 Months: April (350), May (500), June (450), July (550), August (650) */}
-            {[
-              { m: "Apr", val: 350, x: 55, y: 82 },
-              { m: "May", val: 500, x: 110, y: 61 },
-              { m: "Jun", val: 450, x: 165, y: 68 },
-              { m: "Jul", val: 550, x: 220, y: 54 },
-              { m: "Aug", val: 650, x: 275, y: 41 },
-            ].map((pt) => (
-              <g key={pt.m}>
-                <circle cx={pt.x} cy={pt.y} r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
-                <text x={pt.x} y={pt.y - 8} fill="#1e293b" fontSize="9" fontWeight="black" textAnchor="middle">
-                  {pt.val}
-                </text>
-                <text x={pt.x} y={145} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="middle">
-                  {pt.m}
-                </text>
-              </g>
-            ))}
+        <Bay label="Q · close a figure">
+          <svg viewBox="0 0 100 40" className="w-full h-20 bg-white rounded">
+            {w.segs >= 1 && <line x1={20} y1={34} x2={80} y2={34} stroke="#4338ca" strokeWidth={1.4} />}
+            {w.segs >= 2 && <line x1={80} y1={34} x2={50} y2={6} stroke="#4338ca" strokeWidth={1.4} />}
+            {w.segs >= 3 && <line x1={50} y1={6} x2={20} y2={34} stroke="#4338ca" strokeWidth={1.4} />}
+            {w.segs >= 4 && <line x1={20} y1={34} x2={50} y2={20} stroke="#e11d48" strokeWidth={1.4} />}
           </svg>
-
-          <div className="mt-2 text-center text-xs font-mono text-indigo-900 font-bold">
-            (Apr 350 + Jun 450 = 800) &nbsp;:&nbsp; (Aug 650 + Jul 550 = 1200) &nbsp;→&nbsp; 800 : 1200 = <b>2 : 3</b>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Simplified Ratio (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, ratio: "2 : 3", desc: "800 : 1200 = 2:3", },
-              { id: "B" as const, ratio: "3 : 2", desc: "Inverted ratio error", },
-              { id: "C" as const, ratio: "4 : 5", },
-              { id: "D" as const, ratio: "3 : 4", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1 font-mono">{opt.ratio}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <div className="flex items-center gap-1"><Stepper label="segments" value={w.segs} min={1} max={4} disabled={play.readOnly} onStep={(d) => set({ segs: w.segs + d }, "Q")} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || !closed} onClick={() => mark("Q")}>Lock</Btn></div>
+          <p className="text-[11px] font-bold text-slate-600">{closed ? "Closed figure formed." : "Still open."}</p>
+        </Bay>
+        <Bay label="R · chord through the centre">
+          <svg viewBox="0 0 100 44" className="w-full h-20 bg-white rounded"><circle cx={50} cy={22} r={18} fill="#eef2ff" stroke="#4338ca" /><circle cx={50} cy={22} r={1.2} fill="#1e1b4b" /><line x1={50 - Math.sqrt(Math.max(0, 324 - w.chord * w.chord))} y1={22 + w.chord} x2={50 + Math.sqrt(Math.max(0, 324 - w.chord * w.chord))} y2={22 + w.chord} stroke="#f59e0b" strokeWidth={1.4} /></svg>
+          <div className="flex items-center gap-1"><Stepper label="chord offset" value={w.chord} min={0} max={16} steps={[4]} disabled={play.readOnly} onStep={(d) => set({ chord: w.chord + d }, "R")} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly} onClick={() => mark("R")}>Lock</Btn></div>
+          <p className="text-[11px] font-bold text-slate-600">{w.chord === 0 ? "Through the centre: this chord is a diameter." : "Misses the centre: an ordinary chord."}</p>
+        </Bay>
+        <Bay label="S · fraction of a right angle">
+          <p className="text-xs font-mono">{w.taken} of {w.slices} slices of 90° = {+(90 * (w.taken / w.slices)).toFixed(2)}°</p>
+          <Stepper label="slices" value={w.slices} min={1} max={10} disabled={play.readOnly} onStep={(d) => set({ slices: w.slices + d, taken: 0 }, "S")} />
+          <Stepper label="taken" value={w.taken} min={0} max={w.slices} disabled={play.readOnly} onStep={(d) => set({ taken: w.taken + d }, "S")} />
+          <Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || !w.taken} onClick={() => mark("S")}>Lock</Btn>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q48 — 🔬 Mathematics Truth Laboratory (T/F Proof System)
+   Q47 — Toy Store Analytics (Achievers)
+   The line graph's points are live. The student puts months into two baskets; the
+   analytics board totals each basket, forms the ratio and cuts common factors out of it.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q48World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q48TrueFalseFractionActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q48World>({
+const SALES: [string, number][] = [["April", 350], ["May", 500], ["June", 450], ["July", 550], ["August", 650]];
+export function Q47LineGraphRatioActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ a: string[]; b: string[]; reduced: boolean }>({
     question,
+    initial: { a: [], b: [], reduced: false },
+    derive: (w) => {
+      if (!w.a.length || !w.b.length || !w.reduced) return { note: "Fill both baskets and reduce the ratio." };
+      const s = (m: string[]) => m.reduce((t, x) => t + (SALES.find((p) => p[0] === x)?.[1] ?? 0), 0);
+      const g = gcd(s(w.a), s(w.b));
+      const t = `${s(w.a) / g} : ${s(w.b) / g}`;
+      return { value: t, optionId: matchText(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "A" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "A";
-      const seq =
-        w.chosenOption === "A"
-          ? "(P) T, (Q) F, (R) F, (S) T"
-          : w.chosenOption === "B"
-          ? "(P) T, (Q) T, (R) F, (S) F"
-          : w.chosenOption === "C"
-          ? "(P) F, (Q) F, (R) T, (S) T"
-          : "(P) T, (Q) F, (R) T, (S) F";
-
-      return {
-        value: `Option ${w.chosenOption} — ${seq}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, seq) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! (P) Simplest form = coprime numerator and denominator (T). (Q) 5/9 = 0.55 < 4/5 = 0.8 (F). (R) Fractions can be represented on number line (F). (S) Decimal place value divides by 10 moving left-to-right (T)."
-          : `Selected Option ${w.chosenOption}. Truth sequence: T, F, F, T.`,
-      };
-    },
   });
+  const w = play.world;
+  const s = (m: string[]) => m.reduce((t, x) => t + (SALES.find((p) => p[0] === x)?.[1] ?? 0), 0);
+  const X = (i: number) => 12 + i * 20;
+  const Y = (v: number) => 60 - v / 12;
 
   return (
-    <PlayShell
-      title="Mathematics Truth Laboratory"
-      mission="Audit the truth value of all four advanced statements (P, Q, R, S) to identify the correct T/F pattern."
-      icon={FlaskConical}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Truth Sequence" value={world.chosenOption === "A" ? "T, F, F, T (Option A)" : `Option ${world.chosenOption}`} />}
+      title="Toy Store Analytics"
+      mission="Read the line graph. Put the first pair of months in basket 1 and the second pair in basket 2 (in the order the question says), then reduce the ratio."
+      icon={ChartLine}
+      dim="2D"
+      submitLabel="Submit the ratio"
+      live={<Gauge label="Ratio" value={`${s(w.a)} : ${s(w.b)}`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Statement Truth Checks */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl">
-            <span className="text-[10px] font-bold text-emerald-800 uppercase block">(P) Simplest Form Definition</span>
-            <p className="text-xs text-slate-700 mt-1">Numerator & denominator share no common factors other than 1.</p>
-            <span className="text-xs font-mono font-bold text-emerald-900 mt-1 block">Truth: TRUE (T) ✓</span>
-          </div>
-
-          <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl">
-            <span className="text-[10px] font-bold text-rose-800 uppercase block">(Q) Fraction Comparison</span>
-            <p className="text-xs text-slate-700 mt-1">5/9 (0.55) is greater than 4/5 (0.80).</p>
-            <span className="text-xs font-mono font-bold text-rose-900 mt-1 block">Truth: FALSE (F) ✗</span>
-          </div>
-
-          <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl">
-            <span className="text-[10px] font-bold text-rose-800 uppercase block">(R) Number Line Existence</span>
-            <p className="text-xs text-slate-700 mt-1">Fractions cannot be represented on a number line.</p>
-            <span className="text-xs font-mono font-bold text-rose-900 mt-1 block">Truth: FALSE (F) ✗</span>
-          </div>
-
-          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl">
-            <span className="text-[10px] font-bold text-emerald-800 uppercase block">(S) Decimal Place Value</span>
-            <p className="text-xs text-slate-700 mt-1">Moving left to right divides place value factor by 10.</p>
-            <span className="text-xs font-mono font-bold text-emerald-900 mt-1 block">Truth: TRUE (T) ✓</span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Correct T/F Sequence (A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, seq: "(P) T, (Q) F, (R) F, (S) T", desc: "True, False, False, True", },
-              { id: "B" as const, seq: "(P) T, (Q) T, (R) F, (S) F", },
-              { id: "C" as const, seq: "(P) F, (Q) F, (R) T, (S) T", },
-              { id: "D" as const, seq: "(P) T, (Q) F, (R) T, (S) F", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-                  <span className="text-xs font-mono font-bold text-slate-800">{opt.seq}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <Board>
+        <svg viewBox="0 0 110 70" className="w-full max-h-56">
+          <polyline points={SALES.map(([, v], i) => `${X(i)},${Y(v)}`).join(" ")} fill="none" stroke="#6366f1" strokeWidth={1.2} />
+          {SALES.map(([m, v], i) => <g key={m}><circle cx={X(i)} cy={Y(v)} r={1.8} fill={w.a.includes(m) ? "#6366f1" : w.b.includes(m) ? "#f59e0b" : "#94a3b8"} /><text x={X(i)} y={Y(v) - 3} fontSize={3.5} textAnchor="middle">{v}</text><text x={X(i)} y={67} fontSize={3.5} textAnchor="middle">{m.slice(0, 3)}</text></g>)}
+        </svg>
+      </Board>
+      <div className="grid sm:grid-cols-2 gap-2 mt-2">
+        {(["a", "b"] as const).map((k, i) => (
+          <Bay key={k} label={`Basket ${i + 1}: ${s(w[k])}`}>
+            <div className="flex flex-wrap gap-1">{SALES.map(([m]) => <Btn key={m} className="px-2 min-h-[32px] text-[11px]" active={w[k].includes(m)} tone={w[k].includes(m) ? (i ? "amber" : "violet") : "slate"} disabled={play.readOnly || w[i ? "a" : "b"].includes(m)} onClick={() => play.set((p) => ({ ...p, reduced: false, [k]: toggle(p[k], m) }))} ariaLabel={`basket ${i + 1} ${m}`}>{m.slice(0, 3)}</Btn>)}</div>
+          </Bay>
+        ))}
       </div>
-    </PlayShell>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.a.length || !w.b.length} onClick={() => play.patch({ reduced: true })}>✂ Reduce the ratio</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q49 — 🔐 Divisibility Security Lab (Divisibility by 8 Investigation)
+   Q48 — Mathematics Truth Laboratory (Achievers)
+   Each statement has a bench that runs an experiment. The student runs the bench, reads
+   the evidence, and sets the statement's verdict. The four verdicts are the answer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q49World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q49DivisibilitySecurityActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q49World>({
+const BENCHES = [
+  { k: "P", ev: "4/9: common factors of 4 and 9 → only 1. It cannot be reduced, so it is in simplest form." },
+  { k: "Q", ev: "5/9 = 0.555…, 4/5 = 0.8 — so 5/9 is smaller than 4/5." },
+  { k: "R", ev: "1/2 sits halfway between 0 and 1 on the number line; 3/4 sits three quarters of the way." },
+  { k: "S", ev: "Place values: ones × 1, tenths × 1/10, hundredths × 1/100 — each factor is 1/10 of the one before." },
+];
+export function Q48TrueFalseFractionActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ ran: string[]; v: Record<string, "T" | "F"> }>({
     question,
+    initial: { ran: [], v: {} },
+    derive: (w) => {
+      if (BENCHES.some((b) => !w.v[b.k])) return { note: "Run each bench and give every statement a verdict." };
+      const t = BENCHES.map((b) => `(${b.k}) ${w.v[b.k]}`).join(", ");
+      return { value: t, optionId: matchText(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const desc =
-        w.chosenOption === "C"
-          ? "Both Statement I and II are true, and Statement I explains Statement II"
-          : w.chosenOption === "A"
-          ? "Statement I is true and Statement II is false"
-          : w.chosenOption === "B"
-          ? "Statement I is false and Statement II is true"
-          : "Both Statement I and Statement II are false";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Statement I states the universal divisibility rule for 8 (last 3 digits). Statement II tests 987,648 where 648 ÷ 8 = 81 (true). Thus Statement I directly explains Statement II."
-          : `Selected Option ${w.chosenOption}. Both statements are true and Statement I is the underlying mathematical theorem.`,
-      };
-    },
   });
+  const w = play.world;
+  const stmt = (k: string) => (question?.questionText.split("\n").find((l) => l.startsWith(`(${k})`)) ?? `(${k})`).slice(4);
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
+      title="Mathematics Truth Laboratory"
+      mission="Run each statement's bench to see the evidence, then mark the statement True or False."
+      icon={ClipboardCheck}
+      dim="2D"
+      submitLabel="Submit the verdicts"
+      live={<Gauge label="Verdicts" value={BENCHES.map((b) => `${b.k}:${w.v[b.k] ?? "?"}`).join(" ")} tone="violet" />}
+    >
+      <div className="grid md:grid-cols-2 gap-2">
+        {BENCHES.map((b) => (
+          <Bay key={b.k} label={`(${b.k}) ${stmt(b.k)}`}>
+            <Btn className="px-2 min-h-[32px]" tone="sky" disabled={play.readOnly || w.ran.includes(b.k)} onClick={() => play.patch({ ran: [...w.ran, b.k] })} ariaLabel={`run ${b.k}`}>🧪 Run the bench</Btn>
+            {w.ran.includes(b.k) && <p className="text-[11px] font-semibold text-slate-700 mt-1">{b.ev}</p>}
+            <div className="flex gap-1 mt-1">
+              {(["T", "F"] as const).map((x) => <Btn key={x} className="px-2 min-h-[32px]" active={w.v[b.k] === x} tone={w.v[b.k] === x ? (x === "T" ? "emerald" : "rose") : "slate"} disabled={play.readOnly || !w.ran.includes(b.k)} onClick={() => play.patch({ v: { ...w.v, [b.k]: x } })} ariaLabel={`${b.k} ${x}`}>{x === "T" ? "True" : "False"}</Btn>)}
+            </div>
+          </Bay>
+        ))}
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q49 — Divisibility Security Lab (Achievers)
+   Stage 1 tests Statement I: the student enters numbers and the lab compares division of
+   the whole number by 8 with division of its last three digits. Stage 2 runs 987648
+   through the ÷8 tester. The lab combines the two verdicts.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q49DivisibilitySecurityActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ n: number; log: number[]; ran2: boolean }>({
+    question,
+    initial: { n: 12344, log: [], ran2: false },
+    derive: (w) => {
+      if (w.log.length < 3 || !w.ran2) return { note: "Test Statement I on three numbers and run Statement II." };
+      const rule = w.log.every((n) => (n % 8 === 0) === ((n % 1000) % 8 === 0));
+      const two = 987648 % 8 === 0;
+      const id = rule && two ? question?.multipleChoiceConfig?.options.find((o) => /both.*true/i.test(o.text))?.id : rule ? question?.multipleChoiceConfig?.options.find((o) => /I is true and Statement II is false/i.test(o.text))?.id : two ? question?.multipleChoiceConfig?.options.find((o) => /I is false and Statement II is true/i.test(o.text))?.id : question?.multipleChoiceConfig?.options.find((o) => /both.*false/i.test(o.text))?.id;
+      return { value: `Statement I ${rule ? "held" : "failed"}; 987648 ${two ? "is" : "is not"} divisible by 8`, optionId: id };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+
+  return (
+    <Shell
+      play={play}
+      question={question}
       title="Divisibility Security Lab"
-      mission="Investigate Statement I (divisibility rule for 8) and Statement II (987,648 divisibility) to evaluate their logical relationship."
+      mission="Stage 1: enter numbers and test Statement I — the lab checks the whole number and its last three digits against 8. Test at least three. Stage 2: run 987648 through the ÷8 tester."
       icon={ShieldCheck}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Logical Evaluation" value={`Option ${world.chosenOption}`} />}
+      submitLabel="Submit the verdict"
+      live={<Gauge label="Rule held" value={w.log.length ? (w.log.every((n) => (n % 8 === 0) === ((n % 1000) % 8 === 0)) ? `${w.log.length}/${w.log.length}` : "broken") : "—"} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Divisibility Rule & Verification Cards */}
-        <div className="space-y-2">
-          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between text-xs font-mono">
-            <div>
-              <span className="font-bold text-emerald-950 block">Statement I: Divisibility by 8 Rule</span>
-              <span className="text-slate-600">A number is divisible by 8 if its last 3 digits are divisible by 8.</span>
-            </div>
-            <span className="font-bold text-emerald-800 bg-emerald-100 px-2 py-1 rounded">TRUE ✓</span>
-          </div>
-
-          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between text-xs font-mono">
-            <div>
-              <span className="font-bold text-emerald-950 block">Statement II: Target Number 987,648</span>
-              <span className="text-slate-600">Last 3 digits 648 ÷ 8 = 81 (Leaves remainder 0).</span>
-            </div>
-            <span className="font-bold text-emerald-800 bg-emerald-100 px-2 py-1 rounded">TRUE ✓</span>
-          </div>
+      <Bay label="Stage 1 · Statement I">
+        <div className="flex flex-wrap items-center gap-2">
+          <input type="number" aria-label="Number to test" value={w.n} disabled={play.readOnly} onChange={(e) => play.patch({ n: Math.max(1000, Math.round(Number(e.target.value)) || 1000) })} className="w-32 h-10 rounded-lg border border-indigo-200 px-2 font-mono font-black" />
+          <span className="text-xs font-mono">{w.n} ÷ 8 {w.n % 8 === 0 ? "✓" : "✗"} · last three {String(w.n % 1000).padStart(3, "0")} ÷ 8 {(w.n % 1000) % 8 === 0 ? "✓" : "✗"}</span>
+          <Btn tone="emerald" disabled={play.readOnly || w.log.includes(w.n)} onClick={() => play.patch({ log: [...w.log, w.n] })}>Test {w.n}</Btn>
         </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Correct Logical Relationship (A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, text: "Statement I is true and Statement II is false.", },
-              { id: "B" as const, text: "Statement I is false and Statement II is true.", },
-              { id: "C" as const, text: "Both Statement I and Statement II are true, and Statement I is the correct explanation for Statement II.", desc: "Both True & Logically Connected", },
-              { id: "D" as const, text: "Both Statement I and Statement II are false.", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-                  <span className="text-xs font-bold text-slate-800">{opt.text}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
+      </Bay>
+      <Bay label="Stage 2 · Statement II" tone="violet" className="mt-2">
+        <Btn tone="sky" disabled={play.readOnly || w.ran2} onClick={() => play.patch({ ran2: true })}>Run 987648 through ÷8</Btn>
+        {w.ran2 && <p className="font-mono font-black mt-1 text-indigo-900">last three digits 648 ÷ 8 = 81 · 987648 ÷ 8 = {987648 / 8}</p>}
+      </Bay>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q50 — 🏆 Olympiad Master Control Room (Grand Finale Multi-Concept)
+   Q50 — Olympiad Master Control Room (Achievers)
+   Four stations: an integer line to find the smallest integer above every negative, a
+   step calculator for the expression, a divisibility-by-22 dial for the missing digit,
+   and a wire workshop that bends the wire into 2 cm squares.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q50World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q50MasterControlRoomActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q50World>({
+export function Q50MasterControlRoomActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const terms = [49, 40, 3, 69, -80];
+  const play = usePlay<{ p: number | null; steps: number; digit: number; rLock: boolean; squares: number; sLock: boolean }>({
     question,
+    initial: { p: null, steps: 1, digit: 0, rLock: false, squares: 1, sLock: false },
+    derive: (w) => {
+      if (w.p === null || w.steps < terms.length || !w.rLock || !w.sLock) return { note: "Complete all four stations." };
+      const q = terms.reduce((a, b) => a + b, 0);
+      const t = `(P)→${w.p}, (Q)→${q}, (R)→${w.digit}, (S)→${w.squares * 8} cm`;
+      return { value: t, optionId: matchText(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const matchStr =
-        w.chosenOption === "D"
-          ? "(P)→0, (Q)→81, (R)→6, (S)→56 cm (Grand Finale Solution)"
-          : w.chosenOption === "A"
-          ? "(P)→1, (Q)→72, (R)→4, (S)→48 cm"
-          : w.chosenOption === "B"
-          ? "(P)→0, (Q)→72, (R)→6, (S)→56 cm"
-          : "(P)→1, (Q)→81, (R)→4, (S)→28 cm";
-
-      return {
-        value: `Option ${w.chosenOption} — ${matchStr}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! (P) Smallest int > all negatives = 0. (Q) 49 − (−40) − (−3) + 69 − 80 = 81. (R) 7254*98 div by 22 => (20+*) − 15 = 11 => * = 6. (S) 28/4 = 7 squares × 8cm perimeter = 56 cm."
-          : `Selected Option ${w.chosenOption}. Solve all 4 stations: P=0, Q=81, R=6, S=56 cm.`,
-      };
-    },
   });
+  const w = play.world;
+  const num = Number(`7254${w.digit}98`);
+  const area = w.squares * 4;
 
   return (
-    <PlayShell
-      title="Olympiad Master Control Room"
-      mission="Coordinate all four high-order mathematical stations (P, Q, R, S) to solve the grand finale problem."
-      icon={Trophy}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Grand Finale Solution" value={world.chosenOption === "D" ? "(P)→0, (Q)→81, (R)→6, (S)→56 cm" : `Option ${world.chosenOption}`} />}
+      title="Olympiad Master Control Room"
+      mission="(P) Tap the smallest integer that is greater than every negative integer. (Q) Step the calculator through 49 − (−40) − (−3) + 69 − 80. (R) Dial the digit that makes 7254*98 divisible by 22 and lock it. (S) Bend wire into 2 cm squares until they cover 28 cm², then lock it."
+      icon={Cpu}
+      dim="2D"
+      submitLabel="Submit the matching"
+      live={<Gauge label="Stations" value={`P ${w.p ?? "?"} · Q ${w.steps >= terms.length ? terms.reduce((a, b) => a + b, 0) : "…"} · R ${w.rLock ? w.digit : "?"} · S ${w.sLock ? `${w.squares * 8} cm` : "?"}`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* 4 Grand Finale Station Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Station (P)</span>
-            <span className="text-[10px] text-slate-600 block mt-0.5">&gt; all negative ints</span>
-            <span className="font-mono text-xl font-black text-indigo-700 my-1 block">0</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-emerald-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Station (Q)</span>
-            <span className="text-[10px] text-slate-600 block mt-0.5">49 + 40 + 3 + 69 − 80</span>
-            <span className="font-mono text-xl font-black text-emerald-700 my-1 block">81</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-purple-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Station (R)</span>
-            <span className="text-[10px] text-slate-600 block mt-0.5">7254*98 div by 22</span>
-            <span className="font-mono text-xl font-black text-purple-700 my-1 block">6</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-amber-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">Station (S)</span>
-            <span className="text-[10px] text-slate-600 block mt-0.5">7 squares × 8 cm</span>
-            <span className="font-mono text-xl font-black text-amber-700 my-1 block">56 cm</span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Matching Set for Column I → Column II (A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, text: "(P)→1, (Q)→72, (R)→4, (S)→48 cm", },
-              { id: "B" as const, text: "(P)→0, (Q)→72, (R)→6, (S)→56 cm", },
-              { id: "C" as const, text: "(P)→1, (Q)→81, (R)→4, (S)→28 cm", },
-              { id: "D" as const, text: "(P)→0, (Q)→81, (R)→6, (S)→56 cm", desc: "P=0, Q=81, R=6, S=56 cm", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-start justify-between text-left ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                    {isSelected && (<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">Selected</span>)}
-                  </div>
-                  <span className="text-xs font-mono font-bold text-slate-800">{opt.text}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 mt-1">{opt.desc}</span>}
-                </button>
-              );
-            })}
-          </div>
+      <div className="grid md:grid-cols-2 gap-2">
+        <Bay label="P · integer line">
+          <div className="flex flex-wrap gap-1">{[-3, -2, -1, 0, 1, 2].map((n) => <Btn key={n} className="px-2 min-h-[32px]" active={w.p === n} tone={w.p === n ? "violet" : n < 0 ? "rose" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ p: n })} ariaLabel={`integer ${n}`}>{n}</Btn>)}</div>
+        </Bay>
+        <Bay label="Q · step calculator">
+          <p className="font-mono text-xs">{terms.slice(0, w.steps).map((t, i) => (i ? (t < 0 ? ` − ${-t}` : ` + ${t}`) : t)).join("")} = <b>{terms.slice(0, w.steps).reduce((a, b) => a + b, 0)}</b></p>
+          <Btn className="px-2 min-h-[32px] mt-1" tone="slate" disabled={play.readOnly || w.steps >= terms.length} onClick={() => play.patch({ steps: w.steps + 1 })}>Next step</Btn>
+        </Bay>
+        <Bay label="R · divisible by 22?">
+          <p className="font-mono text-sm">{num} · ÷2 {num % 2 === 0 ? "✓" : "✗"} · ÷11 {num % 11 === 0 ? "✓" : "✗"}</p>
+          <div className="flex items-center gap-1"><Stepper label="digit" value={w.digit} min={0} max={9} disabled={play.readOnly} onStep={(d) => play.patch({ digit: w.digit + d, rLock: false })} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || num % 22 !== 0} onClick={() => play.patch({ rLock: true })}>Lock</Btn></div>
+        </Bay>
+        <Bay label="S · wire workshop">
+          <div className="flex flex-wrap gap-0.5">{Array.from({ length: w.squares }, (_, i) => <span key={i} className="w-6 h-6 border-2 border-amber-600 rounded-sm" />)}</div>
+          <p className="text-xs font-mono">{w.squares} squares × 4 cm² = {area} cm² · wire used {w.squares * 8} cm</p>
+          <div className="flex items-center gap-1"><Stepper label="squares" value={w.squares} min={1} max={12} disabled={play.readOnly} onStep={(d) => play.patch({ squares: w.squares + d, sLock: false })} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || area !== 28} onClick={() => play.patch({ sLock: true })}>Lock</Btn></div>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }

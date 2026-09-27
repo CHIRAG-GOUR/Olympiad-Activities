@@ -1,643 +1,277 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Binary,
-  Thermometer,
-  Network,
-  Triangle,
-  Landmark,
-  CheckCircle2,
-  Sparkles,
-} from "lucide-react";
+import React from "react";
+import { Microscope, Thermometer, Hexagon, Triangle, Landmark } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { matchNumber, matchText } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Shell, Board, Stepper, Pt, toggle } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q26 — 🔬 Number Proof Laboratory (Odd Number Product Divisibility)
+   Q26 — Odd Number Proof Laboratory
+   The student picks odd numbers; the lab multiplies each one's predecessor and successor
+   and runs the product past a row of divisors. After four different odd numbers, the
+   greatest divisor that divided every product is the answer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q26World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q26OddNumberProductActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q26World>({
+const DIVS = [4, 6, 8, 12, 16];
+export function Q26OddNumberProductActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ n: number; log: number[] }>({
     question,
+    initial: { n: 3, log: [] },
+    derive: (w) => {
+      if (w.log.length < 4) return { note: `Test at least four odd numbers (${w.log.length}/4).` };
+      const prods = w.log.map((n) => (n - 1) * (n + 1));
+      const always = DIVS.filter((d) => prods.every((p) => p % d === 0));
+      if (!always.length) return { note: "No divisor divided every product." };
+      const best = Math.max(...always);
+      return { value: `${best} divided every product`, optionId: matchNumber(question, best) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const val = w.chosenOption === "A" ? 4 : w.chosenOption === "B" ? 6 : w.chosenOption === "C" ? 8 : 12;
-
-      return {
-        value: `${val} (Universal Divisor for (n−1)(n+1))`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, val) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! For any odd number n = 2k+1, (n−1)(n+1) = (2k)(2k+2) = 4k(k+1). Since k(k+1) is always even, 4 × 2m = 8m, guaranteeing divisibility by 8."
-          : `Selected ${val}. Test n = 3: 2 × 4 = 8; n = 5: 4 × 6 = 24 (GCD is 8).`,
-      };
-    },
   });
+  const w = play.world;
+  const p = (w.n - 1) * (w.n + 1);
 
   return (
-    <PlayShell
-      title="Number Proof Laboratory"
-      mission="Investigate the algebraic product (n−1)(n+1) across odd numbers to discover the greatest universal divisor."
-      icon={Binary}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Universal Divisor" value={world.chosenOption === "C" ? "8 (Option C)" : `Option ${world.chosenOption}`} />}
+      title="Odd Number Proof Laboratory"
+      mission="Choose an odd number greater than 1. The lab multiplies its predecessor by its successor and tests the product against each divisor. Log at least four different odd numbers; the greatest divisor that worked every time is the answer."
+      icon={Microscope}
+      dim="2D"
+      submitLabel="Submit the divisor"
+      live={<Gauge label="Logged" value={w.log.map((n) => `${n}→${(n - 1) * (n + 1)}`).join(", ") || "—"} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Test Matrix */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">Empirical Proof Matrix for Odd Natural Numbers:</div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-            {[
-              { n: 3, p: "2 × 4 = 8", div8: "8 ÷ 8 = 1" },
-              { n: 5, p: "4 × 6 = 24", div8: "24 ÷ 8 = 3" },
-              { n: 7, p: "6 × 8 = 48", div8: "48 ÷ 8 = 6" },
-              { n: 9, p: "8 × 10 = 80", div8: "80 ÷ 8 = 10" },
-            ].map((item) => (
-              <div key={item.n} className="p-2.5 bg-white border border-indigo-200 rounded-lg shadow-xs">
-                <span className="text-[10px] font-mono text-indigo-600 font-bold block">Odd n = {item.n}</span>
-                <span className="text-xs font-black text-slate-800 my-1 block">{item.p}</span>
-                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded">
-                  {item.div8}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Greatest Natural Number that Always Divides the Product">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: 4, desc: "Divides product but not greatest", },
-              { id: "B" as const, val: 6, desc: "Fails for n = 3 (8 is not div by 6)", },
-              { id: "C" as const, val: 8, desc: "Greatest Universal Divisor", },
-              { id: "D" as const, val: 12, desc: "Fails for n = 3 (8 is not div by 12)", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.val}</span>
-                  <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
+      <Stepper label="Odd number" value={w.n} min={3} max={99} steps={[2]} disabled={play.readOnly} onStep={(d) => play.patch({ n: w.n + d })} />
+      <Board className="mt-2">
+        <p className="font-mono font-black text-indigo-900 text-center">{w.n - 1} × {w.n + 1} = {p}</p>
+        <div className="flex justify-center gap-1.5 mt-1">{DIVS.map((d) => <span key={d} className={`px-2 py-1 rounded-lg text-xs font-black ${p % d === 0 ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>÷{d} {p % d === 0 ? "✓" : "✗"}</span>)}</div>
+      </Board>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || w.log.includes(w.n)} onClick={() => play.patch({ log: [...w.log, w.n] })}>{w.log.includes(w.n) ? "Already logged" : `Log ${w.n}`}</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q27 — ❄️ Kashmir Temperature Station (Negative Numbers in Real Life)
+   Q27 — Kashmir Temperature Station
+   The student sets each town's thermometer to its reading. The station compares the two
+   columns and states which town is cooler, and by how much.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q27World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q27NegativeTemperatureActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q27World>({
+export function Q27NegativeTemperatureActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const t1 = cfg<number>(question, "t1", 0);
+  const t2 = cfg<number>(question, "t2", 0);
+  const names = ["Gulmarg", "Srinagar"];
+  const play = usePlay<{ a: number; b: number; compared: boolean }>({
     question,
+    initial: { a: 0, b: 0, compared: false },
+    derive: (w) => {
+      if (!w.compared) return { note: "Set both thermometers and compare them." };
+      if (w.a === w.b) return { value: "Same temperature", optionId: matchText(question, "Both locations had the same temperature.") };
+      const [cool, warm] = w.a < w.b ? [0, 1] : [1, 0];
+      const text = `${names[cool]} was ${Math.abs(w.a - w.b)}°C cooler than ${names[warm]}.`;
+      return { value: text, optionId: matchText(question, text) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const desc =
-        w.chosenOption === "B"
-          ? "Gulmarg was 3°C cooler than Srinagar"
-          : w.chosenOption === "A"
-          ? "Gulmarg was 3°C warmer than Srinagar"
-          : w.chosenOption === "C"
-          ? "Srinagar was 5°C cooler than Gulmarg"
-          : "Both locations had the same temperature";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Gulmarg (−4°C) is 3 units below Srinagar (−1°C) on the temperature scale: (−1) − (−4) = +3°C, so Gulmarg is 3°C cooler."
-          : `Selected Option ${w.chosenOption}. Lower negative number means colder/cooler.`,
-      };
-    },
   });
+  const w = play.world;
+  const Y = (t: number) => 60 - t * 5;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Kashmir Temperature Station"
-      mission="Compare temperatures at Gulmarg (−4°C) and Srinagar (−1°C) on vertical thermometers."
+      mission={`Set Gulmarg's thermometer to ${t1} °C and Srinagar's to ${t2} °C. Then compare: the station states which town is cooler and by how many degrees.`}
       icon={Thermometer}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Temperature Difference" value={world.chosenOption === "B" ? "3°C Cooler (Option B)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the statement"
+      live={<><Gauge label="Gulmarg" value={`${w.a} °C`} tone="sky" /><Gauge label="Srinagar" value={`${w.b} °C`} tone="sky" /></>}
     >
-      <div className="space-y-4">
-        {/* Dual Thermometers Canvas */}
-        <div className="bg-gradient-to-br from-sky-50 via-white to-indigo-50 border border-sky-200 p-6 rounded-xl flex items-center justify-around shadow-sm">
-          {/* Gulmarg */}
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-bold text-sky-900">Gulmarg</span>
-            <div className="w-8 h-32 bg-white rounded-full border-2 border-sky-400 my-2 relative overflow-hidden flex flex-col justify-end p-1 shadow-inner">
-              <div className="w-full bg-sky-500 rounded-full" style={{ height: "25%" }} />
-            </div>
-            <span className="font-mono text-sm font-black text-sky-700">−4°C</span>
-          </div>
-
-          {/* Scale Arrow */}
-          <div className="flex flex-col items-center text-center">
-            <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-1 rounded-full">
-              ΔT = 3°C
-            </span>
-            <span className="text-[10px] text-slate-500 mt-1 font-medium">
-              Gulmarg is 3°C colder
-            </span>
-          </div>
-
-          {/* Srinagar */}
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-bold text-indigo-900">Srinagar</span>
-            <div className="w-8 h-32 bg-white rounded-full border border-slate-200 my-2 relative overflow-hidden flex flex-col justify-end p-1 shadow-inner">
-              <div className="w-full bg-indigo-500 rounded-full" style={{ height: "45%" }} />
-            </div>
-            <span className="font-mono text-sm font-black text-indigo-700">−1°C</span>
-          </div>
+      <div className="flex gap-6 items-end">
+        <svg viewBox="0 0 60 100" className="h-48">
+          {[5, 0, -5].map((t) => <g key={t}><line x1={4} x2={56} y1={Y(t)} y2={Y(t)} stroke="#cbd5e1" strokeWidth={0.4} /><text x={0} y={Y(t) + 1.5} fontSize={4}>{t}°</text></g>)}
+          {[w.a, w.b].map((t, i) => <g key={i}><rect x={16 + i * 22} y={10} width={8} height={80} rx={4} fill="#fff" stroke="#6366f1" /><rect x={17 + i * 22} y={Y(t)} width={6} height={90 - Y(t)} fill="#38bdf8" /></g>)}
+        </svg>
+        <div className="space-y-2">
+          <Stepper label="Gulmarg" value={w.a} min={-10} max={10} unit=" °C" disabled={play.readOnly} onStep={(d) => play.patch({ a: w.a + d, compared: false })} />
+          <Stepper label="Srinagar" value={w.b} min={-10} max={10} unit=" °C" disabled={play.readOnly} onStep={(d) => play.patch({ b: w.b + d, compared: false })} />
+          <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ compared: true })}>Compare the towns</Btn>
         </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Which of the Following Statements is Correct? (A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { id: "A" as const, text: "Gulmarg was 3°C warmer than Srinagar.", },
-              { id: "B" as const, text: "Gulmarg was 3°C cooler than Srinagar.", desc: "(−1) − (−4) = 3°C cooler", },
-              { id: "C" as const, text: "Srinagar was 5°C cooler than Gulmarg.", },
-              { id: "D" as const, text: "Both locations had the same temperature.", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xs font-bold text-slate-800 my-1">{opt.text}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q28 — 🔷 Polygon Connection Lab (Heptagon Diagonals)
+   Q28 — Polygon Connection Lab
+   The student taps two corners of the heptagon to draw a diagonal between them. Sides are
+   refused. The number of different diagonals drawn is the answer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q28World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q28HeptagonDiagonalsActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q28World>({
+export function Q28HeptagonDiagonalsActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const n = cfg<number>(question, "sides", 7);
+  const [pick, setPick] = React.useState<number | null>(null);
+  const play = usePlay<{ diag: string[] }>({
     question,
+    initial: { diag: [] },
+    derive: (w) => (!w.diag.length ? { note: "Draw the diagonals by tapping pairs of corners." } : { value: `${w.diag.length} diagonals`, optionId: matchNumber(question, w.diag.length) }),
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const count = w.chosenOption === "A" ? 12 : w.chosenOption === "B" ? 10 : w.chosenOption === "C" ? 14 : 16;
-
-      return {
-        value: `${count} Diagonals`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, count) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Formula for diagonals in an n-gon is n(n−3)/2. For n=7 (heptagon): 7 × 4 ÷ 2 = 14 diagonals."
-          : `Selected ${count}. Apply the diagonal formula n(n−3)/2 for n=7.`,
-      };
-    },
   });
+  const w = play.world;
+  const P: Pt[] = Array.from({ length: n }, (_, i) => [50 + 40 * Math.cos(-Math.PI / 2 + (i * 2 * Math.PI) / n), 50 + 40 * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / n)]);
+  const tap = (i: number) => {
+    if (play.readOnly) return;
+    if (pick === null) return setPick(i);
+    const a = Math.min(pick, i), b = Math.max(pick, i);
+    setPick(null);
+    if (a === b || b - a === 1 || (a === 0 && b === n - 1)) return;
+    play.set((s) => ({ diag: toggle(s.diag, `${a}-${b}`) }));
+  };
 
   return (
-    <PlayShell
-      title="Polygon Connection Lab (Heptagon)"
-      mission="Calculate the total number of internal diagonals in a regular 7-sided polygon (heptagon)."
-      icon={Network}
+    <Shell
+      play={play}
+      question={question}
+      title="Polygon Connection Lab"
+      mission="Tap one corner and then another to draw the diagonal joining them (tap an existing diagonal's corners again to rub it out). Sides don't count. Draw every diagonal of the heptagon."
+      icon={Hexagon}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Total Diagonals" value={world.chosenOption === "C" ? "14 Diagonals (Option C)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the diagonal count"
+      live={<Gauge label="Diagonals" value={w.diag.length} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Heptagon Diagram Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 200 200" className="w-48 h-48 drop-shadow-md">
-            {(() => {
-              const pts = Array.from({ length: 7 }).map((_, i) => {
-                const ang = (i * 2 * Math.PI) / 7 - Math.PI / 2;
-                return { x: 100 + 75 * Math.cos(ang), y: 100 + 75 * Math.sin(ang) };
-              });
-
-              return (
-                <>
-                  <polygon
-                    points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
-                    fill="#e0e7ff"
-                    fillOpacity="0.5"
-                    stroke="#4f46e5"
-                    strokeWidth="2.5"
-                  />
-                  {pts.map((p1, i) =>
-                    pts.map((p2, j) => {
-                      if (j > i + 1 && !(i === 0 && j === 6)) {
-                        return (
-                          <line
-                            key={`${i}-${j}`}
-                            x1={p1.x}
-                            y1={p1.y}
-                            x2={p2.x}
-                            y2={p2.y}
-                            stroke="#f59e0b"
-                            strokeWidth="1.5"
-                            opacity="0.8"
-                          />
-                        );
-                      }
-                      return null;
-                    })
-                  )}
-                  {pts.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="#ec4899" stroke="#ffffff" strokeWidth="1" />
-                  ))}
-                </>
-              );
-            })()}
-          </svg>
-          <span className="text-xs font-mono text-slate-600 font-bold mt-2">
-            Formula: n(n − 3) ÷ 2 = 7 × 4 ÷ 2 = <b>14 Diagonals</b>
-          </span>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Select the Total Number of Diagonals in a Heptagon">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: 12, },
-              { id: "B" as const, val: 10, },
-              { id: "C" as const, val: 14, desc: "7 × 4 / 2 = 14", },
-              { id: "D" as const, val: 16, },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.val}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
+      <Board>
+        <svg viewBox="0 0 100 100" className="w-full max-h-72">
+          <polygon points={P.map((p) => p.join(",")).join(" ")} fill="#eef2ff" stroke="#312e81" strokeWidth={1} />
+          {w.diag.map((k) => { const [a, b] = k.split("-").map(Number); return <line key={k} x1={P[a][0]} y1={P[a][1]} x2={P[b][0]} y2={P[b][1]} stroke="#f59e0b" strokeWidth={0.9} />; })}
+          {P.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r={3} fill={pick === i ? "#e11d48" : "#4338ca"} role="button" aria-label={`corner ${i + 1}`} style={{ cursor: "pointer" }} onClick={() => tap(i)} />)}
+        </svg>
+      </Board>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q29 — 📐 Triangle Growth Workshop (Perimeter of Outer Boundary)
+   Q29 — Triangle Growth Workshop
+   The big triangle is split by the midpoint triangle into small edges of 6 cm. The student
+   taps the edges that make up the figure's outer boundary; the measuring wheel adds them.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q29World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q29EquilateralTriangleActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q29World>({
+export function Q29EquilateralTriangleActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const A: Pt = [50, 8], B: Pt = [10, 78], C: Pt = [90, 78];
+  const m = (p: Pt, q: Pt): Pt => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  const AB = m(A, B), BC = m(B, C), CA = m(C, A);
+  const segs: [Pt, Pt][] = [[A, AB], [AB, B], [B, BC], [BC, C], [C, CA], [CA, A], [AB, BC], [BC, CA], [CA, AB]];
+  const half = 6;
+  const play = usePlay<{ on: number[]; rolled: boolean }>({
     question,
+    initial: { on: [], rolled: false },
+    derive: (w) => (!w.rolled || !w.on.length ? { note: "Tap the boundary edges, then roll the measuring wheel." } : { value: `${w.on.length} edges × ${half} cm = ${w.on.length * half} cm`, optionId: matchNumber(question, w.on.length * half) }),
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const p = w.chosenOption === "A" ? 24 : w.chosenOption === "B" ? 36 : w.chosenOption === "C" ? 48 : 18;
-
-      return {
-        value: `${p} cm (Outer Boundary Perimeter)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, p) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! The outer boundary perimeter is solely defined by the 3 outer sides of length 12 cm each: 3 × 12 = 36 cm."
-          : `Selected ${p} cm. Note: The problem asks for the OUTER boundary perimeter.`,
-      };
-    },
   });
+  const w = play.world;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Triangle Growth Workshop"
-      mission="Find the outer boundary perimeter of the equilateral triangle with side 12 cm containing midpoint triangles."
+      mission="Every small edge is half of a 12 cm side, so 6 cm. Tap each edge that lies on the outer boundary of the figure (tap again to remove it), then roll the measuring wheel along them."
       icon={Triangle}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Outer Perimeter" value={world.chosenOption === "B" ? "36 cm (Option B)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the perimeter"
+      live={<Gauge label="Wheel" value={`${w.on.length * half} cm`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Fractal Triangle Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 220 180" className="w-52 h-44 drop-shadow-md">
-            {/* Outer Equilateral Triangle (Side 12 cm) */}
-            <polygon points="110,20 200,165 20,165" fill="#e0e7ff" stroke="#4f46e5" strokeWidth="3.5" />
-
-            {/* Inverted Midpoint Triangle (Side 6 cm) */}
-            <polygon points="110,165 155,92.5 65,92.5" fill="#fce7f3" stroke="#db2777" strokeWidth="2" strokeDasharray="3 3" />
-
-            {/* Dimension labels */}
-            <text x="50" y="85" fill="#312e81" fontSize="11" fontWeight="bold">12 cm</text>
-            <text x="170" y="85" fill="#312e81" fontSize="11" fontWeight="bold">12 cm</text>
-            <text x="110" y="180" fill="#312e81" fontSize="11" fontWeight="bold" textAnchor="middle">12 cm</text>
-          </svg>
-          <span className="text-xs text-slate-600 font-medium mt-1">
-            Outer Boundary = 12 + 12 + 12 = <b>36 cm</b>
-          </span>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Outer Boundary Perimeter">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: "24 cm", },
-              { id: "B" as const, val: "36 cm", desc: "3 × 12 = 36 cm", },
-              { id: "C" as const, val: "48 cm", },
-              { id: "D" as const, val: "18 cm", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.val}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
+      <Board>
+        <svg viewBox="0 0 100 86" className="w-full max-h-72">
+          {segs.map(([p, q], i) => <line key={i} x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]} stroke={w.on.includes(i) ? "#f59e0b" : "#4338ca"} strokeWidth={w.on.includes(i) ? 3 : 1.4} role="button" aria-label={`edge ${i + 1}`} style={{ cursor: "pointer" }} onClick={() => !play.readOnly && play.set((s) => ({ rolled: false, on: toggle(s.on, i) }))} />)}
+        </svg>
+      </Board>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.on.length} onClick={() => play.patch({ rolled: true })}>🛞 Roll the measuring wheel</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q30 — 🏛️ Roman Numeral Forge (Arithmetic Evaluation)
+   Q30 — Roman Numeral Forge
+   Each numeral in the sum is decoded tile by tile: the student sets every tile to add or
+   take away. The forge then adds and subtracts the decoded values, and the student casts
+   the result back into Roman numerals from the tile rack.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q30World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q30RomanNumeralForgeActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q30World>({
+const RV: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+const Q30_TERMS = [
+  { r: "LVIII", s: 1 },
+  { r: "XXIV", s: 1 },
+  { r: "LXXXIX", s: 1 },
+  { r: "XXXII", s: 1 },
+  { r: "XCIV", s: -1 },
+];
+const RACK = ["C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+const RACKV: Record<string, number> = { C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+export function Q30RomanNumeralForgeActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ minus: Record<number, number[]>; cast: string[]; done: boolean }>({
     question,
+    initial: { minus: {}, cast: [], done: false },
+    derive: (w) => {
+      if (!w.done || !w.cast.length) return { note: "Decode, forge the total, then cast it in Roman numerals." };
+      const text = w.cast.join("");
+      return { value: `${text} = ${w.cast.reduce((s, t) => s + RACKV[t], 0)}`, optionId: matchText(question, text) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const roman =
-        w.chosenOption === "A"
-          ? "CVI"
-          : w.chosenOption === "B"
-          ? "CXIV"
-          : w.chosenOption === "C"
-          ? "XCIX"
-          : "CIX";
-
-      return {
-        value: `${roman} (109 in Roman Numerals)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, roman) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 58 (LVIII) + 24 (XXIV) + 89 (LXXXIX) + 32 (XXXII) − 94 (XCIV) = 203 − 94 = 109 = CIX."
-          : `Selected ${roman}. 109 = 100 (C) + 9 (IX) = CIX.`,
-      };
-    },
   });
+  const w = play.world;
+  const dec = (i: number) => Q30_TERMS[i].r.split("").reduce((s, ch, j) => s + ((w.minus[i] ?? []).includes(j) ? -1 : 1) * RV[ch], 0);
+  const total = Q30_TERMS.reduce((s, t, i) => s + t.s * dec(i), 0);
+  const castV = w.cast.reduce((s, t) => s + RACKV[t], 0);
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Roman Numeral Forge"
-      mission="Convert each Roman term to standard numbers, evaluate the total sum, and forge the result in Roman numerals."
+      mission="Tap a tile to switch it between adding and taking away — a smaller symbol before a larger one is taken away. The forge totals the sum. Then cast the total in Roman numerals from the rack, largest pieces first."
       icon={Landmark}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Forged Numeral" value={world.chosenOption === "D" ? "CIX (109)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the numeral"
+      live={<><Gauge label="Forge total" value={total} tone="violet" /><Gauge label="Cast" value={`${w.cast.join("") || "—"} = ${castV}`} tone={castV === total ? "emerald" : "amber"} /></>}
     >
-      <div className="space-y-4">
-        {/* Step-by-Step Roman Math Workbench */}
-        <div className="bg-gradient-to-br from-amber-50 via-white to-orange-50 text-slate-800 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col items-center">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-1">Source Roman Numeral Expression:</div>
-          <div className="font-mono text-xl sm:text-2xl font-black text-amber-900 tracking-wider">
-            LVIII + XXIV + LXXXIX + XXXII − XCIV
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full max-w-lg my-3 text-center">
-            <div className="p-2 bg-white rounded border border-amber-200 text-xs font-mono">
-              <span className="text-slate-500 block">LVIII</span>
-              <span className="font-bold text-slate-800">= 58</span>
-            </div>
-            <div className="p-2 bg-white rounded border border-amber-200 text-xs font-mono">
-              <span className="text-slate-500 block">XXIV</span>
-              <span className="font-bold text-slate-800">= 24</span>
-            </div>
-            <div className="p-2 bg-white rounded border border-amber-200 text-xs font-mono">
-              <span className="text-slate-500 block">LXXXIX</span>
-              <span className="font-bold text-slate-800">= 89</span>
-            </div>
-            <div className="p-2 bg-white rounded border border-amber-200 text-xs font-mono">
-              <span className="text-slate-500 block">XXXII</span>
-              <span className="font-bold text-slate-800">= 32</span>
-            </div>
-            <div className="p-2 bg-white rounded border border-amber-200 text-xs font-mono col-span-2 sm:col-span-1">
-              <span className="text-slate-500 block">− XCIV</span>
-              <span className="font-bold text-rose-700">= − 94</span>
-            </div>
-          </div>
-
-          <div className="p-2 bg-amber-100 rounded-lg border border-amber-300 text-center w-full max-w-sm">
-            <span className="text-xs font-mono font-bold text-amber-900">
-              Calculation: 58 + 24 + 89 + 32 − 94 = 203 − 94 = <b>109 → CIX</b>
-            </span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Final Roman Numeral Result (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, roman: "CVI", arabic: "106", },
-              { id: "B" as const, roman: "CXIV", arabic: "114", },
-              { id: "C" as const, roman: "XCIX", arabic: "99", },
-              { id: "D" as const, roman: "CIX", arabic: "109", desc: "100 + 9 = CIX", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-amber-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1 font-mono">{opt.roman}</span>
-                  <span className="text-[10px] text-slate-500 font-mono">Arabic: {opt.arabic}</span>
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-amber-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
+      <div className="space-y-1.5">
+        {Q30_TERMS.map((t, i) => (
+          <div key={i} className="flex flex-wrap items-center gap-1 rounded-xl bg-white border border-indigo-200 p-1.5">
+            <span className="w-5 font-black text-indigo-700">{t.s < 0 ? "−" : "+"}</span>
+            {t.r.split("").map((ch, j) => {
+              const neg = (w.minus[i] ?? []).includes(j);
+              return <button key={j} type="button" disabled={play.readOnly} aria-label={`term ${i + 1} tile ${j + 1}`} onClick={() => play.set((p) => ({ ...p, done: false, minus: { ...p.minus, [i]: toggle(p.minus[i] ?? [], j) } }))} className={`w-8 h-10 rounded font-serif font-black border-2 ${neg ? "bg-rose-100 border-rose-400" : "bg-amber-50 border-amber-300"}`}>{ch}<span className="block text-[8px] font-sans">{neg ? "−" : "+"}{RV[ch]}</span></button>;
             })}
+            <span className="ml-auto font-mono font-black text-indigo-900">{dec(i)}</span>
           </div>
-        </Bay>
+        ))}
       </div>
-    </PlayShell>
+      <Bay label="Casting rack" tone="violet" className="mt-2">
+        <div className="flex flex-wrap gap-1">
+          {RACK.map((r) => <Btn key={r} className="px-2 min-h-[34px] font-serif" tone="slate" disabled={play.readOnly} onClick={() => play.patch({ cast: [...w.cast, r], done: false })} ariaLabel={`cast ${r}`}>{r}</Btn>)}
+          <Btn className="px-2 min-h-[34px]" tone="slate" disabled={play.readOnly || !w.cast.length} onClick={() => play.patch({ cast: w.cast.slice(0, -1), done: false })}>⌫</Btn>
+          <Btn className="px-2 min-h-[34px]" tone="emerald" disabled={play.readOnly || !w.cast.length} onClick={() => play.patch({ done: true })}>🔥 Cast it</Btn>
+        </div>
+      </Bay>
+    </Shell>
   );
 }

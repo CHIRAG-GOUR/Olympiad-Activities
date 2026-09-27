@@ -33,6 +33,10 @@ export interface PlayState<W> {
   world: W;
   locked: boolean;
   touched: boolean;
+  /** Engine result recorded at submit, for reports: what the world produced and the option it mapped to. */
+  result?: { value?: string; mappedOption?: string; completed: boolean };
+  startedAt?: number;
+  updatedAt?: number;
 }
 
 const isPlayState = (s: unknown): s is PlayState<unknown> =>
@@ -86,6 +90,9 @@ export function usePlay<W>({ initial, derive, activityState, value, onChange, re
         world: typeof next === "function" ? (next as (w: W) => W)(p.world) : next,
         locked: false,
         touched: true,
+        result: undefined,
+        startedAt: p.startedAt ?? Date.now(),
+        updatedAt: Date.now(),
       })),
     [engine]
   );
@@ -95,7 +102,21 @@ export function usePlay<W>({ initial, derive, activityState, value, onChange, re
     [set]
   );
 
-  const submit = useCallback(() => engine.update((p) => ({ ...p, locked: true, touched: true })), [engine]);
+  const submit = useCallback(
+    () =>
+      engine.update((p) => {
+        const d = safeDerive(derive, p.world);
+        return {
+          ...p,
+          locked: true,
+          touched: true,
+          result: { value: d.value, mappedOption: d.optionId, completed: !!d.optionId },
+          startedAt: p.startedAt ?? Date.now(),
+          updatedAt: Date.now(),
+        };
+      }),
+    [engine, derive]
+  );
 
   return {
     world,

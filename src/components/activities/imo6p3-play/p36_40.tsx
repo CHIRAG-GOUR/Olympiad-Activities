@@ -1,576 +1,269 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import {
-  ShoppingBag,
-  Fence,
-  Briefcase,
-  GlassWater,
-  Building2,
-  CheckCircle2,
-  Sparkles,
-} from "lucide-react";
+import { ShoppingCart, Fence, Clock3, CupSoda, Users } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
+import { matchNumber } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Shell, Board, Stepper, inr, r4 } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q36 — 🏏 Cricket Bat Shopping (Unit Price & Savings)
+   Q36 — Sports Store Checkout
+   Each shop sells bats only in packs. The student puts packs in each basket until it
+   holds 16 bats; the tills total the baskets and the saving board compares them.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q36World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q36CricketBatShoppingActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q36World>({
+const SHOPS = [
+  { k: "A", bats: 8, price: 2560 },
+  { k: "B", bats: 4, price: 1550 },
+];
+export function Q36CricketBatShoppingActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ packs: number[]; compared: boolean }>({
     question,
+    initial: { packs: [0, 0], compared: false },
+    derive: (w) => {
+      if (!w.compared) return { note: "Fill both baskets and compare the tills." };
+      if (SHOPS.some((s, i) => s.bats * w.packs[i] !== 16)) return { note: "Each basket must hold exactly 16 bats." };
+      const d = Math.abs(SHOPS[0].price * w.packs[0] - SHOPS[1].price * w.packs[1]);
+      return { value: `Saving ${inr(d)}`, optionId: matchNumber(question, d) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const sav = w.chosenOption === "A" ? "₹980" : w.chosenOption === "B" ? "₹1080" : w.chosenOption === "C" ? "₹1120" : "₹1240";
-
-      return {
-        value: `${sav} Savings (Shop B ₹6,200 − Shop A ₹5,120)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, sav) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 16 bats from Shop A: 2 packs × ₹2560 = ₹5120. From Shop B: 4 packs × ₹1550 = ₹6200. Savings = ₹6200 − ₹5120 = ₹1080."
-          : `Selected ${sav}. Cost A = 2 × ₹2560 = ₹5120; Cost B = 4 × ₹1550 = ₹6200.`,
-      };
-    },
   });
+  const w = play.world;
 
   return (
-    <PlayShell
-      title="Sports Store Checkout"
-      mission="Compare purchase totals for 16 bats from Shop A versus Shop B to calculate the coach's savings."
-      icon={ShoppingBag}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Coach's Savings" value={world.chosenOption === "B" ? "₹1,080 (Option B)" : `Option ${world.chosenOption}`} />}
+      title="Sports Store Checkout"
+      mission="Each shop sells bats only in packs. Add packs to each basket until it holds 16 bats, then compare the two tills to see how much buying from Shop A saves."
+      icon={ShoppingCart}
+      dim="2D"
+      submitLabel="Submit the saving"
+      live={<>{SHOPS.map((s, i) => <Gauge key={s.k} label={`Shop ${s.k}`} value={`${s.bats * w.packs[i]} bats · ${inr(s.price * w.packs[i])}`} tone="violet" />)}</>}
     >
-      <div className="space-y-4">
-        {/* Dual Store Comparison Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 bg-emerald-50 border border-slate-200 rounded-xl shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-900 uppercase">Shop A (Bulk Pack)</span>
-              <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">Best Deal ✓</span>
-            </div>
-            <div className="font-mono text-2xl font-black text-emerald-950 my-1">₹5,120</div>
-            <span className="text-xs text-emerald-800 font-medium">
-              2 packs of 8 bats @ ₹2,560 each (16 bats)
-            </span>
-          </div>
-
-          <div className="p-4 bg-slate-50 border-2 border-slate-300 rounded-xl shadow-xs">
-            <span className="text-xs font-bold text-slate-700 uppercase">Shop B (Standard Pack)</span>
-            <div className="font-mono text-2xl font-black text-slate-900 my-1">₹6,200</div>
-            <span className="text-xs text-slate-600 font-medium">
-              4 packs of 4 bats @ ₹1,550 each (16 bats)
-            </span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Total Savings (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, sav: "₹980", },
-              { id: "B" as const, sav: "₹1080", desc: "₹6200 − ₹5120 = ₹1080", },
-              { id: "C" as const, sav: "₹1120", },
-              { id: "D" as const, sav: "₹1240", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.sav}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="grid sm:grid-cols-2 gap-2">
+        {SHOPS.map((s, i) => (
+          <Bay key={s.k} label={`Shop ${s.k}: ${s.bats} bats for ${inr(s.price)}`}>
+            <div className="flex flex-wrap gap-0.5 min-h-[28px]">{Array.from({ length: s.bats * w.packs[i] }, (_, k) => <span key={k}>🏏</span>)}</div>
+            <Stepper label={`Shop ${s.k} packs`} value={w.packs[i]} min={0} max={8} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ compared: false, packs: p.packs.map((x, j) => (j === i ? x + d : x)) }))} />
+          </Bay>
+        ))}
       </div>
-    </PlayShell>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ compared: true })}>Compare the tills</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q37 — 🏞️ Land Fencing (Rectangular Boundary Wire)
+   Q37 — Fencing Robot
+   The robot walks the boundary of the field once per round of wire. The student sets how
+   many rounds to lay and starts it; the wire counter adds the length of every lap.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q37World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q37LandFencingActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q37World>({
+export function Q37LandFencingActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const L = 4.5, B = 2.5;
+  const play = usePlay<{ rounds: number; laid: number }>({
     question,
+    initial: { rounds: 1, laid: 0 },
+    derive: (w) => (!w.laid ? { note: "Set the rounds and lay the wire." } : { value: `${w.laid} rounds × ${2 * (L + B)} m = ${w.laid * 2 * (L + B)} m`, optionId: matchNumber(question, w.laid * 2 * (L + B)) }),
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const len = w.chosenOption === "A" ? "28 metres" : w.chosenOption === "B" ? "56 metres" : w.chosenOption === "C" ? "42 metres" : "70 metres";
-
-      return {
-        value: `${len} Wire (4 rounds × 14 m perimeter)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, len) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Perimeter of field = 2 × (4.5 + 2.5) = 2 × 7 = 14 metres. 4 rounds of fencing = 4 × 14 = 56 metres."
-          : `Selected ${len}. Total wire = 4 × Perimeter = 4 × [2 × (length + breadth)].`,
-      };
-    },
   });
+  const w = play.world;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Fencing Robot"
-      mission="Calculate the total wire needed for 4 rounds of fencing around a 4.5 m × 2.5 m playground."
+      mission={`The playground is ${L} m by ${B} m. Set how many rounds of wire go round it and send the robot; each lap it walks the whole boundary and the counter adds that length.`}
       icon={Fence}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Total Wire Length" value={world.chosenOption === "B" ? "56 metres (Option B)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the wire length"
+      live={<Gauge label="Wire laid" value={`${w.laid * 2 * (L + B)} m`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Field Diagram Canvas */}
-        <div className="bg-gradient-to-br from-emerald-50 via-white to-teal-50 border border-emerald-200 p-6 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 280 150" className="w-full max-w-sm h-36 bg-white rounded-lg border-2 border-emerald-300 shadow-inner">
-            <rect x="40" y="30" width="200" height="90" fill="#dcfce7" stroke="#16a34a" strokeWidth="3" rx="4" />
-            <text x="140" y="22" fill="#166534" fontSize="11" fontWeight="bold" textAnchor="middle">
-              Length = 4.5 m
-            </text>
-            <text x="250" y="80" fill="#166534" fontSize="11" fontWeight="bold" textAnchor="start">
-              2.5 m
-            </text>
-            <text x="140" y="80" fill="#15803d" fontSize="12" fontWeight="black" textAnchor="middle">
-              4 Rounds of Wire
-            </text>
-          </svg>
-          <span className="text-xs font-mono text-emerald-900 font-bold mt-2">
-            1 Round = 2 × (4.5 + 2.5) = 14 m &nbsp;|&nbsp; 4 Rounds = 4 × 14 = <b>56 metres</b>
-          </span>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Total Length of Wire Required (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, len: "28 metres", desc: "2 rounds only", },
-              { id: "B" as const, len: "56 metres", desc: "4 × 14 = 56 m", },
-              { id: "C" as const, len: "42 metres", desc: "3 rounds only", },
-              { id: "D" as const, len: "70 metres", desc: "5 rounds", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.len}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <Board>
+        <svg viewBox="0 0 110 70" className="w-full max-h-56">
+          <rect x={10} y={10} width={90} height={50} fill="#dcfce7" stroke="#16a34a" strokeWidth={1} />
+          {Array.from({ length: w.laid }, (_, k) => <rect key={k} x={10 - (k + 1) * 1.6} y={10 - (k + 1) * 1.6} width={90 + (k + 1) * 3.2} height={50 + (k + 1) * 3.2} fill="none" stroke="#92400e" strokeWidth={0.5} />)}
+          <text x={55} y={8} fontSize={4} textAnchor="middle">{L} m</text>
+          <text x={104} y={36} fontSize={4}>{B} m</text>
+          {w.laid > 0 && <motion.text key={w.laid} fontSize={6} animate={{ x: [10, 100, 100, 10, 10], y: [10, 10, 60, 60, 10] }} transition={{ duration: 1.2, repeat: w.laid - 1 }}>🤖</motion.text>}
+        </svg>
+      </Board>
+      <div className="flex flex-wrap gap-2 mt-2">
+        <Stepper label="Rounds" value={w.rounds} min={1} max={8} disabled={play.readOnly} onStep={(d) => play.patch({ rounds: w.rounds + d, laid: 0 })} />
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ laid: w.rounds })}>Lay the wire</Btn>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q38 — 💼 Work-Time Payroll (Wage & Overtime)
+   Q38 — Work-Time Payroll
+   The payroll adds regular hours at the regular rate and overtime at the overtime rate.
+   The student sets the regular week and adds overtime hours until the pay slip reaches
+   the earnings in the question.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q38World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q38WorkingHoursActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q38World>({
+export function Q38WorkingHoursActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ days: number; hrs: number; weeks: number; ot: number; printed: boolean }>({
     question,
+    initial: { days: 1, hrs: 1, weeks: 1, ot: 0, printed: false },
+    derive: (w) => {
+      const reg = w.days * w.hrs * w.weeks;
+      const pay = r4(reg * 2.4 + w.ot * 3.2);
+      if (!w.printed) return { note: "Set the work schedule and print the pay slip." };
+      if (Math.abs(pay - 432) > 1e-9) return { note: `The slip shows ₹${pay}, not ₹432.` };
+      return { value: `${reg} + ${w.ot} = ${reg + w.ot} hours`, optionId: matchNumber(question, reg + w.ot) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "A" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "A";
-      const hrs = w.chosenOption === "A" ? "175 hours" : w.chosenOption === "B" ? "160 hours" : w.chosenOption === "C" ? "180 hours" : "190 hours";
-
-      return {
-        value: `${hrs} (160 Regular + 15 Overtime Hours)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, hrs) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Regular hours = 4 × 5 × 8 = 160 hrs @ ₹2.40 = ₹384. Overtime pay = ₹432 − ₹384 = ₹48. Overtime hours = ₹48 ÷ ₹3.20 = 15 hrs. Total hours = 160 + 15 = 175 hours."
-          : `Selected ${hrs}. Total hours = Regular hours (160) + Overtime hours (15).`,
-      };
-    },
   });
+  const w = play.world;
+  const reg = w.days * w.hrs * w.weeks;
+  const pay = r4(reg * 2.4 + w.ot * 3.2);
+  const set = (k: "days" | "hrs" | "weeks" | "ot", d: number) => play.set((p) => ({ ...p, printed: false, [k]: p[k] + d }));
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Work-Time Payroll"
-      mission="Calculate the total hours worked across 4 weeks with regular rate ₹2.40/hr and overtime ₹3.20/hr."
-      icon={Briefcase}
+      mission="Set the clerk's regular schedule — days a week, hours a day, weeks — paid at ₹2.40 an hour. Add overtime hours at ₹3.20 until the pay slip shows ₹432, then print it."
+      icon={Clock3}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Total Hours" value={world.chosenOption === "A" ? "175 hours (Option A)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the total hours"
+      live={<><Gauge label="Regular hours" value={reg} tone="violet" /><Gauge label="Pay slip" value={`₹${pay}`} tone={Math.abs(pay - 432) < 1e-9 ? "emerald" : "amber"} /></>}
     >
-      <div className="space-y-4">
-        {/* Payslip Breakdown Card */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">Detailed Monthly Payroll Breakdown:</div>
-          <div className="space-y-2 text-xs font-mono">
-            <div className="flex justify-between p-2.5 bg-white border border-slate-200 rounded-lg">
-              <span>Regular Pay: 4 wks × 40 hrs = 160 hrs @ ₹2.40/hr</span>
-              <span className="font-bold text-slate-800">₹384.00</span>
-            </div>
-            <div className="flex justify-between p-2.5 bg-white border border-slate-200 rounded-lg">
-              <span>Overtime Pay: ₹432 − ₹384 = ₹48 @ ₹3.20/hr</span>
-              <span className="font-bold text-indigo-600">15 hrs (= ₹48.00)</span>
-            </div>
-            <div className="flex justify-between p-2.5 bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold rounded-lg">
-              <span>Total Earnings = ₹432.00 &nbsp;|&nbsp; Total Hours = 160 + 15</span>
-              <span>175 Hours</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Total Hours Worked (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, hrs: "175 hours", desc: "160 reg + 15 ot = 175 hrs", },
-              { id: "B" as const, hrs: "160 hours", desc: "Regular hours only", },
-              { id: "C" as const, hrs: "180 hours", },
-              { id: "D" as const, hrs: "190 hours", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.hrs}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <Bay label="Regular schedule">
+          <Stepper label="Days a week" value={w.days} min={1} max={7} disabled={play.readOnly} onStep={(d) => set("days", d)} />
+          <Stepper label="Hours a day" value={w.hrs} min={1} max={12} disabled={play.readOnly} onStep={(d) => set("hrs", d)} />
+          <Stepper label="Weeks" value={w.weeks} min={1} max={8} disabled={play.readOnly} onStep={(d) => set("weeks", d)} />
+        </Bay>
+        <Bay label="Overtime" tone="violet">
+          <Stepper label="Overtime hours" value={w.ot} min={0} max={100} steps={[1, 5]} disabled={play.readOnly} onStep={(d) => set("ot", d)} />
+          <p className="text-xs font-mono mt-1">{reg} × ₹2.40 + {w.ot} × ₹3.20 = ₹{pay}</p>
         </Bay>
       </div>
-    </PlayShell>
+      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ printed: true })}>🧾 Print the pay slip</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q39 — 🥤 Mocktail Laboratory (Fraction Capacity Addition)
+   Q39 — Mocktail Laboratory
+   A jug marked in sixths of a litre. The student pours each ingredient in; it fills as
+   many sixths as it holds. Six sixths are carried over as one whole litre.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q39World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q39MocktailMixerActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q39World>({
+const DRINKS = [
+  { k: "soda", w: 2, n: 1, d: 3 },
+  { k: "lime syrup", w: 1, n: 2, d: 3 },
+  { k: "water", w: 1, n: 5, d: 6 },
+];
+export function Q39MocktailMixerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ poured: number[]; carried: number }>({
     question,
+    initial: { poured: [], carried: 0 },
+    derive: (w) => {
+      const six = w.poured.reduce((s, i) => s + ((DRINKS[i].w * DRINKS[i].d + DRINKS[i].n) * 6) / DRINKS[i].d, 0);
+      const whole = w.carried;
+      const left = six - 6 * whole;
+      if (w.poured.length < DRINKS.length) return { note: "Pour in every ingredient." };
+      if (left >= 6) return { note: "Carry the full litres out of the sixths." };
+      return { value: `${whole} ${left}/6 litres`, optionId: matchNumber(question, whole + left / 6, 1e-9) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const vol = w.chosenOption === "A" ? "4 ⅔ litres" : w.chosenOption === "B" ? "5 ⅓ litres" : w.chosenOption === "C" ? "6 litres" : "5 ⅚ litres";
-
-      return {
-        value: `${vol} (Total Mocktail Volume)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, vol) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 2 ⅓ + 1 ⅔ + 1 ⅚ = 7/3 + 5/3 + 11/6 = 14/6 + 10/6 + 11/6 = 35/6 = 5 ⅚ litres."
-          : `Selected ${vol}. Convert mixed fractions to common denominator 6: (14 + 10 + 11)/6 = 35/6 = 5 ⅚ litres.`,
-      };
-    },
   });
+  const w = play.world;
+  const six = w.poured.reduce((s, i) => s + ((DRINKS[i].w * DRINKS[i].d + DRINKS[i].n) * 6) / DRINKS[i].d, 0);
+  const left = six - 6 * w.carried;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Mocktail Laboratory"
-      mission="Calculate the total volume when mixing 2⅓ L soda, 1⅔ L lime syrup, and 1⅚ L sparkling water."
-      icon={GlassWater}
+      mission="The jug is marked in sixths of a litre. Pour in each ingredient — it fills as many sixths as it holds. Whenever six sixths are full, carry them over as one litre."
+      icon={CupSoda}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Combined Volume" value={world.chosenOption === "D" ? "5 ⅚ litres (Option D)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the total"
+      live={<Gauge label="Mocktail" value={`${w.carried} L + ${left}/6 L`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Flasks Display */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="p-3 bg-white border-2 border-indigo-200 rounded-xl text-center shadow-xs flex flex-col items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Soda</span>
-            <span className="font-mono text-lg font-black text-indigo-700 my-1">2 ⅓ L</span>
-            <span className="text-[10px] font-mono text-slate-500">= 14/6 L</span>
+      <div className="flex flex-wrap gap-2">{DRINKS.map((d, i) => <Btn key={d.k} tone={w.poured.includes(i) ? "emerald" : "slate"} disabled={play.readOnly || w.poured.includes(i)} onClick={() => play.patch({ poured: [...w.poured, i] })} ariaLabel={`pour ${d.k}`}>🥤 {d.w} {d.n}/{d.d} L {d.k}</Btn>)}</div>
+      <Board className="mt-2">
+        <div className="flex items-end gap-3">
+          <div className="flex gap-1">{Array.from({ length: w.carried }, (_, i) => <span key={i} className="w-8 h-20 rounded bg-sky-300 border border-sky-500 grid place-items-center text-[10px] font-black">1 L</span>)}</div>
+          <div className="flex flex-col-reverse gap-0.5 w-16 min-h-[100px] rounded border-2 border-sky-400 p-0.5 bg-white">
+            {Array.from({ length: left }, (_, i) => <span key={i} className={`h-3 rounded-sm ${i < 6 ? "bg-sky-200" : "bg-rose-300"}`} />)}
           </div>
-
-          <div className="p-3 bg-white border-2 border-emerald-200 rounded-xl text-center shadow-xs flex flex-col items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Lime Syrup</span>
-            <span className="font-mono text-lg font-black text-emerald-700 my-1">1 ⅔ L</span>
-            <span className="text-[10px] font-mono text-slate-500">= 10/6 L</span>
-          </div>
-
-          <div className="p-3 bg-white border-2 border-cyan-200 rounded-xl text-center shadow-xs flex flex-col items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Water</span>
-            <span className="font-mono text-lg font-black text-cyan-700 my-1">1 ⅚ L</span>
-            <span className="text-[10px] font-mono text-slate-500">= 11/6 L</span>
-          </div>
+          <Btn tone="amber" disabled={play.readOnly || left < 6} onClick={() => play.patch({ carried: w.carried + 1 })}>Carry 6/6 → 1 L</Btn>
         </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Total Volume of Mocktail (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, vol: "4 ⅔ litres", },
-              { id: "B" as const, vol: "5 ⅓ litres", },
-              { id: "C" as const, vol: "6 litres", },
-              { id: "D" as const, vol: "5 ⅚ litres", desc: "35/6 = 5 5/6 L", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.vol}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
+      </Board>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q40 — 🏘️ Village Population Simulator (Annual Population Flow)
+   Q40 — Village Population Simulator
+   The population counter starts at the 2015 figure. The student dials the people who
+   moved in and adds them, then dials the people who left and removes them.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q40World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q40VillagePopulationActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q40World>({
+export function Q40VillagePopulationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const start = 105250;
+  const play = usePlay<{ inn: number; out: number; applied: string[] }>({
     question,
+    initial: { inn: 0, out: 0, applied: [] },
+    derive: (w) => {
+      if (w.applied.length < 2) return { note: "Apply the arrivals and the departures." };
+      const p = start + w.inn - w.out;
+      return { value: p.toLocaleString("en-IN"), optionId: matchNumber(question, p) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const pop = w.chosenOption === "A" ? "98,420" : w.chosenOption === "B" ? "101,250" : w.chosenOption === "C" ? "100,323" : "102,143";
-
-      return {
-        value: `${pop} Residents (Jan 2017 Population)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, pop) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Population = Initial (105,250) + Moved in (4,315) − Left (9,242) = 109,565 − 9,242 = 100,323."
-          : `Selected ${pop}. Calculation: 105,250 + 4,315 − 9,242 = 100,323.`,
-      };
-    },
   });
+  const w = play.world;
+  const now = start + (w.applied.includes("in") ? w.inn : 0) - (w.applied.includes("out") ? w.out : 0);
 
   return (
-    <PlayShell
-      title="Village Population Simulator"
-      mission="Calculate the town's population in January 2017 from initial count, arrivals, and departures."
-      icon={Building2}
-      dim="2D"
+    <Shell
+      play={play}
       question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Jan 2017 Population" value={world.chosenOption === "C" ? "100,323 (Option C)" : `Option ${world.chosenOption}`} />}
+      title="Village Population Simulator"
+      mission="The counter starts at 1,05,250. Dial the number of people who moved in and add them, then dial the number who left and remove them."
+      icon={Users}
+      dim="2D"
+      submitLabel="Submit the population"
+      live={<Gauge label="Population" value={now.toLocaleString("en-IN")} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Population Dynamics Ledger */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm">
-          <div className="text-xs font-mono font-bold text-slate-500 mb-2">Population Migration Ledger:</div>
-          <div className="space-y-2 text-xs font-mono">
-            <div className="flex justify-between p-2 bg-white border border-slate-200 rounded-lg">
-              <span>Base Population (Dec 2015)</span>
-              <span className="font-bold text-slate-800">105,250</span>
-            </div>
-            <div className="flex justify-between p-2 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-lg font-bold">
-              <span>+ People who moved in during 2016</span>
-              <span>+4,315</span>
-            </div>
-            <div className="flex justify-between p-2 bg-rose-50 border border-rose-300 text-rose-900 rounded-lg font-bold">
-              <span>− People who left during 2016</span>
-              <span>−9,242</span>
-            </div>
-            <div className="flex justify-between p-2.5 bg-indigo-50 border border-slate-200 text-indigo-950 font-black rounded-lg text-sm">
-              <span>Net Population in Jan 2017</span>
-              <span>100,323</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Population in January 2017 (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, pop: "98,420", },
-              { id: "B" as const, pop: "101,250", },
-              { id: "C" as const, pop: "100,323", desc: "105,250 + 4,315 − 9,242 = 100,323", },
-              { id: "D" as const, pop: "102,143", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.pop}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <Bay label="Moved in">
+          <Stepper label="Arrivals" value={w.inn} min={0} steps={[1, 10, 100, 1000]} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ ...p, inn: p.inn + d, applied: p.applied.filter((x) => x !== "in") }))} />
+          <Btn tone="emerald" className="mt-1" disabled={play.readOnly || w.applied.includes("in")} onClick={() => play.patch({ applied: [...w.applied, "in"] })}>+ Add arrivals</Btn>
+        </Bay>
+        <Bay label="Left the village">
+          <Stepper label="Departures" value={w.out} min={0} steps={[1, 10, 100, 1000]} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ ...p, out: p.out + d, applied: p.applied.filter((x) => x !== "out") }))} />
+          <Btn tone="rose" className="mt-1" disabled={play.readOnly || w.applied.includes("out")} onClick={() => play.patch({ applied: [...w.applied, "out"] })}>− Remove departures</Btn>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }

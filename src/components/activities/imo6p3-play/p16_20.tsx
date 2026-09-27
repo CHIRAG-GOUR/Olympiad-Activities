@@ -2,653 +2,340 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Sliders,
-  FlaskConical,
-  Shapes,
-  Maximize2,
-  Clock,
-  CheckCircle2,
-  Sparkles,
-} from "lucide-react";
+import { Sliders, FlaskConical, Hexagon, Square, Clock } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, matchOption } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
-import { PlayShell, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { matchNumber, matchText } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Shell, Board, Stepper, polyPath, Pt } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q16 — 🎯 Rounding Range (Estimation & Rounding)
+   Q16 — Rounding Range
+   Each number sits on its own number line with a rounding lever (tens, hundreds,
+   thousands). The student sets both levers, and the estimator subtracts the rounded
+   values.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q16World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q16RoundingRangeActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q16World>({
+const PLACE = ["ones", "tens", "hundreds", "thousands"];
+export function Q16RoundingRangeActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const a = cfg<number>(question, "num1", 0);
+  const b = cfg<number>(question, "num2", 0);
+  const rnd = (n: number, p: number) => Math.round(n / 10 ** p) * 10 ** p;
+  const play = usePlay<{ p: [number, number]; run: boolean }>({
     question,
+    initial: { p: [0, 0], run: false },
+    derive: (w) => {
+      if (!w.run) return { note: "Set both rounding levers and run the estimator." };
+      const d = rnd(a, w.p[0]) - rnd(b, w.p[1]);
+      return { value: `${rnd(a, w.p[0])} − ${rnd(b, w.p[1])} = ${d}`, optionId: matchNumber(question, d) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "A" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "A";
-      const val = w.chosenOption === "A" ? 7900 : w.chosenOption === "B" ? 8000 : w.chosenOption === "C" ? 7800 : 7976;
-
-      return {
-        value: `${val} (16,900 − 9,000 = 7,900)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, val) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 16,928 rounds to nearest hundred as 16,900; 8,952 rounds to 9,000. Estimated difference = 16,900 − 9,000 = 7,900."
-          : `Selected ${val}. Remember to round each number to hundreds BEFORE subtracting.`,
-      };
-    },
   });
+  const w = play.world;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Rounding Range"
-      mission="Round 16,928 and 8,952 to the nearest hundreds and find their estimated difference."
+      mission="Slide each number's lever to the place the question asks for — the marker jumps to the nearer mark on that number line. Then run the estimator to subtract the rounded numbers."
       icon={Sliders}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Estimated Difference" value={world.chosenOption === "A" ? "7,900 (Option A)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the estimate"
+      live={<Gauge label="Estimate" value={`${rnd(a, w.p[0])} − ${rnd(b, w.p[1])} = ${rnd(a, w.p[0]) - rnd(b, w.p[1])}`} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Nearest Hundred Dual Dials */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-violet-50 text-slate-800 p-4 rounded-xl border border-indigo-200 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Number 1 */}
-            <div className="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Minuend (16,928)</span>
-              <div className="my-2">
-                <span className="text-xl font-black text-slate-800">16,928</span>
-                <span className="text-xs text-indigo-600 font-bold ml-2">→ Tens digit is 2 (&lt; 5)</span>
-              </div>
-              <div className="p-2 bg-indigo-50 rounded border border-indigo-200 text-xs font-mono font-bold text-indigo-900">
-                Rounded: 16,900
-              </div>
+      {[a, b].map((n, i) => {
+        const p = w.p[i];
+        const step = 10 ** Math.max(p, 1);
+        const lo = Math.floor(n / step) * step;
+        const hi = lo + step;
+        return (
+          <Bay key={n} label={`${n.toLocaleString("en-IN")} rounded to the nearest ${PLACE[p]}`} className="mb-2">
+            <div className="relative h-10">
+              <div className="absolute top-5 left-0 right-0 h-1 bg-indigo-200 rounded" />
+              <span className="absolute top-0 left-0 text-[11px] font-mono font-bold text-slate-600">{lo}</span>
+              <span className="absolute top-0 right-0 text-[11px] font-mono font-bold text-slate-600">{hi}</span>
+              <motion.span animate={{ left: `${((n - lo) / step) * 100}%` }} className="absolute top-3 w-3 h-3 -ml-1.5 rounded-full bg-amber-500" />
+              <motion.span animate={{ left: `${((rnd(n, p) - lo) / step) * 100}%` }} className="absolute top-6 -ml-4 text-[11px] font-black text-indigo-700">▲{rnd(n, p)}</motion.span>
             </div>
-
-            {/* Number 2 */}
-            <div className="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">Subtrahend (8,952)</span>
-              <div className="my-2">
-                <span className="text-xl font-black text-slate-800">8,952</span>
-                <span className="text-xs text-indigo-600 font-bold ml-2">→ Tens digit is 5 (≥ 5)</span>
-              </div>
-              <div className="p-2 bg-indigo-50 rounded border border-indigo-200 text-xs font-mono font-bold text-indigo-900">
-                Rounded: 9,000
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-300 text-center">
-            <span className="text-xs font-mono font-bold text-emerald-900">
-              Estimated Calculation: 16,900 − 9,000 = <span className="text-sm font-black">7,900</span>
-            </span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Estimated Difference (A, B, C, or D)">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: 7900, desc: "16,900 − 9,000 = 7,900", },
-              { id: "B" as const, val: 8000, desc: "17,000 − 9,000", },
-              { id: "C" as const, val: 7800, desc: "16,800 − 9,000", },
-              { id: "D" as const, val: 7976, desc: "Exact difference (not estimated)", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.val}</span>
-                  <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-      </div>
-    </PlayShell>
+            <input type="range" min={0} max={3} value={p} aria-label={`round ${n} to`} disabled={play.readOnly} onChange={(e) => play.set((s) => ({ run: false, p: s.p.map((x, j) => (j === i ? Number(e.target.value) : x)) as [number, number] }))} className="w-full accent-indigo-600" />
+          </Bay>
+        );
+      })}
+      <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ run: true })}>Run the estimator</Btn>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q17 — 🧪 Integer Truth Lab (Integer Properties)
+   Q17 — Integer Truth Lab
+   Each statement has a test bench. The student runs tests with numbers of their choice;
+   a single counterexample stamps a statement FALSE, and the inverse bench checks 5 × ⅕.
+   Once every bench has been run, the one statement left standing is the answer.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q17World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q17IntegerTruthLabActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q17World>({
+export function Q17IntegerTruthLabActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const opts = question?.multipleChoiceConfig?.options ?? [];
+  const idOf = (frag: string) => opts.find((o) => o.text.toLowerCase().includes(frag))?.id ?? "";
+  const ids = { prod: idOf("product of two negative"), inv: idOf("multiplicative inverse"), add: idOf("additive inverse of a negative"), diff: idOf("difference between an integer") };
+  const play = usePlay<{ a: number; b: number; runs: Record<string, number>; broken: string[] }>({
     question,
+    initial: { a: -2, b: -3, runs: {}, broken: [] },
+    derive: (w) => {
+      const all = Object.values(ids);
+      if (all.some((id) => !w.runs[id])) return { note: "Run every test bench at least once." };
+      const standing = all.filter((id) => !w.broken.includes(id));
+      if (standing.length !== 1) return { note: standing.length ? "More than one statement survived — test with other numbers." : "Every statement was broken." };
+      return { value: `Only statement ${standing[0]} survived testing`, optionId: standing[0] };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "B" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "B";
-      const desc =
-        w.chosenOption === "B"
-          ? "The multiplicative inverse of 5 is 1/5 (TRUE statement)"
-          : w.chosenOption === "A"
-          ? "Product of two negative integers is less than both (FALSE)"
-          : w.chosenOption === "C"
-          ? "Additive inverse of negative integer is negative (FALSE)"
-          : "Difference between integer and additive inverse is odd (FALSE)";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! 5 × (1/5) = 1, which defines 1/5 as the unique multiplicative inverse of 5."
-          : `Option ${w.chosenOption} is mathematically FALSE.`,
-      };
-    },
   });
+  const w = play.world;
+  const run = (id: string, fails: boolean) => play.set((p) => ({ ...p, runs: { ...p.runs, [id]: (p.runs[id] ?? 0) + 1 }, broken: fails && !p.broken.includes(id) ? [...p.broken, id] : p.broken }));
+  const stamp = (id: string) => (!w.runs[id] ? "not run" : w.broken.includes(id) ? "✗ FALSE — counterexample found" : "✓ holds so far");
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Integer Truth Lab"
-      mission="Audit the four integer mathematical properties with proof checks to identify the true statement."
+      mission="Set the two numbers, then run each bench. One counterexample is enough to break a statement. Run every bench — the statement that survives is the true one."
       icon={FlaskConical}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Verified Property" value={`Option ${world.chosenOption}`} />}
+      submitLabel="Submit the true statement"
+      live={<Gauge label="Broken" value={w.broken.join(", ") || "none"} tone="rose" />}
     >
-      <div className="space-y-4">
-        {/* 4 Candidate Statements */}
-        <Bay label="Audit Candidate Mathematical Statements (Select A, B, C, or D)">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              {
-                id: "A" as const,
-                text: "The product of two negative integers is always less than both integers.",
-                proof: "Counterexample: (−2) × (−3) = +6 > both (−2, −3).",
-                isTrue: false,
-              },
-              {
-                id: "B" as const,
-                text: "The multiplicative inverse of 5 is 1/5.",
-                proof: "Proof: 5 × (1/5) = 1 (Identity element holds).",
-                isTrue: true,
-              },
-              {
-                id: "C" as const,
-                text: "The additive inverse of a negative integer is always negative.",
-                proof: "Counterexample: Additive inverse of −7 is −(−7) = +7 (positive).",
-                isTrue: false,
-              },
-              {
-                id: "D" as const,
-                text: "The difference between an integer and its additive inverse is always odd.",
-                proof: "Counterexample: 6 − (−6) = 12 (always even for any integer).",
-                isTrue: false,
-              },
-            ].map((stmt) => {
-              const isSelected = world.chosenOption === stmt.id;
-              return (
-                <div
-                  key={stmt.id}
-                  onClick={() => set({ chosenOption: stmt.id })}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-bold text-xs text-slate-700">Option {stmt.id}</span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        stmt.isTrue
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-rose-100 text-rose-800"
-                      }`}
-                    >
-                      {stmt.isTrue ? "Mathematically TRUE ✓" : "Mathematically FALSE ✗"}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-800 font-semibold mb-2">{stmt.text}</p>
-                  <span className="text-[10px] font-mono text-slate-500 bg-slate-100 p-1.5 rounded block">
-                    {stmt.proof}
-                  </span>
-
-                  <button
-                    type="button"
-                    className={`mt-2 text-xs font-bold px-2 py-1 rounded w-full transition-colors ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + stmt.id}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+      <div className="flex flex-wrap gap-4 mb-2">
+        <Stepper label="a" value={w.a} min={-9} max={9} disabled={play.readOnly} onStep={(d) => play.patch({ a: w.a + d })} />
+        <Stepper label="b" value={w.b} min={-9} max={9} disabled={play.readOnly} onStep={(d) => play.patch({ b: w.b + d })} />
+      </div>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <Bay label={`${ids.prod} · product of two negatives`}>
+          <p className="text-xs font-mono">{w.a} × {w.b} = {w.a * w.b}</p>
+          <Btn className="mt-1" disabled={play.readOnly || w.a >= 0 || w.b >= 0} onClick={() => run(ids.prod, !(w.a * w.b < w.a && w.a * w.b < w.b))} ariaLabel="test product">Test (a, b negative)</Btn>
+          <p className="text-[11px] font-bold mt-1">{stamp(ids.prod)}</p>
+        </Bay>
+        <Bay label={`${ids.inv} · multiplicative inverse of 5`}>
+          <p className="text-xs font-mono">5 × 1/5 = 1</p>
+          <Btn className="mt-1" disabled={play.readOnly} onClick={() => run(ids.inv, false)} ariaLabel="test inverse">Multiply 5 by 1/5</Btn>
+          <p className="text-[11px] font-bold mt-1">{stamp(ids.inv)}</p>
+        </Bay>
+        <Bay label={`${ids.add} · additive inverse of a negative`}>
+          <p className="text-xs font-mono">inverse of {w.a} is {-w.a}</p>
+          <Btn className="mt-1" disabled={play.readOnly || w.a >= 0} onClick={() => run(ids.add, -w.a >= 0)} ariaLabel="test additive">Test (a negative)</Btn>
+          <p className="text-[11px] font-bold mt-1">{stamp(ids.add)}</p>
+        </Bay>
+        <Bay label={`${ids.diff} · integer minus its additive inverse`}>
+          <p className="text-xs font-mono">{w.a} − ({-w.a}) = {2 * w.a}</p>
+          <Btn className="mt-1" disabled={play.readOnly} onClick={() => run(ids.diff, (2 * w.a) % 2 === 0)} ariaLabel="test difference">Test with a</Btn>
+          <p className="text-[11px] font-bold mt-1">{stamp(ids.diff)}</p>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q18 — 🔷 Polygon Inspection Chamber (Polygons Identification)
+   Q18 — Polygon Detector
+   Each figure goes through the gate: one sensor checks the figure is closed, the other
+   that every side is a straight line segment. The student sorts each figure into the
+   polygon bin or the reject bin.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q18World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q18PolygonDetectorActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q18World>({
+const Q18_FIGS = [
+  { id: "(i)", closed: true, straight: true, d: "M 10 30 L 30 8 L 52 16 L 44 44 L 18 48 Z" },
+  { id: "(ii)", closed: true, straight: false, d: "M 30 6 L 50 40 A 22 12 0 0 1 10 40 Z" },
+  { id: "(iii)", closed: false, straight: true, d: "M 10 44 L 10 20 L 30 6 L 50 20 L 50 44 L 38 44" },
+];
+export function Q18PolygonDetectorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ scanned: string[]; bin: Record<string, "poly" | "not"> }>({
     question,
+    initial: { scanned: [], bin: {} },
+    derive: (w) => {
+      if (Q18_FIGS.some((f) => !w.bin[f.id])) return { note: "Scan and sort every figure." };
+      const poly = Q18_FIGS.filter((f) => w.bin[f.id] === "poly").map((f) => f.id);
+      const text = poly.length === 1 ? `Only Figure ${poly[0]}` : poly.length === 3 ? "All figures (i), (ii) and (iii)" : `Figures ${poly.join(" and ")}`;
+      return { value: text, optionId: matchText(question, text) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "C" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C";
-      const desc =
-        w.chosenOption === "C"
-          ? "Only Figure (i) (Simple closed figure formed strictly of line segments)"
-          : w.chosenOption === "A"
-          ? "Figures (i) and (ii)"
-          : w.chosenOption === "B"
-          ? "Figures (ii) and (iii)"
-          : "All figures (i), (ii) and (iii)";
-
-      return {
-        value: `Option ${w.chosenOption} — ${desc}`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, w.chosenOption) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! A polygon is a simple closed figure made of straight line segments only. (ii) has a curved boundary, (iii) has self-intersecting loops."
-          : `Option ${w.chosenOption} is incorrect. Check definition of a simple closed polygon.`,
-      };
-    },
   });
+  const w = play.world;
 
   return (
-    <PlayShell
-      title="Polygon Inspection Chamber"
-      mission="Inspect the geometric figures to identify which figures meet the definition of a simple closed polygon."
-      icon={Shapes}
+    <Shell
+      play={play}
+      question={question}
+      title="Polygon Detector"
+      mission="Run each figure through the gate: one sensor checks it is closed, the other that all its sides are straight. Then sort it into the polygon bin or the reject bin."
+      icon={Hexagon}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Identified Polygons" value={`Option ${world.chosenOption}`} />}
+      submitLabel="Submit the polygons"
+      live={<Gauge label="Polygon bin" value={Q18_FIGS.filter((f) => w.bin[f.id] === "poly").map((f) => f.id).join(", ") || "empty"} tone="emerald" />}
     >
-      <div className="space-y-4">
-        {/* Figure Visual Gallery */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="p-3 bg-gradient-to-br from-indigo-50 via-white to-violet-50 border border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-mono font-bold text-slate-500">Figure (i)</span>
-            <svg viewBox="0 0 80 80" className="w-20 h-20 mx-auto my-1">
-              <polygon points="40,12 70,30 60,68 20,68 10,30" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2.5" />
-            </svg>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-              Closed Polygon ✓
-            </span>
-          </div>
-
-          <div className="p-3 bg-gradient-to-br from-indigo-50 via-white to-violet-50 border border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-mono font-bold text-slate-500">Figure (ii)</span>
-            <svg viewBox="0 0 80 80" className="w-20 h-20 mx-auto my-1">
-              <path d="M 15 65 Q 40 10 65 65 Z" fill="#fce7f3" stroke="#ec4899" strokeWidth="2.5" />
-            </svg>
-            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
-              Curved (Not Polygon) ✗
-            </span>
-          </div>
-
-          <div className="p-3 bg-gradient-to-br from-indigo-50 via-white to-violet-50 border border-indigo-200 rounded-xl text-center shadow-xs">
-            <span className="text-[10px] font-mono font-bold text-slate-500">Figure (iii)</span>
-            <svg viewBox="0 0 80 80" className="w-20 h-20 mx-auto my-1">
-              <polygon points="15,15 65,65 15,65 65,15" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2.5" />
-            </svg>
-            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
-              Self-Intersecting ✗
-            </span>
-          </div>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Which of the Given Figures is/are Simple Closed Polygons?">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, title: "Figures (i) and (ii)", },
-              { id: "B" as const, title: "Figures (ii) and (iii)", },
-              { id: "C" as const, title: "Only Figure (i)", },
-              { id: "D" as const, title: "All figures (i), (ii) and (iii)", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xs font-bold text-slate-800 my-1">{opt.title}</span>
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
+      <div className="grid sm:grid-cols-3 gap-2">
+        {Q18_FIGS.map((f) => {
+          const sc = w.scanned.includes(f.id);
+          return (
+            <Bay key={f.id} label={`Figure ${f.id}`}>
+              <svg viewBox="0 0 60 54" className="w-full h-24 bg-white rounded"><path d={f.d} fill={f.closed ? "#e0e7ff" : "none"} stroke="#4338ca" strokeWidth={1.6} /></svg>
+              <div className="text-[11px] font-bold text-slate-700">{sc ? `closed ${f.closed ? "🟢" : "🔴"} · straight sides ${f.straight ? "🟢" : "🔴"}` : "not scanned"}</div>
+              <div className="flex flex-wrap gap-1 mt-1">
+                <Btn className="px-2 min-h-[32px]" tone="sky" disabled={play.readOnly || sc} onClick={() => play.patch({ scanned: [...w.scanned, f.id] })} ariaLabel={`scan ${f.id}`}>Scan</Btn>
+                <Btn className="px-2 min-h-[32px]" tone="emerald" active={w.bin[f.id] === "poly"} disabled={play.readOnly || !sc} onClick={() => play.patch({ bin: { ...w.bin, [f.id]: "poly" } })} ariaLabel={`polygon ${f.id}`}>Polygon</Btn>
+                <Btn className="px-2 min-h-[32px]" tone="rose" active={w.bin[f.id] === "not"} disabled={play.readOnly || !sc} onClick={() => play.patch({ bin: { ...w.bin, [f.id]: "not" } })} ariaLabel={`reject ${f.id}`}>Reject</Btn>
+              </div>
+            </Bay>
+          );
+        })}
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q19 — 🏗️ Area Construction Lab (Overlapping Squares)
+   Q19 — Area Construction Lab
+   The two squares and their overlap are laid on a grid. The student measures each piece
+   with the tape, then decides which pieces the covered area adds and which it takes away;
+   the ledger totals it.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q19World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q19AreaConstructionLabActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q19World>({
+export function Q19AreaConstructionLabActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const pieces = [
+    { k: "big", label: "big square", w: 10, h: 10 },
+    { k: "small", label: "small square", w: 8, h: 8 },
+    { k: "lap", label: "overlap", w: 4, h: 3 },
+  ];
+  const play = usePlay<{ dims: Record<string, [number, number]>; sign: Record<string, number>; done: boolean }>({
     question,
+    initial: { dims: {}, sign: {}, done: false },
+    derive: (w) => {
+      if (pieces.some((p) => !w.dims[p.k] || !w.sign[p.k])) return { note: "Measure every piece and set it to add or take away." };
+      if (!w.done) return { note: "Run the ledger." };
+      const t = pieces.reduce((s, p) => s + w.sign[p.k] * w.dims[p.k][0] * w.dims[p.k][1], 0);
+      return { value: `${t} cm²`, optionId: matchNumber(question, t) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "C" || w.chosenOption === "D"; // Both are 140 cm² in problem text
-      const areaVal = w.chosenOption === "A" ? 128 : w.chosenOption === "B" ? 136 : 140;
-
-      return {
-        value: `${areaVal} cm² (Unshaded Area)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchNumber(question, areaVal) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! Square 1 (10×10 = 100) + Square 2 (8×8 = 64). Overlap = 4×3 = 12. Unshaded = (100−12) + (64−12) = 88 + 52 = 140 cm²."
-          : `Selected ${areaVal} cm². Total unshaded = Area(Sq1 − Overlap) + Area(Sq2 − Overlap).`,
-      };
-    },
   });
+  const w = play.world;
+  const K = 4.2;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Area Construction Lab"
-      mission="Calculate the unshaded area of the two overlapping squares of sides 10 cm and 8 cm."
-      icon={Maximize2}
+      mission="Measure each piece with the tape (set its length and breadth). Decide whether the covered area adds each piece or takes it away — the overlap is counted inside both squares — then run the ledger."
+      icon={Square}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Unshaded Area" value="140 cm² (Option D)" />}
+      submitLabel="Submit the area"
+      live={<Gauge label="Ledger" value={pieces.map((p) => (w.dims[p.k] && w.sign[p.k] ? `${w.sign[p.k] > 0 ? "+" : "−"}${w.dims[p.k][0] * w.dims[p.k][1]}` : "·")).join(" ")} tone="violet" />}
     >
-      <div className="space-y-4">
-        {/* Overlapping Squares Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 280 180" className="w-full max-w-sm h-44 bg-white rounded-lg border border-slate-200 shadow-inner">
-            {/* Square 1: Side 10cm (w=100, h=100) at (30, 40) */}
-            <rect x="30" y="40" width="100" height="100" fill="#e0e7ff" stroke="#6366f1" strokeWidth="2.5" />
-            <text x="80" y="32" fill="#4338ca" fontSize="10" fontWeight="bold" textAnchor="middle">Square 1 (10 cm)</text>
-
-            {/* Square 2: Side 8cm (w=80, h=80) at (90, 70) */}
-            <rect x="90" y="70" width="80" height="80" fill="#fce7f3" stroke="#ec4899" strokeWidth="2.5" />
-            <text x="130" y="165" fill="#be185d" fontSize="10" fontWeight="bold" textAnchor="middle">Square 2 (8 cm)</text>
-
-            {/* Overlap Rectangle: (90, 70) to (130, 100) -> w=40, h=30 representing 4cm x 3cm */}
-            <rect x="90" y="70" width="40" height="30" fill="#f59e0b" stroke="#b45309" strokeWidth="1.5" />
-            <text x="110" y="88" fill="#ffffff" fontSize="9" fontWeight="black" textAnchor="middle">
-              4×3=12
-            </text>
+      <div className="grid md:grid-cols-[1fr_1.2fr] gap-3">
+        <Board>
+          <svg viewBox="0 0 64 64" className="w-full max-h-64">
+            <rect x={2} y={2} width={10 * K} height={10 * K} fill="#c7d2fe" stroke="#4338ca" />
+            <rect x={2 + 6 * K} y={2 + 7 * K} width={8 * K} height={8 * K} fill="#fde68a" stroke="#b45309" opacity={0.85} />
+            <rect x={2 + 6 * K} y={2 + 7 * K} width={4 * K} height={3 * K} fill="#34d399" stroke="#047857" />
+            <text x={2 + 5 * K} y={1.6} fontSize={3} textAnchor="middle">10 cm</text>
+            <text x={2 + 10 * K} y={2 + 15 * K + 3} fontSize={3} textAnchor="middle">8 cm</text>
           </svg>
-
-          <div className="mt-3 text-xs text-slate-600 font-medium text-center">
-            Unshaded = (100 − 12) + (64 − 12) = <b>88 + 52 = 140 cm²</b>
-          </div>
+        </Board>
+        <div className="space-y-2">
+          {pieces.map((p) => {
+            const d = w.dims[p.k] ?? [1, 1];
+            const fits = (d[0] === p.w && d[1] === p.h) || (d[0] === p.h && d[1] === p.w);
+            const set = (i: 0 | 1, v: number) => play.set((s) => ({ ...s, done: false, dims: { ...s.dims, [p.k]: (i ? [d[0], v] : [v, d[1]]) as [number, number] } }));
+            return (
+              <Bay key={p.k} label={`${p.label}: ${fits ? "tape fits ✓" : "measuring…"}`}>
+                <Stepper label={`${p.label} length`} value={d[0]} min={1} max={12} disabled={play.readOnly} onStep={(s) => set(0, d[0] + s)} />
+                <Stepper label={`${p.label} breadth`} value={d[1]} min={1} max={12} disabled={play.readOnly} onStep={(s) => set(1, d[1] + s)} />
+                <div className="flex gap-1 mt-1">
+                  <Btn className="px-2 min-h-[32px]" tone="emerald" active={w.sign[p.k] === 1} disabled={play.readOnly} onClick={() => play.patch({ sign: { ...w.sign, [p.k]: 1 }, done: false })} ariaLabel={`add ${p.label}`}>+ add</Btn>
+                  <Btn className="px-2 min-h-[32px]" tone="rose" active={w.sign[p.k] === -1} disabled={play.readOnly} onClick={() => play.patch({ sign: { ...w.sign, [p.k]: -1 }, done: false })} ariaLabel={`take away ${p.label}`}>− take away</Btn>
+                </div>
+              </Bay>
+            );
+          })}
+          <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ done: true })}>Run the ledger</Btn>
         </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Total Area of the Unshaded Region">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, val: "128 cm²", },
-              { id: "B" as const, val: "136 cm²", },
-              { id: "C" as const, val: "140 cm²", },
-              { id: "D" as const, val: "140 cm²", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-xl font-black text-slate-800 my-1">{opt.val}</span>
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q20 — 🕙 Clock Workshop (Clock Angles at 10:00)
+   Q20 — Clock Workshop
+   The student winds the crown to set the time; the hour hand creeps with the minutes as
+   on a real clock. The gauge opens between the hands and reads the smaller angle.
    ══════════════════════════════════════════════════════════════════════ */
-interface Q20World {
-  chosenOption: "A" | "B" | "C" | "D";
-}
 
-export function Q20ClockAngleActivity({
-  question,
-  value,
-  activityState,
-  onChange,
-  readOnly,
-}: ActivityComponentProps) {
-  const { world, locked, touched, derived, set, submit, reset } = usePlay<Q20World>({
+export function Q20ClockAngleActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ mins: number; read: boolean }>({
     question,
+    initial: { mins: 4 * 60 + 20, read: false },
+    derive: (w) => {
+      if (!w.read) return { note: "Set the clock, then read the gauge." };
+      const a = Math.abs(30 * ((w.mins / 60) % 12) - 6 * (w.mins % 60));
+      const s = Math.min(a, 360 - a);
+      return { value: `${s}°`, optionId: matchNumber(question, s) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
-    initial: { chosenOption: "D" },
-    derive: (w) => {
-      const isCorrect = w.chosenOption === "D";
-      const deg = w.chosenOption === "A" ? "30°" : w.chosenOption === "B" ? "45°" : w.chosenOption === "C" ? "90°" : "60°";
-
-      return {
-        value: `${deg} (Smaller Angle at 10:00)`,
-        optionId: matchOption(question, w.chosenOption) ?? matchText(question, deg) ?? w.chosenOption,
-        note: isCorrect
-          ? "Correct! At 10:00, the hour hand is at 10 and minute hand is at 12. Angle = 2 hour gaps × 30° = 60°."
-          : `Selected ${deg}. Each 1-hour division on the clock face represents 360°/12 = 30°.`,
-      };
-    },
   });
+  const w = play.world;
+  const hA = 30 * ((w.mins / 60) % 12);
+  const mA = 6 * (w.mins % 60);
+  const a = Math.abs(hA - mA);
+  const small = Math.min(a, 360 - a);
+  const hand = (deg: number, len: number): Pt => [50 + len * Math.sin((deg * Math.PI) / 180), 50 - len * Math.cos((deg * Math.PI) / 180)];
+  const wind = (d: number) => play.set((p) => ({ mins: (((p.mins + d) % 720) + 720) % 720, read: false }));
+  const [hx, hy] = hand(hA, 22);
+  const [mx, my] = hand(mA, 34);
+  const time = `${Math.floor(w.mins / 60) % 12 || 12}:${String(w.mins % 60).padStart(2, "0")}`;
 
   return (
-    <PlayShell
+    <Shell
+      play={play}
+      question={question}
       title="Clock Workshop"
-      mission="Find the smaller angle formed between the hour hand and minute hand at 10:00 o'clock."
+      mission="Wind the crown to the time in the question. The gauge always shows the smaller angle between the hands. Read it when the clock is set."
       icon={Clock}
       dim="2D"
-      question={question}
-      derived={derived}
-      locked={locked}
-      touched={touched}
-      readOnly={readOnly}
-      onSubmit={submit}
-      onReset={reset}
-      live={<Gauge label="Smaller Angle" value={world.chosenOption === "D" ? "60° (Option D)" : `Option ${world.chosenOption}`} />}
+      submitLabel="Submit the angle"
+      live={<><Gauge label="Clock" value={time} tone="violet" /><Gauge label="Gauge" value={`${small}°`} tone="amber" /></>}
     >
-      <div className="space-y-4">
-        {/* Clock Canvas */}
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-200 p-4 rounded-xl flex flex-col items-center justify-center shadow-sm">
-          <svg viewBox="0 0 200 200" className="w-48 h-48 drop-shadow-md">
-            {/* Dial background */}
-            <circle cx="100" cy="100" r="90" fill="#f8fafc" stroke="#475569" strokeWidth="4" />
-
-            {/* 12 Hour Ticks */}
-            {Array.from({ length: 12 }).map((_, i) => {
-              const ang = (i * 30 * Math.PI) / 180;
-              const x1 = 100 + 72 * Math.sin(ang);
-              const y1 = 100 - 72 * Math.cos(ang);
-              const x2 = 100 + 82 * Math.sin(ang);
-              const y2 = 100 - 82 * Math.cos(ang);
-              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#64748b" strokeWidth="2.5" />;
-            })}
-
-            {/* Hour Numbers 12, 10 */}
-            <text x="100" y="32" fill="#1e293b" fontSize="13" fontWeight="bold" textAnchor="middle">12</text>
-            <text x="38" y="65" fill="#1e293b" fontSize="13" fontWeight="bold" textAnchor="middle">10</text>
-
-            {/* Arc between 10 and 12 */}
-            <path
-              d="M 100 55 A 45 45 0 0 0 61 77"
-              fill="none"
-              stroke="#f59e0b"
-              strokeWidth="4"
-              strokeDasharray="3 3"
-            />
-            <text x="82" y="64" fill="#b45309" fontSize="12" fontWeight="black">60°</text>
-
-            {/* Hour Hand pointing at 10: ang = -60 deg */}
-            <line x1="100" y1="100" x2="60" y2="76" stroke="#4f46e5" strokeWidth="5" strokeLinecap="round" />
-
-            {/* Minute Hand pointing at 12: ang = 0 deg */}
-            <line x1="100" y1="100" x2="100" y2="30" stroke="#0ea5e9" strokeWidth="3.5" strokeLinecap="round" />
-
-            {/* Pivot */}
-            <circle cx="100" cy="100" r="5" fill="#f59e0b" />
-          </svg>
-          <span className="text-xs text-slate-500 font-medium mt-2">
-            2 Hour Divisions = 2 × 30° = <b>60°</b>
-          </span>
-        </div>
-
-        {/* 4 Option Buttons */}
-        <Bay label="Choose the Smaller Angle at 10:00 O'Clock">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { id: "A" as const, deg: "30°", },
-              { id: "B" as const, deg: "45°", },
-              { id: "C" as const, deg: "90°", },
-              { id: "D" as const, deg: "60°", desc: "2 × 30° = 60°", },
-            ].map((opt) => {
-              const isSelected = world.chosenOption === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => set({ chosenOption: opt.id })}
-                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-between text-center ${
-                    isSelected ? "bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-200"
-                      : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Option {opt.id}</span>
-                  <span className="text-2xl font-black text-slate-800 my-1">{opt.deg}</span>
-                  {opt.desc && <span className="text-[10px] text-slate-500 font-medium">{opt.desc}</span>}
-                  <span
-                    className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded w-full ${
-                      isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {isSelected ? "Selected" : "Select Option " + opt.id}
-                  </span>
-                </button>
-              );
-            })}
+      <div className="grid md:grid-cols-[auto_1fr] gap-3 items-center">
+        <svg viewBox="0 0 100 100" className="w-56 h-56">
+          <circle cx={50} cy={50} r={46} fill="#fff" stroke="#6366f1" strokeWidth={2} />
+          {Array.from({ length: 12 }, (_, i) => { const [x, y] = hand(i * 30, 38); return <text key={i} x={x} y={y + 2} fontSize={7} textAnchor="middle" fontWeight={900} fill="#312e81">{i || 12}</text>; })}
+          <line x1={50} y1={50} x2={hx} y2={hy} stroke="#1e1b4b" strokeWidth={3} strokeLinecap="round" />
+          <line x1={50} y1={50} x2={mx} y2={my} stroke="#7c3aed" strokeWidth={2} strokeLinecap="round" />
+          <circle cx={50} cy={50} r={2} fill="#1e1b4b" />
+        </svg>
+        <Bay label="Crown" tone="violet">
+          <div className="flex flex-wrap gap-1.5">
+            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(-60)}>−1 hour</Btn>
+            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(-5)}>−5 min</Btn>
+            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(5)}>+5 min</Btn>
+            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(60)}>+1 hour</Btn>
           </div>
+          <Btn tone="amber" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ read: true })}>📐 Read the gauge</Btn>
         </Bay>
       </div>
-    </PlayShell>
+    </Shell>
   );
 }
