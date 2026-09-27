@@ -1,29 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
-import { Footprints, Fuel, Route, Milk, Truck } from "lucide-react";
+import React from "react";
+import { motion } from "framer-motion";
+import { Hourglass, Coins, Package, Grid3x3, Scale } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText, gcd } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
+import { matchNumber, matchText, toMixedString } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board, Stepper, inr, r4, toggle } from "./kit";
+import { Shell, Board, Stepper, rupees } from "./kit";
+
+/** Paper 3 (IMO 2019-20 Set A) · Q41–Q45. */
+
+const r2 = (v: number) => Math.round(v * 100) / 100;
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q41 — Step Synchronization
-   Three walkers step towards a finish line the student places. Each shows whether the
-   line falls on one of their footsteps. The least distance where all three land exactly
-   is the answer.
+   Q41 — Time Machine
+   Vinay's marker starts on the timeline years ago, at 3p. Each jump moves one year and adds
+   one to his age; the student stops where the question asks.
    ══════════════════════════════════════════════════════════════════════ */
 
-const STEPS = [63, 70, 77];
-export function Q41StepSynchronizationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ d: number; stop: boolean }>({
+export function Q41TimeMachineActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const ago = cfg<number>(question, "ago", 8);
+  const ahead = cfg<number>(question, "ahead", 4);
+  const play = usePlay<{ y: number; stopped: boolean }>({
     question,
-    initial: { d: 1000, stop: false },
+    initial: { y: 0, stopped: false },
     derive: (w) => {
-      if (!w.stop) return { note: "Place the finish line and stop there." };
-      if (!STEPS.every((s) => w.d % s === 0)) return { note: `Not everyone lands exactly on ${w.d} cm.` };
-      return { value: `${w.d} cm`, optionId: matchNumber(question, w.d) };
+      if (!w.stopped) return { note: "Travel through time and stop at the year asked." };
+      const text = w.y === 0 ? "3p" : `3p + ${w.y}`;
+      return { value: `Vinay is ${text}`, optionId: matchText(question, text) };
     },
     activityState,
     value,
@@ -31,49 +36,60 @@ export function Q41StepSynchronizationActivity({ question, value, activityState,
     readOnly,
   });
   const w = play.world;
+  const span = ago + ahead + 4;
+  const label = (k: number) => (k < ago ? `${ago - k} yr ago` : k === ago ? "now" : `in ${k - ago} yr`);
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Step Synchronization"
-      mission="Move the finish line. Each walker shows whether it lands exactly on a footstep, and how much is left over. Find the shortest distance where all three finish in complete steps."
-      icon={Footprints}
+      title="Time Machine"
+      mission={`The marker starts ${ago} years ago, when Vinay was 3p. Each jump moves one year forward and makes him one year older. Stop at the moment the question asks about.`}
+      icon={Hourglass}
       dim="2D"
-      submitLabel="Submit the distance"
-      live={<Gauge label="Landing exactly" value={`${STEPS.filter((s) => w.d % s === 0).length}/3`} tone="violet" />}
+      submitLabel="Submit his age"
+      hints={["First travel to “now”, then keep going into the future."]}
+      live={
+        <>
+          <Gauge label="Time" value={label(w.y)} tone="violet" />
+          <Gauge label="Vinay's age" value={w.y ? `3p + ${w.y}` : "3p"} tone="amber" />
+        </>
+      }
     >
-      <Stepper label="Finish line" value={w.d} min={1} max={20000} steps={[1, 10, 100, 1000]} unit=" cm" disabled={play.readOnly} onStep={(d) => play.patch({ d: w.d + d, stop: false })} />
-      <div className="space-y-1.5 mt-2">
-        {STEPS.map((s) => (
-          <div key={s} className={`rounded-lg px-2 py-1 text-xs font-black ${w.d % s === 0 ? "bg-emerald-100 text-emerald-800" : "bg-white border border-slate-200 text-slate-600"}`}>
-            👣 {s} cm steps: {Math.floor(w.d / s)} steps {w.d % s === 0 ? "exactly" : `+ ${w.d % s} cm left over`}
-          </div>
+      <div className="relative h-16 rounded-xl bg-indigo-50 border-2 border-indigo-200 px-2">
+        {Array.from({ length: span + 1 }, (_, k) => (
+          <span key={k} className={`absolute top-8 text-[8px] font-bold ${k === ago ? "text-amber-600" : "text-indigo-400"}`} style={{ left: `${(k / span) * 95 + 1}%` }}>
+            |{k === ago ? " now" : ""}
+          </span>
         ))}
+        <motion.span animate={{ left: `${(w.y / span) * 95}%` }} className="absolute top-1 text-2xl">
+          🧑
+        </motion.span>
       </div>
-      <Btn tone="amber" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ stop: true })}>🏁 Stop here</Btn>
+      <div className="flex flex-wrap gap-2">
+        <Btn tone="slate" disabled={play.readOnly || w.y <= 0} onClick={() => play.patch({ y: w.y - 1, stopped: false })}>◀ 1 year back</Btn>
+        <Btn disabled={play.readOnly || w.y >= span} onClick={() => play.patch({ y: w.y + 1, stopped: false })}>1 year forward ▶</Btn>
+        <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ stopped: true })}>⏹ Stop here</Btn>
+      </div>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q42 — Metro Fuel Savings
-   The student loads the fuels that belong on top of the fraction and the one that goes
-   underneath, then cuts common factors out of both until nothing more divides them.
+   Q42 — Money Splitter
+   The student hands out ratio blocks to Vishal and Anita, then pours the money over all the
+   blocks; every block gets the same amount.
    ══════════════════════════════════════════════════════════════════════ */
 
-const FUELS: Record<string, number> = { CNG: 33000, Diesel: 3300, Petrol: 21000 };
-const CUT = [2, 3, 5, 7, 11, 13];
-export function Q42MetroFuelSavingsActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const [msg, setMsg] = useState<string | null>(null);
-  const play = usePlay<{ top: string[]; bot: string[]; frac: [number, number] | null }>({
+export function Q42MoneySplitterActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const total = cfg<number>(question, "total", 0);
+  const play = usePlay<{ v: number; a: number; poured: boolean }>({
     question,
-    initial: { top: [], bot: [], frac: null },
+    initial: { v: 0, a: 0, poured: false },
     derive: (w) => {
-      if (!w.frac) return { note: "Load the fuels and build the fraction." };
-      if (gcd(w.frac[0], w.frac[1]) !== 1) return { note: "Keep cutting common factors." };
-      const t = `${w.frac[0]}/${w.frac[1]}`;
-      return { value: t, optionId: matchText(question, t) };
+      if (!w.poured || !(w.v + w.a)) return { note: "Hand out the ratio blocks and pour the money." };
+      const each = total / (w.v + w.a);
+      return { value: `Anita gets ${w.a} × ${rupees(r2(each))} = ${rupees(r2(each * w.a))}`, optionId: matchNumber(question, r2(each * w.a), 1e-6) };
     },
     activityState,
     value,
@@ -81,61 +97,58 @@ export function Q42MetroFuelSavingsActivity({ question, value, activityState, on
     readOnly,
   });
   const w = play.world;
-  const sum = (ks: string[]) => ks.reduce((s, k) => s + FUELS[k], 0);
+  const each = w.v + w.a ? total / (w.v + w.a) : 0;
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Metro Fuel Savings"
-      mission="Load the fuels that go on top of the fraction and the one that goes underneath, then build it. Cut common factors out of the top and bottom until the fraction is in its simplest form."
-      icon={Fuel}
+      title="Money Splitter"
+      mission={`Give each person the number of equal blocks their part of the ratio says. Then pour the ${rupees(total)} over all the blocks — every block gets the same amount.`}
+      icon={Coins}
       dim="2D"
-      submitLabel="Submit the fraction"
-      live={<Gauge label="Fraction" value={w.frac ? `${w.frac[0]}/${w.frac[1]}` : `${sum(w.top)}/${sum(w.bot)}`} tone="violet" />}
+      submitLabel="Submit Anita's share"
+      hints={["A ratio of 4 : 5 means 4 blocks and 5 blocks — 9 blocks in all."]}
+      live={<Gauge label="Per block" value={w.poured && each ? rupees(r2(each)) : "—"} tone="violet" />}
     >
       <div className="grid sm:grid-cols-2 gap-2">
-        {(["top", "bot"] as const).map((k) => (
-          <Bay key={k} label={k === "top" ? "Top of the fraction" : "Bottom of the fraction"}>
-            <div className="flex flex-wrap gap-1">{Object.keys(FUELS).map((f) => <Btn key={f} className="px-2 min-h-[34px]" active={w[k].includes(f)} tone={w[k].includes(f) ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set((p) => ({ ...p, frac: null, [k]: toggle(p[k], f) }))} ariaLabel={`${k} ${f}`}>{f} {FUELS[f].toLocaleString("en-IN")} t</Btn>)}</div>
+        {(["v", "a"] as const).map((k) => (
+          <Bay key={k} label={k === "v" ? "Vishal" : "Anita"} tone={k === "a" ? "violet" : "slate"}>
+            <div className="flex flex-wrap gap-1 min-h-[40px]">
+              {Array.from({ length: w[k] }, (_, i) => (
+                <span key={i} className="w-12 h-9 rounded bg-amber-200 border border-amber-400 text-[9px] font-black grid place-items-center">
+                  {w.poured ? rupees(r2(each)) : "block"}
+                </span>
+              ))}
+            </div>
+            <Stepper label={`${k === "v" ? "Vishal" : "Anita"} blocks`} value={w[k]} min={0} max={10} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ ...p, poured: false, [k]: p[k] + d }))} />
           </Bay>
         ))}
       </div>
-      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.top.length || !w.bot.length} onClick={() => play.patch({ frac: [sum(w.top), sum(w.bot)] })}>Build {sum(w.top)}/{sum(w.bot)}</Btn>
-      {w.frac && (
-        <Board className="mt-2">
-          <div className="text-center font-mono text-2xl font-black text-indigo-900">{w.frac[0]} / {w.frac[1]}</div>
-          <div className="flex flex-wrap justify-center gap-1 mt-1">
-            {CUT.map((c) => <Btn key={c} className="px-2 min-h-[34px]" tone="slate" disabled={play.readOnly} onClick={() => {
-              if (w.frac![0] % c || w.frac![1] % c) return setMsg(`÷${c} doesn't divide both.`);
-              setMsg(null);
-              play.patch({ frac: [w.frac![0] / c, w.frac![1] / c] });
-            }} ariaLabel={`cut ${c}`}>÷{c}</Btn>)}
-          </div>
-          {msg && <p className="text-center text-xs font-bold text-rose-600">{msg}</p>}
-        </Board>
-      )}
+      <Btn tone="emerald" disabled={play.readOnly || !(w.v + w.a)} onClick={() => play.patch({ poured: true })}>
+        💰 Pour {rupees(total)}
+      </Btn>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q43 — Journey Tracker
-   The trek odometer logs Monday to Wednesday. The student dials Thursday's distance until
-   the four days add up to the planned total.
+   Q43 — Flour Loading Dock
+   Each packet adds its whole kilograms to the dial and its fraction to the eighths pan.
+   When the pan holds eight eighths, the student carries them over as one kilogram.
    ══════════════════════════════════════════════════════════════════════ */
 
-const DAYS = [8.25, 7.52, 11.27];
-export function Q43JourneyTrackerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const total = 42.25;
-  const play = usePlay<{ th: number; logged: boolean }>({
+export function Q43FlourDockActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const sacks = cfg<{ whole: number; num: number; den: number }[]>(question, "sacks", []);
+  const play = usePlay<{ loaded: number[]; carried: number }>({
     question,
-    initial: { th: 10, logged: false },
+    initial: { loaded: [], carried: 0 },
     derive: (w) => {
-      const s = r4(DAYS.reduce((a, b) => a + b, 0) + w.th);
-      if (!w.logged) return { note: "Dial Thursday's distance and log it." };
-      if (Math.abs(s - total) > 1e-9) return { note: `The four days make ${s} km, not ${total} km.` };
-      return { value: `${w.th} km`, optionId: matchNumber(question, w.th, 1e-9) };
+      if (w.loaded.length < sacks.length) return { note: "Load every packet." };
+      const eighths = w.loaded.reduce((s, i) => s + (sacks[i].num * 8) / sacks[i].den, 0) - 8 * w.carried;
+      if (eighths >= 8) return { note: "The pan holds 8 eighths or more — carry them over." };
+      const whole = w.loaded.reduce((s, i) => s + sacks[i].whole, 0) + w.carried;
+      return { value: `${toMixedString(whole * 8 + eighths, 8)} kg`, optionId: matchNumber(question, whole + eighths / 8, 1e-9) };
     },
     activityState,
     value,
@@ -143,99 +156,76 @@ export function Q43JourneyTrackerActivity({ question, value, activityState, onCh
     readOnly,
   });
   const w = play.world;
-  const s = r4(DAYS.reduce((a, b) => a + b, 0) + w.th);
+  const whole = w.loaded.reduce((s, i) => s + sacks[i].whole, 0) + w.carried;
+  const eighths = w.loaded.reduce((s, i) => s + (sacks[i].num * 8) / sacks[i].den, 0) - 8 * w.carried;
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Journey Tracker"
-      mission={`The odometer already holds Monday, Tuesday and Wednesday. Dial Thursday's distance until the four days add up to ${total} km, then log it.`}
-      icon={Route}
+      title="Flour Loading Dock"
+      mission="Load each packet onto the scale: its whole kilograms go on the dial and its fraction goes into the eighths pan. Whenever the pan holds eight eighths, carry them over to the dial as one kilogram."
+      icon={Package}
       dim="2D"
-      submitLabel="Submit Thursday's distance"
-      live={<Gauge label="Four days" value={`${s} km`} tone={Math.abs(s - total) < 1e-9 ? "emerald" : "amber"} />}
+      submitLabel="Submit the total weight"
+      hints={["1/2 kg is 4 eighths and 3/4 kg is 6 eighths."]}
+      live={
+        <>
+          <Gauge label="Dial" value={`${whole} kg`} tone="violet" />
+          <Gauge label="Eighths pan" value={`${eighths}/8 kg`} tone={eighths >= 8 ? "rose" : "amber"} />
+        </>
+      }
     >
-      <Board>
-        <div className="flex h-8 rounded overflow-hidden border border-indigo-200">
-          {[...DAYS, w.th].map((d, i) => <div key={i} className={["bg-indigo-300", "bg-sky-300", "bg-violet-300", "bg-amber-300"][i]} style={{ width: `${(d / Math.max(s, total)) * 100}%` }} />)}
-        </div>
-        <p className="text-xs font-mono mt-1">{DAYS.join(" + ")} + {w.th} = {s} km (plan {total} km)</p>
-      </Board>
-      <div className="flex flex-wrap gap-2 mt-2">
-        <Stepper label="Thursday" value={w.th} min={0} steps={[0.01, 0.1, 1]} unit=" km" disabled={play.readOnly} onStep={(d) => play.patch({ th: r4(w.th + d), logged: false })} />
-        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ logged: true })}>Log Thursday</Btn>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q44 — Dairy Filling Station
-   The barrel's reading must first be converted to millilitres. Then the student fills
-   bottles in batches; the station refuses a batch it cannot fill completely.
-   ══════════════════════════════════════════════════════════════════════ */
-
-export function Q44DairyFillingStationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const bottle = 130;
-  const play = usePlay<{ ml: number | null; filled: number; closed: boolean }>({
-    question,
-    initial: { ml: null, filled: 0, closed: false },
-    derive: (w) => {
-      if (w.ml === null) return { note: "Convert the barrel to millilitres." };
-      if (!w.closed) return { note: "Fill bottles until no more full bottle fits, then close the station." };
-      return { value: `${w.filled} bottles`, optionId: matchNumber(question, w.filled) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const left = w.ml === null ? null : w.ml - w.filled * bottle;
-  const fill = (n: number) => left !== null && left >= n * bottle && play.patch({ filled: w.filled + n, closed: false });
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Dairy Filling Station"
-      mission="The barrel holds 70 L 200 mL. Convert it to millilitres first. Then fill 130 mL bottles in batches of 100, 10 or 1 — a batch is refused if there isn't enough milk left. Close the station when not even one more bottle can be filled."
-      icon={Milk}
-      dim="2D"
-      submitLabel="Submit the bottle count"
-      live={<><Gauge label="In the barrel" value={left === null ? "70 L 200 mL" : `${left} mL`} tone="sky" /><Gauge label="Bottles" value={w.filled} tone="violet" /></>}
-    >
-      <div className="flex flex-wrap gap-1.5">
-        {[[70200, "1 L = 1000 mL → 70,200 mL"], [70020, "1 L = 1000 mL → 70,020 mL"], [7200, "1 L = 100 mL → 7,200 mL"]].map(([v, l]) => (
-          <Btn key={v} active={w.ml === v} tone={w.ml === v ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set({ ml: v as number, filled: 0, closed: false })}>{l}</Btn>
+      <div className="flex flex-wrap gap-2">
+        {sacks.map((s, i) => (
+          <Btn key={i} tone={w.loaded.includes(i) ? "emerald" : "slate"} disabled={play.readOnly || w.loaded.includes(i)} onClick={() => play.patch({ loaded: [...w.loaded, i] })} ariaLabel={`sack ${i + 1}`}>
+            🌾 {s.whole} {s.num}/{s.den} kg
+          </Btn>
         ))}
       </div>
-      <Board className="mt-2">
-        <div className="flex flex-wrap gap-1.5 items-center">
-          {[100, 10, 1].map((n) => <Btn key={n} tone="emerald" disabled={play.readOnly || left === null || left < n * bottle} onClick={() => fill(n)} ariaLabel={`fill ${n}`}>🍼 Fill {n}</Btn>)}
-          <Btn tone="amber" disabled={play.readOnly || left === null || left >= bottle} onClick={() => play.patch({ closed: true })}>Close the station</Btn>
+      <Board className="flex flex-wrap items-center gap-2">
+        <div className="flex gap-0.5 flex-wrap w-64">
+          {Array.from({ length: eighths }, (_, i) => <span key={i} className={`w-6 h-6 rounded ${i < 8 ? "bg-amber-300" : "bg-rose-300"}`} />)}
         </div>
+        <Btn tone="amber" disabled={play.readOnly || eighths < 8} onClick={() => play.patch({ carried: w.carried + 1 })}>
+          Carry 8/8 → 1 kg
+        </Btn>
       </Board>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q45 — Milk Delivery Route
-   The van makes the morning and evening runs each day. The student loads each run,
-   drives the route for as many days as the question covers, and the till prices every
-   litre delivered.
+   Q44 — Perfect Tile Workshop
+   Both courtyard sides are broken into prime blocks. The student drops blocks into the tile
+   maker; a block goes in only while both sides can spare it. The tile is laid; its side is
+   4n cm.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Q45WeeklyMilkVendorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ morning: number; evening: number; days: number; billed: boolean }>({
+const primes = (n: number) => {
+  const out: number[] = [];
+  let m = n;
+  for (let p = 2; p * p <= m; p++) while (m % p === 0) (out.push(p), (m /= p));
+  if (m > 1) out.push(m);
+  return out;
+};
+
+export function Q44TileWorkshopActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const L = cfg<number>(question, "lengthCm", 1);
+  const Wd = cfg<number>(question, "widthCm", 1);
+  const pl = primes(L);
+  const pw = primes(Wd);
+  const count = (arr: number[], p: number) => arr.filter((x) => x === p).length;
+  const play = usePlay<{ hopper: number[]; tried: boolean }>({
     question,
-    initial: { morning: 0, evening: 0, days: 1, billed: false },
+    initial: { hopper: [], tried: false },
     derive: (w) => {
-      if (!w.billed) return { note: "Load both runs, set the days and bill it." };
-      const t = (w.morning + w.evening) * w.days * 20;
-      return { value: inr(t), optionId: matchNumber(question, t) };
+      if (!w.tried) return { note: "Build a tile and lay it." };
+      const side = w.hopper.reduce((a, b) => a * b, 1);
+      const spare = [...new Set(pl)].some((p) => count(w.hopper, p) < Math.min(count(pl, p), count(pw, p)));
+      if (spare) return { note: `A ${side} cm tile fits, but a larger one would too.` };
+      if (side % 4) return { note: `${side} cm is not 4 × a whole number.` };
+      return { value: `Largest tile ${side} cm = ${side / 4} × 4 cm`, optionId: matchNumber(question, side / 4) };
     },
     activityState,
     value,
@@ -243,26 +233,99 @@ export function Q45WeeklyMilkVendorActivity({ question, value, activityState, on
     readOnly,
   });
   const w = play.world;
-  const set = (k: "morning" | "evening" | "days", d: number) => play.set((p) => ({ ...p, billed: false, [k]: p[k] + d }));
+  const side = w.hopper.reduce((a, b) => a * b, 1);
+  const can = (p: number) => count(w.hopper, p) < Math.min(count(pl, p), count(pw, p));
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Milk Delivery Route"
-      mission="Load the van for the morning run and the evening run, set how many days it drives the route, and bill the litres at ₹20 each."
-      icon={Truck}
+      title="Perfect Tile Workshop"
+      mission={`The courtyard is ${L} cm × ${Wd} cm. Each side is broken into prime blocks. Drop blocks into the tile maker — a block goes in only if both sides can spare it. Make the biggest tile that still fits both sides exactly, and lay it.`}
+      icon={Grid3x3}
       dim="2D"
-      submitLabel="Submit the money due"
-      live={<Gauge label="Bill" value={inr((w.morning + w.evening) * w.days * 20)} tone="violet" />}
+      submitLabel="Submit n"
+      hints={["1.12 m = 112 cm and 0.84 m = 84 cm.", "The biggest tile uses every block the two sides share."]}
+      live={
+        <>
+          <Gauge label="Tile side" value={`${side} cm`} tone="violet" />
+          <Gauge label="Fits" value={`${L / side} × ${Wd / side} tiles`} tone="emerald" />
+        </>
+      }
     >
-      <div className="grid sm:grid-cols-3 gap-2">
-        <Bay label="Morning run"><Stepper label="Morning litres" value={w.morning} min={0} steps={[1, 10, 100]} disabled={play.readOnly} onStep={(d) => set("morning", d)} /></Bay>
-        <Bay label="Evening run"><Stepper label="Evening litres" value={w.evening} min={0} steps={[1, 10, 100]} disabled={play.readOnly} onStep={(d) => set("evening", d)} /></Bay>
-        <Bay label="Route"><Stepper label="Days" value={w.days} min={1} max={31} disabled={play.readOnly} onStep={(d) => set("days", d)} /></Bay>
+      <div className="grid sm:grid-cols-2 gap-2">
+        {[{ n: L, ps: pl }, { n: Wd, ps: pw }].map((s) => (
+          <Bay key={s.n} label={`${s.n} cm = ${s.ps.join(" × ")}`}>
+            <div className="flex flex-wrap gap-1">
+              {s.ps.map((p, i) => <span key={i} className="w-8 h-8 rounded bg-sky-100 border border-sky-300 grid place-items-center font-black">{p}</span>)}
+            </div>
+          </Bay>
+        ))}
       </div>
-      <p className="text-xs font-mono mt-1">({w.morning} + {w.evening}) L × {w.days} days × ₹20</p>
-      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ billed: true })}>🧾 Bill the route</Btn>
+      <Bay label={`Tile maker: ${w.hopper.join(" × ") || "empty"} = ${side} cm`} tone="violet">
+        <div className="flex flex-wrap gap-1.5">
+          {[...new Set([...pl, ...pw])].map((p) => (
+            <Btn key={p} disabled={play.readOnly || !can(p)} onClick={() => play.set((s) => ({ hopper: [...s.hopper, p], tried: false }))} ariaLabel={`block ${p}`}>
+              + {p}
+            </Btn>
+          ))}
+          <Btn tone="slate" disabled={play.readOnly || !w.hopper.length} onClick={() => play.set({ hopper: [], tried: false })}>Empty</Btn>
+          <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ tried: true })}>Lay the {side} cm tile</Btn>
+        </div>
+      </Bay>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q45 — Human Weight Balance
+   Arjun's block is locked at twice Surbhi's and Sejal's at 5 kg less than Arjun's. The
+   student slides Surbhi's weight until the group scale reads the total.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q45WeightBalanceActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const total = cfg<number>(question, "total", 0);
+  const play = usePlay<{ s: number }>({
+    question,
+    initial: { s: 10 },
+    derive: (w) => {
+      const a = r2(2 * w.s);
+      const j = r2(a - 5);
+      if (Math.abs(w.s + a + j - total) > 1e-9) return { note: `Together they weigh ${r2(w.s + a + j)} kg, not ${total} kg.` };
+      return { value: `Sejal ${j} + Arjun ${a} = ${r2(a + j)} kg`, optionId: matchNumber(question, r2(a + j), 1e-9) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const a = r2(2 * w.s);
+  const j = r2(a - 5);
+  const t = r2(w.s + a + j);
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Human Weight Balance"
+      mission={`Slide Surbhi's weight. Arjun's block is locked at twice hers and Sejal's at 5 kg less than Arjun's. Balance the group scale at ${total} kg, then read Sejal and Arjun together.`}
+      icon={Scale}
+      dim="2D"
+      submitLabel="Submit Sejal + Arjun"
+      hints={["Every 1 kg added to Surbhi adds 5 kg to the group.", "Surbhi's weight may not be a whole number of kilograms."]}
+      live={<Gauge label="Group scale" value={`${t} kg`} tone={Math.abs(t - total) < 1e-9 ? "emerald" : "amber"} />}
+    >
+      <Stepper label="Surbhi" value={w.s} min={5} max={30} steps={[0.1, 1]} unit=" kg" disabled={play.readOnly} onStep={(d) => play.patch({ s: r2(w.s + d) })} />
+      <Board className="flex items-end gap-3 h-44">
+        {[{ n: "Surbhi", v: w.s, c: "bg-pink-300" }, { n: "Arjun", v: a, c: "bg-sky-300" }, { n: "Sejal", v: j, c: "bg-violet-300" }].map((b) => (
+          <div key={b.n} className="flex-1 text-center">
+            <motion.div animate={{ height: Math.max(8, b.v * 4) }} className={`${b.c} rounded-t-lg mx-auto w-16`} />
+            <div className="text-xs font-black">{b.n}</div>
+            <div className="font-mono text-sm">{b.v} kg</div>
+          </div>
+        ))}
+      </Board>
     </Shell>
   );
 }

@@ -1,31 +1,43 @@
 "use client";
 
-import React from "react";
-import { MonitorCheck, ChartLine, ClipboardCheck, ShieldCheck, Cpu } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { Telescope, Route, Microscope, ChartPie, MonitorCheck } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchText, gcd } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
+import { matchText } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board, Stepper, toggle } from "./kit";
+import { Shell, Board, polyPath, toggle, optText, r4, Pt } from "./kit";
+
+/** Paper 3 (IMO 2019-20 Set A) · Q46–Q50 (Achievers). */
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q46 — Geometry Control Room (Achievers)
-   Four stations. (P) turn one line until it never meets the other, and name the pair.
-   (Q) add segments until a closed figure forms. (R) slide a chord until it passes through
-   the centre, and name it. (S) take 3/5 of a right angle on the slicer.
+   Q46 — Decimal Observatory
+   Station 1: the lens slides over 43.295 and names each place. Station 2: both sides of the
+   balance are worked one step at a time. Station 3: the rounding laser snaps 15.5575 to the
+   aimed place. The three readings fill the blanks.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Q46GeometryClassificationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ tilt: number; segs: number; chord: number; slices: number; taken: number; done: string[] }>({
+const PLACES = ["tens", "ones", "·", "tenths", "hundredths", "thousandths"];
+
+export function Q46DecimalObservatoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const number = cfg<string>(question, "number", "0");
+  const left = cfg<number[]>(question, "left", []);
+  const right = cfg<number[]>(question, "right", []);
+  const rnum = cfg<number>(question, "round", 0);
+  const rounded = (aim: number) => (Math.round(Number((rnum * 10 ** aim).toFixed(6))) / 10 ** aim).toFixed(aim);
+  const play = usePlay<{ lens: number; digit: string | null; ls: number; rs: number; aim: number; fired: boolean }>({
     question,
-    initial: { tilt: 30, segs: 1, chord: 20, slices: 1, taken: 0, done: [] },
+    initial: { lens: 0, digit: null, ls: 1, rs: 1, aim: 1, fired: false },
     derive: (w) => {
-      if (w.done.length < 4) return { note: "Complete all four stations." };
-      const P = w.tilt === 0 ? "Parallel" : "Intersecting";
-      const R = w.chord === 0 ? "Diameter" : "Chord";
-      const S = +(90 * (w.taken / w.slices)).toFixed(2);
-      const t = `(P) ${P}, (Q) ${w.segs}, (R) ${R}, (S) ${S}°`;
-      return { value: t, optionId: matchText(question, t) };
+      if (!w.digit) return { note: "Station 1: record the hundredths digit." };
+      if (w.ls < left.length || w.rs < right.length) return { note: "Station 2: work both sides of the balance." };
+      if (!w.fired) return { note: "Station 3: aim the laser and fire." };
+      const L = r4(left.reduce((a, b) => a + b, 0));
+      const R = r4(right.reduce((a, b) => a + b, 0));
+      const cmp = L < R ? "<" : L > R ? ">" : "=";
+      const text = `${w.digit}, ${cmp}, ${rounded(w.aim)}`;
+      return { value: text, optionId: question?.multipleChoiceConfig?.options.find((o) => o.text.replace(/\s/g, "") === text.replace(/\s/g, ""))?.id };
     },
     activityState,
     value,
@@ -33,182 +45,109 @@ export function Q46GeometryClassificationActivity({ question, value, activitySta
     readOnly,
   });
   const w = play.world;
-  const mark = (k: string) => play.patch({ done: w.done.includes(k) ? w.done : [...w.done, k] });
-  const set = (p: Partial<typeof w>, k: string) => play.set((s) => ({ ...s, ...p, done: s.done.filter((x) => x !== k) }));
-  const closed = w.segs >= 3;
+  const run = (xs: number[], k: number) => r4(xs.slice(0, k).reduce((a, b) => a + b, 0));
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Geometry Control Room"
-      mission="Work each station and lock it. (P) Tilt the second line until the two lines never meet. (Q) Add segments one at a time until they close a figure. (R) Slide the chord until it passes through the centre. (S) Cut a right angle into equal slices and take 3 of 5."
-      icon={MonitorCheck}
+      title="Decimal Observatory"
+      mission="Station 1: slide the lens along 43.295 and record the digit in the hundredths place. Station 2: work each side of the balance one step at a time and see which way it tips. Station 3: aim the rounding laser at the place asked for and fire."
+      icon={Telescope}
       dim="2D"
-      submitLabel="Submit all four blanks"
-      live={<Gauge label="Stations locked" value={`${w.done.length}/4`} tone="violet" />}
+      submitLabel="Submit all three blanks"
+      hints={["Hundredths is the second digit after the decimal point.", "Rounding to thousandths keeps three digits after the point; look at the fourth to round."]}
+      live={
+        <>
+          <Gauge label="(i) digit" value={w.digit ?? "—"} tone="violet" />
+          <Gauge label="(ii) balance" value={w.ls >= left.length && w.rs >= right.length ? `${run(left, left.length)} vs ${run(right, right.length)}` : "working"} tone="violet" />
+          <Gauge label="(iii) laser" value={w.fired ? rounded(w.aim) : "—"} tone="violet" />
+        </>
+      }
     >
-      <div className="grid md:grid-cols-2 gap-2">
-        <Bay label="P · two lines">
-          <svg viewBox="0 0 100 40" className="w-full h-20 bg-white rounded"><line x1={5} y1={12} x2={95} y2={12} stroke="#4338ca" strokeWidth={1.4} /><line x1={5} y1={30 + w.tilt * 0.3} x2={95} y2={30 - w.tilt * 0.3} stroke="#f59e0b" strokeWidth={1.4} /></svg>
-          <div className="flex items-center gap-1"><Stepper label="tilt" value={w.tilt} min={-30} max={30} steps={[10]} disabled={play.readOnly} onStep={(d) => set({ tilt: w.tilt + d }, "P")} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly} onClick={() => mark("P")}>Lock</Btn></div>
-          <p className="text-[11px] font-bold text-slate-600">{w.tilt === 0 ? "They never meet: parallel lines." : "They meet somewhere: intersecting lines."}</p>
+      <div className="grid md:grid-cols-3 gap-2">
+        <Bay label="1 · Place-value lens">
+          <div className="flex justify-center gap-0.5 font-mono text-2xl font-black">
+            {number.split("").map((c, i) => <span key={i} className={`w-7 text-center rounded ${w.lens === i ? "bg-amber-300" : ""}`}>{c}</span>)}
+          </div>
+          <div className="text-center text-xs font-bold mt-1">lens on: {PLACES[w.lens]}</div>
+          <div className="flex gap-1 justify-center mt-1">
+            <Btn className="px-2 min-h-[32px]" tone="slate" disabled={play.readOnly || w.lens <= 0} onClick={() => play.patch({ lens: w.lens - 1 })} ariaLabel="lens left">◀</Btn>
+            <Btn className="px-2 min-h-[32px]" tone="slate" disabled={play.readOnly || w.lens >= number.length - 1} onClick={() => play.patch({ lens: w.lens + 1 })} ariaLabel="lens right">▶</Btn>
+            <Btn className="px-2 min-h-[32px]" disabled={play.readOnly || number[w.lens] === "."} onClick={() => play.patch({ digit: number[w.lens] })}>Record</Btn>
+          </div>
         </Bay>
-        <Bay label="Q · close a figure">
-          <svg viewBox="0 0 100 40" className="w-full h-20 bg-white rounded">
-            {w.segs >= 1 && <line x1={20} y1={34} x2={80} y2={34} stroke="#4338ca" strokeWidth={1.4} />}
-            {w.segs >= 2 && <line x1={80} y1={34} x2={50} y2={6} stroke="#4338ca" strokeWidth={1.4} />}
-            {w.segs >= 3 && <line x1={50} y1={6} x2={20} y2={34} stroke="#4338ca" strokeWidth={1.4} />}
-            {w.segs >= 4 && <line x1={20} y1={34} x2={50} y2={20} stroke="#e11d48" strokeWidth={1.4} />}
-          </svg>
-          <div className="flex items-center gap-1"><Stepper label="segments" value={w.segs} min={1} max={4} disabled={play.readOnly} onStep={(d) => set({ segs: w.segs + d }, "Q")} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || !closed} onClick={() => mark("Q")}>Lock</Btn></div>
-          <p className="text-[11px] font-bold text-slate-600">{closed ? "Closed figure formed." : "Still open."}</p>
-        </Bay>
-        <Bay label="R · chord through the centre">
-          <svg viewBox="0 0 100 44" className="w-full h-20 bg-white rounded"><circle cx={50} cy={22} r={18} fill="#eef2ff" stroke="#4338ca" /><circle cx={50} cy={22} r={1.2} fill="#1e1b4b" /><line x1={50 - Math.sqrt(Math.max(0, 324 - w.chord * w.chord))} y1={22 + w.chord} x2={50 + Math.sqrt(Math.max(0, 324 - w.chord * w.chord))} y2={22 + w.chord} stroke="#f59e0b" strokeWidth={1.4} /></svg>
-          <div className="flex items-center gap-1"><Stepper label="chord offset" value={w.chord} min={0} max={16} steps={[4]} disabled={play.readOnly} onStep={(d) => set({ chord: w.chord + d }, "R")} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly} onClick={() => mark("R")}>Lock</Btn></div>
-          <p className="text-[11px] font-bold text-slate-600">{w.chord === 0 ? "Through the centre: this chord is a diameter." : "Misses the centre: an ordinary chord."}</p>
-        </Bay>
-        <Bay label="S · fraction of a right angle">
-          <p className="text-xs font-mono">{w.taken} of {w.slices} slices of 90° = {+(90 * (w.taken / w.slices)).toFixed(2)}°</p>
-          <Stepper label="slices" value={w.slices} min={1} max={10} disabled={play.readOnly} onStep={(d) => set({ slices: w.slices + d, taken: 0 }, "S")} />
-          <Stepper label="taken" value={w.taken} min={0} max={w.slices} disabled={play.readOnly} onStep={(d) => set({ taken: w.taken + d }, "S")} />
-          <Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || !w.taken} onClick={() => mark("S")}>Lock</Btn>
-        </Bay>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q47 — Toy Store Analytics (Achievers)
-   The line graph's points are live. The student puts months into two baskets; the
-   analytics board totals each basket, forms the ratio and cuts common factors out of it.
-   ══════════════════════════════════════════════════════════════════════ */
-
-const SALES: [string, number][] = [["April", 350], ["May", 500], ["June", 450], ["July", 550], ["August", 650]];
-export function Q47LineGraphRatioActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ a: string[]; b: string[]; reduced: boolean }>({
-    question,
-    initial: { a: [], b: [], reduced: false },
-    derive: (w) => {
-      if (!w.a.length || !w.b.length || !w.reduced) return { note: "Fill both baskets and reduce the ratio." };
-      const s = (m: string[]) => m.reduce((t, x) => t + (SALES.find((p) => p[0] === x)?.[1] ?? 0), 0);
-      const g = gcd(s(w.a), s(w.b));
-      const t = `${s(w.a) / g} : ${s(w.b) / g}`;
-      return { value: t, optionId: matchText(question, t) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const s = (m: string[]) => m.reduce((t, x) => t + (SALES.find((p) => p[0] === x)?.[1] ?? 0), 0);
-  const X = (i: number) => 12 + i * 20;
-  const Y = (v: number) => 60 - v / 12;
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Toy Store Analytics"
-      mission="Read the line graph. Put the first pair of months in basket 1 and the second pair in basket 2 (in the order the question says), then reduce the ratio."
-      icon={ChartLine}
-      dim="2D"
-      submitLabel="Submit the ratio"
-      live={<Gauge label="Ratio" value={`${s(w.a)} : ${s(w.b)}`} tone="violet" />}
-    >
-      <Board>
-        <svg viewBox="0 0 110 70" className="w-full max-h-56">
-          <polyline points={SALES.map(([, v], i) => `${X(i)},${Y(v)}`).join(" ")} fill="none" stroke="#6366f1" strokeWidth={1.2} />
-          {SALES.map(([m, v], i) => <g key={m}><circle cx={X(i)} cy={Y(v)} r={1.8} fill={w.a.includes(m) ? "#6366f1" : w.b.includes(m) ? "#f59e0b" : "#94a3b8"} /><text x={X(i)} y={Y(v) - 3} fontSize={3.5} textAnchor="middle">{v}</text><text x={X(i)} y={67} fontSize={3.5} textAnchor="middle">{m.slice(0, 3)}</text></g>)}
-        </svg>
-      </Board>
-      <div className="grid sm:grid-cols-2 gap-2 mt-2">
-        {(["a", "b"] as const).map((k, i) => (
-          <Bay key={k} label={`Basket ${i + 1}: ${s(w[k])}`}>
-            <div className="flex flex-wrap gap-1">{SALES.map(([m]) => <Btn key={m} className="px-2 min-h-[32px] text-[11px]" active={w[k].includes(m)} tone={w[k].includes(m) ? (i ? "amber" : "violet") : "slate"} disabled={play.readOnly || w[i ? "a" : "b"].includes(m)} onClick={() => play.set((p) => ({ ...p, reduced: false, [k]: toggle(p[k], m) }))} ariaLabel={`basket ${i + 1} ${m}`}>{m.slice(0, 3)}</Btn>)}</div>
-          </Bay>
-        ))}
-      </div>
-      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.a.length || !w.b.length} onClick={() => play.patch({ reduced: true })}>✂ Reduce the ratio</Btn>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q48 — Mathematics Truth Laboratory (Achievers)
-   Each statement has a bench that runs an experiment. The student runs the bench, reads
-   the evidence, and sets the statement's verdict. The four verdicts are the answer.
-   ══════════════════════════════════════════════════════════════════════ */
-
-const BENCHES = [
-  { k: "P", ev: "4/9: common factors of 4 and 9 → only 1. It cannot be reduced, so it is in simplest form." },
-  { k: "Q", ev: "5/9 = 0.555…, 4/5 = 0.8 — so 5/9 is smaller than 4/5." },
-  { k: "R", ev: "1/2 sits halfway between 0 and 1 on the number line; 3/4 sits three quarters of the way." },
-  { k: "S", ev: "Place values: ones × 1, tenths × 1/10, hundredths × 1/100 — each factor is 1/10 of the one before." },
-];
-export function Q48TrueFalseFractionActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ ran: string[]; v: Record<string, "T" | "F"> }>({
-    question,
-    initial: { ran: [], v: {} },
-    derive: (w) => {
-      if (BENCHES.some((b) => !w.v[b.k])) return { note: "Run each bench and give every statement a verdict." };
-      const t = BENCHES.map((b) => `(${b.k}) ${w.v[b.k]}`).join(", ");
-      return { value: t, optionId: matchText(question, t) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const stmt = (k: string) => (question?.questionText.split("\n").find((l) => l.startsWith(`(${k})`)) ?? `(${k})`).slice(4);
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Mathematics Truth Laboratory"
-      mission="Run each statement's bench to see the evidence, then mark the statement True or False."
-      icon={ClipboardCheck}
-      dim="2D"
-      submitLabel="Submit the verdicts"
-      live={<Gauge label="Verdicts" value={BENCHES.map((b) => `${b.k}:${w.v[b.k] ?? "?"}`).join(" ")} tone="violet" />}
-    >
-      <div className="grid md:grid-cols-2 gap-2">
-        {BENCHES.map((b) => (
-          <Bay key={b.k} label={`(${b.k}) ${stmt(b.k)}`}>
-            <Btn className="px-2 min-h-[32px]" tone="sky" disabled={play.readOnly || w.ran.includes(b.k)} onClick={() => play.patch({ ran: [...w.ran, b.k] })} ariaLabel={`run ${b.k}`}>🧪 Run the bench</Btn>
-            {w.ran.includes(b.k) && <p className="text-[11px] font-semibold text-slate-700 mt-1">{b.ev}</p>}
-            <div className="flex gap-1 mt-1">
-              {(["T", "F"] as const).map((x) => <Btn key={x} className="px-2 min-h-[32px]" active={w.v[b.k] === x} tone={w.v[b.k] === x ? (x === "T" ? "emerald" : "rose") : "slate"} disabled={play.readOnly || !w.ran.includes(b.k)} onClick={() => play.patch({ v: { ...w.v, [b.k]: x } })} ariaLabel={`${b.k} ${x}`}>{x === "T" ? "True" : "False"}</Btn>)}
+        <Bay label="2 · Balance">
+          {[{ xs: left, k: w.ls, key: "ls" as const }, { xs: right, k: w.rs, key: "rs" as const }].map((s, i) => (
+            <div key={i} className="flex items-center gap-1 mb-1">
+              <span className="font-mono text-[11px] flex-1">
+                {s.xs.slice(0, s.k).map((x, j) => (j ? (x < 0 ? ` − ${-x}` : ` + ${x}`) : x)).join("")} = <b>{run(s.xs, s.k)}</b>
+              </span>
+              <Btn className="px-2 min-h-[30px]" tone="slate" disabled={play.readOnly || s.k >= s.xs.length} onClick={() => play.patch({ [s.key]: s.k + 1 } as Partial<typeof w>)} ariaLabel={`${i ? "right" : "left"} step`}>step</Btn>
             </div>
-          </Bay>
-        ))}
+          ))}
+          {w.ls >= left.length && w.rs >= right.length && <div className="text-center text-sm font-black">{run(left, left.length) < run(right, right.length) ? "left side rises ⬆ (lighter)" : run(left, left.length) > run(right, right.length) ? "left side sinks ⬇ (heavier)" : "level"}</div>}
+        </Bay>
+        <Bay label="3 · Rounding laser">
+          <div className="font-mono text-lg font-black text-center">{rnum}</div>
+          <div className="flex flex-wrap gap-1 justify-center">
+            {[1, 2, 3].map((k) => (
+              <Btn key={k} className="px-2 min-h-[30px] text-[11px]" active={w.aim === k} tone={w.aim === k ? "sky" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ aim: k, fired: false })} ariaLabel={`aim ${PLACES[k + 2]}`}>
+                {PLACES[k + 2]}
+              </Btn>
+            ))}
+          </div>
+          <Btn tone="rose" className="mt-1 w-full" disabled={play.readOnly} onClick={() => play.patch({ fired: true })}>🔦 Fire → {w.fired ? rounded(w.aim) : "?"}</Btn>
+        </Bay>
       </div>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q49 — Divisibility Security Lab (Achievers)
-   Stage 1 tests Statement I: the student enters numbers and the lab compares division of
-   the whole number by 8 with division of its last three digits. Stage 2 runs 987648
-   through the ÷8 tester. The lab combines the two verdicts.
+   Q47 — Perimeter Surveyor
+   Each figure is a grid of equal squares (5 cm, 4 cm, 3 cm). The survey cart drives along
+   the outside edge; each drive goes straight to the next corner and the odometer adds the
+   length. Once all three are surveyed, the student tests the claims on the comparison
+   balance and picks the true one.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Q49DivisibilitySecurityActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ n: number; log: number[]; ran2: boolean }>({
+type Fig47 = { unit: number; rows: number[][] };
+const cellsOf = (f: Fig47): Pt[] => f.rows.flatMap((r, y) => r.map((x) => [x, y] as Pt));
+const boundary = (cells: Pt[]) => {
+  const has = (x: number, y: number) => cells.some((c) => c[0] === x && c[1] === y);
+  const out = new Set<string>();
+  const add = (a: Pt, b: Pt) => out.add([a, b].map((p) => p.join(",")).sort().join("|"));
+  cells.forEach(([x, y]) => {
+    if (!has(x, y - 1)) add([x, y], [x + 1, y]);
+    if (!has(x, y + 1)) add([x, y + 1], [x + 1, y + 1]);
+    if (!has(x - 1, y)) add([x, y], [x, y + 1]);
+    if (!has(x + 1, y)) add([x + 1, y], [x + 1, y + 1]);
+  });
+  return out;
+};
+const ek = (a: Pt, b: Pt) => [a, b].map((p) => p.join(",")).sort().join("|");
+const DIRS: Record<string, Pt> = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] };
+
+export function Q47PerimeterSurveyorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const figures = cfg<Record<string, Fig47>>(question, "figures", {});
+  const claims = cfg<Record<string, { left: string[]; op: string; right: string[] }>>(question, "claims", {});
+  const ids = Object.keys(figures);
+  const edges = useMemo(() => Object.fromEntries(ids.map((id) => [id, boundary(cellsOf(figures[id]))])), [figures]); // eslint-disable-line react-hooks/exhaustive-deps
+  const homeOf = (id: string): Pt => {
+    const c = cellsOf(figures[id]).sort((a, b) => a[1] - b[1] || a[0] - b[0])[0] ?? [0, 0];
+    return [c[0], c[1]];
+  };
+  type SW = { fig: string; at: Record<string, Pt>; walked: Record<string, string[]>; test: string | null; pick: string | null };
+  const done = (w: SW, id: string) => (w.walked[id] ?? []).length === edges[id].size && w.at[id]?.[0] === homeOf(id)[0] && w.at[id]?.[1] === homeOf(id)[1];
+  const perim = (w: SW, id: string) => (w.walked[id] ?? []).length * figures[id].unit;
+  const play = usePlay<SW>({
     question,
-    initial: { n: 12344, log: [], ran2: false },
+    initial: { fig: ids[0] ?? "", at: Object.fromEntries(ids.map((id) => [id, homeOf(id)])), walked: {}, test: null, pick: null },
     derive: (w) => {
-      if (w.log.length < 3 || !w.ran2) return { note: "Test Statement I on three numbers and run Statement II." };
-      const rule = w.log.every((n) => (n % 8 === 0) === ((n % 1000) % 8 === 0));
-      const two = 987648 % 8 === 0;
-      const id = rule && two ? question?.multipleChoiceConfig?.options.find((o) => /both.*true/i.test(o.text))?.id : rule ? question?.multipleChoiceConfig?.options.find((o) => /I is true and Statement II is false/i.test(o.text))?.id : two ? question?.multipleChoiceConfig?.options.find((o) => /I is false and Statement II is true/i.test(o.text))?.id : question?.multipleChoiceConfig?.options.find((o) => /both.*false/i.test(o.text))?.id;
-      return { value: `Statement I ${rule ? "held" : "failed"}; 987648 ${two ? "is" : "is not"} divisible by 8`, optionId: id };
+      if (ids.some((id) => !done(w, id))) return { note: `Survey every figure all the way round (${ids.filter((id) => done(w, id)).length}/${ids.length}).` };
+      if (!w.pick) return { note: "Test the claims and pick the true one." };
+      return { value: `${ids.map((id) => `${id} = ${perim(w, id)} cm`).join(", ")}; picked ${w.pick}`, optionId: w.pick === "none" ? matchText(question, "None of these") : w.pick };
     },
     activityState,
     value,
@@ -216,50 +155,150 @@ export function Q49DivisibilitySecurityActivity({ question, value, activityState
     readOnly,
   });
   const w = play.world;
+  const id = w.fig;
+  const f = figures[id];
+  const cells = f ? cellsOf(f) : [];
+  const walked = w.walked[id] ?? [];
+  const at = w.at[id] ?? [0, 0];
+  const cols = f ? Math.max(...cells.map((c) => c[0])) + 1 : 1;
+  const rows = f ? f.rows.length : 1;
+  const S = 10;
+  const drive = (d: string) =>
+    play.set((p) => {
+      let cur = p.at[id];
+      const seen = [...(p.walked[id] ?? [])];
+      let moved = 0;
+      for (;;) {
+        const nx: Pt = [cur[0] + DIRS[d][0], cur[1] + DIRS[d][1]];
+        const k = ek(cur, nx);
+        if (!edges[id].has(k) || seen.includes(k)) break;
+        seen.push(k);
+        cur = nx;
+        moved++;
+        const next: Pt = [cur[0] + DIRS[d][0], cur[1] + DIRS[d][1]];
+        const branches = Object.values(DIRS).filter(([dx, dy]) => {
+          const q: Pt = [cur[0] + dx, cur[1] + dy];
+          return edges[id].has(ek(cur, q)) && !seen.includes(ek(cur, q));
+        }).length;
+        if (!edges[id].has(ek(cur, next)) || branches > 1) break;
+      }
+      if (!moved) return p;
+      return { ...p, at: { ...p.at, [id]: cur }, walked: { ...p.walked, [id]: seen }, pick: null };
+    });
+  const side = (list: string[]) => list.reduce((s, k) => s + perim(w, k), 0);
+  const allDone = ids.every((k) => done(w, k));
+  const c = w.test ? claims[w.test] : null;
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Divisibility Security Lab"
-      mission="Stage 1: enter numbers and test Statement I — the lab checks the whole number and its last three digits against 8. Test at least three. Stage 2: run 987648 through the ÷8 tester."
-      icon={ShieldCheck}
+      title="Perimeter Surveyor"
+      mission="Pick a figure and drive the survey cart round its outside edge; each drive runs straight to the next corner and the odometer adds the lengths (each square's side is marked). Survey all three, then put each claim on the comparison balance and pick the one that is true."
+      icon={Route}
       dim="2D"
-      submitLabel="Submit the verdict"
-      live={<Gauge label="Rule held" value={w.log.length ? (w.log.every((n) => (n % 8 === 0) === ((n % 1000) % 8 === 0)) ? `${w.log.length}/${w.log.length}` : "broken") : "—"} tone="violet" />}
+      submitLabel="Submit the true claim"
+      hints={["Count the edges round the outside, then multiply by the length of one square's side.", "The three figures use different square sizes: 5 cm, 4 cm and 3 cm."]}
+      live={
+        <>
+          {ids.map((k) => (
+            <Gauge key={k} label={`${k} (${figures[k].unit} cm squares)`} value={done(w, k) ? `${perim(w, k)} cm` : `${perim(w, k)} cm so far`} tone={done(w, k) ? "emerald" : "slate"} />
+          ))}
+        </>
+      }
     >
-      <Bay label="Stage 1 · Statement I">
-        <div className="flex flex-wrap items-center gap-2">
-          <input type="number" aria-label="Number to test" value={w.n} disabled={play.readOnly} onChange={(e) => play.patch({ n: Math.max(1000, Math.round(Number(e.target.value)) || 1000) })} className="w-32 h-10 rounded-lg border border-indigo-200 px-2 font-mono font-black" />
-          <span className="text-xs font-mono">{w.n} ÷ 8 {w.n % 8 === 0 ? "✓" : "✗"} · last three {String(w.n % 1000).padStart(3, "0")} ÷ 8 {(w.n % 1000) % 8 === 0 ? "✓" : "✗"}</span>
-          <Btn tone="emerald" disabled={play.readOnly || w.log.includes(w.n)} onClick={() => play.patch({ log: [...w.log, w.n] })}>Test {w.n}</Btn>
+      <div className="flex flex-wrap gap-1.5">
+        {ids.map((k) => (
+          <Btn key={k} active={w.fig === k} tone={w.fig === k ? "violet" : done(w, k) ? "emerald" : "slate"} onClick={() => play.patch({ fig: k })}>
+            Figure {k}
+          </Btn>
+        ))}
+      </div>
+      {f && (
+        <div className="grid md:grid-cols-[1.5fr_1fr] gap-3">
+          <Board>
+            <svg viewBox={`-4 -4 ${cols * S + 8} ${rows * S + 8}`} className="w-full max-h-72">
+              {cells.map(([x, y]) => <rect key={`${x},${y}`} x={x * S} y={y * S} width={S} height={S} fill="#e0e7ff" stroke="#6366f1" strokeWidth={0.4} />)}
+              {walked.map((k) => {
+                const [a, b] = k.split("|").map((s) => s.split(",").map(Number));
+                return <line key={k} x1={a[0] * S} y1={a[1] * S} x2={b[0] * S} y2={b[1] * S} stroke="#f59e0b" strokeWidth={1.6} />;
+              })}
+              <motion.circle animate={{ cx: at[0] * S, cy: at[1] * S }} r={2.4} fill="#0f172a" />
+            </svg>
+            <p className="text-[11px] font-bold text-slate-500">Each small square here is {f.unit} cm × {f.unit} cm.</p>
+          </Board>
+          <Bay label="Cart controls" tone="violet">
+            <div className="grid grid-cols-3 gap-1 w-40 mx-auto">
+              <span />
+              <Btn disabled={play.readOnly} onClick={() => drive("N")} ariaLabel="drive north">▲</Btn>
+              <span />
+              <Btn disabled={play.readOnly} onClick={() => drive("W")} ariaLabel="drive west">◀</Btn>
+              <span className="text-center self-center text-xl">🚜</span>
+              <Btn disabled={play.readOnly} onClick={() => drive("E")} ariaLabel="drive east">▶</Btn>
+              <span />
+              <Btn disabled={play.readOnly} onClick={() => drive("S")} ariaLabel="drive south">▼</Btn>
+              <span />
+            </div>
+            <Btn tone="slate" className="mt-2" disabled={play.readOnly || !walked.length} onClick={() => play.set((p) => ({ ...p, at: { ...p.at, [id]: homeOf(id) }, walked: { ...p.walked, [id]: [] }, pick: null }))}>
+              Restart this survey
+            </Btn>
+          </Bay>
+        </div>
+      )}
+      <Bay label="Comparison balance">
+        <div className="flex flex-wrap gap-1.5">
+          {Object.keys(claims).map((k) => (
+            <Btn key={k} className="text-[11px]" active={w.test === k} tone={w.test === k ? "sky" : "slate"} disabled={play.readOnly || !allDone} onClick={() => play.patch({ test: k })}>
+              Test claim {k}
+            </Btn>
+          ))}
+        </div>
+        {c && (
+          <div className="mt-2 text-sm font-bold">
+            <div className="text-[11px] text-slate-500">{optText(question, w.test!)}</div>
+            <div className="font-mono">
+              {c.left.join(" + ")} = {side(c.left)} cm  {c.op}?  {c.right.join(" + ")} = {side(c.right)} cm
+            </div>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {Object.keys(claims).map((k) => (
+            <Btn key={k} className="text-[11px]" tone={w.pick === k ? "emerald" : "slate"} active={w.pick === k} disabled={play.readOnly || !allDone} onClick={() => play.patch({ pick: k })} ariaLabel={`pick ${k}`}>
+              ✓ Claim {k} is true
+            </Btn>
+          ))}
+          <Btn className="text-[11px]" tone={w.pick === "none" ? "emerald" : "slate"} active={w.pick === "none"} disabled={play.readOnly || !allDone} onClick={() => play.patch({ pick: "none" })} ariaLabel="pick none">
+            None of the claims is true
+          </Btn>
         </div>
       </Bay>
-      <Bay label="Stage 2 · Statement II" tone="violet" className="mt-2">
-        <Btn tone="sky" disabled={play.readOnly || w.ran2} onClick={() => play.patch({ ran2: true })}>Run 987648 through ÷8</Btn>
-        {w.ran2 && <p className="font-mono font-black mt-1 text-indigo-900">last three digits 648 ÷ 8 = 81 · 987648 ÷ 8 = {987648 / 8}</p>}
-      </Bay>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q50 — Olympiad Master Control Room (Achievers)
-   Four stations: an integer line to find the smallest integer above every negative, a
-   step calculator for the expression, a divisibility-by-22 dial for the missing digit,
-   and a wire workshop that bends the wire into 2 cm squares.
+   Q48 — Divisibility Research Laboratory
+   Stage 1 feeds 7456824 through the digit-sum machine and the ÷9 tester. Stage 2 tests the
+   claimed rule on numbers whose digit sum is a multiple of 3 — one counterexample is
+   enough to break it.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Q50MasterControlRoomActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const terms = [49, 40, 3, 69, -80];
-  const play = usePlay<{ p: number | null; steps: number; digit: number; rLock: boolean; squares: number; sLock: boolean }>({
+export function Q48DivisibilityLabActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const number = cfg<number>(question, "number", 0);
+  const verdictOptions = cfg<Record<string, string>>(question, "verdictOptions", {});
+  const digits = String(number).split("").map(Number);
+  const dsum = (n: number) => String(n).split("").reduce((s, d) => s + Number(d), 0);
+  const play = usePlay<{ fed: number; tested: boolean; n: number; log: number[] }>({
     question,
-    initial: { p: null, steps: 1, digit: 0, rLock: false, squares: 1, sLock: false },
+    initial: { fed: 0, tested: false, n: 12, log: [] },
     derive: (w) => {
-      if (w.p === null || w.steps < terms.length || !w.rLock || !w.sLock) return { note: "Complete all four stations." };
-      const q = terms.reduce((a, b) => a + b, 0);
-      const t = `(P)→${w.p}, (Q)→${q}, (R)→${w.digit}, (S)→${w.squares * 8} cm`;
-      return { value: t, optionId: matchText(question, t) };
+      if (w.fed < digits.length || !w.tested) return { note: "Stage 1: feed every digit, then run the ÷9 tester." };
+      const v1 = number % 9 === 0 ? "T" : "F";
+      const counter = w.log.some((n) => dsum(n) % 3 === 0 && n % 9 !== 0);
+      const support = w.log.filter((n) => dsum(n) % 3 === 0 && n % 9 === 0).length;
+      const v2 = counter ? "F" : support >= 4 ? "T" : null;
+      if (!v2) return { note: "Stage 2: test numbers whose digit sum is a multiple of 3." };
+      return { value: `Statement-I ${v1 === "T" ? "true" : "false"}, Statement-II ${v2 === "T" ? "true" : "false"}`, optionId: verdictOptions[`${v1}${v2}`] };
     },
     activityState,
     value,
@@ -267,37 +306,251 @@ export function Q50MasterControlRoomActivity({ question, value, activityState, o
     readOnly,
   });
   const w = play.world;
-  const num = Number(`7254${w.digit}98`);
-  const area = w.squares * 4;
+  const sum = digits.slice(0, w.fed).reduce((a, b) => a + b, 0);
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Olympiad Master Control Room"
-      mission="(P) Tap the smallest integer that is greater than every negative integer. (Q) Step the calculator through 49 − (−40) − (−3) + 69 − 80. (R) Dial the digit that makes 7254*98 divisible by 22 and lock it. (S) Bend wire into 2 cm squares until they cover 28 cm², then lock it."
-      icon={Cpu}
+      title="Divisibility Research Laboratory"
+      mission="Stage 1: feed each digit of 7456824 into the digit-sum machine, then run the ÷9 tester. Stage 2: test Statement-II — enter numbers whose digits add to a multiple of 3 and see whether 9 always divides them."
+      icon={Microscope}
       dim="2D"
-      submitLabel="Submit the matching"
-      live={<Gauge label="Stations" value={`P ${w.p ?? "?"} · Q ${w.steps >= terms.length ? terms.reduce((a, b) => a + b, 0) : "…"} · R ${w.rLock ? w.digit : "?"} · S ${w.sLock ? `${w.squares * 8} cm` : "?"}`} tone="violet" />}
+      submitLabel="Submit the verdicts"
+      hints={["A rule is false if even one number breaks it.", "Try a small number like 12 or 21."]}
+      live={
+        <>
+          <Gauge label="Digit sum" value={`${sum}${w.fed === digits.length ? (sum % 9 === 0 ? " (÷9 ✓)" : " (÷9 ✗)") : ""}`} tone="violet" />
+          <Gauge label="Rule broken by" value={w.log.filter((n) => dsum(n) % 3 === 0 && n % 9 !== 0).join(", ") || "none yet"} tone="rose" />
+        </>
+      }
+    >
+      <Bay label="Stage 1 · Number scanner">
+        <div className="flex flex-wrap items-center gap-1">
+          {digits.map((d, i) => <span key={i} className={`w-8 h-10 rounded grid place-items-center font-mono font-black text-xl ${i < w.fed ? "bg-emerald-200" : "bg-slate-100"}`}>{d}</span>)}
+          <Btn className="ml-2" disabled={play.readOnly || w.fed >= digits.length} onClick={() => play.patch({ fed: w.fed + 1 })}>Feed next digit</Btn>
+          <Btn tone="emerald" disabled={play.readOnly || w.fed < digits.length} onClick={() => play.patch({ tested: true })}>Run ÷9 tester</Btn>
+          {w.tested && <span className="font-black text-sm">{number} ÷ 9 = {number / 9}</span>}
+        </div>
+      </Bay>
+      <Bay label="Stage 2 · Rule tester" tone="violet">
+        <div className="flex flex-wrap items-center gap-2">
+          <input type="number" aria-label="Number to test" value={w.n} disabled={play.readOnly} onChange={(e) => play.patch({ n: Math.max(1, Math.round(Number(e.target.value)) || 1) })} className="w-28 h-10 rounded border-2 px-2 font-mono font-black bg-white" />
+          <span className="text-xs font-bold">digit sum {dsum(w.n)} {dsum(w.n) % 3 === 0 ? "(multiple of 3)" : "(not a multiple of 3)"}</span>
+          <Btn tone="emerald" disabled={play.readOnly || w.log.includes(w.n)} onClick={() => play.patch({ log: [...w.log, w.n] })}>Test {w.n}</Btn>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-1">
+          {w.log.map((n) => <span key={n} className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold border ${dsum(n) % 3 === 0 && n % 9 !== 0 ? "bg-rose-100 border-rose-300" : "bg-white"}`}>{n}: ÷9 {n % 9 === 0 ? "✓" : "✗"}</span>)}
+        </div>
+      </Bay>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q49 — Fraction Observatory
+   Each figure goes under the observatory: the student taps every piece to count it and the
+   observatory reads shaded pieces over all pieces. Measured figures are loaded onto the
+   conveyor in the order the student chooses.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q49FractionObservatoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const figs = cfg<Record<string, { regions: Pt[][]; shaded: number[] }>>(question, "figures", {});
+  const ids = Object.keys(figs);
+  const [open, setOpen] = useState(ids[0] ?? "P");
+  const play = usePlay<{ counted: Record<string, number[]>; belt: string[] }>({
+    question,
+    initial: { counted: {}, belt: [] },
+    derive: (w) => {
+      if (w.belt.length < ids.length) return { note: "Measure every figure and load it onto the conveyor." };
+      const text = w.belt.join(", ");
+      return { value: `Conveyor: ${text}`, optionId: matchText(question, text) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const f = figs[open];
+  const c = w.counted[open] ?? [];
+  const measured = (id: string) => (w.counted[id] ?? []).length === figs[id].regions.length;
+  const frac = (id: string) => {
+    const t = w.counted[id] ?? [];
+    return `${t.filter((i) => figs[id].shaded.includes(i)).length}/${t.length}`;
+  };
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Fraction Observatory"
+      mission="Put a figure under the observatory and tap every piece to count it; it reads shaded pieces over all pieces. When a figure is fully counted, load it onto the conveyor. Load all four from the smallest shaded fraction to the largest."
+      icon={ChartPie}
+      dim="2D"
+      submitLabel="Submit the order"
+      hints={["To compare fractions, compare each with 1/2 first.", "5/12 is less than 1/2 by 1/12; 15/32 is less than 1/2 by 1/32."]}
+      live={
+        <>
+          <Gauge label={`Figure ${open}`} value={frac(open)} tone="violet" />
+          <Gauge label="Conveyor" value={w.belt.map((id) => `${id} ${frac(id)}`).join(" → ") || "empty"} tone="amber" />
+        </>
+      }
+    >
+      <div className="flex flex-wrap gap-1.5">
+        {ids.map((id) => <Btn key={id} active={open === id} tone={open === id ? "violet" : measured(id) ? "emerald" : "slate"} onClick={() => setOpen(id)}>Figure {id}</Btn>)}
+      </div>
+      <div className="grid md:grid-cols-[1fr_1fr] gap-3">
+        <Board>
+          {f && (
+            <svg viewBox="0 0 100 100" className="w-full max-h-64">
+              {f.regions.map((pts, i) => (
+                <path key={i} d={polyPath(pts)} fill={f.shaded.includes(i) ? "#a78bfa" : "#ffffff"} stroke={c.includes(i) ? "#f59e0b" : "#312e81"} strokeWidth={c.includes(i) ? 1.6 : 0.6} role="button" aria-label={`piece ${i + 1}`} style={{ cursor: "pointer" }} onClick={() => !play.readOnly && play.set((p) => ({ ...p, belt: p.belt.filter((x) => x !== open), counted: { ...p.counted, [open]: toggle(p.counted[open] ?? [], i) } }))} />
+              ))}
+            </svg>
+          )}
+        </Board>
+        <Bay label="Ascending conveyor" tone="violet">
+          <div className="flex gap-1 min-h-[48px]">
+            {w.belt.map((id) => <span key={id} className="w-14 h-12 rounded-lg bg-amber-200 grid place-items-center font-black leading-tight">{id}<span className="text-[9px]">{frac(id)}</span></span>)}
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <Btn tone="emerald" disabled={play.readOnly || !measured(open) || w.belt.includes(open)} onClick={() => play.patch({ belt: [...w.belt, open] })}>Load figure {open}</Btn>
+            <Btn tone="slate" disabled={play.readOnly || !w.belt.length} onClick={() => play.patch({ belt: [] })}>Clear conveyor</Btn>
+          </div>
+        </Bay>
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q50 — Mathematics Control Room
+   Four stations, one per statement: a Roman numeral decoder, a digit arranger, an
+   estimation calculator and a place-value scanner. Each stamps its statement once worked;
+   the student then flags the statement that failed.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const RV: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+interface RoomWorld {
+  minus: number[];
+  aDone: boolean;
+  order: number[];
+  bDone: boolean;
+  places: number[];
+  cDone: boolean;
+  scan: number;
+  scans: number[];
+  flag: string | null;
+}
+
+export function Q50ControlRoomActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const st = cfg<{ A: { roman: string; claim: number }; B: { digits: number[]; claim: number }; C: { factors: number[]; claim: number }; D: { place: number } }>(question, "stations", {
+    A: { roman: "", claim: 0 },
+    B: { digits: [], claim: 0 },
+    C: { factors: [], claim: 0 },
+    D: { place: 1 },
+  });
+  const romanVal = (w: RoomWorld) => st.A.roman.split("").reduce((s, ch, i) => s + (w.minus.includes(i) ? -1 : 1) * RV[ch], 0);
+  const built = (w: RoomWorld) => (w.order.length === st.B.digits.length ? Number(w.order.map((i) => st.B.digits[i]).join("")) : null);
+  const est = (w: RoomWorld) => st.C.factors.reduce((p, f, i) => p * Math.round(f / 10 ** w.places[i]) * 10 ** w.places[i], 1);
+  const tensEqual = (n: number) => {
+    const d = Math.floor(n / 10) % 10;
+    return d * 10 === d;
+  };
+  const verdict = (w: RoomWorld) => ({
+    A: w.aDone ? romanVal(w) === st.A.claim : null,
+    B: w.bDone ? built(w) === st.B.claim : null,
+    C: w.cDone ? est(w) === st.C.claim : null,
+    D: w.scans.length ? w.scans.every(tensEqual) : null,
+  });
+  const play = usePlay<RoomWorld>({
+    question,
+    initial: { minus: [], aDone: false, order: [], bDone: false, places: st.C.factors.map(() => 0), cDone: false, scan: 3456, scans: [], flag: null },
+    derive: (w) => {
+      const v = verdict(w);
+      if (Object.values(v).some((x) => x === null)) return { note: "Work every station until it stamps its statement." };
+      if (!w.flag) return { note: "Flag the statement that is incorrect." };
+      return { value: `Statement ${w.flag} flagged (station ${v[w.flag as keyof typeof v] ? "passed" : "failed"} it)`, optionId: w.flag };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const v = verdict(w);
+  const stamp = (x: boolean | null) => (x === null ? <span className="text-[10px] text-slate-400 font-bold">not checked</span> : <span className={`text-[10px] font-black px-1.5 rounded ${x ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>{x ? "✓ HOLDS" : "✗ FAILS"}</span>);
+  const b = built(w);
+  const ready = Object.values(v).every((x) => x !== null);
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Mathematics Control Room"
+      mission="Work each station. A: set each numeral tile to add or take away and decode. B: arrange the four digits into the smallest 4-digit number. C: round each factor to its greatest place and multiply. D: scan numbers and compare the tens digit's face value with its place value. Then flag the incorrect statement."
+      icon={MonitorCheck}
+      dim="2D"
+      submitLabel="Submit the incorrect statement"
+      hints={["A 4-digit number cannot start with 0.", "Place value of a tens digit is 10 times its face value."]}
+      live={<>{(["A", "B", "C", "D"] as const).map((k) => <Gauge key={k} label={`Station ${k}`} value={v[k] === null ? "—" : v[k] ? "holds" : "fails"} tone={v[k] === null ? "slate" : v[k] ? "emerald" : "rose"} />)}</>}
     >
       <div className="grid md:grid-cols-2 gap-2">
-        <Bay label="P · integer line">
-          <div className="flex flex-wrap gap-1">{[-3, -2, -1, 0, 1, 2].map((n) => <Btn key={n} className="px-2 min-h-[32px]" active={w.p === n} tone={w.p === n ? "violet" : n < 0 ? "rose" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ p: n })} ariaLabel={`integer ${n}`}>{n}</Btn>)}</div>
+        <Bay label={<span className="flex items-center gap-2">A · Roman numerals {stamp(v.A)}</span>}>
+          <p className="text-[11px] text-slate-600 mb-1">{optText(question, "A")}</p>
+          <div className="flex gap-1">
+            {st.A.roman.split("").map((ch, i) => (
+              <button key={i} type="button" disabled={play.readOnly} aria-label={`A tile ${i + 1}`} onClick={() => play.set((p) => ({ ...p, aDone: false, flag: null, minus: toggle(p.minus, i) }))} className={`w-8 h-10 rounded font-serif font-black border-2 ${w.minus.includes(i) ? "bg-rose-100 border-rose-400" : "bg-amber-50 border-amber-300"}`}>
+                {ch}
+              </button>
+            ))}
+            <Btn className="ml-auto px-2 min-h-[34px]" tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ aDone: true })}>Decode → {romanVal(w)}</Btn>
+          </div>
         </Bay>
-        <Bay label="Q · step calculator">
-          <p className="font-mono text-xs">{terms.slice(0, w.steps).map((t, i) => (i ? (t < 0 ? ` − ${-t}` : ` + ${t}`) : t)).join("")} = <b>{terms.slice(0, w.steps).reduce((a, b) => a + b, 0)}</b></p>
-          <Btn className="px-2 min-h-[32px] mt-1" tone="slate" disabled={play.readOnly || w.steps >= terms.length} onClick={() => play.patch({ steps: w.steps + 1 })}>Next step</Btn>
+        <Bay label={<span className="flex items-center gap-2">B · Digit arranger {stamp(v.B)}</span>}>
+          <p className="text-[11px] text-slate-600 mb-1">{optText(question, "B")}</p>
+          <div className="flex flex-wrap gap-1">
+            {st.B.digits.map((d, i) => (
+              <Btn key={i} className="px-3 min-h-[34px]" tone="slate" disabled={play.readOnly || w.order.includes(i) || (w.order.length === 0 && d === 0)} onClick={() => play.set((p) => ({ ...p, bDone: false, flag: null, order: [...p.order, i] }))} ariaLabel={`digit ${d}`}>
+                {d}
+              </Btn>
+            ))}
+            <span className="font-mono font-black text-xl px-2">{w.order.map((i) => st.B.digits[i]).join("") || "____"}</span>
+            <Btn className="px-2 min-h-[34px]" tone="slate" disabled={play.readOnly || !w.order.length} onClick={() => play.set((p) => ({ ...p, bDone: false, order: [] }))}>clear</Btn>
+            <Btn className="px-2 min-h-[34px]" tone="emerald" disabled={play.readOnly || b === null} onClick={() => play.patch({ bDone: true })}>Check</Btn>
+          </div>
         </Bay>
-        <Bay label="R · divisible by 22?">
-          <p className="font-mono text-sm">{num} · ÷2 {num % 2 === 0 ? "✓" : "✗"} · ÷11 {num % 11 === 0 ? "✓" : "✗"}</p>
-          <div className="flex items-center gap-1"><Stepper label="digit" value={w.digit} min={0} max={9} disabled={play.readOnly} onStep={(d) => play.patch({ digit: w.digit + d, rLock: false })} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || num % 22 !== 0} onClick={() => play.patch({ rLock: true })}>Lock</Btn></div>
+        <Bay label={<span className="flex items-center gap-2">C · Estimation calculator {stamp(v.C)}</span>}>
+          <p className="text-[11px] text-slate-600 mb-1">{optText(question, "C")}</p>
+          {st.C.factors.map((f, i) => (
+            <div key={f} className="flex flex-wrap items-center gap-1 text-xs font-bold">
+              <span className="w-12 font-mono">{f}</span>
+              {[0, 1, 2, 3].map((p) => (
+                <Btn key={p} className="px-1.5 min-h-[28px] text-[10px]" active={w.places[i] === p} tone={w.places[i] === p ? "sky" : "slate"} disabled={play.readOnly || 10 ** p > f} onClick={() => play.set((s) => ({ ...s, cDone: false, flag: null, places: s.places.map((x, j) => (j === i ? p : x)) }))} ariaLabel={`${f} round ${["ones", "tens", "hundreds", "thousands"][p]}`}>
+                  {["ones", "tens", "hundreds", "thousands"][p]}
+                </Btn>
+              ))}
+              <span className="font-mono">{Math.round(f / 10 ** w.places[i]) * 10 ** w.places[i]}</span>
+            </div>
+          ))}
+          <Btn className="mt-1 px-2 min-h-[34px]" tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ cDone: true })}>Multiply → {est(w)}</Btn>
         </Bay>
-        <Bay label="S · wire workshop">
-          <div className="flex flex-wrap gap-0.5">{Array.from({ length: w.squares }, (_, i) => <span key={i} className="w-6 h-6 border-2 border-amber-600 rounded-sm" />)}</div>
-          <p className="text-xs font-mono">{w.squares} squares × 4 cm² = {area} cm² · wire used {w.squares * 8} cm</p>
-          <div className="flex items-center gap-1"><Stepper label="squares" value={w.squares} min={1} max={12} disabled={play.readOnly} onStep={(d) => play.patch({ squares: w.squares + d, sLock: false })} /><Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || area !== 28} onClick={() => play.patch({ sLock: true })}>Lock</Btn></div>
+        <Bay label={<span className="flex items-center gap-2">D · Place-value scanner {stamp(v.D)}</span>}>
+          <p className="text-[11px] text-slate-600 mb-1">{optText(question, "D")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input type="number" aria-label="Number to scan" value={w.scan} disabled={play.readOnly} onChange={(e) => play.patch({ scan: Math.max(10, Math.round(Number(e.target.value)) || 10) })} className="w-24 h-9 rounded border-2 px-2 font-mono font-black bg-white" />
+            <span className="text-xs font-bold">tens digit {Math.floor(w.scan / 10) % 10}: face {Math.floor(w.scan / 10) % 10}, place {(Math.floor(w.scan / 10) % 10) * 10}</span>
+            <Btn className="px-2 min-h-[34px]" tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ scans: [...w.scans, w.scan], flag: null })}>Scan</Btn>
+          </div>
         </Bay>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {(["A", "B", "C", "D"] as const).map((k) => (
+          <Btn key={k} tone={w.flag === k ? "rose" : "slate"} active={w.flag === k} disabled={play.readOnly || !ready} onClick={() => play.patch({ flag: k })} ariaLabel={`flag ${k}`}>
+            🚩 Statement {k} is incorrect
+          </Btn>
+        ))}
       </div>
     </Shell>
   );

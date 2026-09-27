@@ -18,16 +18,36 @@ const RIBBON: Record<string, string> = {
   "Achievers Section": "from-amber-100 via-white to-orange-100 text-amber-800 border-amber-200",
 };
 
-type ShellProps<W> = { play: Play<W>; question?: Question } & Omit<
+type ShellProps<W> = { play: Play<W>; question?: Question; hints?: string[] } & Omit<
   PlayShellProps,
   "derived" | "locked" | "touched" | "readOnly" | "onSubmit" | "onReset" | "question"
 >;
 
-export function Shell<W>({ play, question, ...rest }: ShellProps<W>) {
+export function Shell<W>({ play, question, hints = [], ...rest }: ShellProps<W>) {
   const r = RIBBON[question?.section ?? ""] ?? RIBBON["Logical Reasoning"];
+  const [shown, setShown] = React.useState(0);
   return (
     <div className="space-y-1.5">
-      <div className={`rounded-xl border bg-gradient-to-r px-3 py-1 text-[11px] font-black uppercase tracking-wider ${r}`}>{question?.section ?? "Olympiad"}</div>
+      <div className={`flex items-center justify-between gap-2 rounded-xl border bg-gradient-to-r px-3 py-1 text-[11px] font-black uppercase tracking-wider ${r}`}>
+        <span>{question?.section ?? "Olympiad"}</span>
+        {hints.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShown((n) => Math.min(hints.length, n + 1))}
+            disabled={shown >= hints.length}
+            className="normal-case tracking-normal rounded-lg border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 disabled:opacity-50"
+          >
+            💡 {shown === 0 ? "Need a hint?" : shown < hints.length ? "Another hint" : "No more hints"}
+          </button>
+        )}
+      </div>
+      {shown > 0 && (
+        <ol className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 list-decimal list-inside space-y-0.5">
+          {hints.slice(0, shown).map((h) => (
+            <li key={h}>{h}</li>
+          ))}
+        </ol>
+      )}
       <PlayShell
         {...rest}
         question={question}
@@ -97,3 +117,8 @@ export const optText = (q: Question | undefined, id: string) => q?.multipleChoic
 /** The option whose text starts with `prefix` (case-insensitive). */
 export const optStarting = (q: Question | undefined, prefix: string) =>
   q?.multipleChoiceConfig?.options.find((o) => o.text.toLowerCase().startsWith(prefix.toLowerCase()))?.id;
+/** "P", "P and Q", "P, Q and S" */
+export const listText = (ids: (string | number)[]) =>
+  ids.length <= 1 ? ids.join("") : `${ids.slice(0, -1).join(", ")} and ${ids[ids.length - 1]}`;
+/** Rupees with paise shown only when there are any: ₹ 7,878.75 */
+export const rupees = (v: number) => `₹ ${v.toLocaleString("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: Number.isInteger(v) ? 0 : 2 })}`;

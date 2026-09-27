@@ -2,32 +2,38 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Sliders, FlaskConical, Hexagon, Square, Clock } from "lucide-react";
+import { Vault, Clock, Bot, Grid2x2, Compass } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText } from "../imo6a/shared";
 import { usePlay, cfg } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board, Stepper, polyPath, Pt } from "./kit";
+import { Shell, Board, Stepper, r4, Pt } from "./kit";
+
+/** Paper 3 (IMO 2019-20 Set A) · Q16–Q20. */
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q16 — Rounding Range
-   Each number sits on its own number line with a rounding lever (tens, hundreds,
-   thousands). The student sets both levers, and the estimator subtracts the rounded
-   values.
+   Q16 — Place-Value Vault
+   Each letter gets a place-value card. The vault adds the equation's terms live and opens
+   only when they make the target; the asked expression is then worked from the same cards.
    ══════════════════════════════════════════════════════════════════════ */
 
-const PLACE = ["ones", "tens", "hundreds", "thousands"];
-export function Q16RoundingRangeActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const a = cfg<number>(question, "num1", 0);
-  const b = cfg<number>(question, "num2", 0);
-  const rnd = (n: number, p: number) => Math.round(n / 10 ** p) * 10 ** p;
-  const play = usePlay<{ p: [number, number]; run: boolean }>({
+export function Q16PlaceValueVaultActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const target = cfg<number>(question, "target", 0);
+  const terms = cfg<{ k: string; coef: number; recip: boolean }[]>(question, "terms", []);
+  const ask = cfg<Record<string, number>>(question, "ask", {});
+  const askText = cfg<string>(question, "askText", "");
+  const cards = cfg<number[]>(question, "cards", []);
+  const [slot, setSlot] = useState(terms[0]?.k ?? "P");
+  const termVal = (t: (typeof terms)[number], v?: number) => (v === undefined ? 0 : t.recip ? t.coef / v : t.coef * v);
+  const play = usePlay<{ v: Record<string, number> }>({
     question,
-    initial: { p: [0, 0], run: false },
+    initial: { v: {} },
     derive: (w) => {
-      if (!w.run) return { note: "Set both rounding levers and run the estimator." };
-      const d = rnd(a, w.p[0]) - rnd(b, w.p[1]);
-      return { value: `${rnd(a, w.p[0])} − ${rnd(b, w.p[1])} = ${d}`, optionId: matchNumber(question, d) };
+      if (terms.some((t) => w.v[t.k] === undefined)) return { note: "Give every letter a place-value card." };
+      const sum = r4(terms.reduce((s, t) => s + termVal(t, w.v[t.k]), 0));
+      if (Math.abs(sum - target) > 1e-9) return { note: `The terms add to ${sum}, not ${target}. The vault stays shut.` };
+      const e = r4(Object.entries(ask).reduce((s, [k, c]) => s + c * w.v[k], 0));
+      return { value: String(e), optionId: matchNumber(question, e, 1e-6) };
     },
     activityState,
     value,
@@ -35,61 +41,70 @@ export function Q16RoundingRangeActivity({ question, value, activityState, onCha
     readOnly,
   });
   const w = play.world;
+  const sum = r4(terms.reduce((s, t) => s + termVal(t, w.v[t.k]), 0));
+  const open = Math.abs(sum - target) < 1e-9 && terms.every((t) => w.v[t.k] !== undefined);
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Rounding Range"
-      mission="Slide each number's lever to the place the question asks for — the marker jumps to the nearer mark on that number line. Then run the estimator to subtract the rounded numbers."
-      icon={Sliders}
+      title="Place-Value Vault"
+      mission={`Pick a letter, then a place-value card for it. The vault adds the terms live. When they make exactly ${target} the vault opens and works out ${askText} from your cards.`}
+      icon={Vault}
       dim="2D"
-      submitLabel="Submit the estimate"
-      live={<Gauge label="Estimate" value={`${rnd(a, w.p[0])} − ${rnd(b, w.p[1])} = ${rnd(a, w.p[0]) - rnd(b, w.p[1])}`} tone="violet" />}
+      submitLabel="Submit the expression's value"
+      hints={["Each term supplies one digit of 35.4067: the 3 is 3 tens, the 5 is 5 ones, and so on.", "For 3/P to be 30, P must be a fraction."]}
+      live={
+        <>
+          <Gauge label="Terms add to" value={sum} tone={open ? "emerald" : "amber"} />
+          <Gauge label="Vault" value={open ? "OPEN" : "locked"} tone={open ? "emerald" : "slate"} />
+        </>
+      }
     >
-      {[a, b].map((n, i) => {
-        const p = w.p[i];
-        const step = 10 ** Math.max(p, 1);
-        const lo = Math.floor(n / step) * step;
-        const hi = lo + step;
-        return (
-          <Bay key={n} label={`${n.toLocaleString("en-IN")} rounded to the nearest ${PLACE[p]}`} className="mb-2">
-            <div className="relative h-10">
-              <div className="absolute top-5 left-0 right-0 h-1 bg-indigo-200 rounded" />
-              <span className="absolute top-0 left-0 text-[11px] font-mono font-bold text-slate-600">{lo}</span>
-              <span className="absolute top-0 right-0 text-[11px] font-mono font-bold text-slate-600">{hi}</span>
-              <motion.span animate={{ left: `${((n - lo) / step) * 100}%` }} className="absolute top-3 w-3 h-3 -ml-1.5 rounded-full bg-amber-500" />
-              <motion.span animate={{ left: `${((rnd(n, p) - lo) / step) * 100}%` }} className="absolute top-6 -ml-4 text-[11px] font-black text-indigo-700">▲{rnd(n, p)}</motion.span>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+        {terms.map((t) => (
+          <button key={t.k} type="button" onClick={() => setSlot(t.k)} aria-label={`letter ${t.k}`} className={`rounded-xl border-2 p-2 text-center ${slot === t.k ? "border-violet-500 bg-violet-50" : "border-slate-200 bg-white"}`}>
+            <div className="font-mono text-sm font-black">{t.recip ? `${t.coef}/${t.k}` : `${t.coef}${t.k}`}</div>
+            <div className="font-mono text-lg font-black text-violet-700">
+              {t.k} = {w.v[t.k] ?? "?"}
             </div>
-            <input type="range" min={0} max={3} value={p} aria-label={`round ${n} to`} disabled={play.readOnly} onChange={(e) => play.set((s) => ({ run: false, p: s.p.map((x, j) => (j === i ? Number(e.target.value) : x)) as [number, number] }))} className="w-full accent-indigo-600" />
-          </Bay>
-        );
-      })}
-      <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ run: true })}>Run the estimator</Btn>
+            <div className="text-[10px] font-bold text-slate-500">= {w.v[t.k] === undefined ? "?" : r4(termVal(t, w.v[t.k]))}</div>
+          </button>
+        ))}
+      </div>
+      <Bay label={`Cards for ${slot}`} tone="violet">
+        <div className="flex flex-wrap gap-1.5">
+          {cards.map((c) => (
+            <Btn key={c} className="px-2 font-mono" active={w.v[slot] === c} tone={w.v[slot] === c ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set((p) => ({ v: { ...p.v, [slot]: c } }))} ariaLabel={`card ${c}`}>
+              {c}
+            </Btn>
+          ))}
+        </div>
+      </Bay>
+      <div className={`rounded-xl p-2 font-mono font-black text-center ${open ? "bg-emerald-100 text-emerald-900" : "bg-slate-100 text-slate-500"}`}>
+        {open ? `${askText} = ${r4(Object.entries(ask).reduce((s, [k, c]) => s + c * w.v[k], 0))}` : "🔒 vault locked"}
+      </div>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q17 — Integer Truth Lab
-   Each statement has a test bench. The student runs tests with numbers of their choice;
-   a single counterexample stamps a statement FALSE, and the inverse bench checks 5 × ⅕.
-   Once every bench has been run, the one statement left standing is the answer.
+   Q17 — Clock Workshop
+   The student winds the clock; the hour hand creeps with the minutes. The gauge between
+   the hands reads the smaller angle.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Q17IntegerTruthLabActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const opts = question?.multipleChoiceConfig?.options ?? [];
-  const idOf = (frag: string) => opts.find((o) => o.text.toLowerCase().includes(frag))?.id ?? "";
-  const ids = { prod: idOf("product of two negative"), inv: idOf("multiplicative inverse"), add: idOf("additive inverse of a negative"), diff: idOf("difference between an integer") };
-  const play = usePlay<{ a: number; b: number; runs: Record<string, number>; broken: string[] }>({
+export function Q17ClockWorkshopActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const play = usePlay<{ mins: number; read: boolean }>({
     question,
-    initial: { a: -2, b: -3, runs: {}, broken: [] },
+    initial: { mins: 3 * 60 + 25, read: false },
     derive: (w) => {
-      const all = Object.values(ids);
-      if (all.some((id) => !w.runs[id])) return { note: "Run every test bench at least once." };
-      const standing = all.filter((id) => !w.broken.includes(id));
-      if (standing.length !== 1) return { note: standing.length ? "More than one statement survived — test with other numbers." : "Every statement was broken." };
-      return { value: `Only statement ${standing[0]} survived testing`, optionId: standing[0] };
+      if (!w.read) return { note: "Set the clock, then read the angle gauge." };
+      const h = (w.mins / 60) % 12;
+      const m = w.mins % 60;
+      const a = Math.abs(30 * h - 6 * m);
+      const small = Math.min(a, 360 - a);
+      return { value: `${small}°`, optionId: matchNumber(question, small) };
     },
     activityState,
     value,
@@ -97,44 +112,162 @@ export function Q17IntegerTruthLabActivity({ question, value, activityState, onC
     readOnly,
   });
   const w = play.world;
-  const run = (id: string, fails: boolean) => play.set((p) => ({ ...p, runs: { ...p.runs, [id]: (p.runs[id] ?? 0) + 1 }, broken: fails && !p.broken.includes(id) ? [...p.broken, id] : p.broken }));
-  const stamp = (id: string) => (!w.runs[id] ? "not run" : w.broken.includes(id) ? "✗ FALSE — counterexample found" : "✓ holds so far");
+  const hA = (30 * ((w.mins / 60) % 12)) % 360;
+  const mA = 6 * (w.mins % 60);
+  const a = Math.abs(hA - mA);
+  const small = Math.min(a, 360 - a);
+  const hand = (deg: number, len: number) => [50 + len * Math.sin((deg * Math.PI) / 180), 50 - len * Math.cos((deg * Math.PI) / 180)];
+  const time = `${Math.floor(w.mins / 60) % 12 || 12}:${String(w.mins % 60).padStart(2, "0")}`;
+  const wind = (d: number) => play.set((p) => ({ mins: (((p.mins + d) % 720) + 720) % 720, read: false }));
+  const [hx, hy] = hand(hA, 22);
+  const [mx, my] = hand(mA, 34);
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Integer Truth Lab"
-      mission="Set the two numbers, then run each bench. One counterexample is enough to break a statement. Run every bench — the statement that survives is the true one."
-      icon={FlaskConical}
+      title="Clock Workshop"
+      mission="Wind the crown to set the clock to the time in the question. The gauge opens between the two hands and shows the smaller angle. Read the gauge when the clock is set."
+      icon={Clock}
       dim="2D"
-      submitLabel="Submit the true statement"
-      live={<Gauge label="Broken" value={w.broken.join(", ") || "none"} tone="rose" />}
+      submitLabel="Submit the angle"
+      hints={["Each hour mark is 30° from the next.", "At an exact hour the minute hand points straight up at 12."]}
+      live={
+        <>
+          <Gauge label="Clock" value={time} tone="violet" />
+          <Gauge label="Gauge" value={`${small}°`} tone="amber" />
+        </>
+      }
     >
-      <div className="flex flex-wrap gap-4 mb-2">
-        <Stepper label="a" value={w.a} min={-9} max={9} disabled={play.readOnly} onStep={(d) => play.patch({ a: w.a + d })} />
-        <Stepper label="b" value={w.b} min={-9} max={9} disabled={play.readOnly} onStep={(d) => play.patch({ b: w.b + d })} />
+      <div className="grid md:grid-cols-[auto_1fr] gap-3 items-center">
+        <svg viewBox="0 0 100 100" className="w-56 h-56">
+          <circle cx={50} cy={50} r={46} fill="#fff" stroke="#334155" strokeWidth={2} />
+          {Array.from({ length: 12 }, (_, i) => {
+            const [x, y] = hand(i * 30, 38);
+            return (
+              <text key={i} x={x} y={y + 2} fontSize={7} textAnchor="middle" fontWeight={900}>
+                {i || 12}
+              </text>
+            );
+          })}
+          <path d={`M 50 50 L ${hand(hA, 14).join(" ")} A 14 14 0 0 ${(mA - hA + 360) % 360 > 180 ? 0 : 1} ${hand(mA, 14).join(" ")} Z`} fill="#fbbf2466" />
+          <line x1={50} y1={50} x2={hx} y2={hy} stroke="#1e1b4b" strokeWidth={3} strokeLinecap="round" />
+          <line x1={50} y1={50} x2={mx} y2={my} stroke="#7c3aed" strokeWidth={2} strokeLinecap="round" />
+          <circle cx={50} cy={50} r={2} />
+        </svg>
+        <div className="space-y-2">
+          <Bay label="Crown" tone="violet">
+            <div className="flex flex-wrap gap-1.5">
+              <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(-60)}>−1 hour</Btn>
+              <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(-5)}>−5 min</Btn>
+              <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(5)}>+5 min</Btn>
+              <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(60)}>+1 hour</Btn>
+            </div>
+          </Bay>
+          <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ read: true })}>
+            📐 Read the angle gauge
+          </Btn>
+        </div>
       </div>
-      <div className="grid sm:grid-cols-2 gap-2">
-        <Bay label={`${ids.prod} · product of two negatives`}>
-          <p className="text-xs font-mono">{w.a} × {w.b} = {w.a * w.b}</p>
-          <Btn className="mt-1" disabled={play.readOnly || w.a >= 0 || w.b >= 0} onClick={() => run(ids.prod, !(w.a * w.b < w.a && w.a * w.b < w.b))} ariaLabel="test product">Test (a, b negative)</Btn>
-          <p className="text-[11px] font-bold mt-1">{stamp(ids.prod)}</p>
-        </Bay>
-        <Bay label={`${ids.inv} · multiplicative inverse of 5`}>
-          <p className="text-xs font-mono">5 × 1/5 = 1</p>
-          <Btn className="mt-1" disabled={play.readOnly} onClick={() => run(ids.inv, false)} ariaLabel="test inverse">Multiply 5 by 1/5</Btn>
-          <p className="text-[11px] font-bold mt-1">{stamp(ids.inv)}</p>
-        </Bay>
-        <Bay label={`${ids.add} · additive inverse of a negative`}>
-          <p className="text-xs font-mono">inverse of {w.a} is {-w.a}</p>
-          <Btn className="mt-1" disabled={play.readOnly || w.a >= 0} onClick={() => run(ids.add, -w.a >= 0)} ariaLabel="test additive">Test (a negative)</Btn>
-          <p className="text-[11px] font-bold mt-1">{stamp(ids.add)}</p>
-        </Bay>
-        <Bay label={`${ids.diff} · integer minus its additive inverse`}>
-          <p className="text-xs font-mono">{w.a} − ({-w.a}) = {2 * w.a}</p>
-          <Btn className="mt-1" disabled={play.readOnly} onClick={() => run(ids.diff, (2 * w.a) % 2 === 0)} ariaLabel="test difference">Test with a</Btn>
-          <p className="text-[11px] font-bold mt-1">{stamp(ids.diff)}</p>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q18 — Perimeter Robot
+   The robot drives only along the outside edge of the shaded cells, one 1 cm edge at a
+   time, and never over an edge twice. Home again with every edge driven, the counter is
+   the perimeter.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const boundaryEdges = (cells: Pt[]) => {
+  const has = (x: number, y: number) => cells.some((c) => c[0] === x && c[1] === y);
+  const out = new Set<string>();
+  const add = (a: Pt, b: Pt) => out.add([a, b].map((p) => p.join(",")).sort().join("|"));
+  cells.forEach(([x, y]) => {
+    if (!has(x, y - 1)) add([x, y], [x + 1, y]);
+    if (!has(x, y + 1)) add([x, y + 1], [x + 1, y + 1]);
+    if (!has(x - 1, y)) add([x, y], [x, y + 1]);
+    if (!has(x + 1, y)) add([x + 1, y], [x + 1, y + 1]);
+  });
+  return out;
+};
+const ekey = (a: Pt, b: Pt) => [a, b].map((p) => p.join(",")).sort().join("|");
+
+export function Q18PerimeterRobotActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const cells = cfg<Pt[]>(question, "cells", []);
+  const cols = cfg<number>(question, "cols", 8);
+  const rows = cfg<number>(question, "rows", 6);
+  const edges = React.useMemo(() => boundaryEdges(cells), [cells]);
+  const home: Pt = cells.length ? [cells[0][0], cells[0][1]] : [0, 0];
+  const play = usePlay<{ at: Pt; walked: string[] }>({
+    question,
+    initial: { at: home, walked: [] },
+    derive: (w) => {
+      const back = w.at[0] === home[0] && w.at[1] === home[1];
+      if (!back || w.walked.length < edges.size) return { note: `Drive round the whole outside edge and come home (${w.walked.length} cm so far).` };
+      return { value: `${w.walked.length} cm`, optionId: matchNumber(question, w.walked.length) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const S = 11;
+  const drive = (dx: number, dy: number) =>
+    play.set((p) => {
+      const to: Pt = [p.at[0] + dx, p.at[1] + dy];
+      const k = ekey(p.at, to);
+      if (!edges.has(k) || p.walked.includes(k)) return p;
+      return { at: to, walked: [...p.walked, k] };
+    });
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Perimeter Robot"
+      mission="Steer the robot along the outside edge of the shaded region, one grid edge (1 cm) at a time. It refuses to drive inside the shape, off its edge, or over an edge twice. Bring it home after driving every edge."
+      icon={Bot}
+      dim="2D"
+      submitLabel="Submit the perimeter"
+      hints={["Where two shaded squares only touch at a corner, the robot can turn either way — follow the outline you have not driven yet.", "Every edge of a shaded square that is not shared with another shaded square is part of the perimeter."]}
+      live={
+        <>
+          <Gauge label="Edges driven" value={`${w.walked.length} cm`} tone="violet" />
+          <Gauge label="Home?" value={w.at[0] === home[0] && w.at[1] === home[1] ? "yes" : "no"} />
+        </>
+      }
+    >
+      <div className="grid md:grid-cols-[1.5fr_1fr] gap-3">
+        <Board>
+          <svg viewBox={`-4 -4 ${cols * S + 8} ${rows * S + 8}`} className="w-full max-h-80">
+            {Array.from({ length: cols + 1 }, (_, i) => <line key={`v${i}`} x1={i * S} x2={i * S} y1={0} y2={rows * S} stroke="#94a3b8" strokeWidth={0.4} />)}
+            {Array.from({ length: rows + 1 }, (_, i) => <line key={`h${i}`} y1={i * S} y2={i * S} x1={0} x2={cols * S} stroke="#94a3b8" strokeWidth={0.4} />)}
+            {cells.map(([x, y]) => <rect key={`${x},${y}`} x={x * S} y={y * S} width={S} height={S} fill="#c4b5fd" />)}
+            {w.walked.map((k) => {
+              const [a, b] = k.split("|").map((s) => s.split(",").map(Number));
+              return <line key={k} x1={a[0] * S} y1={a[1] * S} x2={b[0] * S} y2={b[1] * S} stroke="#f59e0b" strokeWidth={1.6} />;
+            })}
+            <motion.circle animate={{ cx: w.at[0] * S, cy: w.at[1] * S }} r={2.6} fill="#0f172a" />
+          </svg>
+        </Board>
+        <Bay label="Steering" tone="violet">
+          <div className="grid grid-cols-3 gap-1 w-40 mx-auto">
+            <span />
+            <Btn disabled={play.readOnly} onClick={() => drive(0, -1)} ariaLabel="drive north">▲</Btn>
+            <span />
+            <Btn disabled={play.readOnly} onClick={() => drive(-1, 0)} ariaLabel="drive west">◀</Btn>
+            <span className="text-center self-center text-xl">🤖</span>
+            <Btn disabled={play.readOnly} onClick={() => drive(1, 0)} ariaLabel="drive east">▶</Btn>
+            <span />
+            <Btn disabled={play.readOnly} onClick={() => drive(0, 1)} ariaLabel="drive south">▼</Btn>
+            <span />
+          </div>
+          <Btn tone="slate" className="mt-2" disabled={play.readOnly || !w.walked.length} onClick={() => play.set({ at: home, walked: [] })}>
+            Send the robot home
+          </Btn>
         </Bay>
       </div>
     </Shell>
@@ -142,25 +275,100 @@ export function Q17IntegerTruthLabActivity({ question, value, activityState, onC
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q18 — Polygon Detector
-   Each figure goes through the gate: one sensor checks the figure is closed, the other
-   that every side is a straight line segment. The student sorts each figure into the
-   polygon bin or the reject bin.
+   Q19 — Architect's Tiling Studio
+   The student turns the tile to decide which side runs along the hall; a leftover strip
+   means that way round does not fit. Once it fits, the floor is tiled and priced.
    ══════════════════════════════════════════════════════════════════════ */
 
-const Q18_FIGS = [
-  { id: "(i)", closed: true, straight: true, d: "M 10 30 L 30 8 L 52 16 L 44 44 L 18 48 Z" },
-  { id: "(ii)", closed: true, straight: false, d: "M 30 6 L 50 40 A 22 12 0 0 1 10 40 Z" },
-  { id: "(iii)", closed: false, straight: true, d: "M 10 44 L 10 20 L 30 6 L 50 20 L 50 44 L 38 44" },
-];
-export function Q18PolygonDetectorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ scanned: string[]; bin: Record<string, "poly" | "not"> }>({
+export function Q19TilingStudioActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const hall = cfg<[number, number]>(question, "hallCm", [0, 0]);
+  const tile = cfg<[number, number]>(question, "tileCm", [1, 1]);
+  const rate = cfg<number>(question, "rate", 1);
+  const play = usePlay<{ turned: boolean; laid: boolean; priced: boolean }>({
     question,
-    initial: { scanned: [], bin: {} },
+    initial: { turned: true, laid: false, priced: false },
     derive: (w) => {
-      if (Q18_FIGS.some((f) => !w.bin[f.id])) return { note: "Scan and sort every figure." };
-      const poly = Q18_FIGS.filter((f) => w.bin[f.id] === "poly").map((f) => f.id);
-      const text = poly.length === 1 ? `Only Figure ${poly[0]}` : poly.length === 3 ? "All figures (i), (ii) and (iii)" : `Figures ${poly.join(" and ")}`;
+      const [a, b] = w.turned ? [tile[1], tile[0]] : tile;
+      const n = Math.floor(hall[0] / a) * Math.floor(hall[1] / b);
+      if (!w.laid || !w.priced) return { note: "Lay the floor, then price it." };
+      const cost = n * rate;
+      return { value: `${n.toLocaleString("en-IN")} tiles × ₹${rate} = ₹${cost.toLocaleString("en-IN")}`, optionId: matchNumber(question, cost) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const [a, b] = w.turned ? [tile[1], tile[0]] : tile;
+  const along = hall[0] / a;
+  const across = hall[1] / b;
+  const fits = Number.isInteger(along) && Number.isInteger(across);
+  const n = Math.floor(along) * Math.floor(across);
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Architect's Tiling Studio"
+      mission={`The hall is ${hall[0] / 100} m × ${hall[1] / 100} m and a tile is ${tile[0]} cm × ${tile[1]} cm. Turn the tile until it fits both walls with nothing left over, lay the floor and price it at ₹${rate} a tile.`}
+      icon={Grid2x2}
+      dim="2D"
+      submitLabel="Submit the cost"
+      hints={["Change metres to centimetres first: 1 m = 100 cm.", "Number of tiles = tiles along the length × tiles across the width."]}
+      live={
+        <>
+          <Gauge label="Along the length" value={`${+along.toFixed(2)} tiles`} tone={Number.isInteger(along) ? "emerald" : "rose"} />
+          <Gauge label="Across the width" value={`${+across.toFixed(2)} tiles`} tone={Number.isInteger(across) ? "emerald" : "rose"} />
+          <Gauge label="Tiles" value={w.laid ? n.toLocaleString("en-IN") : "—"} tone="violet" />
+        </>
+      }
+    >
+      <div className="rounded-2xl bg-stone-50 border-2 border-stone-200 p-2">
+        <svg viewBox="0 0 100 34" className="w-full">
+          <defs>
+            <pattern id="p3q19t" width={(96 * a * 10) / hall[0]} height={(96 * b * 10) / hall[0]} patternUnits="userSpaceOnUse" x={2} y={2}>
+              <rect width={(96 * a * 10) / hall[0]} height={(96 * b * 10) / hall[0]} fill="#a7f3d0" stroke="#047857" strokeWidth={0.1} />
+            </pattern>
+          </defs>
+          <rect x={2} y={2} width={96} height={96 * (hall[1] / hall[0])} fill="#e7e5e4" stroke="#44403c" strokeWidth={0.4} />
+          {w.laid && <rect x={2} y={2} width={(96 * (Math.floor(along) * a)) / hall[0]} height={(96 * (Math.floor(across) * b)) / hall[0]} fill="url(#p3q19t)" />}
+          {!Number.isInteger(along) && <rect x={2 + (96 * Math.floor(along) * a) / hall[0]} y={2} width={(96 * (hall[0] - Math.floor(along) * a)) / hall[0] + 0.6} height={96 * (hall[1] / hall[0])} fill="#fb7185" />}
+          {!Number.isInteger(across) && <rect x={2} y={2 + (96 * Math.floor(across) * b) / hall[0]} width={96} height={(96 * (hall[1] - Math.floor(across) * b)) / hall[0] + 0.6} fill="#fb7185" />}
+        </svg>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Btn tone="sky" disabled={play.readOnly} onClick={() => play.set((p) => ({ turned: !p.turned, laid: false, priced: false }))}>
+          ⟲ Turn the tile ({a} cm along the length)
+        </Btn>
+        <Btn tone="emerald" disabled={play.readOnly || !fits || w.laid} onClick={() => play.patch({ laid: true })}>
+          {fits ? "Lay the floor" : "Leaves a strip — can't lay"}
+        </Btn>
+        <Btn tone="amber" disabled={play.readOnly || !w.laid} onClick={() => play.patch({ priced: true })}>
+          Price at ₹{rate} a tile
+        </Btn>
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q20 — Compass Arena
+   Arjun stands on the compass rose facing South-East. For each task the student dials a
+   turn in quarter revolutions and a direction; Arjun spins and his heading is recorded.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const ROSE = ["North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West"];
+
+export function Q20CompassArenaActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const start = Math.max(0, ROSE.findIndex((r) => r.replace(/[^A-Z]/g, "") === cfg<string>(question, "start", "SE")));
+  const tasks = cfg<{ label: string }[]>(question, "tasks", []);
+  const play = usePlay<{ task: number; quarters: number; dir: "cw" | "acw"; heading: number; record: (string | null)[] }>({
+    question,
+    initial: { task: 0, quarters: 1, dir: "cw", heading: start * 45, record: tasks.map(() => null) },
+    derive: (w) => {
+      if (w.record.some((r) => !r)) return { note: "Spin Arjun for each task and record where he faces." };
+      const text = w.record.join(", ");
       return { value: text, optionId: matchText(question, text) };
     },
     activityState,
@@ -169,172 +377,65 @@ export function Q18PolygonDetectorActivity({ question, value, activityState, onC
     readOnly,
   });
   const w = play.world;
+  const facing = ROSE[((Math.round(w.heading / 45) % 8) + 8) % 8];
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Polygon Detector"
-      mission="Run each figure through the gate: one sensor checks it is closed, the other that all its sides are straight. Then sort it into the polygon bin or the reject bin."
-      icon={Hexagon}
+      title="Compass Arena"
+      mission="Choose a task. Dial how many quarter revolutions to turn and which way, then spin Arjun and record where he ends up facing. Each task starts again from South-East."
+      icon={Compass}
       dim="2D"
-      submitLabel="Submit the polygons"
-      live={<Gauge label="Polygon bin" value={Q18_FIGS.filter((f) => w.bin[f.id] === "poly").map((f) => f.id).join(", ") || "empty"} tone="emerald" />}
-    >
-      <div className="grid sm:grid-cols-3 gap-2">
-        {Q18_FIGS.map((f) => {
-          const sc = w.scanned.includes(f.id);
-          return (
-            <Bay key={f.id} label={`Figure ${f.id}`}>
-              <svg viewBox="0 0 60 54" className="w-full h-24 bg-white rounded"><path d={f.d} fill={f.closed ? "#e0e7ff" : "none"} stroke="#4338ca" strokeWidth={1.6} /></svg>
-              <div className="text-[11px] font-bold text-slate-700">{sc ? `closed ${f.closed ? "🟢" : "🔴"} · straight sides ${f.straight ? "🟢" : "🔴"}` : "not scanned"}</div>
-              <div className="flex flex-wrap gap-1 mt-1">
-                <Btn className="px-2 min-h-[32px]" tone="sky" disabled={play.readOnly || sc} onClick={() => play.patch({ scanned: [...w.scanned, f.id] })} ariaLabel={`scan ${f.id}`}>Scan</Btn>
-                <Btn className="px-2 min-h-[32px]" tone="emerald" active={w.bin[f.id] === "poly"} disabled={play.readOnly || !sc} onClick={() => play.patch({ bin: { ...w.bin, [f.id]: "poly" } })} ariaLabel={`polygon ${f.id}`}>Polygon</Btn>
-                <Btn className="px-2 min-h-[32px]" tone="rose" active={w.bin[f.id] === "not"} disabled={play.readOnly || !sc} onClick={() => play.patch({ bin: { ...w.bin, [f.id]: "not" } })} ariaLabel={`reject ${f.id}`}>Reject</Btn>
-              </div>
-            </Bay>
-          );
-        })}
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q19 — Area Construction Lab
-   The two squares and their overlap are laid on a grid. The student measures each piece
-   with the tape, then decides which pieces the covered area adds and which it takes away;
-   the ledger totals it.
-   ══════════════════════════════════════════════════════════════════════ */
-
-export function Q19AreaConstructionLabActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const pieces = [
-    { k: "big", label: "big square", w: 10, h: 10 },
-    { k: "small", label: "small square", w: 8, h: 8 },
-    { k: "lap", label: "overlap", w: 4, h: 3 },
-  ];
-  const play = usePlay<{ dims: Record<string, [number, number]>; sign: Record<string, number>; done: boolean }>({
-    question,
-    initial: { dims: {}, sign: {}, done: false },
-    derive: (w) => {
-      if (pieces.some((p) => !w.dims[p.k] || !w.sign[p.k])) return { note: "Measure every piece and set it to add or take away." };
-      if (!w.done) return { note: "Run the ledger." };
-      const t = pieces.reduce((s, p) => s + w.sign[p.k] * w.dims[p.k][0] * w.dims[p.k][1], 0);
-      return { value: `${t} cm²`, optionId: matchNumber(question, t) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const K = 4.2;
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Area Construction Lab"
-      mission="Measure each piece with the tape (set its length and breadth). Decide whether the covered area adds each piece or takes it away — the overlap is counted inside both squares — then run the ledger."
-      icon={Square}
-      dim="2D"
-      submitLabel="Submit the area"
-      live={<Gauge label="Ledger" value={pieces.map((p) => (w.dims[p.k] && w.sign[p.k] ? `${w.sign[p.k] > 0 ? "+" : "−"}${w.dims[p.k][0] * w.dims[p.k][1]}` : "·")).join(" ")} tone="violet" />}
-    >
-      <div className="grid md:grid-cols-[1fr_1.2fr] gap-3">
-        <Board>
-          <svg viewBox="0 0 64 64" className="w-full max-h-64">
-            <rect x={2} y={2} width={10 * K} height={10 * K} fill="#c7d2fe" stroke="#4338ca" />
-            <rect x={2 + 6 * K} y={2 + 7 * K} width={8 * K} height={8 * K} fill="#fde68a" stroke="#b45309" opacity={0.85} />
-            <rect x={2 + 6 * K} y={2 + 7 * K} width={4 * K} height={3 * K} fill="#34d399" stroke="#047857" />
-            <text x={2 + 5 * K} y={1.6} fontSize={3} textAnchor="middle">10 cm</text>
-            <text x={2 + 10 * K} y={2 + 15 * K + 3} fontSize={3} textAnchor="middle">8 cm</text>
-          </svg>
-        </Board>
-        <div className="space-y-2">
-          {pieces.map((p) => {
-            const d = w.dims[p.k] ?? [1, 1];
-            const fits = (d[0] === p.w && d[1] === p.h) || (d[0] === p.h && d[1] === p.w);
-            const set = (i: 0 | 1, v: number) => play.set((s) => ({ ...s, done: false, dims: { ...s.dims, [p.k]: (i ? [d[0], v] : [v, d[1]]) as [number, number] } }));
-            return (
-              <Bay key={p.k} label={`${p.label}: ${fits ? "tape fits ✓" : "measuring…"}`}>
-                <Stepper label={`${p.label} length`} value={d[0]} min={1} max={12} disabled={play.readOnly} onStep={(s) => set(0, d[0] + s)} />
-                <Stepper label={`${p.label} breadth`} value={d[1]} min={1} max={12} disabled={play.readOnly} onStep={(s) => set(1, d[1] + s)} />
-                <div className="flex gap-1 mt-1">
-                  <Btn className="px-2 min-h-[32px]" tone="emerald" active={w.sign[p.k] === 1} disabled={play.readOnly} onClick={() => play.patch({ sign: { ...w.sign, [p.k]: 1 }, done: false })} ariaLabel={`add ${p.label}`}>+ add</Btn>
-                  <Btn className="px-2 min-h-[32px]" tone="rose" active={w.sign[p.k] === -1} disabled={play.readOnly} onClick={() => play.patch({ sign: { ...w.sign, [p.k]: -1 }, done: false })} ariaLabel={`take away ${p.label}`}>− take away</Btn>
-                </div>
-              </Bay>
-            );
-          })}
-          <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ done: true })}>Run the ledger</Btn>
-        </div>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q20 — Clock Workshop
-   The student winds the crown to set the time; the hour hand creeps with the minutes as
-   on a real clock. The gauge opens between the hands and reads the smaller angle.
-   ══════════════════════════════════════════════════════════════════════ */
-
-export function Q20ClockAngleActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ mins: number; read: boolean }>({
-    question,
-    initial: { mins: 4 * 60 + 20, read: false },
-    derive: (w) => {
-      if (!w.read) return { note: "Set the clock, then read the gauge." };
-      const a = Math.abs(30 * ((w.mins / 60) % 12) - 6 * (w.mins % 60));
-      const s = Math.min(a, 360 - a);
-      return { value: `${s}°`, optionId: matchNumber(question, s) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const hA = 30 * ((w.mins / 60) % 12);
-  const mA = 6 * (w.mins % 60);
-  const a = Math.abs(hA - mA);
-  const small = Math.min(a, 360 - a);
-  const hand = (deg: number, len: number): Pt => [50 + len * Math.sin((deg * Math.PI) / 180), 50 - len * Math.cos((deg * Math.PI) / 180)];
-  const wind = (d: number) => play.set((p) => ({ mins: (((p.mins + d) % 720) + 720) % 720, read: false }));
-  const [hx, hy] = hand(hA, 22);
-  const [mx, my] = hand(mA, 34);
-  const time = `${Math.floor(w.mins / 60) % 12 || 12}:${String(w.mins % 60).padStart(2, "0")}`;
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Clock Workshop"
-      mission="Wind the crown to the time in the question. The gauge always shows the smaller angle between the hands. Read it when the clock is set."
-      icon={Clock}
-      dim="2D"
-      submitLabel="Submit the angle"
-      live={<><Gauge label="Clock" value={time} tone="violet" /><Gauge label="Gauge" value={`${small}°`} tone="amber" /></>}
+      submitLabel="Submit both headings"
+      hints={["A whole revolution brings Arjun back to where he started.", "Three quarters of a revolution is three quarter-turns."]}
+      live={
+        <>
+          <Gauge label="Facing" value={facing} tone="violet" />
+          {tasks.map((t, i) => (
+            <Gauge key={i} label={t.label} value={w.record[i] ?? "—"} tone={w.record[i] ? "emerald" : "slate"} />
+          ))}
+        </>
+      }
     >
       <div className="grid md:grid-cols-[auto_1fr] gap-3 items-center">
-        <svg viewBox="0 0 100 100" className="w-56 h-56">
-          <circle cx={50} cy={50} r={46} fill="#fff" stroke="#6366f1" strokeWidth={2} />
-          {Array.from({ length: 12 }, (_, i) => { const [x, y] = hand(i * 30, 38); return <text key={i} x={x} y={y + 2} fontSize={7} textAnchor="middle" fontWeight={900} fill="#312e81">{i || 12}</text>; })}
-          <line x1={50} y1={50} x2={hx} y2={hy} stroke="#1e1b4b" strokeWidth={3} strokeLinecap="round" />
-          <line x1={50} y1={50} x2={mx} y2={my} stroke="#7c3aed" strokeWidth={2} strokeLinecap="round" />
-          <circle cx={50} cy={50} r={2} fill="#1e1b4b" />
+        <svg viewBox="-50 -50 100 100" className="w-56 h-56">
+          <circle r={46} fill="#f0f9ff" stroke="#0369a1" strokeWidth={1} />
+          {ROSE.map((r, i) => {
+            const t = (i * 45 * Math.PI) / 180;
+            return (
+              <text key={r} x={38 * Math.sin(t)} y={-38 * Math.cos(t) + 2} fontSize={i % 2 ? 5 : 7} textAnchor="middle" fontWeight={900}>
+                {r.replace(/[^A-Z]/g, "")}
+              </text>
+            );
+          })}
+          <motion.g animate={{ rotate: w.heading }} transition={{ duration: 1.2 }}>
+            <polygon points="0,-26 5,4 -5,4" fill="#dc2626" />
+            <circle r={6} fill="#1e293b" />
+          </motion.g>
         </svg>
-        <Bay label="Crown" tone="violet">
-          <div className="flex flex-wrap gap-1.5">
-            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(-60)}>−1 hour</Btn>
-            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(-5)}>−5 min</Btn>
-            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(5)}>+5 min</Btn>
-            <Btn tone="slate" disabled={play.readOnly} onClick={() => wind(60)}>+1 hour</Btn>
+        <div className="space-y-2">
+          <div className="flex gap-1.5">
+            {tasks.map((t, i) => (
+              <Btn key={i} active={w.task === i} tone={w.task === i ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ task: i, heading: start * 45 })}>
+                Task {t.label}
+              </Btn>
+            ))}
           </div>
-          <Btn tone="amber" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ read: true })}>📐 Read the gauge</Btn>
-        </Bay>
+          <Stepper label="Quarter turns" value={w.quarters} min={1} max={8} disabled={play.readOnly} onStep={(d) => play.patch({ quarters: w.quarters + d })} />
+          <div className="flex gap-1.5">
+            <Btn active={w.dir === "cw"} tone={w.dir === "cw" ? "sky" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ dir: "cw" })}>↻ clockwise</Btn>
+            <Btn active={w.dir === "acw"} tone={w.dir === "acw" ? "sky" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ dir: "acw" })}>↺ anticlockwise</Btn>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ heading: start * 45 + (w.dir === "cw" ? 1 : -1) * w.quarters * 90 })}>
+              Spin {w.quarters / 4} revolution{w.quarters === 4 ? "" : "s"}
+            </Btn>
+            <Btn tone="amber" disabled={play.readOnly || w.heading === start * 45} onClick={() => play.patch({ record: w.record.map((r, i) => (i === w.task ? facing : r)) })}>
+              Record {tasks[w.task]?.label}
+            </Btn>
+          </div>
+        </div>
       </div>
     </Shell>
   );

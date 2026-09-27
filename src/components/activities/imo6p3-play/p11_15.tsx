@@ -1,273 +1,55 @@
 "use client";
 
-import React, { useState } from "react";
-import { Factory, CircleDot, BookA, Users, Grid3x3 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Users, Shapes, Atom, ScanSearch, Dna } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText } from "../imo6a/shared";
 import { usePlay, cfg } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { clientToSvg } from "../imo6a-play/svgPoint";
-import { Shell, Board, Pt, polyPath } from "./kit";
+import { Shell, Board } from "./kit";
+
+/** Paper 3 (IMO 2019-20 Set A) · Q11–Q15. */
+
+const A2Z = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q11 — Operator Factory
-   Each code letter is a socket; the student plugs the real operator into it. The factory
-   then evaluates the expression one operation at a time, and only accepts the operation
-   the order-of-operations rules allow next.
+   Q11 — Family Tree Detective
+   Person cards go into a two-generation tree. Each clue lights when the tree satisfies it;
+   with every clue lit, Karan's relation to Atul is read off the tree.
    ══════════════════════════════════════════════════════════════════════ */
 
-const Q11_EXPR = ["24", "R", "8", "S", "7", "M", "2", "P", "5"];
-const REAL: Record<string, string> = { P: "×", R: "÷", M: "−", S: "+" };
-const f = (op: string, a: number, b: number) => (op === "×" ? a * b : op === "÷" ? a / b : op === "+" ? a + b : a - b);
-export function Q11OperatorFactoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const [msg, setMsg] = useState<string | null>(null);
-  const play = usePlay<{ plug: Record<string, string>; toks: string[] | null }>({
-    question,
-    initial: { plug: {}, toks: null },
-    derive: (w) => {
-      if (!w.toks) return { note: "Plug an operator into every letter, then start the factory." };
-      if (w.toks.length > 1) return { note: "Keep running operations until one number is left." };
-      const v = Number(w.toks[0]);
-      return { value: String(v), optionId: matchNumber(question, v, 1e-9) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const letters = ["P", "R", "M", "S"];
-  const ready = letters.every((l) => w.plug[l]);
-  const nextIdx = (t: string[]) => {
-    const md = t.findIndex((s) => s === "×" || s === "÷");
-    return md >= 0 ? md : t.findIndex((s) => s === "+" || s === "−");
-  };
+const TOP = ["T0", "T1", "T2"];
 
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Operator Factory"
-      mission="Plug the operator each letter stands for into its socket. Start the factory, then tap the operation that must be done next — × and ÷ before + and −, left to right. Keep going until one number remains."
-      icon={Factory}
-      dim="2D"
-      submitLabel="Submit the value"
-      live={<Gauge label="Line" value={(w.toks ?? Q11_EXPR.map((t) => w.plug[t] ?? t)).join(" ")} tone="violet" />}
-    >
-      <div className="grid sm:grid-cols-4 gap-2">
-        {letters.map((l) => (
-          <Bay key={l} label={`letter ${l}`}>
-            <div className="flex gap-1">
-              {["×", "÷", "+", "−"].map((o) => (
-                <Btn key={o} className="px-2 min-h-[34px]" active={w.plug[l] === o} tone={w.plug[l] === o ? "violet" : "slate"} disabled={play.readOnly || !!w.toks} onClick={() => play.patch({ plug: { ...w.plug, [l]: o } })} ariaLabel={`${l} as ${o}`}>{o}</Btn>
-              ))}
-            </div>
-          </Bay>
-        ))}
-      </div>
-      <Board className="mt-2">
-        <div className="flex flex-wrap items-center gap-1 justify-center">
-          {(w.toks ?? Q11_EXPR.map((t) => w.plug[t] ?? t)).map((t, i) =>
-            w.toks && ["×", "÷", "+", "−"].includes(t) ? (
-              <button key={i} type="button" disabled={play.readOnly} aria-label={`operation ${i}`} className="w-9 h-9 rounded-lg bg-indigo-600 text-white font-black" onClick={() => {
-                const t0 = w.toks!;
-                if (nextIdx(t0) !== i) return setMsg("Not yet — × and ÷ come first, left to right.");
-                setMsg(null);
-                const v = f(t, Number(t0[i - 1]), Number(t0[i + 1]));
-                play.patch({ toks: [...t0.slice(0, i - 1), String(+v.toFixed(6)), ...t0.slice(i + 2)] });
-              }}>{t}</button>
-            ) : (
-              <span key={i} className="font-mono text-xl font-black text-indigo-900 px-1">{t}</span>
-            )
-          )}
-        </div>
-      </Board>
-      {msg && <p className="text-xs font-bold text-rose-600">{msg}</p>}
-      <div className="flex gap-2 mt-2">
-        <Btn tone="emerald" disabled={play.readOnly || !ready || !!w.toks} onClick={() => play.patch({ toks: Q11_EXPR.map((t) => w.plug[t] ?? t) })}>▶ Start the factory</Btn>
-        <Btn tone="slate" disabled={play.readOnly || !w.toks} onClick={() => play.patch({ toks: null })}>Stop and re-plug</Btn>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q12 — Geometric Dot Laboratory
-   The student places the two dots in a candidate figure; the scanner reports exactly which
-   shapes each dot is inside. A candidate can be locked only when both dots satisfy
-   Figure (X)'s conditions.
-   ══════════════════════════════════════════════════════════════════════ */
-
-interface Fig { c: [number, number, number]; s: [number, number, number]; t: Pt[] }
-const Q12_FIGS: Record<string, Fig> = {
-  A: { c: [35, 55, 16], s: [52, 50, 28], t: [[50, 10], [15, 85], [85, 85]] },
-  B: { c: [50, 52, 12], s: [30, 30, 42], t: [[50, 15], [20, 82], [80, 82]] },
-  C: { c: [20, 25, 14], s: [62, 60, 28], t: [[45, 40], [25, 90], [65, 90]] },
-  D: { c: [45, 50, 20], s: [50, 32, 35], t: [[22, 8], [8, 40], [36, 40]] },
-};
-const inside = (g: Fig, [x, y]: Pt) => {
-  const [[x1, y1], [x2, y2], [x3, y3]] = g.t;
-  const d = (ax: number, ay: number, bx: number, by: number) => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
-  const a = d(x1, y1, x2, y2), b = d(x2, y2, x3, y3), c = d(x3, y3, x1, y1);
-  return {
-    circle: (x - g.c[0]) ** 2 + (y - g.c[1]) ** 2 <= g.c[2] ** 2,
-    triangle: (a >= 0 && b >= 0 && c >= 0) || (a <= 0 && b <= 0 && c <= 0),
-    square: x >= g.s[0] && x <= g.s[0] + g.s[2] && y >= g.s[1] && y <= g.s[1] + g.s[2],
-  };
-};
-const RULES = [
-  { dot: 1, want: { circle: true, triangle: true, square: false }, label: "circle and triangle only" },
-  { dot: 2, want: { circle: false, triangle: true, square: true }, label: "triangle and square only" },
-];
-
-export function Q12GeometricDotLaboratoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const [dot, setDot] = useState(1);
-  const svg = React.useRef<SVGSVGElement>(null);
-  const play = usePlay<{ fig: string; dots: Record<string, Record<number, Pt>>; locked: string | null }>({
-    question,
-    initial: { fig: "A", dots: {}, locked: null },
-    derive: (w) => (!w.locked ? { note: "Place both dots correctly in a figure and lock it." } : { value: `Both dots fit in figure ${w.locked}`, optionId: w.locked }),
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const g = Q12_FIGS[w.fig];
-  const here = w.dots[w.fig] ?? {};
-  const ok = (r: (typeof RULES)[number]) => {
-    const p = here[r.dot];
-    if (!p) return false;
-    const s = inside(g, p);
-    return s.circle === r.want.circle && s.triangle === r.want.triangle && s.square === r.want.square;
-  };
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Geometric Dot Laboratory"
-      mission="In Figure (X) one dot is inside the circle and the triangle only, and the other inside the triangle and the square only. Pick a candidate, choose a dot and tap where it goes. Lock the candidate where both dots can sit correctly."
-      icon={CircleDot}
-      dim="2D"
-      submitLabel="Submit the figure"
-      live={<>{RULES.map((r) => <Gauge key={r.dot} label={`Dot ${r.dot} (${r.label})`} value={ok(r) ? "✓" : "✗"} tone={ok(r) ? "emerald" : "slate"} />)}</>}
-    >
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {Object.keys(Q12_FIGS).map((k) => <Btn key={k} active={w.fig === k} tone={w.fig === k ? "violet" : "slate"} onClick={() => play.patch({ fig: k, locked: null })}>Figure {k}</Btn>)}
-        {RULES.map((r) => <Btn key={r.dot} active={dot === r.dot} tone={dot === r.dot ? "amber" : "slate"} onClick={() => setDot(r.dot)}>Dot {r.dot}</Btn>)}
-      </div>
-      <Board>
-        <svg ref={svg} viewBox="0 0 100 100" className="w-full max-h-80" onClick={(e) => {
-          if (play.readOnly) return;
-          const q = clientToSvg(svg.current, e.clientX, e.clientY);
-          if (!q) return;
-          play.set((s) => ({ ...s, locked: null, dots: { ...s.dots, [s.fig]: { ...(s.dots[s.fig] ?? {}), [dot]: [Math.round(q.x), Math.round(q.y)] } } }));
-        }}>
-          <circle cx={g.c[0]} cy={g.c[1]} r={g.c[2]} fill="#38bdf833" stroke="#0284c7" strokeWidth={0.8} />
-          <rect x={g.s[0]} y={g.s[1]} width={g.s[2]} height={g.s[2]} fill="#f59e0b22" stroke="#d97706" strokeWidth={0.8} />
-          <path d={polyPath(g.t)} fill="#8b5cf622" stroke="#7c3aed" strokeWidth={0.8} />
-          {Object.entries(here).map(([k, p]) => (
-            <g key={k}>
-              <circle cx={p[0]} cy={p[1]} r={2} fill={ok(RULES[Number(k) - 1]) ? "#10b981" : "#e11d48"} stroke="#fff" strokeWidth={0.5} />
-              <text x={p[0] + 2.5} y={p[1] - 2} fontSize={4} fontWeight={900} fill="#1e1b4b">{k}</text>
-            </g>
-          ))}
-        </svg>
-      </Board>
-      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !RULES.every(ok)} onClick={() => play.patch({ locked: w.fig })}>🔒 Lock figure {w.fig}</Btn>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q13 — Dictionary Conveyor
-   The student loads the word cards onto the conveyor in the order they would appear in a
-   dictionary. The conveyor reads back their numbers in that order.
-   ══════════════════════════════════════════════════════════════════════ */
-
-export function Q13DictionaryConveyorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const words = cfg<string[]>(question, "words", []);
-  const play = usePlay<{ belt: number[] }>({
-    question,
-    initial: { belt: [] },
-    derive: (w) => {
-      if (w.belt.length < words.length) return { note: "Load every word onto the conveyor." };
-      const text = w.belt.map((i) => i + 1).join(", ");
-      return { value: text, optionId: matchText(question, text) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const letterAt = (k: number) => {
-    // the first letter position where the loaded neighbours differ, to show the student why
-    if (k === 0) return -1;
-    const a = words[w.belt[k - 1]], b = words[w.belt[k]];
-    let i = 0;
-    while (i < Math.min(a.length, b.length) && a[i].toLowerCase() === b[i].toLowerCase()) i++;
-    return i;
-  };
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Dictionary Conveyor"
-      mission="Tap the word cards in the order they appear in a dictionary. Compare letter by letter — the conveyor highlights the first letter where each word differs from the one before it."
-      icon={BookA}
-      dim="2D"
-      submitLabel="Submit the order"
-      live={<Gauge label="Order" value={w.belt.map((i) => i + 1).join(", ") || "—"} tone="violet" />}
-    >
-      <div className="flex flex-wrap gap-2">
-        {words.map((wd, i) => (
-          <Btn key={wd} tone={w.belt.includes(i) ? "emerald" : "slate"} disabled={play.readOnly || w.belt.includes(i)} onClick={() => play.patch({ belt: [...w.belt, i] })} ariaLabel={`word ${wd}`}>
-            {i + 1}. {wd}
-          </Btn>
-        ))}
-      </div>
-      <Board className="mt-2">
-        <div className="flex flex-wrap gap-2 min-h-[48px]">
-          {w.belt.map((i, k) => {
-            const d = letterAt(k);
-            return (
-              <span key={i} className="px-3 py-2 rounded-lg bg-white border border-indigo-200 font-mono text-lg font-black text-indigo-900">
-                {words[i].split("").map((c, j) => <span key={j} className={j === d ? "bg-amber-200 rounded" : ""}>{c}</span>)}
-                <sup className="text-[10px] text-slate-500 ml-1">{i + 1}</sup>
-              </span>
-            );
-          })}
-        </div>
-      </Board>
-      <Btn tone="slate" className="mt-2" disabled={play.readOnly || !w.belt.length} onClick={() => play.patch({ belt: [] })}>Empty the conveyor</Btn>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q14 — Family Detective
-   Person cards go into a family tree. When the clue in Amar's sentence lights up, the
-   detective reads Amar's relation to the girl's mother from the tree.
-   ══════════════════════════════════════════════════════════════════════ */
-
-const PEOPLE = [
-  { id: "Amar", g: "M" },
-  { id: "Amar's mother", g: "F" },
-  { id: "Girl's mother", g: "F" },
-  { id: "Girl", g: "F" },
-];
-export function Q14FamilyDetectiveActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+export function Q11FamilyTreeActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const people = cfg<{ id: string; g: "M" | "F" }[]>(question, "people", []);
   const [held, setHeld] = useState<string | null>(null);
-  const play = usePlay<{ at: Record<string, string> }>({
+  type TreeWorld = { at: Record<string, string> };
+  const parentOf = (w: TreeWorld, id: string) => {
+    const s = w.at[id];
+    return s && s.includes("c") ? Object.keys(w.at).find((p) => w.at[p] === s.slice(0, 2)) : undefined;
+  };
+  const top = (w: TreeWorld, id: string) => TOP.includes(w.at[id] ?? "");
+  const clues = (w: TreeWorld) => [
+    { text: "Karan is the brother of Vijay", ok: top(w, "Karan") && top(w, "Vijay") },
+    { text: "Sneha is the daughter of Vijay", ok: parentOf(w, "Sneha") === "Vijay" },
+    { text: "Bharti is the sister of Karan", ok: top(w, "Bharti") && top(w, "Karan") },
+    { text: "Atul is the brother of Sneha", ok: !!parentOf(w, "Atul") && parentOf(w, "Atul") === parentOf(w, "Sneha") },
+  ];
+  const relation = (w: TreeWorld, a: string, b: string) => {
+    if (parentOf(w, b) === a) return "Father";
+    if (top(w, a) && top(w, b)) return "Brother";
+    if (top(w, a) && parentOf(w, b) && parentOf(w, b) !== a) return "Uncle";
+    if (parentOf(w, a) && parentOf(w, b)) return parentOf(w, a) === parentOf(w, b) ? "Brother" : "Cousin";
+    return "—";
+  };
+  const play = usePlay<TreeWorld>({
     question,
     initial: { at: {} },
     derive: (w) => {
-      const lit = w.at["Amar's mother"] === "top" && ["c1", "c2"].includes(w.at["Amar"]) && ["c1", "c2"].includes(w.at["Girl's mother"]) && w.at["Girl"] === `${w.at["Girl's mother"]}k`;
-      if (!lit) return { note: "Build the tree so the clue lights up." };
-      return { value: "Amar and the girl's mother are children of the same mother", optionId: matchText(question, "Brother") };
+      const c = clues(w);
+      if (!c.every((x) => x.ok)) return { note: `Build the tree so every clue lights (${c.filter((x) => x.ok).length}/${c.length}).` };
+      const r = relation(w, "Karan", "Atul");
+      return { value: `Karan is Atul's ${r.toLowerCase()}`, optionId: matchText(question, r) };
     },
     activityState,
     value,
@@ -275,92 +57,101 @@ export function Q14FamilyDetectiveActivity({ question, value, activityState, onC
     readOnly,
   });
   const w = play.world;
-  const who = (s: string) => Object.keys(w.at).find((k) => w.at[k] === s);
-  const place = (s: string) => {
+  const who = (slot: string) => Object.keys(w.at).find((p) => w.at[p] === slot);
+  const place = (slot: string) => {
     if (!held || play.readOnly) return;
     play.set((p) => {
       const at = { ...p.at };
-      Object.keys(at).forEach((k) => at[k] === s && delete at[k]);
-      at[held] = s;
+      Object.keys(at).forEach((k) => at[k] === slot && delete at[k]);
+      at[held] = slot;
       return { at };
     });
     setHeld(null);
   };
-  const Slot = ({ s, label }: { s: string; label: string }) => (
-    <button type="button" onClick={() => place(s)} aria-label={`slot ${label}`} className={`h-12 w-full rounded-xl border-2 text-xs font-black ${who(s) ? "bg-white border-indigo-400 text-indigo-900" : "border-dashed border-slate-300 text-slate-400"}`}>
-      {who(s) ?? label}
-    </button>
-  );
-  const lit = w.at["Amar's mother"] === "top" && ["c1", "c2"].includes(w.at["Amar"] ?? "") && ["c1", "c2"].includes(w.at["Girl's mother"] ?? "") && w.at["Girl"] === `${w.at["Girl's mother"]}k`;
+  const Slot = ({ s, small }: { s: string; small?: boolean }) => {
+    const p = who(s);
+    const g = people.find((x) => x.id === p)?.g;
+    return (
+      <button type="button" onClick={() => place(s)} aria-label={`tree slot ${s}`} className={`rounded-xl border-2 ${small ? "h-10 text-xs" : "h-12 text-sm"} w-full font-black ${p ? (g === "M" ? "bg-sky-100 border-sky-400" : "bg-pink-100 border-pink-400") : held ? "border-dashed border-violet-400 bg-violet-50" : "border-dashed border-slate-300 bg-white"}`}>
+        {p ?? "empty"}
+      </button>
+    );
+  };
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Family Detective"
-      mission="“Her mother is the only daughter of my mother.” Tap a card, then a place in the tree: the top is a mother, the next row her children, and the bottom a child of the person above it. When the clue lights, read how Amar is related to the girl's mother."
+      title="Family Tree Detective"
+      mission="Tap a person card, then a place on the tree. The top row is one set of brothers and sisters; the two places under someone are that person's children. Build the tree until every clue lights, and read Karan's relation to Atul from it."
       icon={Users}
       dim="2D"
       submitLabel="Submit the relation"
-      live={<Gauge label="Clue" value={lit ? "lit" : "not yet"} tone={lit ? "emerald" : "slate"} />}
+      hints={["Karan, Vijay and Bharti are brothers and sister, so they share the top row.", "Sneha and Atul both belong under the same parent."]}
+      live={<Gauge label="Karan → Atul" value={clues(w).every((c) => c.ok) ? relation(w, "Karan", "Atul") : "—"} tone="violet" />}
     >
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {PEOPLE.map((p) => <Btn key={p.id} active={held === p.id} tone={held === p.id ? "amber" : "slate"} disabled={play.readOnly} onClick={() => setHeld(p.id)} ariaLabel={`person ${p.id}`}>{p.g === "M" ? "👦" : "👩"} {p.id}</Btn>)}
+      <div className="flex flex-wrap gap-1.5">
+        {people.map((p) => (
+          <Btn key={p.id} active={held === p.id} tone={held === p.id ? "amber" : "slate"} disabled={play.readOnly} onClick={() => setHeld(p.id)} ariaLabel={`person ${p.id}`}>
+            {p.g === "M" ? "👦" : "👧"} {p.id}
+          </Btn>
+        ))}
       </div>
-      <Board>
-        <div className="max-w-sm mx-auto space-y-2">
-          <Slot s="top" label="mother" />
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-2"><Slot s="c1" label="child 1" /><Slot s="c1k" label="child of child 1" /></div>
-            <div className="space-y-2"><Slot s="c2" label="child 2" /><Slot s="c2k" label="child of child 2" /></div>
+      <div className="grid grid-cols-3 gap-3 rounded-2xl bg-amber-50 border-2 border-amber-200 p-3">
+        {TOP.map((t) => (
+          <div key={t} className="space-y-2">
+            <Slot s={t} />
+            <div className="h-3 border-l-2 border-amber-400 mx-auto w-0" />
+            <div className="grid grid-cols-2 gap-1">
+              <Slot s={`${t}c0`} small />
+              <Slot s={`${t}c1`} small />
+            </div>
           </div>
-        </div>
-      </Board>
+        ))}
+      </div>
+      <ul className="grid sm:grid-cols-2 gap-1">
+        {clues(w).map((c) => (
+          <li key={c.text} className={`text-xs font-bold rounded-lg px-2 py-1 ${c.ok ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"}`}>
+            {c.ok ? "✓" : "○"} {c.text}
+          </li>
+        ))}
+      </ul>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q15 — Matrix Laboratory
-   Along each row the shaded sector turns a quarter turn clockwise, and the third column
-   carries a cross. The student builds the missing cell — shape, shaded sector and cross —
-   and the built cell is compared with the options.
+   Q12 — Shape Sorting Laboratory
+   Tapping a figure runs the probe, which reports how it is built. The student sends each
+   figure to one of three chambers; when every chamber holds three, the grouping is read.
    ══════════════════════════════════════════════════════════════════════ */
 
-const SHAPES = ["circle", "square", "diamond"] as const;
-const SECT = ["left", "top", "right", "bottom"] as const;
-const Q15_STATES: Record<string, { shape: string; sector: string; cross: boolean }> = {
-  A: { shape: "circle", sector: "top", cross: false },
-  B: { shape: "square", sector: "bottom", cross: false },
-  C: { shape: "diamond", sector: "right", cross: true },
-  D: { shape: "circle", sector: "right", cross: true },
+const FIGS: Record<string, { el: React.ReactNode; probe: string }> = {
+  circleSquare: { el: <><circle cx={25} cy={21} r={17} /><rect x={17} y={13} width={16} height={16} /></>, probe: "outer circle, inner square" },
+  squareQuarters: { el: <><rect x={10} y={6} width={30} height={30} /><path d="M 25 6 V 36 M 10 21 H 40" /></>, probe: "square cut into 4 parts" },
+  diamondDiamond: { el: <><path d="M 25 3 L 43 21 L 25 39 L 7 21 Z" /><path d="M 25 13 L 33 21 L 25 29 L 17 21 Z" /></>, probe: "outer diamond, inner diamond" },
+  triangleTriangle: { el: <><path d="M 25 4 L 44 38 L 6 38 Z" /><path d="M 25 18 L 34 33 L 16 33 Z" /></>, probe: "outer triangle, inner triangle" },
+  rectQuarters: { el: <><rect x={5} y={10} width={40} height={22} /><path d="M 25 10 V 32 M 5 21 H 45" /></>, probe: "rectangle cut into 4 parts" },
+  trapQuarters: { el: <><path d="M 14 5 L 36 5 L 42 37 L 8 37 Z" /><path d="M 25 5 V 37 M 11 21 H 39" /></>, probe: "trapezium cut into 4 parts" },
+  squareTriangle: { el: <><rect x={8} y={4} width={34} height={34} /><path d="M 25 11 L 36 32 L 14 32 Z" /></>, probe: "outer square, inner triangle" },
+  triangleCircle: { el: <><path d="M 25 3 L 45 39 L 5 39 Z" /><circle cx={25} cy={27} r={7} /></>, probe: "outer triangle, inner circle" },
+  circleCircle: { el: <><circle cx={25} cy={21} r={17} /><circle cx={25} cy={21} r={8} /></>, probe: "outer circle, inner circle" },
 };
-function Cell({ shape, sector, cross }: { shape: string | null; sector: string | null; cross: boolean }) {
-  const clip = shape === "circle" ? <circle cx={20} cy={20} r={15} /> : shape === "square" ? <rect x={6} y={6} width={28} height={28} /> : <polygon points="20,4 36,20 20,36 4,20" />;
-  const wedge: Record<string, string> = { left: "M20 20 L0 0 L0 40 Z", top: "M20 20 L0 0 L40 0 Z", right: "M20 20 L40 0 L40 40 Z", bottom: "M20 20 L0 40 L40 40 Z" };
-  const id = `cl${shape}${sector}${cross}`;
-  return (
-    <svg viewBox="0 0 40 40" className="w-full h-full">
-      <rect width={40} height={40} fill="#fff" />
-      {shape && (
-        <>
-          <defs><clipPath id={id}>{clip}</clipPath></defs>
-          {sector && <path d={wedge[sector]} fill="#6366f1" clipPath={`url(#${id})`} />}
-          {React.cloneElement(clip, { fill: "none", stroke: "#312e81", strokeWidth: 1.2 })}
-          {cross && <path d="M14 20 H26 M20 14 V26" stroke="#e11d48" strokeWidth={1.4} />}
-        </>
-      )}
-    </svg>
-  );
-}
-export function Q15MatrixLaboratoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ shape: string | null; sector: string | null; cross: boolean; placed: boolean }>({
+const groupsKey = (groups: number[][]) => groups.map((g) => [...g].sort((a, b) => a - b).join(",")).sort().join(";");
+
+export function Q12ShapeSorterActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const figs = cfg<string[]>(question, "figures", []);
+  const [held, setHeld] = useState<number | null>(null);
+  const play = usePlay<{ ch: Record<number, number> }>({
     question,
-    initial: { shape: null, sector: null, cross: false, placed: false },
+    initial: { ch: {} },
     derive: (w) => {
-      if (!w.placed || !w.shape || !w.sector) return { note: "Build the missing cell and slot it in." };
-      const opt = Object.keys(Q15_STATES).find((k) => Q15_STATES[k].shape === w.shape && Q15_STATES[k].sector === w.sector && Q15_STATES[k].cross === w.cross);
-      return { value: `${w.shape}, ${w.sector} sector${w.cross ? ", cross" : ""}`, optionId: opt };
+      if (Object.keys(w.ch).length < figs.length) return { note: `Sort every figure (${Object.keys(w.ch).length}/${figs.length}).` };
+      const groups = [0, 1, 2].map((g) => figs.map((_, i) => i + 1).filter((n) => w.ch[n - 1] === g));
+      if (groups.some((g) => g.length !== 3)) return { note: "Each chamber takes exactly three figures." };
+      const key = groupsKey(groups);
+      const opt = question?.multipleChoiceConfig?.options.find((o) => groupsKey(o.text.split(";").map((g) => g.split(",").map((x) => Number(x.trim())))) === key)?.id;
+      return { value: groups.map((g) => g.join(", ")).join("; "), optionId: opt };
     },
     activityState,
     value,
@@ -373,32 +164,371 @@ export function Q15MatrixLaboratoryActivity({ question, value, activityState, on
     <Shell
       play={play}
       question={question}
-      title="Matrix Laboratory"
-      mission="Study the rows and columns. Build the missing cell: pick its shape, the shaded sector and whether it carries the cross. Slot it into the matrix."
-      icon={Grid3x3}
+      title="Shape Sorting Laboratory"
+      mission="Tap a figure to probe it — the probe tells you how it is built. Then tap a chamber to send it there. Find the property that splits the nine figures into three chambers of three."
+      icon={Shapes}
       dim="2D"
-      submitLabel="Submit the cell"
-      live={<Gauge label="Your cell" value={`${w.shape ?? "?"} · ${w.sector ?? "?"}${w.cross ? " · cross" : ""}`} tone="violet" />}
+      submitLabel="Submit the three chambers"
+      hints={["Some figures are one shape cut into parts; others are one shape inside another.", "For the figures with an inner shape, compare the inner shape with the outer one."]}
+      live={<Gauge label="Probe" value={held !== null ? `${held + 1}: ${FIGS[figs[held]]?.probe}` : "tap a figure"} tone="sky" />}
     >
+      <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5">
+        {figs.map((f, i) => (
+          <button key={i} type="button" disabled={play.readOnly} onClick={() => setHeld(i)} aria-label={`figure ${i + 1}`} className={`rounded-xl border-2 p-1 ${held === i ? "border-violet-600 ring-2 ring-violet-300 bg-white" : w.ch[i] !== undefined ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white"}`}>
+            <svg viewBox="0 0 50 42" className="w-full" fill="none" stroke="#312e81" strokeWidth={1.6}>
+              {FIGS[f]?.el}
+            </svg>
+            <div className="text-[10px] font-black">{i + 1}</div>
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {[0, 1, 2].map((g) => (
+          <button
+            key={g}
+            type="button"
+            disabled={play.readOnly || held === null}
+            onClick={() => {
+              if (held === null) return;
+              play.set((p) => ({ ch: { ...p.ch, [held]: g } }));
+              setHeld(null);
+            }}
+            aria-label={`chamber ${g + 1}`}
+            className="rounded-2xl border-4 border-sky-300 bg-sky-50 min-h-[90px] p-2 text-left"
+          >
+            <div className="text-[10px] font-black text-sky-800">CHAMBER {g + 1}</div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {figs.map((f, i) =>
+                w.ch[i] === g ? (
+                  <span key={i} className="w-9 rounded bg-white border">
+                    <svg viewBox="0 0 50 42" fill="none" stroke="#4c1d95" strokeWidth={1.6}>
+                      {FIGS[f]?.el}
+                    </svg>
+                    <span className="block text-center text-[9px] font-black">{i + 1}</span>
+                  </span>
+                ) : null
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q13 — Number Reactor
+   The student chooses how the reactor treats each outer number (as it is, squared,
+   doubled) and whether it is added or taken away. When both solved triangles glow, the
+   same rule is run on the third.
+   ══════════════════════════════════════════════════════════════════════ */
+
+type Tf = "x" | "sq" | "dbl";
+const TF: Record<Tf, { label: string; f: (v: number) => number; show: (s: string) => string }> = {
+  x: { label: "as is", f: (v) => v, show: (s) => s },
+  sq: { label: "squared", f: (v) => v * v, show: (s) => `${s}²` },
+  dbl: { label: "doubled", f: (v) => 2 * v, show: (s) => `2×${s}` },
+};
+
+export function Q13NumberReactorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const examples = cfg<{ a: number; b: number; c: number; out: number }[]>(question, "examples", []);
+  const ask = cfg<{ a: number; b: number; c: number }>(question, "ask", { a: 0, b: 0, c: 0 });
+  type RW = { tf: Tf[]; sign: number[] };
+  const run = (w: RW, t: { a: number; b: number; c: number }) => [t.a, t.b, t.c].reduce((s, v, i) => s + w.sign[i] * TF[w.tf[i]].f(v), 0);
+  const play = usePlay<RW>({
+    question,
+    initial: { tf: ["x", "x", "x"], sign: [1, 1, 1] },
+    derive: (w) => {
+      if (!examples.every((e) => run(w, e) === e.out)) return { note: "Find a rule that makes both solved triangles glow." };
+      const v = run(w, ask);
+      return { value: String(v), optionId: matchNumber(question, v) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const names = ["left side", "right side", "bottom"];
+  const formula = ["a", "b", "c"].map((s, i) => `${w.sign[i] < 0 ? "−" : i ? "+" : ""} ${TF[w.tf[i]].show(s)}`).join(" ");
+  const good = examples.every((e) => run(w, e) === e.out);
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Number Reactor"
+      mission="Set how the reactor treats each outer number and whether it is added or taken away. When both solved triangles glow green, the reactor runs your rule on the third triangle."
+      icon={Atom}
+      dim="2D"
+      submitLabel="Submit the reactor output"
+      hints={["The answers on offer are large, so the rule probably squares some numbers.", "Try treating all three numbers the same way and changing only the signs."]}
+      live={
+        <>
+          <Gauge label="Rule" value={formula} tone="violet" />
+          <Gauge label="Third triangle" value={good ? run(w, ask) : "?"} tone="emerald" />
+        </>
+      }
+    >
+      <div className="grid grid-cols-3 gap-2">
+        {[...examples.map((e) => ({ ...e, out: e.out as number | null })), { ...ask, out: null }].map((t, k) => {
+          const got = run(w, t);
+          const ok = t.out !== null && got === t.out;
+          return (
+            <div key={k} className={`rounded-2xl p-2 text-center border-2 ${t.out === null ? "bg-amber-50 border-amber-300" : ok ? "bg-emerald-100 border-emerald-400" : "bg-white border-slate-200"}`}>
+              <svg viewBox="0 0 60 54" className="w-full">
+                <path d="M 30 6 L 54 44 L 6 44 Z" fill="none" stroke="#334155" strokeWidth={1} />
+                <text x={10} y={24} fontSize={6} fontWeight={900}>{t.a}</text>
+                <text x={46} y={24} fontSize={6} fontWeight={900}>{t.b}</text>
+                <text x={30} y={52} fontSize={6} fontWeight={900} textAnchor="middle">{t.c}</text>
+                <text x={30} y={34} fontSize={8} fontWeight={900} textAnchor="middle" fill={t.out === null ? "#b45309" : "#1e1b4b"}>
+                  {t.out ?? "?"}
+                </text>
+              </svg>
+              <div className="text-[11px] font-bold">
+                {t.out === null ? "run →" : "reactor gives"} {got}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="grid sm:grid-cols-3 gap-2">
+        {names.map((nm, i) => (
+          <Bay key={nm} label={`${nm} number (${["a", "b", "c"][i]})`}>
+            <div className="flex flex-wrap gap-1">
+              {(Object.keys(TF) as Tf[]).map((t) => (
+                <Btn key={t} className="px-2 min-h-[34px]" active={w.tf[i] === t} tone={w.tf[i] === t ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set((p) => ({ ...p, tf: p.tf.map((x, j) => (j === i ? t : x)) }))} ariaLabel={`${nm} ${TF[t].label}`}>
+                  {TF[t].label}
+                </Btn>
+              ))}
+              <Btn className="px-2 min-h-[34px]" tone={w.sign[i] < 0 ? "rose" : "emerald"} disabled={play.readOnly} onClick={() => play.set((p) => ({ ...p, sign: p.sign.map((x, j) => (j === i ? -x : x)) }))} ariaLabel={`${nm} sign`}>
+                {w.sign[i] < 0 ? "take away" : "add"}
+              </Btn>
+            </div>
+          </Bay>
+        ))}
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q14 — Zig-zag Scanner
+   Each option figure is drawn on a triangular grid. The student traces along the figure's
+   lines by tapping grid points; a stroke is refused if it is not a real line. The figure
+   can be confirmed only when the trace has exactly the given zig-zag's shape.
+   ══════════════════════════════════════════════════════════════════════ */
+
+type LP = [number, number]; // [row, k] with 0 ≤ k ≤ row ≤ 4
+const LX = (p: LP) => 50 + (p[1] - p[0] / 2) * 20;
+const LY = (p: LP) => 10 + p[0] * 17.32;
+const STEP: Record<string, LP> = { DL: [1, 0], DR: [1, 1], R: [0, 1], UR: [-1, 0], UL: [-1, -1], L: [0, -1] };
+const INVERSE: Record<string, string> = { DL: "UR", UR: "DL", DR: "UL", UL: "DR", R: "L", L: "R" };
+const SIDES: [LP, LP][] = [[[0, 0], [4, 0]], [[0, 0], [4, 4]], [[4, 0], [4, 4]]];
+const unitsOf = (a: LP, b: LP): string[] | null => {
+  const dr = b[0] - a[0];
+  const dk = b[1] - a[1];
+  const n = Math.max(Math.abs(dr), Math.abs(dk));
+  if (!n) return null;
+  const u: LP = [dr / n, dk / n];
+  const name = Object.keys(STEP).find((k) => STEP[k][0] === u[0] && STEP[k][1] === u[1]);
+  return name ? Array(n).fill(name) : null;
+};
+const edgeSet = (segs: [LP, LP][]) => {
+  const out = new Set<string>();
+  segs.forEach(([a, b]) => {
+    const u = unitsOf(a, b);
+    if (!u) return;
+    let p = a;
+    u.forEach((s) => {
+      const q: LP = [p[0] + STEP[s][0], p[1] + STEP[s][1]];
+      out.add(`${p}|${q}`);
+      out.add(`${q}|${p}`);
+      p = q;
+    });
+  });
+  return out;
+};
+
+export function Q14ZigzagScannerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const target = cfg<string[]>(question, "target", []);
+  const figures = cfg<Record<string, { lattice: [LP, LP][]; extra: [number, number][][] }>>(question, "figures", {});
+  const edges = useMemo(() => Object.fromEntries(Object.entries(figures).map(([k, f]) => [k, edgeSet([...SIDES, ...f.lattice])])), [figures]);
+  const back = useMemo(() => [...target].reverse().map((s) => INVERSE[s]), [target]);
+  const check = (fig: string, tr: LP[]) => {
+    const units: string[] = [];
+    let valid = true;
+    for (let i = 1; i < tr.length; i++) {
+      const u = unitsOf(tr[i - 1], tr[i]);
+      if (!u) {
+        valid = false;
+        break;
+      }
+      let p = tr[i - 1];
+      for (const s of u) {
+        const q: LP = [p[0] + STEP[s][0], p[1] + STEP[s][1]];
+        if (!edges[fig]?.has(`${p}|${q}`)) valid = false;
+        p = q;
+      }
+      units.push(...u);
+    }
+    const same = (a: string[]) => a.length === units.length && a.every((s, i) => s === units[i]);
+    return { valid, shape: valid && (same(target) || same(back)) };
+  };
+  const play = usePlay<{ fig: string; trace: LP[]; found: string | null }>({
+    question,
+    initial: { fig: "A", trace: [], found: null },
+    derive: (w) => (!w.found ? { note: "Trace the zig-zag inside a figure and confirm it." } : { value: `Zig-zag traced in figure ${w.found}`, optionId: w.found }),
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const c = check(w.fig, w.trace);
+  const f = figures[w.fig];
+  const points: LP[] = [];
+  for (let r = 0; r <= 4; r++) for (let k = 0; k <= r; k++) points.push([r, k]);
+  const targetPts = target.reduce<[number, number][]>((acc, s) => {
+    const [x, y] = acc[acc.length - 1];
+    const d = { DL: [-10, 17.32], DR: [10, 17.32], R: [20, 0], UR: [10, -17.32], UL: [-10, -17.32], L: [-20, 0] }[s] as [number, number];
+    return [...acc, [x + d[0], y + d[1]]];
+  }, [[30, 5]]);
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Zig-zag Scanner"
+      mission="Pick a figure and trace along its lines by tapping grid points one after another. The scanner rejects a stroke that is not a real line. Confirm the figure where your trace has exactly the shape of the given zig-zag."
+      icon={ScanSearch}
+      dim="2D"
+      submitLabel="Submit the figure"
+      hints={["The zig-zag's first two strokes are long: look for a long horizontal line that meets a side of the big triangle.", "The last three strokes are short: you need a small slanting line near a bottom corner."]}
+      live={
+        <>
+          <Gauge label="Trace" value={`${Math.max(0, w.trace.length - 1)} strokes`} tone="violet" />
+          <Gauge label="On real lines?" value={c.valid ? "yes" : "no"} tone={c.valid ? "emerald" : "rose"} />
+          <Gauge label="Zig-zag shape?" value={c.shape ? "exact" : "not yet"} tone={c.shape ? "emerald" : "slate"} />
+        </>
+      }
+    >
+      <div className="flex flex-wrap gap-1.5">
+        {Object.keys(figures).map((id) => (
+          <Btn key={id} active={w.fig === id} tone={w.fig === id ? "violet" : "slate"} onClick={() => play.set((p) => ({ ...p, fig: id, trace: [] }))}>
+            Figure {id}
+          </Btn>
+        ))}
+      </div>
       <div className="grid md:grid-cols-[auto_1fr] gap-3 items-start">
-        <div className="grid grid-cols-3 w-60 h-60 gap-0.5 bg-indigo-200 p-0.5 rounded-lg">
-          {SHAPES.flatMap((sh, r) =>
-            [0, 1, 2].map((c) =>
-              r === 2 && c === 2 ? (
-                <div key={`${r}${c}`} className="bg-amber-50 grid place-items-center">{w.placed ? <Cell shape={w.shape} sector={w.sector} cross={w.cross} /> : <span className="text-3xl text-amber-600 font-black">?</span>}</div>
-              ) : (
-                <Cell key={`${r}${c}`} shape={sh} sector={SECT[c]} cross={c === 2} />
-              )
-            )
-          )}
-        </div>
-        <Bay label="Cell builder" tone="violet">
-          <div className="flex flex-wrap gap-1 mb-1">{SHAPES.map((s) => <Btn key={s} className="px-2 min-h-[34px]" active={w.shape === s} tone={w.shape === s ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ shape: s, placed: false })}>{s}</Btn>)}</div>
-          <div className="flex flex-wrap gap-1 mb-1">{SECT.map((s) => <Btn key={s} className="px-2 min-h-[34px]" active={w.sector === s} tone={w.sector === s ? "sky" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ sector: s, placed: false })} ariaLabel={`sector ${s}`}>shade {s}</Btn>)}</div>
-          <Btn className="px-2 min-h-[34px]" active={w.cross} tone={w.cross ? "rose" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ cross: !w.cross, placed: false })}>✚ cross {w.cross ? "on" : "off"}</Btn>
-          <div className="w-20 h-20 mt-2 border border-indigo-200 rounded"><Cell shape={w.shape} sector={w.sector} cross={w.cross} /></div>
-          <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.shape || !w.sector} onClick={() => play.patch({ placed: true })}>Slot it in</Btn>
+        <Bay label="Given figure">
+          <svg viewBox="0 0 90 90" className="w-28">
+            <polyline points={targetPts.map((p) => p.join(",")).join(" ")} fill="none" stroke="#7c3aed" strokeWidth={2} strokeLinejoin="round" />
+          </svg>
         </Bay>
+        <Board>
+          <svg viewBox="0 0 100 90" className="w-full max-h-80">
+            {f && (
+              <>
+                {[...SIDES, ...f.lattice].map(([a, b], i) => (
+                  <line key={i} x1={LX(a)} y1={LY(a)} x2={LX(b)} y2={LY(b)} stroke="#1e293b" strokeWidth={0.9} />
+                ))}
+                {f.extra.map((pts, i) => (
+                  <polyline key={`e${i}`} points={pts.map((p) => p.join(",")).join(" ")} fill="none" stroke="#1e293b" strokeWidth={0.9} />
+                ))}
+              </>
+            )}
+            <polyline points={w.trace.map((p) => `${LX(p)},${LY(p)}`).join(" ")} fill="none" stroke={c.valid ? (c.shape ? "#10b981" : "#8b5cf6") : "#f43f5e"} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+            {points.map((p) => (
+              <circle key={`${p}`} cx={LX(p)} cy={LY(p)} r={2.6} fill={w.trace.some((t) => t[0] === p[0] && t[1] === p[1]) ? "#f59e0b" : "#cbd5e1"} stroke="#475569" strokeWidth={0.4} role="button" aria-label={`point ${p[0]},${p[1]}`} style={{ cursor: "pointer" }} onClick={() => !play.readOnly && play.set((s) => ({ ...s, found: null, trace: [...s.trace, p] }))} />
+            ))}
+          </svg>
+        </Board>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Btn tone="slate" disabled={play.readOnly || !w.trace.length} onClick={() => play.patch({ trace: [] })}>
+          Clear trace
+        </Btn>
+        <Btn tone="emerald" disabled={play.readOnly || !c.shape} onClick={() => play.patch({ found: w.fig })}>
+          Confirm: embedded in figure {w.fig}
+        </Btn>
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q15 — Alphabet DNA Analyzer
+   Each word goes into the analysis chamber, which marks its letters on the alphabet strand
+   and measures the jumps. After all four are analysed the student flags the odd word.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q15DnaAnalyzerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const words = (question?.multipleChoiceConfig?.options ?? []).map((o) => o.text);
+  const jumps = (wd: string) => wd.split("").slice(1).map((c, i) => A2Z.indexOf(c) - A2Z.indexOf(wd[i]));
+  const play = usePlay<{ analysed: string[]; open: string | null; flagged: string | null }>({
+    question,
+    initial: { analysed: [], open: null, flagged: null },
+    derive: (w) => {
+      if (w.analysed.length < words.length) return { note: `Analyse every word (${w.analysed.length}/${words.length}).` };
+      if (!w.flagged) return { note: "Flag the word whose pattern is different." };
+      return { value: `${w.flagged} is the odd one`, optionId: matchText(question, w.flagged) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const open = w.open;
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Alphabet DNA Analyzer"
+      mission="Put each word into the analysis chamber. It marks the letters on the alphabet strand and measures every jump. When all four are analysed, flag the word whose jumps follow a different pattern."
+      icon={Dna}
+      dim="2D"
+      submitLabel="Submit the odd word"
+      hints={["Write down the three jumps of every word and compare them."]}
+      live={<Gauge label="Analysed" value={w.analysed.map((x) => `${x} ${jumps(x).map((j) => `+${j}`).join(" ")}`).join(" · ") || "none"} tone="violet" />}
+    >
+      <div className="flex flex-wrap gap-1.5">
+        {words.map((wd) => (
+          <Btn key={wd} active={open === wd} tone={open === wd ? "violet" : w.analysed.includes(wd) ? "emerald" : "slate"} disabled={play.readOnly} onClick={() => play.set((p) => ({ ...p, open: wd, analysed: p.analysed.includes(wd) ? p.analysed : [...p.analysed, wd] }))} ariaLabel={`analyse ${wd}`}>
+            {wd}
+          </Btn>
+        ))}
+      </div>
+      <Board>
+        <svg viewBox="0 0 270 60" className="w-full">
+          {A2Z.split("").map((ch, i) => (
+            <text key={ch} x={8 + i * 10} y={50} fontSize={6} textAnchor="middle" fill={open?.includes(ch) ? "#b45309" : "#94a3b8"} fontWeight={900}>
+              {ch}
+            </text>
+          ))}
+          {open &&
+            open.split("").slice(1).map((ch, i) => {
+              const a = 8 + A2Z.indexOf(open[i]) * 10;
+              const b = 8 + A2Z.indexOf(ch) * 10;
+              return (
+                <g key={i}>
+                  <path d={`M ${a} 42 Q ${(a + b) / 2} ${22 - i * 4} ${b} 42`} fill="none" stroke="#7c3aed" strokeWidth={1.2} />
+                  <text x={(a + b) / 2} y={28 - i * 4} fontSize={7} fill="#4c1d95" textAnchor="middle" fontWeight={900}>
+                    +{A2Z.indexOf(ch) - A2Z.indexOf(open[i])}
+                  </text>
+                </g>
+              );
+            })}
+        </svg>
+      </Board>
+      <div className="flex flex-wrap gap-1.5">
+        {words.map((wd) => (
+          <Btn key={wd} tone={w.flagged === wd ? "rose" : "slate"} active={w.flagged === wd} disabled={play.readOnly || w.analysed.length < words.length} onClick={() => play.patch({ flagged: wd })} ariaLabel={`flag ${wd}`}>
+            🚩 {wd}
+          </Btn>
+        ))}
       </div>
     </Shell>
   );

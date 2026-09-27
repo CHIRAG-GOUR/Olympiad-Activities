@@ -2,32 +2,32 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { ShoppingCart, Fence, Clock3, CupSoda, Users } from "lucide-react";
+import { Footprints, Receipt, Timer, ShoppingBag, Building2 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber } from "../imo6a/shared";
-import { usePlay } from "../imo6a-play/engine";
+import { matchNumber, matchText } from "../imo6a/shared";
+import { usePlay, cfg } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board, Stepper, inr, r4 } from "./kit";
+import { Shell, Board, Stepper, rupees } from "./kit";
+
+/** Paper 3 (IMO 2019-20 Set A) · Q36–Q40. */
+
+const r2 = (v: number) => Math.round(v * 100) / 100;
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q36 — Sports Store Checkout
-   Each shop sells bats only in packs. The student puts packs in each basket until it
-   holds 16 bats; the tills total the baskets and the saving board compares them.
+   Q36 — Marching Synchronizer
+   Four friends march towards a finish line the student places; each shows whether the line
+   falls on one of their footsteps. The least distance where all four land exactly wins.
    ══════════════════════════════════════════════════════════════════════ */
 
-const SHOPS = [
-  { k: "A", bats: 8, price: 2560 },
-  { k: "B", bats: 4, price: 1550 },
-];
-export function Q36CricketBatShoppingActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ packs: number[]; compared: boolean }>({
+export function Q36MarchingSyncActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const steps = cfg<number[]>(question, "steps", []);
+  const play = usePlay<{ d: number; stop: boolean }>({
     question,
-    initial: { packs: [0, 0], compared: false },
+    initial: { d: 100, stop: false },
     derive: (w) => {
-      if (!w.compared) return { note: "Fill both baskets and compare the tills." };
-      if (SHOPS.some((s, i) => s.bats * w.packs[i] !== 16)) return { note: "Each basket must hold exactly 16 bats." };
-      const d = Math.abs(SHOPS[0].price * w.packs[0] - SHOPS[1].price * w.packs[1]);
-      return { value: `Saving ${inr(d)}`, optionId: matchNumber(question, d) };
+      if (!w.stop) return { note: "Place the finish line and stop the parade." };
+      if (!steps.every((s) => w.d % s === 0)) return { note: `Not every friend lands exactly on ${w.d} cm.` };
+      return { value: `${w.d} cm`, optionId: matchNumber(question, w.d) };
     },
     activityState,
     value,
@@ -40,90 +40,174 @@ export function Q36CricketBatShoppingActivity({ question, value, activityState, 
     <Shell
       play={play}
       question={question}
-      title="Sports Store Checkout"
-      mission="Each shop sells bats only in packs. Add packs to each basket until it holds 16 bats, then compare the two tills to see how much buying from Shop A saves."
-      icon={ShoppingCart}
+      title="Marching Synchronizer"
+      mission="Move the finish line. Each friend shows whether it lands exactly on one of their footsteps. Find the shortest distance where all four finish in complete steps, and stop the parade there."
+      icon={Footprints}
       dim="2D"
-      submitLabel="Submit the saving"
-      live={<>{SHOPS.map((s, i) => <Gauge key={s.k} label={`Shop ${s.k}`} value={`${s.bats * w.packs[i]} bats · ${inr(s.price * w.packs[i])}`} tone="violet" />)}</>}
+      submitLabel="Submit the distance"
+      hints={["The distance must be a multiple of every step length.", "Start from the longest step, 72 cm, and try its multiples."]}
+      live={<Gauge label="Landing exactly" value={`${steps.filter((s) => w.d % s === 0).length}/${steps.length}`} tone="violet" />}
+    >
+      <Stepper label="Finish line" value={w.d} min={1} max={1000} steps={[1, 10, 50]} unit=" cm" disabled={play.readOnly} onStep={(d) => play.patch({ d: w.d + d, stop: false })} />
+      <Board className="space-y-1.5">
+        {steps.map((s) => {
+          const ok = w.d % s === 0;
+          const n = Math.floor(w.d / s);
+          return (
+            <div key={s} className="flex items-center gap-2">
+              <span className="w-16 text-xs font-black">{s} cm step</span>
+              <div className="relative flex-1 h-7 rounded bg-white border overflow-hidden">
+                {Array.from({ length: Math.min(n, 60) }, (_, i) => (
+                  <span key={i} className="absolute top-1 text-xs" style={{ left: `${((i + 1) * s * 100) / Math.max(w.d, 1) - 2}%` }}>
+                    👣
+                  </span>
+                ))}
+                <span className="absolute right-0 top-0 h-full w-1 bg-rose-500" />
+              </div>
+              <span className={`w-28 text-xs font-black ${ok ? "text-emerald-700" : "text-rose-600"}`}>{ok ? `${n} steps exactly` : `${n} steps + ${w.d % s} cm`}</span>
+            </div>
+          );
+        })}
+      </Board>
+      <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ stop: true })}>
+        🏁 Stop the parade here
+      </Btn>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q37 — Concert Budget Ledger
+   Each money card must be lined up by place value; a card one column off counts ten times
+   too much or too little. The student aligns and deposits every card and the ledger adds.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q37BudgetLedgerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const items = cfg<{ label: string; v: number }[]>(question, "items", []);
+  const width = Math.max(...items.map((i) => String(i.v).length), 1);
+  const play = usePlay<{ shift: number[]; dep: number[] }>({
+    question,
+    initial: { shift: items.map((i) => (width - String(i.v).length) + 1), dep: [] },
+    derive: (w) => {
+      if (w.dep.length < items.length) return { note: `Deposit every card (${w.dep.length}/${items.length}).` };
+      const t = items.reduce((s, it, i) => s + it.v * 10 ** w.shift[i], 0);
+      return { value: rupees(t), optionId: matchNumber(question, t) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const total = w.dep.reduce((s, i) => s + items[i].v * 10 ** w.shift[i], 0);
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Concert Budget Ledger"
+      mission="Slide each money card so its digits sit under the right columns — ones under ones. A card one column too far left counts ten times as much. Deposit every card; the ledger adds the columns."
+      icon={Receipt}
+      dim="2D"
+      submitLabel="Submit the total"
+      hints={["Line up the last digits of all four amounts.", "The shortest amount, 56,480, has only five digits."]}
+      live={<Gauge label="Ledger total" value={rupees(total)} tone="violet" />}
+    >
+      <div className="rounded-2xl bg-amber-50 border-2 border-amber-200 p-2 space-y-1.5 font-mono overflow-x-auto">
+        {items.map((it, i) => (
+          <div key={it.label} className="flex items-center gap-1">
+            <span className="w-28 text-xs font-sans font-black">{it.label}</span>
+            <Btn className="px-2 min-h-[32px]" tone="slate" disabled={play.readOnly} onClick={() => play.set((p) => ({ dep: p.dep.filter((x) => x !== i), shift: p.shift.map((s, j) => (j === i ? s + 1 : s)) }))} ariaLabel={`${it.label} left`}>◀</Btn>
+            <span className="text-lg tracking-[0.35em] w-56 text-right">{String(it.v * 10 ** w.shift[i]).padStart(width + 3, "·")}</span>
+            <Btn className="px-2 min-h-[32px]" tone="slate" disabled={play.readOnly || w.shift[i] <= 0} onClick={() => play.set((p) => ({ dep: p.dep.filter((x) => x !== i), shift: p.shift.map((s, j) => (j === i ? s - 1 : s)) }))} ariaLabel={`${it.label} right`}>▶</Btn>
+            <Btn className="px-2 min-h-[32px]" tone="emerald" disabled={play.readOnly || w.dep.includes(i)} onClick={() => play.patch({ dep: [...w.dep, i] })} ariaLabel={`deposit ${it.label}`}>Deposit</Btn>
+          </div>
+        ))}
+        <div className="border-t-2 border-amber-400 pt-1 text-right text-xl font-black pr-24">{total.toLocaleString("en-IN")}</div>
+      </div>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q38 — Field Race Simulator
+   Each runner's field is drawn to scale. The student sets the laps and starts the race; the
+   odometers count the distance round each field.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q38FieldRaceActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const runners = cfg<{ who: string; field: [number, number] }[]>(question, "runners", []);
+  const per = (r: (typeof runners)[number]) => 2 * (r.field[0] + r.field[1]);
+  const play = usePlay<{ laps: number[]; ran: boolean }>({
+    question,
+    initial: { laps: runners.map(() => 1), ran: false },
+    derive: (w) => {
+      if (!w.ran) return { note: "Set the laps and run the race." };
+      const d = runners.map((r, i) => per(r) * w.laps[i]);
+      const win = d[0] >= d[1] ? 0 : 1;
+      const text = `${runners[win].who}, ${Math.abs(d[0] - d[1])} m`;
+      return { value: text, optionId: matchText(question, text) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Field Race Simulator"
+      mission="Set how many times each runner goes round their field, then start the race. The odometers add the distance round each field for every lap."
+      icon={Timer}
+      dim="2D"
+      submitLabel="Submit the result"
+      hints={["One lap is the perimeter of the field.", "Thrice means 3 laps; twice means 2 laps."]}
+      live={<>{runners.map((r, i) => <Gauge key={r.who} label={r.who} value={w.ran ? `${per(r) * w.laps[i]} m` : "—"} tone="violet" />)}</>}
     >
       <div className="grid sm:grid-cols-2 gap-2">
-        {SHOPS.map((s, i) => (
-          <Bay key={s.k} label={`Shop ${s.k}: ${s.bats} bats for ${inr(s.price)}`}>
-            <div className="flex flex-wrap gap-0.5 min-h-[28px]">{Array.from({ length: s.bats * w.packs[i] }, (_, k) => <span key={k}>🏏</span>)}</div>
-            <Stepper label={`Shop ${s.k} packs`} value={w.packs[i]} min={0} max={8} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ compared: false, packs: p.packs.map((x, j) => (j === i ? x + d : x)) }))} />
+        {runners.map((r, i) => (
+          <Bay key={r.who} label={`${r.who} · field ${r.field[0]} m × ${r.field[1]} m`}>
+            <svg viewBox="0 0 60 40" className="w-full h-28">
+              <rect x={30 - r.field[0]} y={20 - r.field[1] / 1.4} width={r.field[0] * 2} height={(r.field[1] * 2) / 1.4} fill="#bbf7d0" stroke="#15803d" strokeWidth={0.8} />
+              {w.ran && (
+                <motion.circle
+                  r={1.6}
+                  fill="#dc2626"
+                  initial={{ cx: 30 - r.field[0], cy: 20 - r.field[1] / 1.4 }}
+                  animate={{ cx: [30 - r.field[0], 30 + r.field[0], 30 + r.field[0], 30 - r.field[0], 30 - r.field[0]], cy: [20 - r.field[1] / 1.4, 20 - r.field[1] / 1.4, 20 + r.field[1] / 1.4, 20 + r.field[1] / 1.4, 20 - r.field[1] / 1.4] }}
+                  transition={{ duration: 1, repeat: w.laps[i] - 1 }}
+                />
+              )}
+            </svg>
+            <Stepper label={`${r.who} laps`} value={w.laps[i]} min={1} max={6} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ ran: false, laps: p.laps.map((x, j) => (j === i ? x + d : x)) }))} />
           </Bay>
         ))}
       </div>
-      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ compared: true })}>Compare the tills</Btn>
+      <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ ran: true })}>
+        🏃 Start the race
+      </Btn>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q37 — Fencing Robot
-   The robot walks the boundary of the field once per round of wire. The student sets how
-   many rounds to lay and starts it; the wire counter adds the length of every lap.
+   Q39 — Fashion Store Checkout
+   The shirt has no price tag. The student balances two shirts against one saree by setting
+   the shirt price, fills the basket and checks out.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Q37LandFencingActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const L = 4.5, B = 2.5;
-  const play = usePlay<{ rounds: number; laid: number }>({
+export function Q39FashionCheckoutActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const saree = cfg<number>(question, "saree", 0);
+  const play = usePlay<{ shirt: number; qs: number; qh: number; paid: boolean }>({
     question,
-    initial: { rounds: 1, laid: 0 },
-    derive: (w) => (!w.laid ? { note: "Set the rounds and lay the wire." } : { value: `${w.laid} rounds × ${2 * (L + B)} m = ${w.laid * 2 * (L + B)} m`, optionId: matchNumber(question, w.laid * 2 * (L + B)) }),
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Fencing Robot"
-      mission={`The playground is ${L} m by ${B} m. Set how many rounds of wire go round it and send the robot; each lap it walks the whole boundary and the counter adds that length.`}
-      icon={Fence}
-      dim="2D"
-      submitLabel="Submit the wire length"
-      live={<Gauge label="Wire laid" value={`${w.laid * 2 * (L + B)} m`} tone="violet" />}
-    >
-      <Board>
-        <svg viewBox="0 0 110 70" className="w-full max-h-56">
-          <rect x={10} y={10} width={90} height={50} fill="#dcfce7" stroke="#16a34a" strokeWidth={1} />
-          {Array.from({ length: w.laid }, (_, k) => <rect key={k} x={10 - (k + 1) * 1.6} y={10 - (k + 1) * 1.6} width={90 + (k + 1) * 3.2} height={50 + (k + 1) * 3.2} fill="none" stroke="#92400e" strokeWidth={0.5} />)}
-          <text x={55} y={8} fontSize={4} textAnchor="middle">{L} m</text>
-          <text x={104} y={36} fontSize={4}>{B} m</text>
-          {w.laid > 0 && <motion.text key={w.laid} fontSize={6} animate={{ x: [10, 100, 100, 10, 10], y: [10, 10, 60, 60, 10] }} transition={{ duration: 1.2, repeat: w.laid - 1 }}>🤖</motion.text>}
-        </svg>
-      </Board>
-      <div className="flex flex-wrap gap-2 mt-2">
-        <Stepper label="Rounds" value={w.rounds} min={1} max={8} disabled={play.readOnly} onStep={(d) => play.patch({ rounds: w.rounds + d, laid: 0 })} />
-        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ laid: w.rounds })}>Lay the wire</Btn>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q38 — Work-Time Payroll
-   The payroll adds regular hours at the regular rate and overtime at the overtime rate.
-   The student sets the regular week and adds overtime hours until the pay slip reaches
-   the earnings in the question.
-   ══════════════════════════════════════════════════════════════════════ */
-
-export function Q38WorkingHoursActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ days: number; hrs: number; weeks: number; ot: number; printed: boolean }>({
-    question,
-    initial: { days: 1, hrs: 1, weeks: 1, ot: 0, printed: false },
+    initial: { shirt: 400, qs: 0, qh: 0, paid: false },
     derive: (w) => {
-      const reg = w.days * w.hrs * w.weeks;
-      const pay = r4(reg * 2.4 + w.ot * 3.2);
-      if (!w.printed) return { note: "Set the work schedule and print the pay slip." };
-      if (Math.abs(pay - 432) > 1e-9) return { note: `The slip shows ₹${pay}, not ₹432.` };
-      return { value: `${reg} + ${w.ot} = ${reg + w.ot} hours`, optionId: matchNumber(question, reg + w.ot) };
+      if (!w.paid) return { note: "Price the shirt, fill the basket and check out." };
+      const t = r2(w.qs * saree + w.qh * w.shirt);
+      return { value: rupees(t), optionId: matchNumber(question, t, 1e-6) };
     },
     activityState,
     value,
@@ -131,59 +215,66 @@ export function Q38WorkingHoursActivity({ question, value, activityState, onChan
     readOnly,
   });
   const w = play.world;
-  const reg = w.days * w.hrs * w.weeks;
-  const pay = r4(reg * 2.4 + w.ot * 3.2);
-  const set = (k: "days" | "hrs" | "weeks" | "ot", d: number) => play.set((p) => ({ ...p, printed: false, [k]: p[k] + d }));
+  const balanced = Math.abs(2 * w.shirt - saree) < 1e-9;
+  const set = (k: "shirt" | "qs" | "qh", d: number) => play.set((p) => ({ ...p, paid: false, [k]: Math.max(0, r2(p[k] + d)) }));
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Work-Time Payroll"
-      mission="Set the clerk's regular schedule — days a week, hours a day, weeks — paid at ₹2.40 an hour. Add overtime hours at ₹3.20 until the pay slip shows ₹432, then print it."
-      icon={Clock3}
+      title="Fashion Store Checkout"
+      mission={`A saree costs ${rupees(saree)} and is worth two shirts. Set the shirt price until two shirts balance one saree, put the sarees and shirts from the question in the basket, and check out.`}
+      icon={ShoppingBag}
       dim="2D"
-      submitLabel="Submit the total hours"
-      live={<><Gauge label="Regular hours" value={reg} tone="violet" /><Gauge label="Pay slip" value={`₹${pay}`} tone={Math.abs(pay - 432) < 1e-9 ? "emerald" : "amber"} /></>}
+      submitLabel="Submit the bill"
+      hints={["A shirt costs half as much as a saree."]}
+      live={
+        <>
+          <Gauge label="Shirt price" value={rupees(w.shirt)} tone={balanced ? "emerald" : "amber"} />
+          <Gauge label="Basket" value={`${w.qs} sarees, ${w.qh} shirts`} tone="violet" />
+        </>
+      }
     >
       <div className="grid sm:grid-cols-2 gap-2">
-        <Bay label="Regular schedule">
-          <Stepper label="Days a week" value={w.days} min={1} max={7} disabled={play.readOnly} onStep={(d) => set("days", d)} />
-          <Stepper label="Hours a day" value={w.hrs} min={1} max={12} disabled={play.readOnly} onStep={(d) => set("hrs", d)} />
-          <Stepper label="Weeks" value={w.weeks} min={1} max={8} disabled={play.readOnly} onStep={(d) => set("weeks", d)} />
+        <Bay label={`Price scale — ${balanced ? "balanced" : "not balanced"}`}>
+          <div className="text-center text-3xl">{balanced ? "⚖️" : 2 * w.shirt > saree ? "↙️" : "↘️"}</div>
+          <div className="text-xs font-bold text-center">1 saree {rupees(saree)} ⟷ 2 shirts {rupees(2 * w.shirt)}</div>
+          <Stepper label="Shirt ₹" value={w.shirt} min={0} steps={[0.25, 1, 100]} disabled={play.readOnly} onStep={(d) => set("shirt", d)} />
         </Bay>
-        <Bay label="Overtime" tone="violet">
-          <Stepper label="Overtime hours" value={w.ot} min={0} max={100} steps={[1, 5]} disabled={play.readOnly} onStep={(d) => set("ot", d)} />
-          <p className="text-xs font-mono mt-1">{reg} × ₹2.40 + {w.ot} × ₹3.20 = ₹{pay}</p>
+        <Bay label="Basket" tone="violet">
+          <Stepper label="Sarees" value={w.qs} min={0} disabled={play.readOnly} onStep={(d) => set("qs", d)} />
+          <Stepper label="Shirts" value={w.qh} min={0} disabled={play.readOnly || !balanced} onStep={(d) => set("qh", d)} />
+          {!balanced && <p className="text-[11px] font-bold text-slate-500">Price the shirt first.</p>}
         </Bay>
       </div>
-      <Btn tone="emerald" className="mt-2" disabled={play.readOnly} onClick={() => play.patch({ printed: true })}>🧾 Print the pay slip</Btn>
+      <Btn tone="emerald" disabled={play.readOnly || !balanced} onClick={() => play.patch({ paid: true })}>
+        🧾 Check out
+      </Btn>
+      {w.paid && (
+        <p className="font-mono font-black">
+          {w.qs} × {rupees(saree)} + {w.qh} × {rupees(w.shirt)} = {rupees(r2(w.qs * saree + w.qh * w.shirt))}
+        </p>
+      )}
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q39 — Mocktail Laboratory
-   A jug marked in sixths of a litre. The student pours each ingredient in; it fills as
-   many sixths as it holds. Six sixths are carried over as one whole litre.
+   Q40 — Real Estate Calculator
+   Two towers. The student fills each with its flats; each tower's board multiplies flats
+   by the unit price, and the difference board compares them.
    ══════════════════════════════════════════════════════════════════════ */
 
-const DRINKS = [
-  { k: "soda", w: 2, n: 1, d: 3 },
-  { k: "lime syrup", w: 1, n: 2, d: 3 },
-  { k: "water", w: 1, n: 5, d: 6 },
-];
-export function Q39MocktailMixerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ poured: number[]; carried: number }>({
+export function Q40RealEstateActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const towers = cfg<{ city: string; flats: number; price: number }[]>(question, "towers", []);
+  const play = usePlay<{ n: number[]; compared: boolean }>({
     question,
-    initial: { poured: [], carried: 0 },
+    initial: { n: towers.map(() => 0), compared: false },
     derive: (w) => {
-      const six = w.poured.reduce((s, i) => s + ((DRINKS[i].w * DRINKS[i].d + DRINKS[i].n) * 6) / DRINKS[i].d, 0);
-      const whole = w.carried;
-      const left = six - 6 * whole;
-      if (w.poured.length < DRINKS.length) return { note: "Pour in every ingredient." };
-      if (left >= 6) return { note: "Carry the full litres out of the sixths." };
-      return { value: `${whole} ${left}/6 litres`, optionId: matchNumber(question, whole + left / 6, 1e-9) };
+      if (!w.compared) return { note: "Fill both towers and compare them." };
+      const t = towers.map((x, i) => x.price * w.n[i]);
+      const d = Math.abs(t[0] - t[1]);
+      return { value: rupees(d), optionId: matchNumber(question, d) };
     },
     activityState,
     value,
@@ -191,79 +282,35 @@ export function Q39MocktailMixerActivity({ question, value, activityState, onCha
     readOnly,
   });
   const w = play.world;
-  const six = w.poured.reduce((s, i) => s + ((DRINKS[i].w * DRINKS[i].d + DRINKS[i].n) * 6) / DRINKS[i].d, 0);
-  const left = six - 6 * w.carried;
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Mocktail Laboratory"
-      mission="The jug is marked in sixths of a litre. Pour in each ingredient — it fills as many sixths as it holds. Whenever six sixths are full, carry them over as one litre."
-      icon={CupSoda}
+      title="Real Estate Calculator"
+      mission="Fill each tower with the number of flats in its city. Each tower's board multiplies its flats by the price of one flat. Then compare the two totals."
+      icon={Building2}
       dim="2D"
-      submitLabel="Submit the total"
-      live={<Gauge label="Mocktail" value={`${w.carried} L + ${left}/6 L`} tone="violet" />}
-    >
-      <div className="flex flex-wrap gap-2">{DRINKS.map((d, i) => <Btn key={d.k} tone={w.poured.includes(i) ? "emerald" : "slate"} disabled={play.readOnly || w.poured.includes(i)} onClick={() => play.patch({ poured: [...w.poured, i] })} ariaLabel={`pour ${d.k}`}>🥤 {d.w} {d.n}/{d.d} L {d.k}</Btn>)}</div>
-      <Board className="mt-2">
-        <div className="flex items-end gap-3">
-          <div className="flex gap-1">{Array.from({ length: w.carried }, (_, i) => <span key={i} className="w-8 h-20 rounded bg-sky-300 border border-sky-500 grid place-items-center text-[10px] font-black">1 L</span>)}</div>
-          <div className="flex flex-col-reverse gap-0.5 w-16 min-h-[100px] rounded border-2 border-sky-400 p-0.5 bg-white">
-            {Array.from({ length: left }, (_, i) => <span key={i} className={`h-3 rounded-sm ${i < 6 ? "bg-sky-200" : "bg-rose-300"}`} />)}
-          </div>
-          <Btn tone="amber" disabled={play.readOnly || left < 6} onClick={() => play.patch({ carried: w.carried + 1 })}>Carry 6/6 → 1 L</Btn>
-        </div>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q40 — Village Population Simulator
-   The population counter starts at the 2015 figure. The student dials the people who
-   moved in and adds them, then dials the people who left and removes them.
-   ══════════════════════════════════════════════════════════════════════ */
-
-export function Q40VillagePopulationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const start = 105250;
-  const play = usePlay<{ inn: number; out: number; applied: string[] }>({
-    question,
-    initial: { inn: 0, out: 0, applied: [] },
-    derive: (w) => {
-      if (w.applied.length < 2) return { note: "Apply the arrivals and the departures." };
-      const p = start + w.inn - w.out;
-      return { value: p.toLocaleString("en-IN"), optionId: matchNumber(question, p) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const now = start + (w.applied.includes("in") ? w.inn : 0) - (w.applied.includes("out") ? w.out : 0);
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Village Population Simulator"
-      mission="The counter starts at 1,05,250. Dial the number of people who moved in and add them, then dial the number who left and remove them."
-      icon={Users}
-      dim="2D"
-      submitLabel="Submit the population"
-      live={<Gauge label="Population" value={now.toLocaleString("en-IN")} tone="violet" />}
+      submitLabel="Submit the difference"
+      hints={["City B has fewer rupees per flat but more flats — work out both totals before comparing."]}
+      live={<>{towers.map((t, i) => <Gauge key={t.city} label={t.city} value={rupees(t.price * w.n[i])} tone="violet" />)}</>}
     >
       <div className="grid sm:grid-cols-2 gap-2">
-        <Bay label="Moved in">
-          <Stepper label="Arrivals" value={w.inn} min={0} steps={[1, 10, 100, 1000]} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ ...p, inn: p.inn + d, applied: p.applied.filter((x) => x !== "in") }))} />
-          <Btn tone="emerald" className="mt-1" disabled={play.readOnly || w.applied.includes("in")} onClick={() => play.patch({ applied: [...w.applied, "in"] })}>+ Add arrivals</Btn>
-        </Bay>
-        <Bay label="Left the village">
-          <Stepper label="Departures" value={w.out} min={0} steps={[1, 10, 100, 1000]} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ ...p, out: p.out + d, applied: p.applied.filter((x) => x !== "out") }))} />
-          <Btn tone="rose" className="mt-1" disabled={play.readOnly || w.applied.includes("out")} onClick={() => play.patch({ applied: [...w.applied, "out"] })}>− Remove departures</Btn>
-        </Bay>
+        {towers.map((t, i) => (
+          <Bay key={t.city} label={`${t.city} · ${rupees(t.price)} a flat`}>
+            <div className="flex flex-wrap-reverse gap-0.5 h-24 content-start bg-sky-100 border border-sky-200 rounded p-1">
+              {Array.from({ length: w.n[i] }, (_, k) => <span key={k} className="w-2.5 h-2.5 bg-amber-400 rounded-sm" />)}
+            </div>
+            <Stepper label={`${t.city} flats`} value={w.n[i]} min={0} max={100} steps={[1, 10]} disabled={play.readOnly} onStep={(d) => play.set((p) => ({ compared: false, n: p.n.map((x, j) => (j === i ? x + d : x)) }))} />
+            <div className="font-mono text-sm font-black">
+              {w.n[i]} × {rupees(t.price)} = {rupees(t.price * w.n[i])}
+            </div>
+          </Bay>
+        ))}
       </div>
+      <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ compared: true })}>
+        ⚖ Compare the towers
+      </Btn>
     </Shell>
   );
 }

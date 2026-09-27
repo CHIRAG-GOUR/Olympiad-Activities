@@ -1,124 +1,170 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { ScanSearch, Languages, BrickWall, FoldHorizontal, Compass } from "lucide-react";
+import type { ThreeEvent } from "@react-three/fiber";
+import { Edges } from "@react-three/drei";
+import { Shuffle, ArrowDownAZ, Boxes, Binary, Waves } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
-import { matchNumber, matchText } from "../imo6a/shared";
+import { matchNumber, matchText, matchOptionState } from "../imo6a/shared";
 import { usePlay, cfg } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board, Pt } from "./kit";
+import { Stage3D, Floor } from "../imo6a-play/three";
+import { Shell, Board, toggle } from "./kit";
+
+/** Paper 3 (IMO 2019-20 Set A) · Q6–Q10. */
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q6 — Shape X-Ray Scanner
-   Each candidate figure sits on a dot lattice. The student traces Figure (X) inside it by
-   tapping dots in turn; every stroke must be a real line of the candidate. When the trace
-   has exactly the shape of Figure (X), the scanner confirms the candidate.
+   Q6 — Symbol Movers
+   Figure (1) becomes figure (2) by moving each symbol to a new place. The student builds
+   the missing figure (3) by placing the symbols of (4) on an empty frame, then runs the
+   movers on it to see what their (3) turns into, and compares that with (4).
    ══════════════════════════════════════════════════════════════════════ */
 
-type Seg = [Pt, Pt];
-const Q6_TARGET: Pt[] = [[1, 0], [1, 1], [-1, 1], [-1, 0], [0, -1], [0, -1]]; // a closed "house" pentagon, stroke by stroke
-const Q6_FIGS: Record<string, Seg[]> = {
-  A: [[[1, 1], [2, 1]], [[2, 1], [3, 2]], [[3, 2], [2, 3]], [[2, 3], [1, 3]], [[1, 3], [1, 1]], [[0, 0], [4, 0]], [[0, 0], [0, 4]], [[0, 4], [4, 4]], [[4, 0], [4, 4]], [[3, 2], [4, 2]]],
-  B: [[[1, 1], [2, 1]], [[2, 1], [1, 2]], [[1, 2], [2, 3]], [[1, 1], [1, 3]], [[0, 0], [4, 0]], [[0, 0], [0, 4]], [[0, 4], [4, 4]], [[4, 0], [4, 4]]],
-  C: [[[2, 1], [3, 1]], [[3, 1], [3, 3]], [[3, 3], [2, 3]], [[2, 3], [1, 2]], [[1, 2], [2, 1]], [[0, 0], [4, 0]], [[0, 0], [0, 4]], [[0, 4], [4, 4]], [[4, 0], [4, 4]]],
-  D: [[[1, 1], [3, 1]], [[3, 1], [3, 3]], [[3, 3], [1, 3]], [[1, 3], [1, 1]], [[1, 1], [3, 3]], [[0, 0], [4, 0]], [[0, 0], [0, 4]], [[0, 4], [4, 4]], [[4, 0], [4, 4]]],
-};
-const unitEdges = (segs: Seg[]) => {
-  const out = new Set<string>();
-  segs.forEach(([a, b]) => {
-    const n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
-    const dx = Math.sign(b[0] - a[0]);
-    const dy = Math.sign(b[1] - a[1]);
-    for (let i = 0; i < n; i++) {
-      const p = [a[0] + dx * i, a[1] + dy * i];
-      const q = [p[0] + dx, p[1] + dy];
-      out.add(`${p}|${q}`);
-      out.add(`${q}|${p}`);
-    }
-  });
-  return out;
-};
+type Cells = Record<string, string>;
+const CELLS = Array.from({ length: 9 }, (_, i) => `${Math.floor(i / 3)},${i % 3}`);
+const CELL_NAME = ["top-left", "top-middle", "top-right", "middle-left", "centre", "middle-right", "bottom-left", "bottom-middle", "bottom-right"];
 
-export function Q06ShapeXRayScannerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const edges = useMemo(() => Object.fromEntries(Object.entries(Q6_FIGS).map(([k, s]) => [k, unitEdges(s)])), []);
-  const play = usePlay<{ fig: string; trace: Pt[]; found: string | null }>({
+function Frame({ s, onCell, hot, small }: { s: Cells; onCell?: (c: string) => void; hot?: boolean; small?: boolean }) {
+  return (
+    <div className={`grid grid-cols-3 gap-0.5 rounded-lg border-2 border-slate-400 bg-white p-0.5 ${small ? "w-24" : "w-full max-w-[11rem]"}`}>
+      {CELLS.map((c, i) => (
+        <button
+          key={c}
+          type="button"
+          disabled={!onCell}
+          onClick={() => onCell?.(c)}
+          aria-label={onCell ? `cell ${CELL_NAME[i]}` : undefined}
+          className={`aspect-square grid place-items-center font-black ${small ? "text-sm" : "text-xl"} rounded ${hot ? "border border-dashed border-violet-300 bg-violet-50/60" : ""}`}
+        >
+          {s[c] ?? ""}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function Q06SymbolMoversActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const f1 = cfg<Cells>(question, "fig1", {});
+  const f2 = cfg<Cells>(question, "fig2", {});
+  const f4 = cfg<Cells>(question, "fig4", {});
+  const moves = useMemo(() => Object.fromEntries(Object.entries(f1).map(([c, sym]) => [c, Object.keys(f2).find((k) => f2[k] === sym)])), [f1, f2]) as Record<string, string | undefined>;
+  const symbols = Object.values(f4);
+  const [held, setHeld] = useState<string | null>(null);
+  const play = usePlay<{ built: Cells; ran: boolean }>({
     question,
-    initial: { fig: "A", trace: [], found: null },
-    derive: (w) => (!w.found ? { note: "Trace Figure (X) inside a candidate and confirm it." } : { value: `Figure (X) traced in figure ${w.found}`, optionId: w.found }),
+    initial: { built: {}, ran: false },
+    derive: (w) => {
+      if (Object.keys(w.built).length < symbols.length) return { note: "Place every symbol of (4) on the frame for (3)." };
+      return { value: `(3): ${Object.entries(w.built).map(([c, s]) => `${s} ${CELL_NAME[CELLS.indexOf(c)]}`).join(", ")}`, optionId: matchOptionState(question, w.built, (o: Cells, b) => Object.keys(o).length === Object.keys(b).length && Object.keys(o).every((k) => o[k] === b[k])) };
+    },
     activityState,
     value,
     onChange,
     readOnly,
   });
   const w = play.world;
-  const steps = w.trace.slice(1).map((p, i) => [p[0] - w.trace[i][0], p[1] - w.trace[i][1]]);
-  const valid = w.trace.slice(1).every((p, i) => edges[w.fig].has(`${w.trace[i]}|${p}`));
-  const exact = valid && steps.length === Q6_TARGET.length && steps.every((s, i) => s[0] === Q6_TARGET[i][0] && s[1] === Q6_TARGET[i][1]);
-  const X = (v: number) => 10 + v * 20;
+  const out: Cells = {};
+  let stuck = false;
+  Object.entries(w.built).forEach(([c, s]) => {
+    if (moves[c]) out[moves[c]!] = s;
+    else stuck = true;
+  });
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Shape X-Ray Scanner"
-      mission="Figure (X) is a pentagon: across, down-right slant, down-left slant, back across and straight up. Pick a candidate and trace Figure (X) by tapping lattice dots one after another along the candidate's own lines. Confirm the candidate where your trace fits exactly."
-      icon={ScanSearch}
+      title="Symbol Movers"
+      mission="Watch how each symbol of (1) moves to reach (2). Build figure (3): tap a symbol of (4), then tap a cell of the empty frame. Run the movers on your (3) and compare what comes out with (4)."
+      icon={Shuffle}
       dim="2D"
-      submitLabel="Submit the figure"
+      submitLabel="Submit figure (3)"
+      hints={["Match symbols by the part they play: the symbol that ends top-left of the pair in (2) started at the bottom of (1).", "Work backwards: find where each symbol of (4) must have started."]}
       live={
         <>
-          <Gauge label="On real lines?" value={valid ? "yes" : "no"} tone={valid ? "emerald" : "rose"} />
-          <Gauge label="Shape of (X)?" value={exact ? "exact" : "not yet"} tone={exact ? "emerald" : "slate"} />
+          <Gauge label="Placed" value={`${Object.keys(w.built).length}/${symbols.length}`} tone="violet" />
+          <Gauge label="Movers" value={w.ran ? (stuck ? "a symbol had no mover" : "ran") : "not run"} tone={w.ran && !stuck ? "emerald" : "slate"} />
         </>
       }
     >
-      <div className="flex gap-1.5 mb-2">
-        {Object.keys(Q6_FIGS).map((k) => <Btn key={k} active={w.fig === k} tone={w.fig === k ? "violet" : "slate"} onClick={() => play.set((p) => ({ ...p, fig: k, trace: [] }))}>Figure {k}</Btn>)}
-      </div>
-      <div className="grid md:grid-cols-[auto_1fr] gap-3 items-start">
-        <Bay label="Figure (X)">
-          <svg viewBox="-0.3 -0.3 2.6 2.6" className="w-20">
-            <polyline points="0,0 1,0 2,1 1,2 0,2 0,0" fill="#e0e7ff" stroke="#4338ca" strokeWidth={0.08} />
-          </svg>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <Bay label="(1) → (2): the movers">
+          <div className="flex items-center gap-2">
+            <Frame s={f1} small />
+            <span className="text-xl text-violet-600">➜</span>
+            <Frame s={f2} small />
+          </div>
+          <ul className="mt-1 text-[11px] font-semibold text-slate-600">
+            {Object.entries(moves).map(([from, to]) => (
+              <li key={from}>
+                {CELL_NAME[CELLS.indexOf(from)]} → {to ? CELL_NAME[CELLS.indexOf(to)] : "?"}
+              </li>
+            ))}
+          </ul>
         </Bay>
-        <Board>
-          <svg viewBox="0 0 100 100" className="w-full max-h-72">
-            {Q6_FIGS[w.fig].map(([a, b], i) => <line key={i} x1={X(a[0])} y1={X(a[1])} x2={X(b[0])} y2={X(b[1])} stroke="#334155" strokeWidth={1} />)}
-            <polyline points={w.trace.map(([x, y]) => `${X(x)},${X(y)}`).join(" ")} fill="none" stroke={valid ? (exact ? "#10b981" : "#8b5cf6") : "#f43f5e"} strokeWidth={2.4} strokeLinecap="round" />
-            {Array.from({ length: 25 }, (_, k) => {
-              const p: Pt = [k % 5, Math.floor(k / 5)];
-              return <circle key={k} cx={X(p[0])} cy={X(p[1])} r={2.6} fill={w.trace.some((t) => t[0] === p[0] && t[1] === p[1]) ? "#f59e0b" : "#a5b4fc"} role="button" aria-label={`dot ${p[0]},${p[1]}`} style={{ cursor: "pointer" }} onClick={() => !play.readOnly && play.set((s) => ({ ...s, found: null, trace: [...s.trace, p] }))} />;
-            })}
-          </svg>
-        </Board>
-      </div>
-      <div className="flex gap-2 mt-2">
-        <Btn tone="slate" disabled={play.readOnly || !w.trace.length} onClick={() => play.patch({ trace: [] })}>Clear trace</Btn>
-        <Btn tone="emerald" disabled={play.readOnly || !exact} onClick={() => play.patch({ found: w.fig })}>Confirm figure {w.fig}</Btn>
+        <Bay label="Build (3), then run → compare with (4)" tone="violet">
+          <div className="flex flex-wrap gap-1 mb-2">
+            {symbols.map((sym) => (
+              <Btn key={sym} className="px-3 text-lg" active={held === sym} tone={held === sym ? "amber" : "slate"} disabled={play.readOnly} onClick={() => setHeld(sym)} ariaLabel={`symbol ${sym}`}>
+                {sym}
+              </Btn>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Frame
+              s={w.built}
+              hot
+              onCell={(c) => {
+                if (play.readOnly || !held) return;
+                play.set((p) => {
+                  const built = Object.fromEntries(Object.entries(p.built).filter(([k, v]) => v !== held && k !== c));
+                  return { built: { ...built, [c]: held }, ran: false };
+                });
+              }}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <Btn tone="emerald" disabled={play.readOnly || !Object.keys(w.built).length} onClick={() => play.patch({ ran: true })}>
+              ⚙ Run the movers
+            </Btn>
+            <Btn tone="slate" disabled={play.readOnly || !Object.keys(w.built).length} onClick={() => play.set({ built: {}, ran: false })}>
+              Clear
+            </Btn>
+          </div>
+          {w.ran && (
+            <div className="flex items-center gap-2 mt-2">
+              <div>
+                <div className="text-[10px] font-black text-slate-500">your (3) becomes</div>
+                <Frame s={out} small />
+              </div>
+              <div>
+                <div className="text-[10px] font-black text-slate-500">figure (4)</div>
+                <Frame s={f4} small />
+              </div>
+            </div>
+          )}
+        </Bay>
       </div>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q7 — Word-Swap Laboratory
-   Real objects sit on the bench; the translator shows what each is called in this code.
-   The student picks the object the question really needs, sends it through the
-   translator, and the coded word that comes out is the answer.
+   Q7 — Alphabet Conveyor
+   The student loads the letters onto the conveyor in alphabetical order; the comparison
+   then lights every place where the conveyor letter matches the word's letter above it.
    ══════════════════════════════════════════════════════════════════════ */
 
-const USES: Record<string, string> = { Clock: "tells the time", Television: "shows programmes", Radio: "plays broadcasts", Oven: "bakes food", Grinder: "grinds spices", Iron: "presses clothes" };
-export function Q07WordSwapLaboratoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const chain = cfg<Record<string, string>>(question, "chain", {});
-  const objects = Array.from(new Set([...Object.keys(chain), ...Object.values(chain)]));
-  const play = usePlay<{ obj: string | null; sent: boolean }>({
+export function Q07AlphabetConveyorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const word = cfg<string>(question, "word", "");
+  const play = usePlay<{ placed: number[]; compared: boolean }>({
     question,
-    initial: { obj: null, sent: false },
+    initial: { placed: [], compared: false },
     derive: (w) => {
-      if (!w.obj || !w.sent) return { note: "Pick the real object and send it through the translator." };
-      const coded = chain[w.obj] ?? w.obj;
-      return { value: `${w.obj} is called ${coded}`, optionId: matchText(question, coded) };
+      if (w.placed.length < word.length || !w.compared) return { note: "Load every letter in alphabetical order, then compare." };
+      const n = w.placed.filter((idx, i) => word[idx] === word[i]).length;
+      const said = n > 2 ? "More than two" : ["None", "One", "Two"][n];
+      return { value: `${n} letter${n === 1 ? "" : "s"} unmoved`, optionId: matchText(question, said) };
     },
     activityState,
     value,
@@ -126,257 +172,331 @@ export function Q07WordSwapLaboratoryActivity({ question, value, activityState, 
     readOnly,
   });
   const w = play.world;
+  const conveyor = w.placed.map((i) => word[i]);
+  const sorted = conveyor.every((c, i) => i === 0 || conveyor[i - 1] <= c);
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Word-Swap Laboratory"
-      mission="Each real object on the bench has a new name in this code language. Pick the object a woman would really use to bake, then send it through the translator to see what it is called."
-      icon={Languages}
+      title="Alphabet Conveyor"
+      mission="Tap the letters of the word in alphabetical order to load them onto the conveyor, left to right. Then run the comparison: it lights every place where the conveyor letter matches the letter of the word above it."
+      icon={ArrowDownAZ}
       dim="2D"
-      submitLabel="Submit the coded name"
-      live={<Gauge label="Translator" value={w.obj && w.sent ? `${w.obj} → ${chain[w.obj] ?? w.obj}` : "—"} tone="violet" />}
+      submitLabel="Submit the count"
+      hints={["When a letter appears twice, load both copies one after the other.", "Only letters that land in exactly the same place count."]}
+      live={
+        <>
+          <Gauge label="Loaded" value={`${w.placed.length}/${word.length}`} tone="violet" />
+          <Gauge label="In alphabetical order?" value={conveyor.length ? (sorted ? "yes" : "no") : "—"} tone={sorted ? "emerald" : "rose"} />
+        </>
+      }
     >
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {objects.map((o) => (
-          <button key={o} type="button" disabled={play.readOnly} onClick={() => play.set({ obj: o, sent: false })} aria-label={`object ${o}`} className={`rounded-xl border-2 p-2 text-left bg-white ${w.obj === o ? "border-indigo-500 ring-2 ring-indigo-200" : "border-slate-200"}`}>
-            <div className="font-black text-indigo-900">{o}</div>
-            <div className="text-[11px] text-slate-500">real use: {USES[o] ?? "—"}</div>
-            <div className="text-[11px] font-bold text-amber-700">called “{chain[o] ?? "—"}”</div>
-          </button>
-        ))}
-      </div>
-      <Btn tone="emerald" className="mt-2" disabled={play.readOnly || !w.obj} onClick={() => play.patch({ sent: true })}>🔁 Send {w.obj ?? "…"} through the translator</Btn>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q8 — Brick Wall Completion
-   The wall alternates two brick panels in a chequerboard. Four panels are missing. The
-   student picks a panel type for each gap; the finished patch is compared with the
-   options.
-   ══════════════════════════════════════════════════════════════════════ */
-
-type Panel = "H" | "V" | "D" | "S";
-const Q8_STATES: Record<string, Panel[]> = { A: ["V", "V", "V", "V"], B: ["H", "V", "V", "H"], C: ["D", "D", "D", "D"], D: ["S", "S", "S", "S"] };
-function PanelArt({ t }: { t: Panel | null }) {
-  return (
-    <svg viewBox="0 0 20 20" className="w-full h-full">
-      <rect width={20} height={20} fill={t ? "#fde68a" : "#f8fafc"} stroke="#92400e" strokeWidth={0.6} strokeDasharray={t ? undefined : "1 1"} />
-      {t === "H" && [5, 10, 15].map((y) => <line key={y} x1={0} x2={20} y1={y} y2={y} stroke="#92400e" strokeWidth={0.6} />)}
-      {t === "V" && [5, 10, 15].map((x) => <line key={x} y1={0} y2={20} x1={x} x2={x} stroke="#92400e" strokeWidth={0.6} />)}
-      {t === "D" && [0, 10, 20].map((k) => <line key={k} x1={k - 10} y1={20} x2={k + 10} y2={0} stroke="#92400e" strokeWidth={0.6} />)}
-      {t === "S" && <rect width={20} height={20} fill="#b45309" />}
-    </svg>
-  );
-}
-export function Q08BrickWallCompletionActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const [held, setHeld] = useState<Panel>("H");
-  const play = usePlay<{ gap: (Panel | null)[]; done: boolean }>({
-    question,
-    initial: { gap: [null, null, null, null], done: false },
-    derive: (w) => {
-      if (w.gap.some((g) => !g) || !w.done) return { note: "Fill all four gaps and set the patch." };
-      const opt = Object.keys(Q8_STATES).find((k) => Q8_STATES[k].join() === w.gap.join());
-      return { value: `Patch ${w.gap.join(" ")}`, optionId: opt };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const wall = (r: number, c: number): Panel => ((r + c) % 2 ? "V" : "H");
-  const gapIdx = (r: number, c: number) => (r >= 2 && c >= 2 ? (r - 2) * 2 + (c - 2) : -1);
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Brick Wall Completion"
-      mission="Study how the brick panels alternate across the wall. Pick a panel type and tap each empty gap to fill it so the pattern carries on. Then set the patch."
-      icon={BrickWall}
-      dim="2D"
-      submitLabel="Submit the patch"
-      live={<Gauge label="Patch" value={w.gap.map((g) => g ?? "·").join(" ")} tone="violet" />}
-    >
-      <div className="grid md:grid-cols-[auto_1fr] gap-3 items-start">
-        <div className="grid grid-cols-4 w-60 h-60 border-2 border-amber-800 rounded-lg overflow-hidden">
-          {Array.from({ length: 16 }, (_, k) => {
-            const r = Math.floor(k / 4);
-            const c = k % 4;
-            const g = gapIdx(r, c);
-            return g < 0 ? (
-              <PanelArt key={k} t={wall(r, c)} />
-            ) : (
-              <button key={k} type="button" disabled={play.readOnly} onClick={() => play.set((p) => ({ done: false, gap: p.gap.map((x, j) => (j === g ? held : x)) }))} aria-label={`gap ${g + 1}`}>
-                <PanelArt t={w.gap[g]} />
-              </button>
+      <Board className="space-y-3 p-3">
+        <div className="flex gap-1 justify-center">
+          {word.split("").map((c, i) => (
+            <button key={i} type="button" disabled={play.readOnly || w.placed.includes(i)} onClick={() => play.set((p) => ({ placed: [...p.placed, i], compared: false }))} aria-label={`letter ${c} at ${i + 1}`} className={`w-9 h-11 rounded-lg font-mono font-black text-xl border-2 ${w.placed.includes(i) ? "bg-slate-100 border-slate-200 text-slate-300" : "bg-amber-200 border-amber-400 text-amber-950"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 justify-center">
+          {word.split("").map((c, i) => {
+            const on = w.compared && conveyor[i] === c;
+            return (
+              <div key={i} className={`w-9 h-11 rounded-lg border-2 border-dashed grid place-items-center font-mono font-black text-xl ${on ? "bg-emerald-300 border-emerald-500" : "border-indigo-300 bg-white text-indigo-900"}`}>
+                {conveyor[i] ?? ""}
+              </div>
             );
           })}
         </div>
-        <Bay label="Brick panels" tone="violet">
-          <div className="flex flex-wrap gap-2">
-            {(["H", "V", "D", "S"] as Panel[]).map((t) => (
-              <button key={t} type="button" onClick={() => setHeld(t)} aria-label={`panel ${t}`} className={`w-14 h-14 rounded-lg border-2 ${held === t ? "border-indigo-500 ring-2 ring-indigo-200" : "border-slate-200"}`}>
-                <PanelArt t={t} />
-              </button>
-            ))}
-          </div>
-          <Btn tone="emerald" className="mt-2" disabled={play.readOnly || w.gap.some((g) => !g)} onClick={() => play.patch({ done: true })}>Set the patch</Btn>
-        </Bay>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q9 — Fold Studio
-   A transparent sheet carries a triangle in one corner and a circle on the other half.
-   The student chooses which half to fold over the dotted line and drags the fold closed;
-   whatever lies on the folded sheet is matched to the options.
-   ══════════════════════════════════════════════════════════════════════ */
-
-const Q9_STATES: Record<string, { side: string; items: string }> = {
-  A: { side: "left", items: "triangle" },
-  B: { side: "right", items: "triangle+circle" },
-  C: { side: "none", items: "triangle+circle" },
-  D: { side: "left", items: "triangle+circle" },
-};
-export function Q09FoldStudioActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ fold: "right" | "left" | null; progress: number }>({
-    question,
-    initial: { fold: null, progress: 0 },
-    derive: (w) => {
-      if (!w.fold || w.progress < 1) return { note: "Choose the half to fold and close the fold completely." };
-      const side = w.fold === "right" ? "left" : "right";
-      const st = { side, items: "triangle+circle" };
-      const opt = Object.keys(Q9_STATES).find((k) => Q9_STATES[k].side === st.side && Q9_STATES[k].items === st.items);
-      return { value: `Folded onto the ${side} half: triangle and circle superimposed`, optionId: opt };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const turn = w.fold === "right" ? -180 * w.progress : 180 * w.progress;
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Fold Studio"
-      mission="The sheet is transparent, so anything on the folded half shows through. The question folds the right half over the dotted line. Choose that half and drag the fold slider until the sheet is closed."
-      icon={FoldHorizontal}
-      dim="2D"
-      submitLabel="Submit the folded sheet"
-      live={<Gauge label="Fold" value={w.fold ? `${w.fold} half · ${Math.round(w.progress * 100)}%` : "—"} tone="violet" />}
-    >
-      <Board>
-        <div className="flex justify-center" style={{ perspective: 600 }}>
-          <div className="relative flex">
-            <div className="w-28 h-40 bg-sky-50/80 border border-sky-300 relative">
-              <svg viewBox="0 0 28 40" className="absolute inset-0"><polygon points="2,2 14,2 2,14" fill="#6366f1" /></svg>
-            </div>
-            <div className="border-l-2 border-dashed border-rose-400" />
-            <motion.div className="w-28 h-40 bg-sky-50/70 border border-sky-300 relative origin-left" style={{ transformStyle: "preserve-3d" }} animate={{ rotateY: w.fold === "right" ? turn : 0 }}>
-              <svg viewBox="0 0 28 40" className="absolute inset-0"><circle cx={20} cy={30} r={5} fill="none" stroke="#10b981" strokeWidth={2} /></svg>
-            </motion.div>
-          </div>
-        </div>
       </Board>
-      <div className="flex flex-wrap items-center gap-2 mt-2">
-        <Btn active={w.fold === "right"} tone={w.fold === "right" ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set({ fold: "right", progress: 0 })}>Fold the right half over</Btn>
-        <Btn active={w.fold === "left"} tone={w.fold === "left" ? "violet" : "slate"} disabled={play.readOnly} onClick={() => play.set({ fold: "left", progress: 0 })}>Fold the left half over</Btn>
-        <label className="flex items-center gap-2 text-xs font-bold text-slate-700">
-          fold
-          <input type="range" aria-label="fold amount" min={0} max={1} step={0.1} value={w.progress} disabled={play.readOnly || !w.fold} onChange={(e) => play.patch({ progress: Number(e.target.value) })} className="accent-indigo-600" />
-        </label>
+      <div className="flex gap-2">
+        <Btn tone="emerald" disabled={play.readOnly || w.placed.length < word.length} onClick={() => play.patch({ compared: true })}>
+          Run the comparison
+        </Btn>
+        <Btn tone="slate" disabled={play.readOnly || !w.placed.length} onClick={() => play.set({ placed: [], compared: false })}>
+          Empty the conveyor
+        </Btn>
       </div>
     </Shell>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q10 — Two-Explorer Navigation
-   The student walks each explorer's route on the map in 5 m steps. When both routes end
-   at C, the map lays a tape between the two starting points.
+   Q8 — Cube Wall Lab (3D)
+   The wall stands on a turntable. The student orbits it, isolates a layer, and tags each
+   cube (on the 3D model or on the layer's floor plan). The tag counter is the answer.
    ══════════════════════════════════════════════════════════════════════ */
 
-const HEAD = ["North", "East", "South", "West"];
-const DIR: Pt[] = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-interface Walker {
-  face: number;
-  x: number;
-  y: number;
-  path: Pt[];
-}
-const fresh = (x: number, y: number): Walker => ({ face: 0, x, y, path: [[x, y]] });
-
-export function Q10TwoExplorerNavigationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const vStart = cfg<Pt>(question, "vanshStart", [0, 0]);
-  const pStart = cfg<Pt>(question, "puneetStart", [0, 0]);
-  const [who, setWho] = useState<"v" | "p">("v");
-  const play = usePlay<{ v: Walker; p: Walker; taped: boolean }>({
+export function Q08CubeWallActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const columns = cfg<[number, number, number][]>(question, "columns", []);
+  const H = Math.max(1, ...columns.map((c) => c[2]));
+  const cubes = useMemo(() => columns.flatMap(([x, z, h]) => Array.from({ length: h }, (_, y) => ({ id: `${x},${y},${z}`, x, y, z }))), [columns]);
+  const xs = columns.map((c) => c[0]);
+  const zs = columns.map((c) => c[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cz = (Math.min(...zs) + Math.max(...zs)) / 2;
+  const play = usePlay<{ tagged: string[]; layer: number | null }>({
     question,
-    initial: { v: fresh(vStart[0], vStart[1]), p: fresh(pStart[0], pStart[1]), taped: false },
-    derive: (w) => {
-      if (w.v.x !== w.p.x || w.v.y !== w.p.y || w.v.path.length < 2 || w.p.path.length < 2) return { note: "Walk both explorers until they meet at C." };
-      if (!w.taped) return { note: "Lay the tape between the starting points." };
-      const d = Math.hypot(pStart[0] - vStart[0], pStart[1] - vStart[1]);
-      return { value: `${+d.toFixed(2)} m between the starts`, optionId: matchNumber(question, d, 1e-6) };
-    },
+    initial: { tagged: [], layer: null },
+    derive: (w) => (!w.tagged.length ? { note: "Tag every cube, including hidden ones." } : { value: `${w.tagged.length} cubes tagged`, optionId: matchNumber(question, w.tagged.length) }),
     activityState,
     value,
     onChange,
     readOnly,
   });
   const w = play.world;
-  const upd = (f: (x: Walker) => Walker) => play.set((s) => ({ ...s, taped: false, [who]: f(s[who]) }));
-  const S = 1.4;
-  const ox = 20;
-  const oy = 30;
+  const shown = cubes.filter((c) => w.layer === null || c.y === w.layer);
+  const tag = (id: string) => !play.readOnly && play.set((p) => ({ ...p, tagged: toggle(p.tagged, id) }));
 
   return (
     <Shell
       play={play}
       question={question}
-      title="Two-Explorer Navigation"
-      mission="Pick an explorer and walk their route in 5 m steps, turning as the question says (each starts facing North). When both reach the same point C, lay the tape between their starting points."
-      icon={Compass}
-      dim="2D"
-      submitLabel="Submit the distance"
+      title="Cube Wall Lab"
+      mission="Drag round the wall to see it from every side. Isolate a layer to see it on its own, then tap each cube once to tag it (on the model or on the floor plan). Tag every cube in the wall."
+      icon={Boxes}
+      dim="3D"
+      submitLabel="Submit the cube count"
+      hints={["Count one layer at a time, then check every layer has the same number.", "The corner where the wall turns is one column, not two."]}
       live={
         <>
-          <Gauge label="Vansh" value={`${HEAD[w.v.face]} · (${w.v.x}, ${-w.v.y})`} tone="violet" />
-          <Gauge label="Puneet" value={`${HEAD[w.p.face]} · (${w.p.x}, ${-w.p.y})`} tone="amber" />
+          <Gauge label="Cubes tagged" value={w.tagged.length} tone="violet" />
+          {Array.from({ length: H }, (_, y) => (
+            <Gauge key={y} label={`Layer ${y + 1}`} value={`${cubes.filter((c) => c.y === y && w.tagged.includes(c.id)).length} tagged`} />
+          ))}
         </>
       }
     >
-      <Board>
-        <svg viewBox="0 0 110 80" className="w-full">
-          {[...Array(23)].map((_, i) => <line key={i} x1={i * 5} x2={i * 5} y1={0} y2={80} stroke="#e0e7ff" strokeWidth={0.3} />)}
-          {[...Array(17)].map((_, i) => <line key={`h${i}`} y1={i * 5} y2={i * 5} x1={0} x2={110} stroke="#e0e7ff" strokeWidth={0.3} />)}
-          <polyline points={w.v.path.map(([x, y]) => `${ox + x * S},${oy + y * S}`).join(" ")} fill="none" stroke="#6366f1" strokeWidth={1.2} />
-          <polyline points={w.p.path.map(([x, y]) => `${ox + x * S},${oy + y * S}`).join(" ")} fill="none" stroke="#f59e0b" strokeWidth={1.2} />
-          {w.taped && <line x1={ox + vStart[0] * S} y1={oy + vStart[1] * S} x2={ox + pStart[0] * S} y2={oy + pStart[1] * S} stroke="#e11d48" strokeWidth={0.9} strokeDasharray="2 1" />}
-          <text x={ox + vStart[0] * S - 3} y={oy + vStart[1] * S + 5} fontSize={4} fontWeight={900}>A</text>
-          <text x={ox + pStart[0] * S + 1} y={oy + pStart[1] * S + 5} fontSize={4} fontWeight={900}>B</text>
-          {[w.v, w.p].map((x, i) => <circle key={i} cx={ox + x.x * S} cy={oy + x.y * S} r={1.8} fill={i ? "#f59e0b" : "#6366f1"} />)}
-        </svg>
-      </Board>
-      <div className="flex flex-wrap gap-1.5 mt-2">
-        <Btn active={who === "v"} tone={who === "v" ? "violet" : "slate"} onClick={() => setWho("v")}>Vansh</Btn>
-        <Btn active={who === "p"} tone={who === "p" ? "amber" : "slate"} onClick={() => setWho("p")}>Puneet</Btn>
-        <Btn tone="slate" disabled={play.readOnly} onClick={() => upd((x) => ({ ...x, face: (x.face + 3) % 4 }))}>↺ Turn left</Btn>
-        <Btn tone="slate" disabled={play.readOnly} onClick={() => upd((x) => ({ ...x, face: (x.face + 1) % 4 }))}>Turn right ↻</Btn>
-        <Btn tone="emerald" disabled={play.readOnly} onClick={() => upd((x) => { const nx = x.x + DIR[x.face][0] * 5; const ny = x.y + DIR[x.face][1] * 5; return { ...x, x: nx, y: ny, path: [...x.path, [nx, ny]] }; })}>🚶 Walk 5 m</Btn>
-        <Btn tone="slate" disabled={play.readOnly} onClick={() => upd(() => (who === "v" ? fresh(vStart[0], vStart[1]) : fresh(pStart[0], pStart[1])))}>Back to start</Btn>
-        <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ taped: true })}>📏 Lay the tape A–B</Btn>
+      <Stage3D height={300} camera={{ position: [5, 6, 8], fov: 42 }} orbitTarget={[0, 1.2, 0]} readOnly={play.readOnly}>
+        <Floor />
+        {shown.map((c) => {
+          const on = w.tagged.includes(c.id);
+          return (
+            <mesh
+              key={c.id}
+              position={[c.x - cx, c.y + 0.5, c.z - cz]}
+              castShadow
+              onClick={(e: ThreeEvent<MouseEvent>) => {
+                if (e.delta > 6) return;
+                e.stopPropagation();
+                tag(c.id);
+              }}
+            >
+              <boxGeometry args={[0.96, 0.96, 0.96]} />
+              <meshStandardMaterial color={on ? "#f59e0b" : ["#a78bfa", "#60a5fa", "#34d399"][c.y % 3]} />
+              <Edges color="#1e1b4b" />
+            </mesh>
+          );
+        })}
+      </Stage3D>
+      <div className="flex flex-wrap gap-1.5">
+        <Btn active={w.layer === null} tone={w.layer === null ? "violet" : "slate"} onClick={() => play.patch({ layer: null })}>
+          Whole wall
+        </Btn>
+        {Array.from({ length: H }, (_, y) => (
+          <Btn key={y} active={w.layer === y} tone={w.layer === y ? "violet" : "slate"} onClick={() => play.patch({ layer: y })}>
+            Layer {y + 1} only
+          </Btn>
+        ))}
+        <Btn tone="slate" disabled={play.readOnly || !w.tagged.length} onClick={() => play.patch({ tagged: [] })}>
+          Clear tags
+        </Btn>
       </div>
+      {w.layer !== null && (
+        <Bay label={`Floor plan of layer ${w.layer + 1} (seen from above)`}>
+          <div className="inline-grid gap-0.5" style={{ gridTemplateColumns: `repeat(${Math.max(...xs) - Math.min(...xs) + 1}, 2.25rem)` }}>
+            {Array.from({ length: (Math.max(...zs) - Math.min(...zs) + 1) * (Math.max(...xs) - Math.min(...xs) + 1) }, (_, k) => {
+              const nx = Math.max(...xs) - Math.min(...xs) + 1;
+              const x = Math.min(...xs) + (k % nx);
+              const z = Math.min(...zs) + Math.floor(k / nx);
+              const cube = cubes.find((c) => c.x === x && c.z === z && c.y === w.layer);
+              if (!cube) return <span key={k} className="w-9 h-9" />;
+              const on = w.tagged.includes(cube.id);
+              return (
+                <button key={k} type="button" disabled={play.readOnly} onClick={() => tag(cube.id)} aria-label={`cube ${cube.id}`} className={`w-9 h-9 rounded border-2 ${on ? "bg-amber-400 border-amber-600" : "bg-indigo-100 border-indigo-300"}`} />
+              );
+            })}
+          </div>
+        </Bay>
+      )}
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q9 — Digit Transformation Machine
+   The student drops −1 / +1 tokens on each number's tens and units wheels. The machine
+   ranks the new numbers; the original of the greatest is the answer.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export function Q09DigitMachineActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const nums = cfg<number[]>(question, "numbers", []);
+  const [token, setToken] = useState<-1 | 1>(-1);
+  const after = (d: Record<number, { t: number; u: number }>, n: number) => n + (d[n]?.t ?? 0) * 10 + (d[n]?.u ?? 0);
+  const play = usePlay<{ d: Record<number, { t: number; u: number }>; ranked: boolean }>({
+    question,
+    initial: { d: {}, ranked: false },
+    derive: (w) => {
+      const done = nums.filter((n) => w.d[n]?.t && w.d[n]?.u);
+      if (done.length < nums.length) return { note: `Change the tens and units wheels of every number (${done.length}/${nums.length}).` };
+      if (!w.ranked) return { note: "Rank the new numbers." };
+      const best = [...nums].sort((a, b) => after(w.d, b) - after(w.d, a))[0];
+      return { value: `${best} → ${after(w.d, best)} is the greatest`, optionId: matchNumber(question, best) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+  const drop = (n: number, k: "t" | "u") => play.set((p) => ({ ranked: false, d: { ...p.d, [n]: { ...{ t: 0, u: 0 }, ...p.d[n], [k]: (p.d[n]?.[k] ?? 0) + token } } }));
+  const ranked = [...nums].sort((a, b) => after(w.d, b) - after(w.d, a));
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Digit Transformation Machine"
+      mission="Pick up the −1 or +1 token, then tap a number's tens wheel or units wheel to drop it there. Do what the question says to every number, then rank the new numbers."
+      icon={Binary}
+      dim="2D"
+      submitLabel="Submit the original of the greatest"
+      hints={["Take 1 from the tens digit and add 1 to the units digit of every number.", "Compare the new numbers, but answer with the original number."]}
+      live={<Gauge label="Ranking" value={w.ranked ? ranked.map((n) => after(w.d, n)).join(" > ") : "not ranked"} tone="violet" />}
+    >
+      <div className="flex gap-2">
+        {([-1, 1] as const).map((t) => (
+          <Btn key={t} active={token === t} tone={token === t ? (t < 0 ? "rose" : "emerald") : "slate"} onClick={() => setToken(t)}>
+            Token {t < 0 ? "−1" : "+1"}
+          </Btn>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+        {nums.map((n) => {
+          const a = String(after(w.d, n)).padStart(3, "0");
+          return (
+            <Bay key={n} label={`Number ${n}`}>
+              <div className="flex justify-center gap-1 font-mono font-black text-2xl">
+                <span className="w-9 h-12 grid place-items-center rounded bg-slate-100">{a[0]}</span>
+                {(["t", "u"] as const).map((k, i) => (
+                  <button key={k} type="button" disabled={play.readOnly} onClick={() => drop(n, k)} aria-label={`${n} ${k === "t" ? "tens" : "units"}`} className={`w-9 h-12 rounded border-2 ${w.d[n]?.[k] ? "bg-violet-100 border-violet-400" : "bg-white border-slate-300"}`}>
+                    {a[i + 1]}
+                  </button>
+                ))}
+              </div>
+              <div className="text-[10px] font-bold text-center text-slate-500 mt-1">
+                {n} → {after(w.d, n)}
+              </div>
+            </Bay>
+          );
+        })}
+      </div>
+      <Btn tone="amber" disabled={play.readOnly} onClick={() => play.patch({ ranked: true })}>
+        📊 Rank the new numbers
+      </Btn>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q10 — Reflection Pool
+   The student sets the mirror (waterline below or mirror at the right) and then drops each
+   character into a slot of the reflection, where it appears reflected. The built
+   reflection is compared with the four printed images.
+   ══════════════════════════════════════════════════════════════════════ */
+
+function Glyph({ c, flip }: { c: string; flip: "v" | "h" | null }) {
+  return (
+    <span className="inline-block" style={{ transform: flip === "v" ? "scaleY(-1)" : flip === "h" ? "scaleX(-1)" : undefined }}>
+      {c}
+    </span>
+  );
+}
+
+export function Q10ReflectionPoolActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
+  const text = cfg<string>(question, "text", "");
+  const states = cfg<Record<string, { seq: string; flip: "v" | "h" }>>(question, "optionStates", {});
+  const [held, setHeld] = useState<number | null>(null);
+  const play = usePlay<{ mirror: "v" | "h" | null; slots: (number | null)[] }>({
+    question,
+    initial: { mirror: null, slots: Array(text.length).fill(null) },
+    derive: (w) => {
+      if (!w.mirror) return { note: "Set up the mirror." };
+      if (w.slots.some((s) => s === null)) return { note: "Drop every character into the reflection." };
+      const seq = w.slots.map((i) => text[i!]).join("");
+      return { value: `${w.mirror === "v" ? "Water image" : "Mirror image"}: ${seq.split("").join(" ")}`, optionId: matchOptionState(question, { seq, flip: w.mirror }, (o: { seq: string; flip: string }, b) => o.seq === b.seq && o.flip === b.flip) };
+    },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+  });
+  const w = play.world;
+
+  return (
+    <Shell
+      play={play}
+      question={question}
+      title="Reflection Pool"
+      mission="Put the mirror where the question needs it. Then tap a character and tap a slot in the pool to drop it there — it appears reflected. Build the whole reflection. The printed images are below for comparison."
+      icon={Waves}
+      dim="2D"
+      submitLabel="Submit the reflection"
+      hints={["A water image is what you see in a pond below the text: top and bottom swap.", "In a water image every character stays in the same position as in the original."]}
+      live={<Gauge label="Mirror" value={w.mirror === "v" ? "waterline below" : w.mirror === "h" ? "mirror at the right" : "none"} tone="sky" />}
+    >
+      <div className="flex flex-wrap gap-1.5">
+        <Btn active={w.mirror === "v"} tone={w.mirror === "v" ? "sky" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ mirror: "v" })}>
+          🌊 Waterline below the text
+        </Btn>
+        <Btn active={w.mirror === "h"} tone={w.mirror === "h" ? "sky" : "slate"} disabled={play.readOnly} onClick={() => play.patch({ mirror: "h" })}>
+          🪞 Mirror at the right
+        </Btn>
+      </div>
+      <div className="rounded-2xl bg-gradient-to-b from-sky-50 to-sky-200 border-2 border-sky-200 p-3">
+        <div className="flex gap-1 justify-center">
+          {text.split("").map((c, i) => (
+            <button key={i} type="button" disabled={play.readOnly} onClick={() => setHeld(i)} aria-label={`character ${c} at ${i + 1}`} className={`w-9 h-11 rounded-lg font-mono font-black text-2xl border-2 ${held === i ? "bg-amber-300 border-amber-500" : w.slots.includes(i) ? "bg-white/60 border-sky-200 text-slate-400" : "bg-white border-sky-300 text-slate-900"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+        <div className="h-1 bg-sky-600/50 rounded my-2" />
+        <div className="flex gap-1 justify-center">
+          {w.slots.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              disabled={play.readOnly || held === null}
+              onClick={() => {
+                if (held === null) return;
+                play.set((p) => ({ ...p, slots: p.slots.map((x, j) => (j === i ? held : x === held ? null : x)) }));
+                setHeld(null);
+              }}
+              aria-label={`pool slot ${i + 1}`}
+              className="w-9 h-11 rounded-lg border-2 border-dashed border-sky-500 bg-sky-100/70 font-mono font-black text-2xl text-sky-900"
+            >
+              {s !== null && <Glyph c={text[s]} flip={w.mirror} />}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {Object.entries(states).map(([id, st]) => (
+          <Bay key={id} label={`Image ${id}`}>
+            <div className="font-mono font-black text-lg tracking-wide text-slate-800">
+              {st.seq.split("").map((c, i) => (
+                <Glyph key={i} c={c} flip={st.flip} />
+              ))}
+            </div>
+          </Bay>
+        ))}
+      </div>
+      <Btn tone="slate" disabled={play.readOnly} onClick={() => play.patch({ slots: Array(text.length).fill(null) })}>
+        Empty the pool
+      </Btn>
     </Shell>
   );
 }
