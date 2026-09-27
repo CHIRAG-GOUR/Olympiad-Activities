@@ -108,23 +108,11 @@ function piecesOf(shape: string, parts: number): Pt[][] {
 
 const spreadShaded = (parts: number, shaded: number) => Array.from({ length: shaded }, (_, i) => Math.round((i * parts) / shaded));
 
-/* ══════════════════════════════════════════════════════════════════════
-   Q16 — Fraction Scanner (2D)
-   Each figure goes under the scanner. The student taps every piece to tally it; the
-   scanner counts shaded pieces against all pieces. A figure can be docked in the target
-   slot only once all its pieces are tallied, and the docked figure is the answer.
-   ══════════════════════════════════════════════════════════════════════ */
-
 interface FigSpec {
   parts: number;
   shaded: number | number[];
   shape: string;
 }
-interface ScanFracWorld {
-  tallied: Record<string, number[]>;
-  docked: string | null;
-}
-
 function FigureSvg({ spec, tallied, onTap, big, disabled }: { spec: FigSpec; tallied: number[]; onTap?: (i: number) => void; big?: boolean; disabled?: boolean }) {
   const pieces = piecesOf(spec.shape, spec.parts);
   const shaded = Array.isArray(spec.shaded) ? spec.shaded : spreadShaded(spec.parts, spec.shaded);
@@ -145,99 +133,6 @@ function FigureSvg({ spec, tallied, onTap, big, disabled }: { spec: FigSpec; tal
         );
       })}
     </svg>
-  );
-}
-
-export function B16FractionScanner({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const figures = cfg<Record<string, FigSpec>>(question, "figures", {});
-  const target = cfg<[number, number]>(question, "target", [1, 1]);
-  const ids = Object.keys(figures);
-  const [open, setOpen] = useState(ids[0] ?? "A");
-  const shadedOf = (id: string) => {
-    const f = figures[id];
-    return Array.isArray(f.shaded) ? f.shaded : spreadShaded(f.parts, f.shaded);
-  };
-  const reading = (id: string, t: number[]) => {
-    const sh = shadedOf(id);
-    return { shaded: t.filter((i) => sh.includes(i)).length, total: t.length, done: t.length === figures[id].parts };
-  };
-
-  const play = usePlay<ScanFracWorld>({
-    question,
-    initial: { tallied: {}, docked: null },
-    derive: (w) => {
-      if (!w.docked) return { note: "Tally a figure's pieces, then dock the one that measures the target fraction." };
-      const r = reading(w.docked, w.tallied[w.docked] ?? []);
-      const [n, d] = reduceFraction(r.shaded, r.total);
-      return { value: `Figure ${w.docked} docked: ${r.shaded}/${r.total} = ${n}/${d}`, optionId: w.docked };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const t = w.tallied[open] ?? [];
-  const r = figures[open] ? reading(open, t) : { shaded: 0, total: 0, done: false };
-  const [rn, rd] = reduceFraction(r.shaded, r.total || 1);
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Fraction Scanner"
-      mission={`Put each figure under the scanner and tap every piece to tally it. The scanner counts shaded pieces out of all pieces. Dock the figure whose tally is exactly ${target[0]}/${target[1]}.`}
-      icon={ChartPie}
-      dim="2D"
-      submitLabel="Submit the docked figure"
-      live={
-        <>
-          <Gauge label={`Figure ${open} tally`} value={`${r.shaded} shaded / ${r.total} pieces`} tone="violet" />
-          <Gauge label="Reads as" value={r.total ? `${rn}/${rd}` : "—"} tone={r.done ? "emerald" : "slate"} />
-          <Gauge label="Target slot" value={`${target[0]}/${target[1]} · ${w.docked ? `holds ${w.docked}` : "empty"}`} tone="amber" />
-        </>
-      }
-    >
-      <div className="grid md:grid-cols-[1fr_1.3fr] gap-3">
-        <Bay label="Figure tray — pick one to scan">
-          <div className="grid grid-cols-2 gap-2">
-            {ids.map((id) => {
-              const done = figures[id] && reading(id, w.tallied[id] ?? []).done;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setOpen(id)}
-                  className={`rounded-xl border-2 p-1 bg-white ${open === id ? "border-violet-500 ring-2 ring-violet-200" : "border-slate-200"}`}
-                >
-                  <FigureSvg spec={figures[id]} tallied={[]} />
-                  <div className="text-[11px] font-black">
-                    Figure {id} {done ? "· scanned" : ""} {w.docked === id ? "· docked" : ""}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </Bay>
-        <Bay label={`Scanner bed — figure ${open}: tap every piece`} tone="violet">
-          {figures[open] && (
-            <FigureSvg
-              spec={figures[open]}
-              tallied={t}
-              big
-              disabled={play.readOnly}
-              onTap={(i) => play.set((p) => ({ ...p, docked: p.docked === open ? null : p.docked, tallied: { ...p.tallied, [open]: toggle(p.tallied[open] ?? [], i) } }))}
-            />
-          )}
-          <div className="flex flex-wrap gap-2 mt-2">
-            <Btn disabled={play.readOnly || !r.done} onClick={() => play.patch({ docked: open })}>
-              Dock figure {open} in the {target[0]}/{target[1]} slot
-            </Btn>
-            {!r.done && <span className="text-xs font-bold text-slate-500 self-center">Tally all {figures[open]?.parts} pieces first.</span>}
-          </div>
-        </Bay>
-      </div>
-    </Shell>
   );
 }
 
@@ -415,557 +310,6 @@ export function B17FacePainter({ question, value, activityState, onChange, readO
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q19 — Area Cutter (2D)
-   The polygon is an irregular shape nobody can measure directly. The student slides a
-   horizontal cutter across it; when the cut produces only rectangles and triangles, each
-   piece gets a measured area and can be lifted out of the frame. What remains of the
-   frame after every piece is lifted is the shaded area.
-   ══════════════════════════════════════════════════════════════════════ */
-
-function clipY(pts: Pt[], c: number, keepBelow: boolean): Pt[] {
-  const inside = (p: Pt) => (keepBelow ? p[1] <= c + 1e-9 : p[1] >= c - 1e-9);
-  const out: Pt[] = [];
-  pts.forEach((cur, i) => {
-    const prev = pts[(i + pts.length - 1) % pts.length];
-    const ci = inside(cur);
-    const pi = inside(prev);
-    if (ci !== pi) {
-      const t = (c - prev[1]) / (cur[1] - prev[1]);
-      out.push([prev[0] + t * (cur[0] - prev[0]), c]);
-    }
-    if (ci) out.push(cur);
-  });
-  // drop repeats and straight-through points so shapes classify cleanly
-  const dedup = out.filter((p, i) => {
-    const q = out[(i + out.length - 1) % out.length];
-    return Math.hypot(p[0] - q[0], p[1] - q[1]) > 1e-9;
-  });
-  return dedup.filter((p, i) => {
-    const a = dedup[(i + dedup.length - 1) % dedup.length];
-    const b = dedup[(i + 1) % dedup.length];
-    return Math.abs((p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0])) > 1e-9;
-  });
-}
-
-function measure(pts: Pt[]): { kind: "rectangle" | "triangle" | "irregular"; area?: number; how?: string } {
-  if (pts.length === 4 && pts.every((p, i) => {
-    const q = pts[(i + 1) % 4];
-    return Math.abs(p[0] - q[0]) < 1e-9 || Math.abs(p[1] - q[1]) < 1e-9;
-  })) {
-    const xs = pts.map((p) => p[0]);
-    const ys = pts.map((p) => p[1]);
-    const L = Math.max(...xs) - Math.min(...xs);
-    const B = Math.max(...ys) - Math.min(...ys);
-    return { kind: "rectangle", area: L * B, how: `${L} × ${B}` };
-  }
-  if (pts.length === 3) {
-    const flat = pts.findIndex((p, i) => Math.abs(p[1] - pts[(i + 1) % 3][1]) < 1e-9);
-    if (flat >= 0) {
-      const a = pts[flat];
-      const b = pts[(flat + 1) % 3];
-      const apex = pts[(flat + 2) % 3];
-      const base = Math.abs(a[0] - b[0]);
-      const h = Math.abs(apex[1] - a[1]);
-      return { kind: "triangle", area: (base * h) / 2, how: `½ × ${base} × ${h}` };
-    }
-  }
-  return { kind: "irregular" };
-}
-
-interface CutWorld {
-  cut: number | null;
-  lifted: number[];
-}
-
-export function B19AreaCutter({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const rect = cfg<{ w: number; h: number }>(question, "rect", { w: 20, h: 12 });
-  const poly = cfg<Pt[]>(question, "polygon", []);
-  const ys = poly.map((p) => p[1]);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const piecesFor = (cut: number | null) => {
-    const raw = cut === null ? [poly] : [clipY(poly, cut, true), clipY(poly, cut, false)];
-    return raw.filter((p) => p.length >= 3 && shoelace(p) > 1e-9).map((pts) => ({ pts, ...measure(pts) }));
-  };
-
-  const play = usePlay<CutWorld>({
-    question,
-    initial: { cut: null, lifted: [] },
-    derive: (w) => {
-      const pieces = piecesFor(w.cut);
-      if (pieces.some((p) => p.kind === "irregular")) return { note: "An irregular piece can't be measured. Move the cutter until every piece is a rectangle or a triangle." };
-      if (w.lifted.length < pieces.length) return { note: `Lift every measured piece out of the frame (${w.lifted.length}/${pieces.length}).` };
-      const out = pieces.reduce((s, p) => s + (p.area ?? 0), 0);
-      const left = rect.w * rect.h - out;
-      return { value: `${rect.w * rect.h} − ${out} = ${left} cm²`, optionId: matchNumber(question, left) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const pieces = piecesFor(w.cut);
-  const S = 100 / rect.w;
-  const X = (x: number) => 5 + x * S;
-  const Y = (y: number) => 5 + (rect.h - y) * S;
-  const colours = ["#fbbf24", "#34d399"];
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Area Cutter"
-      mission="The polygon in the frame can't be measured as it is. Slide the cutter to slice it into pieces you can measure, lift each measured piece out of the frame, and read how much shaded frame is left."
-      icon={Scissors}
-      dim="2D"
-      submitLabel="Submit the shaded area"
-      live={
-        <>
-          <Gauge label="Frame" value={`${rect.w} × ${rect.h} = ${rect.w * rect.h} cm²`} />
-          <Gauge label="Cutter" value={w.cut === null ? "not used" : `y = ${w.cut} cm`} tone="violet" />
-          <Gauge label="Lifted out" value={`${pieces.filter((_, i) => w.lifted.includes(i)).reduce((s, p) => s + (p.area ?? 0), 0)} cm²`} tone="amber" />
-        </>
-      }
-    >
-      <div className="grid md:grid-cols-[1.4fr_1fr] gap-3">
-        <div className="rounded-2xl bg-white border-2 border-slate-200 p-2">
-          <svg viewBox={`0 0 110 ${rect.h * S + 10}`} className="w-full">
-            <defs>
-              <pattern id="b19hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <rect width="3" height="3" fill="#ddd6fe" />
-                <line x1="0" y1="0" x2="0" y2="3" stroke="#8b5cf6" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect x={X(0)} y={Y(rect.h)} width={rect.w * S} height={rect.h * S} fill="url(#b19hatch)" stroke="#312e81" strokeWidth={0.6} />
-            {Array.from({ length: rect.w + 1 }, (_, i) => (
-              <line key={`v${i}`} x1={X(i)} y1={Y(0)} x2={X(i)} y2={Y(rect.h)} stroke="#a5b4fc" strokeWidth={0.12} />
-            ))}
-            {Array.from({ length: rect.h + 1 }, (_, i) => (
-              <line key={`h${i}`} x1={X(0)} y1={Y(i)} x2={X(rect.w)} y2={Y(i)} stroke="#a5b4fc" strokeWidth={0.12} />
-            ))}
-            {pieces.map((p, i) =>
-              w.lifted.includes(i) ? (
-                <path key={i} d={polyPath(p.pts.map(([x, y]) => [X(x), Y(y)]))} fill="#ffffff" stroke="#94a3b8" strokeDasharray="1 1" strokeWidth={0.4} />
-              ) : (
-                <path key={i} d={polyPath(p.pts.map(([x, y]) => [X(x), Y(y)]))} fill={p.kind === "irregular" ? "#fda4af" : colours[i % 2]} stroke="#1e1b4b" strokeWidth={0.5} />
-              )
-            )}
-            {poly.map(([x, y], i) => (
-              <text key={i} x={X(x)} y={Y(y) - 1.2} fontSize={2.6} textAnchor="middle" fontWeight={800} fill="#1e1b4b">
-                ({x},{y})
-              </text>
-            ))}
-            {w.cut !== null && <line x1={X(-0.5)} y1={Y(w.cut)} x2={X(rect.w + 0.5)} y2={Y(w.cut)} stroke="#dc2626" strokeWidth={0.6} strokeDasharray="2 1" />}
-          </svg>
-          <label className="flex items-center gap-2 text-xs font-bold mt-1">
-            Cutter height
-            <input
-              type="range"
-              min={minY}
-              max={maxY}
-              step={1}
-              value={w.cut ?? minY}
-              disabled={play.readOnly}
-              onChange={(e) => play.set({ cut: Number(e.target.value), lifted: [] })}
-              className="accent-rose-600 flex-1"
-            />
-            <Btn tone="slate" disabled={play.readOnly || w.cut === null} onClick={() => play.set({ cut: null, lifted: [] })}>
-              Put cutter away
-            </Btn>
-          </label>
-        </div>
-        <Bay label="Pieces" tone="violet">
-          <ul className="space-y-2">
-            {pieces.map((p, i) => (
-              <li key={i} className="flex items-center gap-2 bg-white rounded-lg border p-2">
-                <span className="w-3 h-3 rounded-sm" style={{ background: p.kind === "irregular" ? "#fda4af" : colours[i % 2] }} />
-                <span className="text-xs font-bold flex-1">
-                  {p.kind === "irregular" ? `${p.pts.length}-sided irregular piece — no formula` : `${p.kind}: ${p.how} = ${p.area} cm²`}
-                </span>
-                <Btn disabled={play.readOnly || p.kind === "irregular"} active={w.lifted.includes(i)} tone={w.lifted.includes(i) ? "amber" : "violet"} onClick={() => play.patch({ lifted: toggle(w.lifted, i) })}>
-                  {w.lifted.includes(i) ? "Put back" : "Lift out"}
-                </Btn>
-              </li>
-            ))}
-          </ul>
-        </Bay>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q20 — Circle Lab (2D)
-   The student drags the ends of a chord round the circle. When the chord passes through
-   the centre the lab measures it against the diameter; tapping the region cut off by a
-   chord names it. Each statement's verdict switch unlocks once its experiment has run.
-   ══════════════════════════════════════════════════════════════════════ */
-
-interface CircleWorld {
-  a1: number;
-  a2: number;
-  sawDiameter: boolean;
-  sawSegment: boolean;
-  v: [string | null, string | null];
-}
-
-export function B20CircleLab({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const verdictOptions = cfg<Record<string, string>>(question, "verdictOptions", {});
-  const R = 38;
-  const pos = (deg: number): Pt => [50 + R * Math.cos((deg * Math.PI) / 180), 50 + R * Math.sin((deg * Math.PI) / 180)];
-
-  const play = usePlay<CircleWorld>({
-    question,
-    initial: { a1: 200, a2: 320, sawDiameter: false, sawSegment: false, v: [null, null] },
-    derive: (w) => {
-      if (!w.v[0] || !w.v[1]) return { note: "Run both experiments, then set a verdict for each statement." };
-      const key = `${w.v[0]}${w.v[1]}`;
-      return { value: `(i) ${w.v[0] === "T" ? "true" : "false"}, (ii) ${w.v[1] === "T" ? "true" : "false"}`, optionId: verdictOptions[key] };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const p1 = pos(w.a1);
-  const p2 = pos(w.a2);
-  const chord = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]);
-  const diff = (((w.a2 - w.a1) % 360) + 360) % 360;
-  const throughCentre = diff === 180;
-  const small = diff <= 180;
-  const segPath = `M ${p1.join(" ")} A ${R} ${R} 0 0 ${small ? 1 : 0} ${p2.join(" ")} Z`;
-
-  const [dragging, setDragging] = useState<null | 1 | 2>(null);
-  const moveTo = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!dragging || play.readOnly) return;
-    const q = clientToSvg(e.currentTarget, e.clientX, e.clientY);
-    if (!q) return;
-    const x = q.x - 50;
-    const y = q.y - 50;
-    const a = (Math.round(((Math.atan2(y, x) * 180) / Math.PI + 360) / 5) * 5) % 360;
-    const k = dragging === 1 ? "a1" : "a2";
-    if (w[k] === a) return;
-    play.set((s) => {
-      const next = { ...s, [k]: a } as CircleWorld;
-      const d = (((next.a2 - next.a1) % 360) + 360) % 360;
-      return d === 180 ? { ...next, sawDiameter: true } : next;
-    });
-  };
-
-  const Verdict = ({ i, unlocked }: { i: 0 | 1; unlocked: boolean }) => (
-    <div className="flex gap-1.5">
-      {["T", "F"].map((v) => (
-        <Btn key={v} disabled={play.readOnly || !unlocked} active={w.v[i] === v} tone={w.v[i] === v ? (v === "T" ? "emerald" : "rose") : "slate"} onClick={() => play.patch({ v: (i === 0 ? [v, w.v[1]] : [w.v[0], v]) as [string, string] })}>
-          {v === "T" ? "True" : "False"}
-        </Btn>
-      ))}
-    </div>
-  );
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Circle Lab"
-      mission="Drag the two ends of the chord around the circle. Line the chord up through the centre and compare it with the diameter; tap the region between a chord and its arc to name it. Then give each statement its verdict."
-      icon={CircleDot}
-      dim="2D"
-      submitLabel="Submit the verdicts"
-      live={
-        <>
-          <Gauge label="Chord length" value={`${(chord / R).toFixed(2)} r`} tone="violet" />
-          <Gauge label="Through the centre?" value={throughCentre ? "yes — equals 2r" : "no"} tone={throughCentre ? "emerald" : "slate"} />
-          <Gauge label="Region named" value={w.sawSegment ? "segment" : "—"} tone={w.sawSegment ? "emerald" : "slate"} />
-        </>
-      }
-    >
-      <div className="grid md:grid-cols-[1fr_1fr] gap-3">
-        <div className="rounded-2xl bg-white border-2 border-slate-200 p-2 select-none" style={{ touchAction: "none" }}>
-          <svg
-            viewBox="0 0 100 100"
-            className="w-full max-h-72"
-            onPointerMove={moveTo}
-            onPointerUp={() => setDragging(null)}
-            onPointerLeave={() => setDragging(null)}
-          >
-            <circle cx={50} cy={50} r={R} fill="#f5f3ff" stroke="#312e81" strokeWidth={0.8} />
-            <path d={segPath} fill={w.sawSegment ? "#fbbf24" : "#ddd6fe"} opacity={0.85} onClick={() => !play.readOnly && play.patch({ sawSegment: true })} style={{ cursor: "pointer" }} />
-            {w.sawSegment && (
-              <text x={(p1[0] + p2[0]) / 2} y={(p1[1] + p2[1]) / 2 + (small ? -3 : 5)} fontSize={4} fontWeight={900} textAnchor="middle" fill="#78350f">
-                segment
-              </text>
-            )}
-            <line x1={p1[0]} y1={p1[1]} x2={p2[0]} y2={p2[1]} stroke={throughCentre ? "#16a34a" : "#7c3aed"} strokeWidth={1.4} />
-            <circle cx={50} cy={50} r={1.3} fill="#1e1b4b" />
-            <text x={52} y={48} fontSize={3.5} fontWeight={800}>
-              O
-            </text>
-            {[p1, p2].map((p, i) => (
-              <circle key={i} cx={p[0]} cy={p[1]} r={4} fill="#7c3aed" stroke="#fff" strokeWidth={0.8} style={{ cursor: "grab" }}
-                data-handle={i + 1}
-                onPointerDown={(e) => {
-                  if (play.readOnly) return;
-                  (e.currentTarget.ownerSVGElement as SVGSVGElement | null)?.setPointerCapture?.(e.pointerId);
-                  setDragging((i + 1) as 1 | 2);
-                }}
-              />
-            ))}
-          </svg>
-          <p className="text-[11px] text-slate-500 font-semibold">Drag the violet dots. The drag reads your finger's angle around the circle, so drag inside the box.</p>
-        </div>
-        <div className="space-y-2">
-          <Bay label="(i) A chord that passes through the centre is a diameter">
-            <p className="text-xs font-semibold text-slate-600 mb-1">{w.sawDiameter ? "Lab note: a chord through O measured 2r — the diameter." : "Experiment: get the chord through O."}</p>
-            <Verdict i={0} unlocked={w.sawDiameter} />
-          </Bay>
-          <Bay label="(ii) The region between a chord and its arc is a segment">
-            <p className="text-xs font-semibold text-slate-600 mb-1">{w.sawSegment ? "Lab note: chord + arc enclose a segment." : "Experiment: tap the shaded region cut off by the chord."}</p>
-            <Verdict i={1} unlocked={w.sawSegment} />
-          </Bay>
-        </div>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q21 — Number Machine Factory (2D)
-   Four machines each combine two whole numbers. The student sets a and b, feeds them to a
-   machine and the output lands on the belt; an output that is not a whole number jams
-   the machine. After every machine has been tested three times, the jammed machine is
-   the property that is not always true.
-   ══════════════════════════════════════════════════════════════════════ */
-
-interface MachineRun {
-  m: string;
-  a: number;
-  b: number;
-  out: number;
-  ok: boolean;
-}
-interface FactoryWorld {
-  a: number;
-  b: number;
-  log: MachineRun[];
-}
-const runMachine = (op: string, a: number, b: number) => {
-  if (op === "+") return { out: a + b, ok: true };
-  if (op === "×") return { out: a * b, ok: true };
-  if (op === "−") return { out: a - b, ok: a - b >= 0 };
-  return { out: a * 1, ok: a * 1 === a };
-};
-
-export function B21MachineFactory({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const machines = cfg<{ id: string; op: string }[]>(question, "machines", []);
-  const play = usePlay<FactoryWorld>({
-    question,
-    initial: { a: 3, b: 5, log: [] },
-    derive: (w) => {
-      const untested = machines.filter((m) => w.log.filter((r) => r.m === m.id).length < 3);
-      const jammed = machines.filter((m) => w.log.some((r) => r.m === m.id && !r.ok));
-      if (untested.length && jammed.length === 0) return { note: `Test every machine at least 3 times (${machines.length - untested.length}/${machines.length} done).` };
-      if (!jammed.length) return { note: "No machine has jammed yet. Try other pairs — does any rule break?" };
-      if (jammed.length > 1) return { note: "More than one machine jammed — check the log." };
-      return { value: `Machine ${jammed[0].id} (a ${jammed[0].op === "×1" ? "× 1" : `${jammed[0].op} b`}) jammed`, optionId: jammed[0].id };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const Step = ({ k }: { k: "a" | "b" }) => (
-    <div className="flex items-center gap-1.5">
-      <span className="font-black w-4">{k}</span>
-      <Btn className="px-2" disabled={play.readOnly || w[k] <= 0} onClick={() => play.patch({ [k]: w[k] - 1 } as Partial<FactoryWorld>)}>
-        −
-      </Btn>
-      <span className="font-mono font-black text-lg w-8 text-center">{w[k]}</span>
-      <Btn className="px-2" disabled={play.readOnly || w[k] >= 20} onClick={() => play.patch({ [k]: w[k] + 1 } as Partial<FactoryWorld>)}>
-        +
-      </Btn>
-    </div>
-  );
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Number Machine Factory"
-      mission="Pick two whole numbers a and b, and feed them into each machine. A machine jams when its output isn't a whole number (whole numbers are 0, 1, 2, 3 …). Test each machine at least three times and find the one whose rule is not always true."
-      icon={Factory}
-      dim="2D"
-      submitLabel="Submit the jammed machine"
-      live={
-        <>
-          <Gauge label="Inputs" value={`a = ${w.a}, b = ${w.b}`} tone="violet" />
-          <Gauge label="Runs logged" value={w.log.length} />
-          <Gauge label="Jams" value={w.log.filter((r) => !r.ok).length} tone={w.log.some((r) => !r.ok) ? "rose" : "emerald"} />
-        </>
-      }
-    >
-      <div className="flex flex-wrap gap-4 mb-2">
-        <Step k="a" />
-        <Step k="b" />
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {machines.map((m) => {
-          const runs = w.log.filter((r) => r.m === m.id);
-          const jam = runs.some((r) => !r.ok);
-          return (
-            <motion.div key={m.id} animate={jam ? { rotate: [0, -2, 2, 0] } : {}} className={`rounded-2xl border-2 p-2 ${jam ? "bg-rose-50 border-rose-300" : "bg-slate-50 border-slate-200"}`}>
-              <div className="text-[10px] font-black uppercase text-slate-500">Machine {m.id}</div>
-              <div className="font-mono font-black text-lg">{m.op === "×1" ? "a × 1" : `a ${m.op} b`}</div>
-              <Btn className="w-full mt-1" disabled={play.readOnly} onClick={() => play.patch({ log: [...w.log, { m: m.id, a: w.a, b: w.b, ...runMachine(m.op, w.a, w.b) }] })}>
-                Feed {m.op === "×1" ? `a = ${w.a}` : `${w.a}, ${w.b}`}
-              </Btn>
-              <ul className="mt-1 space-y-0.5 max-h-24 overflow-y-auto">
-                {runs.map((r, i) => (
-                  <li key={i} className={`text-[11px] font-mono font-bold ${r.ok ? "text-emerald-700" : "text-rose-700"}`}>
-                    {m.op === "×1" ? `${r.a} × 1 = ${r.out}` : `${r.a} ${m.op} ${r.b} = ${r.out}`} {r.ok ? "✓" : "✗ JAM"}
-                  </li>
-                ))}
-              </ul>
-              <div className="text-[10px] font-bold text-slate-500">{runs.length}/3 tests</div>
-            </motion.div>
-          );
-        })}
-      </div>
-      <Btn tone="slate" className="mt-2" disabled={play.readOnly || !w.log.length} onClick={() => play.patch({ log: [] })}>
-        Clear the log
-      </Btn>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q23 — Place-Value Columns (2D)
-   Each part of the expanded form is a digit card. The student drops each card into a
-   place-value column; the column decides what the digit stands for. The number read off
-   the columns is the answer, so a card in the wrong column changes the number.
-   ══════════════════════════════════════════════════════════════════════ */
-
-interface Block {
-  id: string;
-  label: string;
-  digit: number;
-  place: number;
-}
-interface ColumnsWorld {
-  placed: Record<string, number>;
-}
-const PLACES = [2, 1, 0, -1, -2, -3, -4];
-const PLACE_NAME: Record<number, string> = { 2: "Hundreds", 1: "Tens", 0: "Ones", [-1]: "Tenths", [-2]: "Hundredths", [-3]: "Thousandths", [-4]: "Ten-thousandths" };
-const PLACE_FRAC: Record<number, string> = { 2: "100", 1: "10", 0: "1", [-1]: "1/10", [-2]: "1/100", [-3]: "1/1000", [-4]: "1/10000" };
-
-function readColumns(blocks: Block[], placed: Record<string, number>) {
-  let scaled = 0; // in ten-thousandths
-  blocks.forEach((b) => {
-    if (placed[b.id] !== undefined) scaled += b.digit * 10 ** (placed[b.id] + 4);
-  });
-  const int = Math.floor(scaled / 10000);
-  const frac = String(scaled % 10000).padStart(4, "0").replace(/0+$/, "");
-  return { text: frac ? `${int}.${frac}` : String(int), num: scaled / 10000 };
-}
-
-export function B23PlaceValueColumns({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const blocks = cfg<Block[]>(question, "blocks", []);
-  const [held, setHeld] = useState<string | null>(null);
-  const play = usePlay<ColumnsWorld>({
-    question,
-    initial: { placed: {} },
-    derive: (w) => {
-      const left = blocks.filter((b) => w.placed[b.id] === undefined).length;
-      if (left) return { note: `Place every card in a column (${blocks.length - left}/${blocks.length}).` };
-      const r = readColumns(blocks, w.placed);
-      return { value: r.text, optionId: matchText(question, r.text) ?? matchNumber(question, r.num) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const reading = readColumns(blocks, w.placed);
-  const inCol = (pl: number) => blocks.filter((b) => w.placed[b.id] === pl);
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Place-Value Columns"
-      mission="Tap a card from the expanded form, then tap the column it belongs in. A column tells you what its digit is worth — check it matches the card. Empty columns count as 0. Read the finished number off the board."
-      icon={Columns3}
-      dim="2D"
-      submitLabel="Submit the number on the board"
-      live={
-        <>
-          <Gauge label="Board reads" value={reading.text} tone="violet" />
-          <Gauge label="Cards placed" value={`${Object.keys(w.placed).length}/${blocks.length}`} />
-          <Gauge label="Holding" value={held ? blocks.find((b) => b.id === held)?.label : "—"} tone="amber" />
-        </>
-      }
-    >
-      <Bay label="Expanded-form cards">
-        <div className="flex flex-wrap gap-2">
-          {blocks.map((b) => {
-            const at = w.placed[b.id];
-            const worth = at !== undefined ? `${b.digit} × ${PLACE_FRAC[at]}` : "";
-            const wrong = at !== undefined && at !== b.place;
-            return (
-              <button
-                key={b.id}
-                type="button"
-                disabled={play.readOnly}
-                onClick={() => setHeld(held === b.id ? null : b.id)}
-                className={`min-h-[44px] px-3 rounded-xl border-2 font-mono font-black text-base ${held === b.id ? "bg-amber-100 border-amber-500" : at !== undefined ? (wrong ? "bg-rose-50 border-rose-300" : "bg-emerald-50 border-emerald-300") : "bg-white border-slate-300"}`}
-              >
-                {b.label}
-                {at !== undefined && <span className="block text-[10px] font-bold">{worth} {wrong ? "≠ card" : "✓"}</span>}
-              </button>
-            );
-          })}
-        </div>
-      </Bay>
-      <div className="grid grid-cols-4 sm:grid-cols-7 gap-1 mt-2">
-        {PLACES.map((pl) => (
-          <button
-            key={pl}
-            type="button"
-            disabled={play.readOnly || !held}
-            onClick={() => {
-              if (!held) return;
-              play.set((p) => ({ placed: { ...p.placed, [held]: pl } }));
-              setHeld(null);
-            }}
-            className={`rounded-xl border-2 p-1 min-h-[88px] text-center ${pl === -1 ? "border-l-4 border-l-rose-400" : ""} ${held ? "bg-violet-50 border-violet-300 hover:bg-violet-100" : "bg-slate-50 border-slate-200"}`}
-          >
-            <div className="text-[9px] font-black uppercase text-slate-500 leading-tight">{PLACE_NAME[pl]}</div>
-            <div className="text-[9px] font-bold text-slate-400">× {PLACE_FRAC[pl]}</div>
-            <div className="font-mono font-black text-2xl">{inCol(pl).reduce((s, b) => s + b.digit, 0) || 0}</div>
-          </button>
-        ))}
-      </div>
-      <div className="flex gap-2 mt-2">
-        <Btn tone="slate" disabled={play.readOnly || !held || w.placed[held] === undefined} onClick={() => {
-          if (!held) return;
-          play.set((p) => {
-            const next = { ...p.placed };
-            delete next[held];
-            return { placed: next };
-          });
-          setHeld(null);
-        }}>
-          Take the held card off the board
-        </Btn>
-      </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
    Q25 — Perimeter Ant (2D)
    An ant stands at one corner of the figure. The student taps an edge next to the ant to
    walk it; the odometer adds its length. The perimeter is what the odometer reads when
@@ -1084,12 +428,13 @@ export function B26PercentBeaker({ question, value, activityState, onChange, rea
     const s = Array.isArray(f.shaded) ? f.shaded.length : f.shaded;
     return (s / f.parts) * 100;
   };
+  const target = cfg<number>(question, "targetPercent", 40);
   const [sel, setSel] = useState(ids[0] ?? "A");
   const play = usePlay<BeakerWorld>({
     question,
     initial: { poured: [], last: null, pedestal: null },
     derive: (w) =>
-      !w.pedestal ? { note: "Pour the figures, then stand the 40% one on the pedestal." } : { value: `Figure ${w.pedestal} fills ${+pct(w.pedestal).toFixed(1)}%`, optionId: w.pedestal },
+      !w.pedestal ? { note: `Pour the figures, then stand the ${target}% one on the pedestal.` } : { value: `Figure ${w.pedestal} fills ${+pct(w.pedestal).toFixed(1)}%`, optionId: w.pedestal },
     activityState,
     value,
     onChange,
@@ -1103,7 +448,7 @@ export function B26PercentBeaker({ question, value, activityState, onChange, rea
       play={play}
       question={question}
       title="Percentage Beaker"
-      mission="Pick a figure and pour it: its shaded pieces fill the beaker to the shaded share of the figure. Compare with the 40% line. Stand the figure that fills exactly to 40% on the pedestal."
+      mission={`Pick a figure and pour it: its shaded pieces fill the beaker to the shaded share of the figure. Compare with the ${target}% line (${target / 100} of the whole). Stand the figure that fills exactly to it on the pedestal.`}
       icon={FlaskConical}
       dim="2D"
       submitLabel="Submit the figure on the pedestal"
@@ -1131,10 +476,10 @@ export function B26PercentBeaker({ question, value, activityState, onChange, rea
             <svg viewBox="0 0 60 110" className="h-56">
               <rect x={10} y={5} width={40} height={100} rx={3} fill="#f8fafc" stroke="#334155" strokeWidth={1.2} />
               <motion.rect x={11} width={38} initial={false} animate={{ y: 104 - level, height: level }} transition={{ duration: 0.9 }} fill="#38bdf8" opacity={0.8} />
-              {[20, 40, 60, 80, 100].map((m) => (
+              {Array.from(new Set([20, 40, 60, 80, 100, target])).map((m) => (
                 <g key={m}>
-                  <line x1={10} x2={m === 40 ? 56 : 18} y1={105 - m} y2={105 - m} stroke={m === 40 ? "#dc2626" : "#475569"} strokeWidth={m === 40 ? 1 : 0.6} />
-                  <text x={m === 40 ? 57 : 20} y={106 - m} fontSize={5} fontWeight={800} fill={m === 40 ? "#dc2626" : "#475569"}>
+                  <line x1={10} x2={m === target ? 56 : 18} y1={105 - m} y2={105 - m} stroke={m === target ? "#dc2626" : "#475569"} strokeWidth={m === target ? 1 : 0.6} />
+                  <text x={m === target ? 57 : 20} y={106 - m} fontSize={5} fontWeight={800} fill={m === target ? "#dc2626" : "#475569"}>
                     {m}%
                   </text>
                 </g>
@@ -1145,7 +490,7 @@ export function B26PercentBeaker({ question, value, activityState, onChange, rea
                 Pour figure {sel}
               </Btn>
               <Btn className="w-full" tone="amber" disabled={play.readOnly || !w.poured.includes(sel)} onClick={() => play.patch({ pedestal: sel })}>
-                Stand figure {sel} on the 40% pedestal
+                Stand figure {sel} on the {target}% pedestal
               </Btn>
               {!w.poured.includes(sel) && <p className="text-[11px] font-bold text-slate-500">Pour figure {sel} before it can go on the pedestal.</p>}
             </div>
@@ -1167,7 +512,7 @@ const ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight"
 const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
 function words(n: number): string {
   if (n < 20) return ONES[n];
-  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "");
+  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? ` ${ONES[n % 10]}` : "");
   return `${ONES[Math.floor(n / 100)]} hundred${n % 100 ? ` ${words(n % 100)}` : ""}`;
 }
 const PERIODS = ["", "thousand", "lakh", "crore"];
@@ -1267,7 +612,7 @@ export function B27PeriodReader({ question, value, activityState, onChange, read
           </React.Fragment>
         ))}
       </div>
-      <Bay label="The reader says" tone="dark">
+      <Bay label="The reader says" tone="violet">
         <p className="text-base font-bold">{"error" in r ? `⚠ ${r.error}` : w.commas.some(Boolean) ? `“${r.text}”` : "…waiting for commas"}</p>
       </Bay>
     </Shell>
@@ -1293,10 +638,9 @@ const anglesOf = ([a, b, c]: [number, number, number]): [number, number, number]
 };
 const eq = (x: number, y: number) => Math.abs(x - y) < 0.05;
 const STATEMENTS: { text: string; holds: (g: [number, number, number]) => boolean }[] = [
-  { text: "All angles are equal", holds: (g) => eq(g[0], g[1]) && eq(g[1], g[2]) },
-  { text: "Exactly two angles are equal", holds: (g) => [eq(g[0], g[1]), eq(g[1], g[2]), eq(g[0], g[2])].filter(Boolean).length === 1 },
-  { text: "All angles are of different measures", holds: (g) => !eq(g[0], g[1]) && !eq(g[1], g[2]) && !eq(g[0], g[2]) },
-  { text: "One angle is always 90°", holds: (g) => g.some((x) => eq(x, 90)) },
+  { text: "Two angles are equal", holds: (g) => [eq(g[0], g[1]), eq(g[1], g[2]), eq(g[0], g[2])].filter(Boolean).length === 1 },
+  { text: "All the angles are equal", holds: (g) => eq(g[0], g[1]) && eq(g[1], g[2]) },
+  { text: "All the angles are of different measures", holds: (g) => !eq(g[0], g[1]) && !eq(g[1], g[2]) && !eq(g[0], g[2]) },
 ];
 
 export function B28TriangleForge({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
@@ -1408,128 +752,6 @@ export function B28TriangleForge({ question, value, activityState, onChange, rea
           </Btn>
         </Bay>
       </div>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q30 — Measuring-Stick Workshop (2D)
-   Two rods have consecutive lengths. The student lays measuring sticks along both rods;
-   a stick measures a rod when copies fit with nothing left over. The longest stick that
-   measures both is their HCF. The workshop logs pairs and keeps the statements that held
-   for every pair.
-   ══════════════════════════════════════════════════════════════════════ */
-
-interface StickWorld {
-  n: number;
-  stick: number;
-  fits: number[];
-  log: { n: number; hcf: number }[];
-}
-const HCF_STATEMENTS = [
-  { text: "0", holds: (l: { n: number; hcf: number }) => l.hcf === 0 },
-  { text: "2", holds: (l: { n: number; hcf: number }) => l.hcf === 2 },
-  { text: "the smaller number", holds: (l: { n: number; hcf: number }) => l.hcf === l.n },
-  { text: "1", holds: (l: { n: number; hcf: number }) => l.hcf === 1 },
-];
-
-export function B30StickWorkshop({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<StickWorld>({
-    question,
-    initial: { n: 8, stick: 4, fits: [], log: [] },
-    derive: (w) => {
-      if (w.log.length < 3) return { note: `Log the longest common stick for at least 3 different pairs (${w.log.length}/3).` };
-      const always = HCF_STATEMENTS.filter((s) => w.log.every(s.holds));
-      if (always.length !== 1) return { note: always.length ? "More than one statement held every time — log a different pair." : "No statement held for every pair." };
-      return { value: `HCF was ${always[0].text} for every pair`, optionId: matchText(question, always[0].text) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const rods = [w.n, w.n + 1];
-  const fitsBoth = rods.every((r) => r % w.stick === 0);
-  const best = w.fits.length ? Math.max(...w.fits) : 0;
-  const logged = w.log.some((l) => l.n === w.n);
-  const U = 88 / (w.n + 1);
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Measuring-Stick Workshop"
-      mission="Two rods are consecutive numbers long. Choose a stick and lay it along both rods: it measures a rod when copies fit exactly. Try sticks until you find the longest one that measures both — that is the HCF. Log it, then change the rods and repeat."
-      icon={Ruler}
-      dim="2D"
-      submitLabel="Submit what the HCF always was"
-      live={
-        <>
-          <Gauge label="Rods" value={`${w.n} and ${w.n + 1}`} tone="violet" />
-          <Gauge label="Stick" value={`${w.stick} ${fitsBoth ? "fits both" : "leaves a gap"}`} tone={fitsBoth ? "emerald" : "rose"} />
-          <Gauge label="Longest common stick found" value={best || "—"} tone="amber" />
-        </>
-      }
-    >
-      <div className="rounded-2xl bg-amber-50 border-2 border-amber-200 p-2">
-        <svg viewBox="0 0 100 40" className="w-full">
-          {rods.map((r, k) => {
-            const copies = Math.floor(r / w.stick);
-            const gap = r - copies * w.stick;
-            return (
-              <g key={k} transform={`translate(6 ${6 + k * 17})`}>
-                <rect width={r * U} height={5} fill="#a16207" rx={1} />
-                <text x={r * U + 1} y={4.5} fontSize={3.6} fontWeight={900}>
-                  {r}
-                </text>
-                {Array.from({ length: copies }, (_, i) => (
-                  <rect key={i} x={i * w.stick * U} y={6} width={w.stick * U - 0.4} height={4} fill="#34d399" stroke="#065f46" strokeWidth={0.2} />
-                ))}
-                {gap > 0 && <rect x={copies * w.stick * U} y={6} width={gap * U} height={4} fill="#fda4af" />}
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 mt-2">
-        <span className="text-xs font-black">Stick</span>
-        {Array.from({ length: w.n + 1 }, (_, i) => i + 1).map((s) => (
-          <Btn
-            key={s}
-            className="px-2 min-w-[40px]"
-            active={w.stick === s}
-            tone={w.stick === s ? "violet" : w.fits.includes(s) ? "emerald" : "slate"}
-            disabled={play.readOnly}
-            onClick={() => play.set((p) => ({ ...p, stick: s, fits: [w.n, w.n + 1].every((r) => r % s === 0) && !p.fits.includes(s) ? [...p.fits, s] : p.fits }))}
-          >
-            {s}
-          </Btn>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center gap-2 mt-2">
-        <span className="text-xs font-black">Rods</span>
-        <Btn className="px-2" disabled={play.readOnly || w.n <= 1} onClick={() => play.patch({ n: w.n - 1, stick: 1, fits: [] })}>
-          shorter
-        </Btn>
-        <Btn className="px-2" disabled={play.readOnly || w.n >= 14} onClick={() => play.patch({ n: w.n + 1, stick: 1, fits: [] })}>
-          longer
-        </Btn>
-        <Btn tone="amber" disabled={play.readOnly || !best || logged} onClick={() => play.patch({ log: [...w.log, { n: w.n, hcf: best }] })}>
-          {logged ? "Pair already logged" : `Log HCF(${w.n}, ${w.n + 1}) = ${best || "?"}`}
-        </Btn>
-      </div>
-      {!!w.log.length && (
-        <Bay label="Workshop log" className="mt-2">
-          <div className="flex flex-wrap gap-1.5 text-xs font-mono font-bold">
-            {w.log.map((l, i) => (
-              <span key={i} className="px-2 py-1 rounded bg-white border">
-                HCF({l.n}, {l.n + 1}) = {l.hcf}
-              </span>
-            ))}
-          </div>
-        </Bay>
-      )}
     </Shell>
   );
 }
@@ -1695,7 +917,7 @@ export function B32MirrorTester({ question, value, activityState, onChange, read
     const c = (id: string) => w.closed.includes(id);
     const n = (id: string) => (w.lines[id] ?? []).length;
     return [
-      c("para") ? (n("para") === 2 ? "T" : "F") : null,
+      c("para") ? (n("para") === 1 ? "T" : "F") : null,
       c("rect") && c("square") ? (n("rect") === n("square") ? "T" : "F") : null,
       c("circle") ? (n("circle") === ANGLES.length ? "T" : "F") : null,
     ];
@@ -1706,7 +928,7 @@ export function B32MirrorTester({ question, value, activityState, onChange, read
     derive: (w) => {
       const v = verdicts(w);
       if (v.some((x) => !x)) return { note: "Close the case on every shape: try all 12 mirror angles on it." };
-      const text = v.join(", ");
+      const text = v.map((x) => (x === "T" ? "True" : "False")).join(", ");
       return { value: text, optionId: matchText(question, text) };
     },
     activityState,
@@ -1733,7 +955,7 @@ export function B32MirrorTester({ question, value, activityState, onChange, read
       mission="Pick a shape and turn the mirror line through its centre. When the reflected outline (dashed) lands exactly on the shape, record that line of symmetry. Try all 12 angles on a shape to close its case. The verdicts fill in from what you recorded."
       icon={FlipHorizontal2}
       dim="2D"
-      submitLabel="Submit T/F for (i), (ii), (iii)"
+      submitLabel="Submit True/False for (i), (ii), (iii)"
       live={
         <>
           <Gauge label="Mirror" value={`${ang}° · ${hit ? "match" : "no match"}`} tone={hit ? "emerald" : "slate"} />
@@ -1802,109 +1024,3 @@ export function B32MirrorTester({ question, value, activityState, onChange, read
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   Q34 — Polygon Gate (2D)
-   Each figure goes through the gate. The gate's two sensors report whether the figure is
-   closed and whether it is made only of straight sides. After scanning, the student sorts
-   the figure into the polygon bin or the reject bin. The polygon bin is the answer.
-   ══════════════════════════════════════════════════════════════════════ */
-
-interface GateShape {
-  id: number;
-  name: string;
-  closed: boolean;
-  straight: boolean;
-}
-interface GateWorld {
-  scanned: number[];
-  bin: Record<number, "poly" | "not">;
-}
-const ngon = (k: number, r = 30): Pt[] => Array.from({ length: k }, (_, i) => [50 + r * Math.cos(-Math.PI / 2 + (i / k) * Math.PI * 2), 50 + r * Math.sin(-Math.PI / 2 + (i / k) * Math.PI * 2)]);
-function GateFigure({ name }: { name: string }) {
-  if (name === "circle") return <circle cx={50} cy={50} r={30} fill="#e0f2fe" stroke="#0c4a6e" strokeWidth={3} />;
-  if (name === "zig-zag") return <polyline points="12,70 30,30 48,70 66,30 84,70" fill="none" stroke="#0c4a6e" strokeWidth={3} />;
-  const k = name === "triangle" ? 3 : name === "pentagon" ? 5 : name === "hexagon" ? 6 : 4;
-  return <path d={polyPath(ngon(k))} fill="#e0f2fe" stroke="#0c4a6e" strokeWidth={3} />;
-}
-
-export function B34PolygonGate({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const shapes = cfg<GateShape[]>(question, "shapes", []);
-  const [sel, setSel] = useState<number>(shapes[0]?.id ?? 1);
-  const play = usePlay<GateWorld>({
-    question,
-    initial: { scanned: [], bin: {} },
-    derive: (w) => {
-      const sorted = shapes.filter((s) => w.bin[s.id]).length;
-      if (sorted < shapes.length) return { note: `Scan and sort every figure (${sorted}/${shapes.length}).` };
-      const poly = shapes.filter((s) => w.bin[s.id] === "poly").map((s) => s.id);
-      if (!poly.length) return { note: "The polygon bin is empty." };
-      const text = listText(poly);
-      return { value: `Polygons: ${text}`, optionId: matchText(question, text) };
-    },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-  });
-  const w = play.world;
-  const s = shapes.find((x) => x.id === sel);
-  const scanned = w.scanned.includes(sel);
-
-  return (
-    <Shell
-      play={play}
-      question={question}
-      title="Polygon Gate"
-      mission="Send each figure through the gate: one sensor checks the figure is closed, the other checks every side is a straight line. Then sort the figure into the polygon bin or the reject bin."
-      icon={Hexagon}
-      dim="2D"
-      submitLabel="Submit the polygon bin"
-      live={
-        <>
-          <Gauge label="Polygon bin" value={shapes.filter((x) => w.bin[x.id] === "poly").map((x) => x.id).join(", ") || "empty"} tone="emerald" />
-          <Gauge label="Reject bin" value={shapes.filter((x) => w.bin[x.id] === "not").map((x) => x.id).join(", ") || "empty"} tone="rose" />
-        </>
-      }
-    >
-      <div className="grid grid-cols-5 gap-1.5">
-        {shapes.map((x) => (
-          <button key={x.id} type="button" onClick={() => setSel(x.id)} className={`rounded-xl border-2 p-1 bg-white ${sel === x.id ? "border-violet-500 ring-2 ring-violet-200" : "border-slate-200"} ${w.bin[x.id] === "poly" ? "bg-emerald-50" : w.bin[x.id] === "not" ? "bg-rose-50" : ""}`}>
-            <svg viewBox="0 0 100 100" className="w-full h-14">
-              <GateFigure name={x.name} />
-            </svg>
-            <div className="text-[11px] font-black">{x.id}</div>
-          </button>
-        ))}
-      </div>
-      {s && (
-        <div className="grid md:grid-cols-[1fr_1fr] gap-3 mt-2">
-          <Bay label={`Gate — figure ${s.id}`} tone="dark">
-            <div className="flex items-center gap-3">
-              <svg viewBox="0 0 100 100" className="w-24 h-24 bg-slate-800 rounded-lg">
-                <GateFigure name={s.name} />
-              </svg>
-              <div className="space-y-1.5 text-sm font-bold">
-                <div>Closed? {scanned ? (s.closed ? "🟢 yes" : "🔴 no — the ends don't meet") : "…"}</div>
-                <div>Only straight sides? {scanned ? (s.straight ? "🟢 yes" : "🔴 no — it curves") : "…"}</div>
-              </div>
-            </div>
-            <Btn tone="sky" className="mt-2" disabled={play.readOnly || scanned} onClick={() => play.patch({ scanned: [...w.scanned, sel] })}>
-              {scanned ? "Scanned" : "Run the gate"}
-            </Btn>
-          </Bay>
-          <Bay label="Sort it">
-            <div className="flex flex-wrap gap-2">
-              <Btn tone="emerald" disabled={play.readOnly || !scanned} active={w.bin[sel] === "poly"} onClick={() => play.patch({ bin: { ...w.bin, [sel]: "poly" } })}>
-                → Polygon bin
-              </Btn>
-              <Btn tone="rose" disabled={play.readOnly || !scanned} active={w.bin[sel] === "not"} onClick={() => play.patch({ bin: { ...w.bin, [sel]: "not" } })}>
-                → Reject bin
-              </Btn>
-            </div>
-            {!scanned && <p className="text-[11px] font-bold text-slate-500 mt-1">Run the gate before sorting.</p>}
-          </Bay>
-        </div>
-      )}
-    </Shell>
-  );
-}

@@ -151,7 +151,7 @@ export function Q02DotLabActivity({ question, value, activityState, onChange, re
   const play = usePlay<{ fig: string; dots: Record<string, Record<number, Pt>>; locked: string | null }>({
     question,
     initial: { fig: "A", dots: {}, locked: null },
-    derive: (w) => (!w.locked ? { note: "Place all three dots correctly in one figure and lock it." } : { value: `All three dots fit in figure ${w.locked}`, optionId: w.locked }),
+    derive: (w) => (!w.locked ? { note: `Place all ${rules.length} dots correctly in one figure and lock it.` } : { value: `All ${rules.length} dots fit in figure ${w.locked}`, optionId: w.locked }),
     activityState,
     value,
     onChange,
@@ -169,11 +169,11 @@ export function Q02DotLabActivity({ question, value, activityState, onChange, re
       play={play}
       question={question}
       title="Dot Placement Laboratory"
-      mission="Study the given figure: the scanner lists which shapes each of its dots is inside. Then pick an option figure, choose a dot and tap the light-table to place it. Lock the figure where all three dots can sit in the same kinds of region."
+      mission={`Study the given figure: the list says which shapes each of its dots is inside. Then pick an option figure, choose a dot and tap the light-table to place it. Lock the figure where all ${rules.length} dots can sit in the same kinds of region.`}
       icon={CircleDot}
       dim="2D"
       submitLabel="Submit the figure"
-      hints={["A dot's region is described by the shapes it is inside and the shapes it is outside.", "Look for a region that is inside the triangle and the square but not the circle — not every figure has one."]}
+      hints={cfg<string[]>(question, "hints", ["A dot's region is described by the shapes it is inside and the shapes it is outside.", "Look for a region that is inside the triangle and the square but not the circle — not every figure has one."])}
       live={
         <>
           {rules.map((r) => (

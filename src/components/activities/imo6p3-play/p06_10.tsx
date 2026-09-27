@@ -444,7 +444,7 @@ export function Q10ReflectionPoolActivity({ question, value, activityState, onCh
       icon={Waves}
       dim="2D"
       submitLabel="Submit the reflection"
-      hints={["A water image is what you see in a pond below the text: top and bottom swap.", "In a water image every character stays in the same position as in the original."]}
+      hints={cfg<string[]>(question, "hints", ["A water image is what you see in a pond below the text: top and bottom swap.", "In a water image every character stays in the same position as in the original."])}
       live={<Gauge label="Mirror" value={w.mirror === "v" ? "waterline below" : w.mirror === "h" ? "mirror at the right" : "none"} tone="sky" />}
     >
       <div className="flex flex-wrap gap-1.5">

@@ -78,24 +78,24 @@ export function B03CipherRoom({ question, value, activityState, onChange, readOn
         </>
       }
     >
-      <div className="rounded-2xl bg-slate-950 p-3 text-white overflow-x-auto">
-        <div className="text-[10px] font-black tracking-widest text-emerald-400 mb-2">DECRYPT THE WORD</div>
+      <div className="rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 border-2 border-indigo-200 p-3 text-slate-900 overflow-x-auto">
+        <div className="text-[10px] font-black tracking-widest text-emerald-700 mb-2">DECRYPT THE WORD</div>
         <div className="flex gap-2 min-w-max">
           {Array.from({ length: n }).map((_, i) => {
             const ok = encoded[i] === ex.coded[i];
             return (
-              <div key={i} className="w-16 rounded-xl bg-slate-900 border border-slate-700 p-1.5 flex flex-col items-center gap-1">
+              <div key={i} className="w-16 rounded-xl bg-white border border-indigo-200 p-1.5 flex flex-col items-center gap-1">
                 <span className="text-[10px] text-slate-400 font-mono">{ex.plain[i] ?? ""}</span>
-                <button type="button" disabled={play.readOnly} onClick={() => setShift(i, 1)} className="w-full h-7 rounded bg-slate-800 text-xs font-black" aria-label={`wheel ${i + 1} up`}>
+                <button type="button" disabled={play.readOnly} onClick={() => setShift(i, 1)} className="w-full h-7 rounded bg-indigo-100 text-indigo-900 text-xs font-black" aria-label={`wheel ${i + 1} up`}>
                   ▲
                 </button>
-                <motion.div key={w.shifts[i]} initial={{ rotateX: 90 }} animate={{ rotateX: 0 }} className="font-mono text-xs font-black text-amber-300">
+                <motion.div key={w.shifts[i]} initial={{ rotateX: 90 }} animate={{ rotateX: 0 }} className="font-mono text-xs font-black text-amber-700">
                   {w.shifts[i] > 0 ? `+${w.shifts[i]}` : w.shifts[i]}
                 </motion.div>
-                <button type="button" disabled={play.readOnly} onClick={() => setShift(i, -1)} className="w-full h-7 rounded bg-slate-800 text-xs font-black" aria-label={`wheel ${i + 1} down`}>
+                <button type="button" disabled={play.readOnly} onClick={() => setShift(i, -1)} className="w-full h-7 rounded bg-indigo-100 text-indigo-900 text-xs font-black" aria-label={`wheel ${i + 1} down`}>
                   ▼
                 </button>
-                <span className={`relative w-10 h-10 grid place-items-center rounded-lg font-mono text-xl font-black ${ok ? "bg-emerald-600" : "bg-rose-700"}`}>
+                <span className={`relative w-10 h-10 grid place-items-center rounded-lg font-mono text-xl font-black text-white ${ok ? "bg-emerald-600" : "bg-rose-600"}`}>
                   {encoded[i] ?? ""}
                   {!ok && ex.plain[i] && <span className="absolute -top-1.5 -right-1.5 text-[9px] bg-rose-500 rounded px-0.5 rotate-12">✗</span>}
                 </span>
@@ -104,7 +104,7 @@ export function B03CipherRoom({ question, value, activityState, onChange, readOn
             );
           })}
         </div>
-        <div className="mt-3 text-[10px] font-black tracking-widest text-sky-400">TARGET: {target}</div>
+        <div className="mt-3 text-[10px] font-black tracking-widest text-sky-700">TARGET: {target}</div>
         <div className="mt-1 flex gap-2 min-w-max">
           {target.split("").map((c, i) => {
             const used = w.display.includes(i);
@@ -114,7 +114,7 @@ export function B03CipherRoom({ question, value, activityState, onChange, readOn
                 type="button"
                 disabled={play.readOnly || used}
                 onClick={() => play.patch({ display: [...w.display, i] })}
-                className={`w-16 h-12 rounded-lg border-2 font-mono text-lg font-black ${used ? "border-slate-700 text-slate-600" : "border-sky-400 text-sky-200 hover:bg-sky-900"}`}
+                className={`w-16 h-12 rounded-lg border-2 font-mono text-lg font-black ${used ? "border-slate-200 text-slate-400 bg-slate-50" : "border-sky-400 text-sky-900 bg-white hover:bg-sky-50"}`}
                 aria-label={`pull decoded letter ${i + 1}`}
               >
                 {c}→{shiftLetter(c, w.shifts[i])}
@@ -581,16 +581,16 @@ export function B22DivisibilityVault({ question, value, activityState, onChange,
         </>
       }
     >
-      <div className="rounded-2xl bg-gradient-to-b from-slate-700 to-slate-900 p-4 text-white">
+      <div className="rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200 border-2 border-slate-300 p-4 text-slate-900">
         <div className="flex items-center justify-center gap-4">
-          <motion.div animate={{ rotateY: open ? -70 : 0 }} style={{ transformOrigin: "left center" }} className="w-40 h-40 rounded-full border-8 border-slate-500 bg-slate-600 grid place-items-center shadow-inner">
+          <motion.div animate={{ rotateY: open ? -70 : 0 }} style={{ transformOrigin: "left center" }} className="w-40 h-40 rounded-full border-8 border-slate-400 bg-white grid place-items-center shadow-inner">
             <motion.div animate={{ rotate: (w.digit ?? 0) * 36 }} className="w-24 h-24 rounded-full border-4 border-dashed border-amber-400 grid place-items-center text-4xl">
               {open ? "🔓" : "🔒"}
             </motion.div>
           </motion.div>
           <div className="font-mono text-3xl font-black tracking-widest">
             {number.split("").map((c, i) => (
-              <span key={i} className={i === left.length ? "text-amber-300 underline" : ""}>
+              <span key={i} className={i === left.length ? "text-amber-700 underline" : ""}>
                 {c}
               </span>
             ))}

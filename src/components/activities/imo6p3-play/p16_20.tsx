@@ -53,7 +53,7 @@ export function Q16PlaceValueVaultActivity({ question, value, activityState, onC
       icon={Vault}
       dim="2D"
       submitLabel="Submit the expression's value"
-      hints={["Each term supplies one digit of 35.4067: the 3 is 3 tens, the 5 is 5 ones, and so on.", "For 3/P to be 30, P must be a fraction."]}
+      hints={cfg<string[]>(question, "hints", ["Each term supplies one digit of 35.4067: the 3 is 3 tens, the 5 is 5 ones, and so on.", "For 3/P to be 30, P must be a fraction."])}
       live={
         <>
           <Gauge label="Terms add to" value={sum} tone={open ? "emerald" : "amber"} />

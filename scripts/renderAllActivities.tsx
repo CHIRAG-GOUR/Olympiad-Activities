@@ -71,6 +71,8 @@ interface Paper {
   prefix?: string;
   /** Papers whose activities are registered statically resolve through the registry. */
   viaRegistry?: boolean;
+  /** Games that live outside the paper's own modules: [question number, loader, export]. */
+  extra?: [number, () => Promise<Record<string, unknown>>, string][];
 }
 
 const PAPERS: Paper[] = [
@@ -118,6 +120,12 @@ const PAPERS: Paper[] = [
       () => import("../src/components/activities/imo6b2-play/b_every"),
       () => import("../src/components/activities/imo6b2-play/b_logic"),
       () => import("../src/components/activities/imo6b2-play/b_math"),
+      () => import("../src/components/activities/imo6b2-play/b_paper"),
+    ],
+    extra: [
+      [13, () => import("../src/components/activities/imo6p3-play/p01_05"), "Q02DotLabActivity"],
+      [15, () => import("../src/components/activities/imo6p3-play/p06_10"), "Q10ReflectionPoolActivity"],
+      [23, () => import("../src/components/activities/imo6p3-play/p16_20"), "Q16PlaceValueVaultActivity"],
     ],
   },
   { label: "Set B", questions: IMO_CLASS6_SETB_QUESTIONS, viaRegistry: true },
@@ -146,6 +154,10 @@ async function componentsFor(paper: Paper): Promise<Map<number, { name: string; 
       const n = leadingNumber(name, paper.prefix ?? "Q");
       if (n !== null && typeof exported === "function") out.set(n, { name, comp: exported as Comp });
     }
+  }
+  for (const [n, load, name] of paper.extra ?? []) {
+    const exported = (await load())[name];
+    if (typeof exported === "function") out.set(n, { name, comp: exported as Comp });
   }
   return out;
 }

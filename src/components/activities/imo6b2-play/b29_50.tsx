@@ -289,11 +289,11 @@ export function B35DivisorCannon({ question, value, activityState, onChange, rea
         {numbers.map((n) => {
           const r = w.fired && w.block ? n % w.block : null;
           return (
-            <div key={n} className="rounded-2xl bg-slate-800 text-white p-3 text-center">
+            <div key={n} className="rounded-2xl bg-indigo-50 border-2 border-indigo-200 text-indigo-950 p-3 text-center">
               <div className="text-3xl">💣</div>
               <div className="font-mono text-2xl font-black">{n}</div>
               {r !== null && w.block && (
-                <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`mt-1 font-mono text-sm font-black ${r === 0 ? "text-emerald-300" : "text-rose-300"}`}>
+                <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`mt-1 font-mono text-sm font-black ${r === 0 ? "text-emerald-700" : "text-rose-600"}`}>
                   {n} = {w.block} × {Math.floor(n / w.block)} + {r}
                 </motion.div>
               )}
@@ -463,15 +463,15 @@ export function B38RiceWarehouse({ question, value, activityState, onChange, rea
     >
       <div className="flex flex-wrap gap-2 justify-center">
         {WHEELS.map((wh, i) => (
-          <div key={wh.label} className="flex flex-col items-center gap-1 rounded-xl bg-slate-800 p-2 text-white w-20">
-            <span className="text-[9px] font-black text-slate-300 uppercase">{wh.label}</span>
-            <button type="button" disabled={play.readOnly} onClick={() => play.set((p) => ({ loaded: false, digits: p.digits.map((x, j) => (j === i ? (x + 1) % 10 : x)) }))} className="w-full h-8 rounded bg-slate-700" aria-label={`${wh.label} up`}>
+          <div key={wh.label} className="flex flex-col items-center gap-1 rounded-xl bg-indigo-50 border-2 border-indigo-200 p-2 text-indigo-950 w-20">
+            <span className="text-[9px] font-black text-slate-500 uppercase">{wh.label}</span>
+            <button type="button" disabled={play.readOnly} onClick={() => play.set((p) => ({ loaded: false, digits: p.digits.map((x, j) => (j === i ? (x + 1) % 10 : x)) }))} className="w-full h-8 rounded bg-indigo-100" aria-label={`${wh.label} up`}>
               ▲
             </button>
-            <motion.span key={w.digits[i]} initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="font-mono text-3xl font-black text-amber-300">
+            <motion.span key={w.digits[i]} initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="font-mono text-3xl font-black text-amber-700">
               {w.digits[i]}
             </motion.span>
-            <button type="button" disabled={play.readOnly} onClick={() => play.set((p) => ({ loaded: false, digits: p.digits.map((x, j) => (j === i ? (x + 9) % 10 : x)) }))} className="w-full h-8 rounded bg-slate-700" aria-label={`${wh.label} down`}>
+            <button type="button" disabled={play.readOnly} onClick={() => play.set((p) => ({ loaded: false, digits: p.digits.map((x, j) => (j === i ? (x + 9) % 10 : x)) }))} className="w-full h-8 rounded bg-indigo-100" aria-label={`${wh.label} down`}>
               ▼
             </button>
             {i === 1 && <span className="text-2xl font-black leading-none -mt-1">.</span>}
@@ -483,10 +483,10 @@ export function B38RiceWarehouse({ question, value, activityState, onChange, rea
           🚚 Load {amt.toFixed(3)} kg onto the truck
         </Btn>
         {w.loaded && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-mono text-right bg-slate-900 text-lime-300 rounded-xl px-4 py-2 text-lg font-black">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-mono text-right bg-emerald-50 border-2 border-emerald-200 text-emerald-800 rounded-xl px-4 py-2 text-lg font-black">
             <div>{stock.toFixed(3)}</div>
-            <div className="border-b border-lime-300/50">− {amt.toFixed(3)}</div>
-            <div className="text-white">{round(stock - amt, 3).toFixed(3)} kg</div>
+            <div className="border-b border-emerald-400">− {amt.toFixed(3)}</div>
+            <div className="text-emerald-950">{round(stock - amt, 3).toFixed(3)} kg</div>
           </motion.div>
         )}
       </div>
@@ -538,7 +538,7 @@ const clockText = (start: { h: number; m: number }, t: number) => {
   const h24 = Math.floor(total / 60) % 24;
   const m = total % 60;
   const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-  return `${h12}:${String(m).padStart(2, "0")} ${h24 < 12 ? "a.m." : "p.m."}`;
+  return `${h12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h24 < 12 ? "a.m." : "p.m."}`;
 };
 
 export function B40BellTower({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
