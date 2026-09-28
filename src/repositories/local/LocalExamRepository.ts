@@ -3,8 +3,8 @@ import { Exam } from "@/types/exam";
 import { SEED_EXAMS, reconcileWithSeed } from "@/lib/seedData";
 import { idbClient } from "@/services/persistence/indexeddb";
 
-// Key bumped to v6 for the newly added SOF IMO 2023-24 Class 6 Set C paper.
-const LOCAL_STORAGE_KEY = "olympiad_exams_repo_v6";
+// Key bumped to v7 for the newly added 10th SOF IMO Class 6 Set A paper.
+const LOCAL_STORAGE_KEY = "olympiad_exams_repo_v7";
 
 export class LocalExamRepository implements IExamRepository {
   private inMemory: Exam[] | null = null;
