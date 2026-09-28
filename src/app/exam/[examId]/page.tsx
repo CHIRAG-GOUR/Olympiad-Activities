@@ -1,13 +1,9 @@
 import ExamSessionClient from "./ExamSessionClient";
 
+import { SEED_EXAMS } from "@/lib/seedData";
+
 export function generateStaticParams() {
-  return [
-    { examId: "exam_imo_2024_g6_setb" },
-    { examId: "exam_imo_2018_g6_seta" },
-    { examId: "exam_imo_2018_g6_seta_classic" },
-    { examId: "exam_imo_g6_setb2" },
-    { examId: "exam_imo_g6_paper3" },
-  ];
+  return SEED_EXAMS.map((exam) => ({ examId: exam.id }));
 }
 
 export default function Page({ params }: { params: Promise<{ examId: string }> }) {
