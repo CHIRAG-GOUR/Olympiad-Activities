@@ -41,20 +41,5 @@ jobs:
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: olympiad-dashboard.firebaseapp.com
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: olympiad-dashboard.firebasestorage.app
 
-      - name: Deploy with Firebase Action
-        if: env.FIREBASE_TOKEN != ''
+      - name: Deploy to Firebase Hosting
         run: npx firebase-tools deploy --only hosting:the-olympiad-dashboard --project olympiad-dashboard --token "${{ secrets.FIREBASE_TOKEN }}"
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-
-      - name: Deploy with Firebase Hosting Action (Service Account)
-        if: env.FIREBASE_SERVICE_ACCOUNT != ''
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_OLYMPIAD_DASHBOARD }}'
-          channelId: live
-          projectId: olympiad-dashboard
-          target: the-olympiad-dashboard
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OLYMPIAD_DASHBOARD }}
