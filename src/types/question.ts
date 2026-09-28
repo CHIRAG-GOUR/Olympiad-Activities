@@ -210,4 +210,6 @@ export interface Question {
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
+  /** Fingerprint of the built-in revision this record came from (see reconcileWithSeed). */
+  seedRev?: string;
 }

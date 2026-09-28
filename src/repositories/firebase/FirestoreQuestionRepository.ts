@@ -4,6 +4,7 @@ import { db } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, where } from "firebase/firestore";
 import { LocalQuestionRepository } from "../local/LocalQuestionRepository";
 import { reviveNestedArrays } from "./decodeFirestore";
+import { SEED_QUESTIONS, preferSeed, reconcileWithSeed } from "@/lib/seedData";
 
 export class FirestoreQuestionRepository implements IQuestionRepository {
   private localFallback = new LocalQuestionRepository();
@@ -13,7 +14,7 @@ export class FirestoreQuestionRepository implements IQuestionRepository {
     try {
       const snap = await getDoc(doc(db, "questions", id));
       if (snap.exists()) {
-        return reviveNestedArrays(snap.data()) as Question;
+        return preferSeed(reviveNestedArrays(snap.data()) as Question, SEED_QUESTIONS, id);
       }
       return this.localFallback.getQuestion(id);
     } catch (e) {
@@ -32,7 +33,7 @@ export class FirestoreQuestionRepository implements IQuestionRepository {
         let remote = snap.docs.map((d) => reviveNestedArrays(d.data()) as Question);
         const remoteIds = new Set(remote.map((q) => q.id));
         const missingLocal = (await this.localFallback.listQuestions()).filter((q) => !remoteIds.has(q.id));
-        let questions = [...remote, ...missingLocal];
+        let questions = reconcileWithSeed([...remote, ...missingLocal], SEED_QUESTIONS);
         if (filters) {
           if (filters.subjectId) {
             questions = questions.filter((q) => q.subjectId === filters.subjectId);

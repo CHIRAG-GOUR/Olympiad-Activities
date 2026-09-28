@@ -1,6 +1,6 @@
 import { IQuestionRepository, QuestionFilters } from "../interfaces/IQuestionRepository";
 import { Question } from "@/types/question";
-import { SEED_QUESTIONS } from "@/lib/seedData";
+import { SEED_QUESTIONS, reconcileWithSeed } from "@/lib/seedData";
 
 // Bumped with the arrival of the Set A question bank (see LocalExamRepository).
 const LOCAL_STORAGE_KEY = "olympiad_questions_repo_v5";
@@ -23,11 +23,10 @@ export class LocalQuestionRepository implements IQuestionRepository {
       }
     }
 
-    const existingIds = new Set(questions.map((q) => q.id));
-    const missing = SEED_QUESTIONS.filter((q) => !existingIds.has(q.id));
-    this.inMemory = [...questions, ...missing];
-    if (missing.length > 0 || questions.length === 0) {
-      this.persist(this.inMemory);
+    const merged = reconcileWithSeed(questions, SEED_QUESTIONS);
+    this.inMemory = merged;
+    if (questions.length === 0 || merged.some((q, i) => q !== questions[i])) {
+      this.persist(merged);
     }
     return this.inMemory;
   }

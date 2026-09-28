@@ -1,6 +1,6 @@
 import { IExamRepository } from "../interfaces/IExamRepository";
 import { Exam } from "@/types/exam";
-import { SEED_EXAMS } from "@/lib/seedData";
+import { SEED_EXAMS, reconcileWithSeed } from "@/lib/seedData";
 import { idbClient } from "@/services/persistence/indexeddb";
 
 // Key bumped to v5 so all browsers immediately pick up the newly added 6th Olympiad paper.
@@ -24,11 +24,10 @@ export class LocalExamRepository implements IExamRepository {
       }
     }
 
-    const existingIds = new Set(exams.map((e) => e.id));
-    const missing = SEED_EXAMS.filter((e) => !existingIds.has(e.id));
-    this.inMemory = [...exams, ...missing];
-    if (missing.length > 0 || exams.length === 0) {
-      this.persist(this.inMemory);
+    const merged = reconcileWithSeed(exams, SEED_EXAMS);
+    this.inMemory = merged;
+    if (exams.length === 0 || merged.some((e, i) => e !== exams[i])) {
+      this.persist(merged);
     }
     return this.inMemory;
   }

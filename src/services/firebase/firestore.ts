@@ -18,6 +18,7 @@ import {
   SEED_QUESTIONS,
   SEED_EXAMS,
   SEED_LIVE_SESSIONS,
+  reconcileWithSeed,
 } from "@/lib/seedData";
 
 const LOCAL_STORAGE_PREFIX = "olympiad_db_";
@@ -86,13 +87,13 @@ export const OlympiadStore = {
       try {
         const snap = await getDocs(collection(db, "questions"));
         if (!snap.empty) {
-          return snap.docs.map((d) => d.data() as Question);
+          return reconcileWithSeed(snap.docs.map((d) => d.data() as Question), SEED_QUESTIONS);
         }
       } catch (e) {
         console.warn("Firestore read failed, falling back to local store", e);
       }
     }
-    return getLocalCollection<Question>("questions", SEED_QUESTIONS);
+    return reconcileWithSeed(getLocalCollection<Question>("questions", SEED_QUESTIONS), SEED_QUESTIONS);
   },
 
   async getQuestionById(id: string): Promise<Question | null> {
@@ -137,16 +138,13 @@ export const OlympiadStore = {
       try {
         const snap = await getDocs(collection(db, "exams"));
         if (!snap.empty) {
-          const remote = snap.docs.map((d) => d.data() as Exam);
-          const remoteIds = new Set(remote.map((e) => e.id));
-          const missing = SEED_EXAMS.filter((e) => !remoteIds.has(e.id));
-          return [...remote, ...missing];
+          return reconcileWithSeed(snap.docs.map((d) => d.data() as Exam), SEED_EXAMS);
         }
       } catch (e) {
         console.warn("Firestore exam fetch fallback", e);
       }
     }
-    return getLocalCollection<Exam>("exams", SEED_EXAMS);
+    return reconcileWithSeed(getLocalCollection<Exam>("exams", SEED_EXAMS), SEED_EXAMS);
   },
 
   async getExamById(id: string): Promise<Exam | null> {

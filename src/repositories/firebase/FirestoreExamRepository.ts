@@ -4,6 +4,7 @@ import { db } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { LocalExamRepository } from "../local/LocalExamRepository";
 import { reviveNestedArrays } from "./decodeFirestore";
+import { SEED_EXAMS, preferSeed, reconcileWithSeed } from "@/lib/seedData";
 
 export class FirestoreExamRepository implements IExamRepository {
   private localFallback = new LocalExamRepository();
@@ -13,7 +14,7 @@ export class FirestoreExamRepository implements IExamRepository {
     try {
       const snap = await getDoc(doc(db, "exams", id));
       if (snap.exists()) {
-        return reviveNestedArrays(snap.data()) as Exam;
+        return preferSeed(reviveNestedArrays(snap.data()) as Exam, SEED_EXAMS, id);
       }
       return this.localFallback.getExam(id);
     } catch (e) {
@@ -31,7 +32,7 @@ export class FirestoreExamRepository implements IExamRepository {
         const remote = snap.docs.map((d) => reviveNestedArrays(d.data()) as Exam);
         const remoteIds = new Set(remote.map((e) => e.id));
         const missingLocal = local.filter((e) => !remoteIds.has(e.id));
-        return [...remote, ...missingLocal];
+        return reconcileWithSeed([...remote, ...missingLocal], SEED_EXAMS);
       }
       return local;
     } catch (e) {

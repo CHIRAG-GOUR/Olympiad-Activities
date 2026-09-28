@@ -42,6 +42,8 @@ export interface Exam {
   scheduledEndTime?: string;
   createdAt: string;
   updatedAt: string;
+  /** Fingerprint of the built-in revision this record came from (see reconcileWithSeed). */
+  seedRev?: string;
   participantCount?: number;
   completionCount?: number;
   averageScore?: number;

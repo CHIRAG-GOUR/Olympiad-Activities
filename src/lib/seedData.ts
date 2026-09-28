@@ -23,21 +23,60 @@ import { IMO6P3_QUESTIONS, IMO6P3_EXAM } from "@/data/imo6p3";
  *   • IMO Class 6 Paper 3 (Set C / Level 1) — 50 interactive mini-games.
  */
 
-export const SEED_QUESTIONS: Question[] = [
+/** FNV-1a hash of a record's JSON, ignoring its own seedRev. */
+function fingerprint(x: object): string {
+  const json = JSON.stringify({ ...x, seedRev: undefined });
+  let h = 0x811c9dc5;
+  for (let i = 0; i < json.length; i++) {
+    h ^= json.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
+function stamp<T extends { seedRev?: string }>(items: T[]): T[] {
+  return items.map((x) => ({ ...x, seedRev: fingerprint(x) }));
+}
+
+/**
+ * Merge stored records with the built-in papers. A stored copy of a built-in record is kept
+ * only while it carries the current seedRev (so a teacher's edit survives until the paper
+ * itself changes); a copy of an older revision is replaced by the code's version, and
+ * built-in records missing from the store are appended.
+ */
+export function reconcileWithSeed<T extends { id: string; seedRev?: string }>(stored: T[], seeds: T[]): T[] {
+  const byId = new Map(seeds.map((s) => [s.id, s]));
+  const kept = stored.map((x) => {
+    const seed = byId.get(x.id);
+    return seed && x.seedRev !== seed.seedRev ? seed : x;
+  });
+  const have = new Set(stored.map((x) => x.id));
+  return [...kept, ...seeds.filter((s) => !have.has(s.id))];
+}
+
+/** The built-in version of one record, when the stored copy is missing or out of date. */
+export function preferSeed<T extends { id: string; seedRev?: string }>(stored: T | null, seeds: T[], id: string): T | null {
+  const seed = seeds.find((s) => s.id === id || (s as { code?: string }).code === id || (s as { questionId?: string }).questionId === id);
+  if (!stored) return seed ?? null;
+  if (seed && seed.id === stored.id && stored.seedRev !== seed.seedRev) return seed;
+  return stored;
+}
+
+export const SEED_QUESTIONS: Question[] = stamp([
   ...IMO6A_QUESTIONS,
   ...IMO6A_CLASSIC_QUESTIONS,
   ...IMO_CLASS6_SETB_QUESTIONS,
   ...IMO6B2_QUESTIONS,
   ...IMO6P3_QUESTIONS,
-];
-export const SEED_EXAMS: Exam[] = [
+]);
+export const SEED_EXAMS: Exam[] = stamp([
   IMO6A_EXAM,
   IMO6A_CLASSIC_EXAM,
   IMO_CLASS6_SETB_2022_EXAM,
   IMO_CLASS6_SETB_2024_EXAM,
   IMO6B2_EXAM,
   IMO6P3_EXAM,
-];
+]);
 
 export const SEED_SUBJECTS: Subject[] = [
   {
