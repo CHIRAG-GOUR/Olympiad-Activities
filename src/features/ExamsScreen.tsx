@@ -2,30 +2,38 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { examRepository } from "@/repositories";
 import { Exam } from "@/types/exam";
 import {
-  FileCheck2,
-  Plus,
+  Calculator,
+  BookOpen,
+  Layers,
   Search,
   Clock,
   Award,
-  Users,
-  Play,
-  Settings,
-  ChevronRight,
-  HelpCircle,
   FileText,
+  Play,
+  Plus,
+  FileCheck2,
+  Sparkles,
+  LayoutList,
+  LayoutGrid,
+  CheckCircle2,
+  ArrowRight,
+  GraduationCap,
 } from "lucide-react";
 
+type SubjectTabKey = "math" | "english" | "all";
+
 export default function ExamsScreen() {
-  // Links resolve into the route group the active role actually owns.
   const { activeRole } = useAuth();
   const roleBase = ROLE_PREFIX[activeRole];
   const [exams, setExams] = useState<Exam[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<SubjectTabKey>("math");
+  const [layoutMode, setLayoutMode] = useState<"list" | "grid">("list");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,35 +50,80 @@ export default function ExamsScreen() {
     load();
   }, []);
 
-  const filtered = exams.filter(
-    (e) =>
-      e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.subjectName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Split exams by subject
+  const mathExams = useMemo(() => {
+    return exams.filter((e) => {
+      const sId = (e.subjectId || "").toLowerCase();
+      const sName = (e.subjectName || "").toLowerCase();
+      const code = (e.code || "").toLowerCase();
+      const title = (e.title || "").toLowerCase();
+      return (
+        sId.includes("math") ||
+        sName.includes("math") ||
+        code.includes("imo") ||
+        title.includes("mathematics") ||
+        title.includes("imo") ||
+        (!sId.includes("eng") && !sName.includes("english"))
+      );
+    });
+  }, [exams]);
+
+  const englishExams = useMemo(() => {
+    return exams.filter((e) => {
+      const sId = (e.subjectId || "").toLowerCase();
+      const sName = (e.subjectName || "").toLowerCase();
+      const code = (e.code || "").toLowerCase();
+      const title = (e.title || "").toLowerCase();
+      return (
+        sId.includes("eng") ||
+        sName.includes("english") ||
+        code.includes("ieo") ||
+        title.includes("english") ||
+        title.includes("ieo")
+      );
+    });
+  }, [exams]);
+
+  // Current tab collection
+  const currentTabExams = useMemo(() => {
+    if (activeTab === "math") return mathExams;
+    if (activeTab === "english") return englishExams;
+    return exams;
+  }, [activeTab, mathExams, englishExams, exams]);
+
+  // Search filter
+  const filtered = useMemo(() => {
+    return currentTabExams.filter(
+      (e) =>
+        e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.subtitle && e.subtitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (e.description && e.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [currentTabExams, searchTerm]);
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
-      {/* 1. Header (Requirement 8) */}
+      {/* 1. Header */}
       <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Examination Operations</span>
             <span className="text-[#667085]">•</span>
-            <span>Test Management</span>
+            <span>Grade 6 Olympiad Registry</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182338] mt-1">
-            All Examinations
+            Examinations Catalogue
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
-            Schedule, configure, author, and deploy digital Olympiad examination papers for students.
+            Browse, manage, configure, and launch Grade 6 Olympiad examination papers organized by academic subject.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <Link
             href={`${roleBase}/exams/new`}
-            className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
+            className="h-10 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create Examination</span>
@@ -78,102 +131,266 @@ export default function ExamsScreen() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        
-        {/* 2. Search & Overview */}
-        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative flex-1 w-full min-w-[260px]">
-            <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search examinations by title, code, or subject..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
-            />
-          </div>
+      {/* 2. Subject Tabs Navigation */}
+      <div className="bg-white border border-[#E1E7EF] rounded-2xl p-2 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Maths Tab */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("math")}
+            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+              activeTab === "math"
+                ? "bg-[#2468B2] text-white shadow-sm"
+                : "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+          >
+            <Calculator className={`w-4 h-4 ${activeTab === "math" ? "text-white" : "text-[#2468B2]"}`} />
+            <span>Mathematics</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black ${
+                activeTab === "math"
+                  ? "bg-white/20 text-white"
+                  : "bg-indigo-50 text-[#2468B2] border border-indigo-100"
+              }`}
+            >
+              {mathExams.length}
+            </span>
+          </button>
 
-          <span className="text-xs font-bold text-[#667085] px-2">
-            Showing <strong className="text-[#2468B2]">{filtered.length}</strong> examinations
-          </span>
+          {/* English Tab */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("english")}
+            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+              activeTab === "english"
+                ? "bg-[#9333EA] text-white shadow-sm"
+                : "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+          >
+            <BookOpen className={`w-4 h-4 ${activeTab === "english" ? "text-white" : "text-[#9333EA]"}`} />
+            <span>English</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black ${
+                activeTab === "english"
+                  ? "bg-white/20 text-white"
+                  : "bg-purple-50 text-[#9333EA] border border-purple-100"
+              }`}
+            >
+              {englishExams.length}
+            </span>
+          </button>
+
+          {/* All Subjects Tab */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("all")}
+            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+              activeTab === "all"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>All Subjects</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black ${
+                activeTab === "all"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 text-slate-700 border border-slate-200"
+              }`}
+            >
+              {exams.length}
+            </span>
+          </button>
         </div>
 
-        {/* 3. Examination Cards Grid */}
-        {filtered.length === 0 ? (
-          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-16 text-center space-y-4 shadow-subtle">
-            <div className="w-12 h-12 rounded-2xl bg-[#EAF2FC] text-[#2468B2] flex items-center justify-center mx-auto border border-[#E1E7EF]">
-              <FileCheck2 className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-[#182338]">
-                {exams.length === 0 ? "No Examinations Published Yet" : "No Matching Examinations"}
-              </h3>
-              <p className="text-xs text-[#667085] max-w-sm mx-auto">
-                {exams.length === 0
-                  ? "Create your first digital Olympiad examination paper from questions in the Question Bank."
-                  : "No examination matches your current search query."}
-              </p>
-            </div>
-            {exams.length === 0 && (
-              <div className="pt-2">
-                <Link
-                  href={`${roleBase}/exams/new`}
-                  className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-subtle inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create Examination</span>
-                </Link>
-              </div>
-            )}
+        {/* Grade Badge & View Mode Toggle */}
+        <div className="flex items-center gap-2 px-2">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold font-mono">
+            <GraduationCap className="w-3.5 h-3.5 text-amber-700" />
+            <span>Grade 6</span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filtered.map((exam) => (
-              <div
-                key={exam.id}
-                className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-5 shadow-subtle flex flex-col justify-between hover:border-[#2468B2] transition-all space-y-4"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF]">
+
+          <div className="flex items-center border border-slate-200 rounded-lg p-0.5 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setLayoutMode("list")}
+              className={`p-1.5 rounded-md transition-all ${
+                layoutMode === "list" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
+              title="1-by-1 List View"
+            >
+              <LayoutList className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setLayoutMode("grid")}
+              className={`p-1.5 rounded-md transition-all ${
+                layoutMode === "grid" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Search Bar within active tab */}
+      <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative flex-1 w-full min-w-[260px]">
+          <Search className="w-4 h-4 text-[#667085] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder={
+              activeTab === "math"
+                ? "Search Mathematics papers by title, code, or set..."
+                : activeTab === "english"
+                ? "Search English papers..."
+                : "Search all examinations by title, code, or subject..."
+            }
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-10 pl-10 pr-3 text-xs sm:text-[13px] bg-[#F4F7FB]/70 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white transition-all"
+          />
+        </div>
+
+        <div className="text-xs font-bold text-[#667085] px-2 flex items-center gap-2">
+          <span>
+            Showing <strong className="text-[#2468B2]">{filtered.length}</strong> {activeTab === "math" ? "Mathematics" : activeTab === "english" ? "English" : ""} examinations
+          </span>
+        </div>
+      </div>
+
+      {/* 4. Tab Content */}
+      {activeTab === "english" && englishExams.length === 0 ? (
+        /* Empty / Prepared State for English */
+        <div className="bg-white border-2 border-dashed border-purple-200 rounded-2xl p-12 sm:p-16 text-center space-y-4 shadow-xs">
+          <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto border border-purple-100 shadow-xs">
+            <BookOpen className="w-8 h-8" />
+          </div>
+          <div className="space-y-2 max-w-md mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-800 text-[11px] font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <span>English Olympiad (IEO) • Grade 6</span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+              Ready for English Examination Papers
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              The English Olympiad subject taxonomy (Word and Structure Knowledge, Reading Comprehension, Spoken & Written Expression, and Achievers Section) is initialized.
+            </p>
+          </div>
+          <div className="pt-3">
+            <Link
+              href={`${roleBase}/exams/new`}
+              className="h-10 px-5 bg-[#9333EA] hover:bg-[#7E22CE] text-white rounded-xl text-xs font-bold shadow-xs inline-flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create First English Paper</span>
+            </Link>
+          </div>
+        </div>
+      ) : filtered.length === 0 ? (
+        /* Empty / No Matches State */
+        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-16 text-center space-y-4 shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-[#EAF2FC] text-[#2468B2] flex items-center justify-center mx-auto border border-[#E1E7EF]">
+            <FileCheck2 className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-[#182338]">
+              No Matching Examinations
+            </h3>
+            <p className="text-xs text-[#667085] max-w-sm mx-auto">
+              No examination matches your current search criteria in this subject tab.
+            </p>
+          </div>
+        </div>
+      ) : layoutMode === "list" ? (
+        /* ── 1-BY-1 SPREAD LIST (Default Requested Layout) ── */
+        <div className="space-y-4">
+          {filtered.map((exam, idx) => (
+            <div
+              key={exam.id}
+              className="bg-white border border-[#E1E7EF] hover:border-[#2468B2] rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5"
+            >
+              {/* Left Column: Numbering + Main Info */}
+              <div className="flex items-start gap-4 flex-1 min-w-0">
+                {/* Paper Number Badge */}
+                <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-indigo-50 to-sky-100 border border-indigo-200 text-[#2468B2] flex flex-col items-center justify-center font-mono shadow-2xs">
+                  <span className="text-[9px] font-bold text-slate-500 uppercase leading-none">Paper</span>
+                  <span className="text-base font-black leading-tight">{(idx + 1).toString().padStart(2, "0")}</span>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2.5 py-0.5 rounded-md border border-indigo-100">
                       {exam.code}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#F4F7FB] text-[#1C5190] border border-[#E1E7EF] text-[10px] font-bold uppercase">
-                      ● {exam.status || "Active"}
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {exam.status || "Published"}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold font-mono">
+                      Class {exam.grade || 6}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-bold text-[#182338] leading-snug">{exam.title}</h3>
+                    <h3 className="text-base sm:text-lg font-bold text-[#182338] leading-snug">
+                      {exam.title}
+                    </h3>
                     {exam.subtitle && (
-                      <p className="text-[11px] text-[#2468B2] mt-0.5 font-bold">{exam.subtitle}</p>
+                      <p className="text-xs font-bold text-[#2468B2] mt-0.5">{exam.subtitle}</p>
                     )}
                   </div>
 
-                  <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium">
-                    {exam.description || "Official Olympiad digital examination."}
-                  </p>
+                  {exam.description && (
+                    <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium max-w-3xl">
+                      {exam.description}
+                    </p>
+                  )}
 
-                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#E1E7EF] text-xs text-[#667085]">
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <Clock className="w-3.5 h-3.5 text-[#2468B2]" />
-                      <span>{exam.durationMinutes} mins</span>
+                  {/* Section Breakdown Pills */}
+                  {exam.sections && exam.sections.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {exam.sections.map((sec) => (
+                        <span
+                          key={sec.id}
+                          className="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-slate-50 border border-slate-200 text-slate-600"
+                        >
+                          {sec.title} ({sec.questionIds.length}Q)
+                        </span>
+                      ))}
                     </div>
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <Award className="w-3.5 h-3.5 text-[#59B6DE]" />
-                      <span>{exam.totalMarks || 60} Marks</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <FileText className="w-3.5 h-3.5 text-[#182338]" />
-                      <span>{exam.questionIds.length || 50} Qs</span>
-                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Metrics & Action Buttons */}
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between lg:justify-end gap-4 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-[#E1E7EF]">
+                {/* Metrics */}
+                <div className="flex items-center gap-4 text-xs text-[#667085] pr-2">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <Clock className="w-4 h-4 text-[#2468B2]" />
+                    <span>{exam.durationMinutes}m</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    <span>{exam.totalMarks || 60}M</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <FileText className="w-4 h-4 text-indigo-600" />
+                    <span>{exam.questionIds.length || exam.totalQuestions || 50}Q</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between gap-2">
+                {/* Actions */}
+                <div className="flex items-center gap-2">
                   <Link
                     href={`/exam/${exam.id}`}
-                    className="h-9 px-3 text-xs font-bold text-[#1C5190] bg-[#EAF2FC] hover:bg-[#E1E7EF] rounded-xl flex items-center gap-1.5 transition-all"
+                    className="h-10 px-4 text-xs font-bold text-[#1C5190] bg-[#EAF2FC] hover:bg-[#D4E5F9] rounded-xl flex items-center gap-1.5 transition-all border border-indigo-100"
                   >
                     <Play className="w-3.5 h-3.5 fill-[#1C5190] text-[#1C5190]" />
                     <span>Launch Exam</span>
@@ -181,17 +398,85 @@ export default function ExamsScreen() {
 
                   <Link
                     href={`${roleBase}/exams/${exam.id}`}
-                    className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-subtle"
+                    className="h-10 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
                   >
                     Manage
                   </Link>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* ── GRID VIEW (Optional fallback) ── */
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {filtered.map((exam, idx) => (
+            <div
+              key={exam.id}
+              className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-[#2468B2] transition-all space-y-4"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-black bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">
+                      #{(idx + 1).toString().padStart(2, "0")}
+                    </span>
+                    <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF]">
+                      {exam.code}
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-[#F4F7FB] text-[#1C5190] border border-[#E1E7EF] text-[10px] font-bold uppercase">
+                    ● {exam.status || "Active"}
+                  </span>
+                </div>
 
-      </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#182338] leading-snug">{exam.title}</h3>
+                  {exam.subtitle && (
+                    <p className="text-[11px] text-[#2468B2] mt-0.5 font-bold">{exam.subtitle}</p>
+                  )}
+                </div>
+
+                <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium">
+                  {exam.description || "Official Olympiad digital examination."}
+                </p>
+
+                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#E1E7EF] text-xs text-[#667085]">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <Clock className="w-3.5 h-3.5 text-[#2468B2]" />
+                    <span>{exam.durationMinutes} mins</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <Award className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{exam.totalMarks || 60} Marks</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <FileText className="w-3.5 h-3.5 text-[#182338]" />
+                    <span>{exam.questionIds.length || 50} Qs</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between gap-2">
+                <Link
+                  href={`/exam/${exam.id}`}
+                  className="h-9 px-3 text-xs font-bold text-[#1C5190] bg-[#EAF2FC] hover:bg-[#E1E7EF] rounded-xl flex items-center gap-1.5 transition-all"
+                >
+                  <Play className="w-3.5 h-3.5 fill-[#1C5190] text-[#1C5190]" />
+                  <span>Launch Exam</span>
+                </Link>
+
+                <Link
+                  href={`${roleBase}/exams/${exam.id}`}
+                  className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
+                >
+                  Manage
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

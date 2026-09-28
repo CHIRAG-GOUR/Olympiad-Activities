@@ -89,11 +89,50 @@ export const SEED_EXAMS: Exam[] = stamp([
   IMO6P3_EXAM,
 ]);
 
+export const IEO_SUBJECT: Subject = {
+  id: "sub_english",
+  name: "English",
+  code: "ENG-06",
+  description:
+    "International English Olympiad (IEO) curriculum covering word and structure knowledge, reading comprehension, spoken and written expression, and higher-order verbal reasoning.",
+  color: "#9333EA",
+  iconName: "BookOpen",
+  gradeLevels: [6],
+  chapters: [
+    {
+      id: "ch_word_power",
+      name: "Word and Structure Knowledge",
+      topics: [
+        { id: "top_grammar", name: "Grammar & Sentence Structure" },
+        { id: "top_vocab", name: "Vocabulary & Idioms" },
+      ],
+    },
+    {
+      id: "ch_reading",
+      name: "Reading Comprehension",
+      topics: [{ id: "top_comprehension", name: "Passage Analysis & Inference" }],
+    },
+    {
+      id: "ch_achievers_eng",
+      name: "Achievers Section",
+      topics: [{ id: "top_achievers_eng", name: "Advanced Verbal Reasoning" }],
+    },
+  ],
+  questionCount: 0,
+  examCount: 0,
+};
+
 export const SEED_SUBJECTS: Subject[] = [
   {
     ...IMO_SUBJECT,
-    questionCount: SEED_QUESTIONS.length,
-    examCount: SEED_EXAMS.length,
+    name: "Mathematics",
+    questionCount: SEED_QUESTIONS.filter((q) => q.subjectId === "sub_mathematics" || !q.subjectId).length,
+    examCount: SEED_EXAMS.filter((e) => e.subjectId === "sub_mathematics" || !e.subjectId).length,
+  },
+  {
+    ...IEO_SUBJECT,
+    questionCount: SEED_QUESTIONS.filter((q) => q.subjectId === "sub_english").length,
+    examCount: SEED_EXAMS.filter((e) => e.subjectId === "sub_english").length,
   },
 ];
 
