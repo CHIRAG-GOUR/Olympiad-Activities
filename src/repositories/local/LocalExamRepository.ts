@@ -3,8 +3,8 @@ import { Exam } from "@/types/exam";
 import { SEED_EXAMS, reconcileWithSeed } from "@/lib/seedData";
 import { idbClient } from "@/services/persistence/indexeddb";
 
-// Key bumped to v9 for mathematically verified answer keys and activities.
-const LOCAL_STORAGE_KEY = "olympiad_exams_repo_v9";
+// Key bumped to v10 for IEO Class 6 Set A paper and interactive activities.
+const LOCAL_STORAGE_KEY = "olympiad_exams_repo_v10";
 
 export class LocalExamRepository implements IExamRepository {
   private inMemory: Exam[] | null = null;

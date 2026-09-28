@@ -2,8 +2,8 @@ import { IQuestionRepository, QuestionFilters } from "../interfaces/IQuestionRep
 import { Question } from "@/types/question";
 import { SEED_QUESTIONS, reconcileWithSeed } from "@/lib/seedData";
 
-// Key bumped to v9 for mathematically verified answer keys and activities.
-const LOCAL_STORAGE_KEY = "olympiad_questions_repo_v9";
+// Key bumped to v10 for IEO Class 6 Set A paper and interactive activities.
+const LOCAL_STORAGE_KEY = "olympiad_questions_repo_v10";
 
 export class LocalQuestionRepository implements IQuestionRepository {
   private inMemory: Question[] | null = null;
