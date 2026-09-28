@@ -80,16 +80,8 @@ export function Q01MorningRoutineActivity({ question, value, activityState, onCh
           </div>
 
           {/* Real 3D Interactive World */}
-          <World3D height="280px" camera={{ position: [0, 2.8, 4.8], fov: 45 }}>
+          <World3D height="300px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
             <DiningTable3D position={[0, 0, 0]} />
-            <Avatar3D
-              position={[-0.8, 0, 1.2]}
-              rotation={[0, 0.4, 0]}
-              pose="holding_cup"
-              shirtColor="#3B82F6"
-              hairStyle="short"
-              expression={play.world.selectedVerb === "eat" ? "happy" : "neutral"}
-            />
           </World3D>
         </div>
 
