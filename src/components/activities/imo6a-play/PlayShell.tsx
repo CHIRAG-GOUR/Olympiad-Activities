@@ -194,11 +194,12 @@ export function Bay({
   label?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-  tone?: "slate" | "violet" | "dark";
+  tone?: "slate" | "violet" | "indigo" | "dark";
 }) {
   const tones = {
     slate: "bg-slate-50 border-slate-200",
     violet: "bg-violet-50/60 border-violet-200",
+    indigo: "bg-indigo-50/60 border-indigo-200",
     dark: "bg-slate-900 border-slate-800 text-white",
   } as const;
   return (
@@ -221,11 +222,12 @@ export function Gauge({
 }: {
   label: string;
   value: React.ReactNode;
-  tone?: "slate" | "violet" | "emerald" | "amber" | "rose" | "sky";
+  tone?: "slate" | "violet" | "emerald" | "amber" | "rose" | "sky" | "indigo";
 }) {
   const tones = {
     slate: "bg-white border-slate-200 text-slate-900",
     violet: "bg-violet-50 border-violet-300 text-violet-900",
+    indigo: "bg-indigo-50 border-indigo-300 text-indigo-900",
     emerald: "bg-emerald-50 border-emerald-300 text-emerald-900",
     amber: "bg-amber-50 border-amber-300 text-amber-900",
     rose: "bg-rose-50 border-rose-300 text-rose-900",
@@ -254,13 +256,14 @@ export function Btn({
   onClick?: () => void;
   disabled?: boolean;
   active?: boolean;
-  tone?: "violet" | "slate" | "emerald" | "amber" | "rose" | "sky";
+  tone?: "violet" | "slate" | "emerald" | "amber" | "rose" | "sky" | "indigo";
   className?: string;
   title?: string;
   ariaLabel?: string;
 }) {
   const on = {
     violet: "bg-violet-600 border-violet-700 text-white",
+    indigo: "bg-indigo-600 border-indigo-700 text-white",
     slate: "bg-slate-800 border-slate-900 text-white",
     emerald: "bg-emerald-600 border-emerald-700 text-white",
     amber: "bg-amber-500 border-amber-600 text-white",

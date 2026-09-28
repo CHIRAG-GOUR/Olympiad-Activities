@@ -7,6 +7,7 @@ import { IMO6A_ACTIVITY_MAP } from "./imo6a-play/registry";
 import { IMO6B2_ACTIVITY_MAP } from "./imo6b2-play/registry";
 import { IMO6B_PLAY_ACTIVITY_MAP } from "./imo6b-play/registry";
 import { IMO6P3_ACTIVITY_MAP } from "./imo6p3-play/registry";
+import { IMO23_24_C_PLAY_ACTIVITY_MAP } from "./imo23_24_c-play/registry";
 
 // 50 Bespoke Interactive Olympiad Activities
 import { DiceLabActivity } from "./DiceLabActivity";
@@ -194,8 +195,9 @@ export function getQuestionActivity(
   questionIdOrCode?: string
 ): ActivityComponentType | undefined {
   if (!questionIdOrCode) return undefined;
-  // All 5 Olympiad sets mapped: Classic Set A, 3D Mini-games Set A, 3D Mini-games Set B #2, Paper 3 (Set C), and Set B
+  // All Olympiad sets mapped: 2023-24 Set C, Classic Set A, 3D Set A, 3D Set B #2, Paper 3 (Set C), and Set B
   return (
+    IMO23_24_C_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
     IMO6B_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
     IMO6P3_ACTIVITY_MAP[questionIdOrCode] ??
     IMO6A_CLASSIC_ACTIVITY_MAP[questionIdOrCode] ??

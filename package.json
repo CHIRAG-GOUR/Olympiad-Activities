@@ -14,6 +14,7 @@
     "verify:imo6a": "npx --yes tsx --tsconfig tsconfig.json src/data/imo6a/__tests__/answerMapping.ts",
     "verify:imo6p3": "npx --yes tsx --tsconfig tsconfig.json src/data/imo6p3/__tests__/answerMapping.ts",
     "verify:imo6b2": "npx --yes tsx --tsconfig tsconfig.json src/data/imo6b2/__tests__/answerMapping.ts",
+    "verify:imo23_24_c": "npx --yes tsx --tsconfig tsconfig.json src/data/imo23_24_c/__tests__/answerMapping.ts",
     "verify:rbac": "npx --yes tsx --tsconfig tsconfig.json src/lib/auth/__tests__/accessMatrix.ts"
   },
   "dependencies": {
