@@ -3,8 +3,8 @@
 import React from "react";
 import { ActivityComponentProps } from "../kit/types";
 import { usePlay } from "../imo6a-play/engine";
-import { Shell, Board, PlayCanvas, World3D, WordPill, SentenceSlot, Bay } from "./kit";
-import { UtensilsCrossed, ShieldAlert, Sparkles, Globe, History, Scale } from "lucide-react";
+import { Shell, Board, PlayCanvas, WordPill, SentenceSlot, Bay } from "./kit";
+import { UtensilsCrossed, ShieldAlert, Sparkles, Globe, History, Scale, Award, Microscope, HeartHandshake, CheckCircle2 } from "lucide-react";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q6 — Restaurant Time Portal (Time Conjunctions)
@@ -42,19 +42,50 @@ export function Q06RestaurantTimelineActivity({ question, value, activityState, 
       hints={["'have not visited' pairs with 'since' to denote action from a fixed past starting point until now."]}
     >
       <Board>
-        {/* Timeline Bar */}
-        <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between text-xs font-bold text-amber-900">
-            <span className="flex items-center gap-1.5"><History className="w-4 h-4 text-amber-700" /> Opening Day (5 Years Ago)</span>
-            <span>Present Day</span>
+        {/* Rich Restaurant Timeline Card */}
+        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-yellow-50/60 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
+                <UtensilsCrossed className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-amber-950 uppercase tracking-wider block">Le Bistro Italiano · History</span>
+                <span className="text-[11px] font-medium text-slate-500">Founded 5 Years Ago · Continuous Timeline</span>
+              </div>
+            </div>
+
+            <span className="px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 text-xs font-mono font-bold">
+              Time Anchor: Starting Point (Past)
+            </span>
           </div>
-          <div className="relative w-full h-3 bg-amber-200 rounded-full overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-full bg-gradient-to-r from-amber-500 to-indigo-500 rounded-full" />
+
+          {/* Timeline Milestones Graphic */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white/90 rounded-xl p-4 border border-amber-200 shadow-2xs flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-lg">
+                🏪
+              </div>
+              <div>
+                <span className="text-xs font-bold text-amber-950 block">Opening Day Event</span>
+                <p className="text-[11px] text-slate-600">Five Years Ago · Ribbon Cutting</p>
+              </div>
+            </div>
+
+            <div className="bg-white/90 rounded-xl p-4 border border-purple-200 shadow-2xs flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-lg">
+                📍
+              </div>
+              <div>
+                <span className="text-xs font-bold text-purple-950 block">Present Day</span>
+                <p className="text-[11px] text-slate-600">Have not visited throughout 5-year gap</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="bg-purple-50/80 border border-purple-200 rounded-xl p-4 text-center">
-          <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
+        <div className="bg-purple-50/80 border-2 border-purple-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-[#182338] leading-relaxed">
             I have not visited this restaurant{" "}
             <SentenceSlot value={play.world.connector} filled={!!play.world.connector} />{" "}
             it opened, five years ago.
@@ -62,11 +93,12 @@ export function Q06RestaurantTimelineActivity({ question, value, activityState, 
         </div>
 
         <Bay label="Timeline Conjunction Selector" tone="amber">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {connectors.map((c) => (
               <WordPill
                 key={c}
                 text={c}
+                size="lg"
                 tone="amber"
                 selected={play.world.connector === c}
                 onClick={() => play.set({ connector: c })}
@@ -81,7 +113,7 @@ export function Q06RestaurantTimelineActivity({ question, value, activityState, 
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q7 — 3D Baggage Scanner (Sensory Verbs)
+   Q7 — Airport Baggage Scanner (Sensory Observation)
    Sentence: "Can I help you with your bags? They ______ heavy."
    Options: A. looked, B. seeming, C. look, D. seemed -> Key: C (look)
    ══════════════════════════════════════════════════════════════════════ */
@@ -108,39 +140,56 @@ export function Q07MagicBagActivity({ question, value, activityState, onChange, 
 
   return (
     <Shell
-      dim="3D"
+      dim="2D"
       play={play}
       question={question}
       title="Q7 · Airport Baggage Scanner"
-      subtitle="Inspect the luggage weight and choose the present observation verb"
+      subtitle="Inspect the heavy luggage on the check-in scale and choose the present observation verb"
       hints={["'Can I help you...' is present dialogue. With plural subject 'They', use base sensory verb 'look'."]}
     >
       <Board>
-        <World3D camera={{ position: [0, 3, 5], fov: 45 }} height="260px">
-          {/* Airport Floor */}
-          <mesh position={[0, -0.6, 0]}>
-            <cylinderGeometry args={[3, 3, 0.2, 32]} />
-            <meshStandardMaterial color="#F1F5F9" />
-          </mesh>
-          {/* Heavy Luggage 1 */}
-          <mesh position={[-0.4, 0, 0]}>
-            <boxGeometry args={[0.7, 0.9, 0.45]} />
-            <meshStandardMaterial color="#DC2626" />
-          </mesh>
-          {/* Heavy Luggage 2 */}
-          <mesh position={[0.4, -0.1, 0.2]}>
-            <boxGeometry args={[0.65, 0.75, 0.4]} />
-            <meshStandardMaterial color="#1E3A8A" />
-          </mesh>
-          {/* Weight Indicator Beacon */}
-          <mesh position={[0, 0.8, -0.5]}>
-            <sphereGeometry args={[0.15, 16, 16]} />
-            <meshStandardMaterial color="#EAB308" emissive="#CA8A04" emissiveIntensity={0.6} />
-          </mesh>
-        </World3D>
+        {/* Airport Check-in Stage */}
+        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-sky-200/80 bg-gradient-to-b from-sky-50 via-blue-50/40 to-indigo-50/50 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-200/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-xs">
+                <Scale className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-sky-950 uppercase tracking-wider block">Terminal 2 · Baggage Drop Scale</span>
+                <span className="text-[11px] font-medium text-slate-500">Live Observation · Two Bulky Suitcases</span>
+              </div>
+            </div>
 
-        <div className="bg-sky-50/80 border border-sky-200 rounded-xl p-4 text-center">
-          <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
+            <span className="px-3 py-1 rounded-lg bg-red-100 text-red-800 border border-red-200 text-xs font-mono font-bold animate-pulse">
+              Scale: 32.4 kg [HEAVY LUGGAGE]
+            </span>
+          </div>
+
+          {/* Luggage Scale Graphic */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div className="bg-white/90 rounded-xl p-4 border border-sky-200 shadow-2xs flex items-center gap-4">
+              <div className="text-4xl">🧳🧳</div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 block">Checked Luggage (Plural: They)</span>
+                <p className="text-[11px] text-slate-600 mt-0.5">Visibly bulging suitcases on conveyor platform.</p>
+              </div>
+            </div>
+
+            <div className="bg-white/90 rounded-xl p-4 border border-sky-200 shadow-2xs flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-xl">
+                🙋
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 block">Helpful Traveler:</span>
+                <p className="text-xs text-sky-900 italic">"Can I help you with your bags? They look heavy."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-sky-50/80 border-2 border-sky-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-[#182338] leading-relaxed">
             Can I help you with your bags? They{" "}
             <SentenceSlot value={play.world.verb} filled={!!play.world.verb} />{" "}
             heavy.
@@ -148,11 +197,12 @@ export function Q07MagicBagActivity({ question, value, activityState, onChange, 
         </div>
 
         <Bay label="Observation Verb Selector" tone="sky">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {verbs.map((v) => (
               <WordPill
                 key={v}
                 text={v}
+                size="lg"
                 tone="sky"
                 selected={play.world.verb === v}
                 onClick={() => play.set({ verb: v })}
@@ -194,7 +244,7 @@ export function Q08MangoDetectiveActivity({ question, value, activityState, onCh
 
   return (
     <Shell
-      dim="3D"
+      dim="2D"
       play={play}
       question={question}
       title="Q8 · Fruit Detective Laboratory"
@@ -202,31 +252,46 @@ export function Q08MangoDetectiveActivity({ question, value, activityState, onCh
       hints={["Examine the experience log and select the auxiliary verb form from the options."]}
     >
       <Board>
-        <World3D camera={{ position: [0, 2.5, 4.5], fov: 45 }} height="260px">
-          {/* Pedestal */}
-          <mesh position={[0, -0.6, 0]}>
-            <cylinderGeometry args={[1.5, 1.8, 0.4, 24]} />
-            <meshStandardMaterial color="#334155" />
-          </mesh>
-          {/* Glass Specimen Chamber */}
-          <mesh position={[0, 0.2, 0]}>
-            <cylinderGeometry args={[0.9, 0.9, 1.2, 24]} />
-            <meshStandardMaterial color="#93C5FD" transparent opacity={0.3} />
-          </mesh>
-          {/* Mangosteen Fruit */}
-          <mesh position={[0, 0.1, 0]}>
-            <sphereGeometry args={[0.35, 24, 24]} />
-            <meshStandardMaterial color="#581C87" />
-          </mesh>
-          {/* Calyx leaves */}
-          <mesh position={[0, 0.45, 0]}>
-            <boxGeometry args={[0.3, 0.08, 0.3]} />
-            <meshStandardMaterial color="#15803D" />
-          </mesh>
-        </World3D>
+        {/* Botanical Lab Specimen Stage */}
+        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-purple-200/80 bg-gradient-to-b from-purple-50 via-fuchsia-50/30 to-indigo-50/50 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-200/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-700 text-white shadow-xs">
+                <Microscope className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-purple-950 uppercase tracking-wider block">Specimen Chamber #8: Garcinia mangostana</span>
+                <span className="text-[11px] font-medium text-slate-500">Tropical Fruit · Experience Log Audit</span>
+              </div>
+            </div>
 
-        <div className="bg-purple-50/80 border border-purple-200 rounded-xl p-4 text-center">
-          <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
+            <span className="px-3 py-1 rounded-lg bg-purple-100 text-purple-900 border border-purple-300 text-xs font-mono font-bold">
+              Tasting Count: 0 (Untasted)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            {/* Mangosteen Specimen Box */}
+            <div className="bg-white/90 rounded-xl p-4 border border-purple-200 shadow-2xs flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-900 to-indigo-950 flex items-center justify-center text-3xl shadow-md">
+                🫐
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 block">Purple Mangosteen</span>
+                <p className="text-[11px] text-slate-600 mt-0.5">Known as the 'Queen of Fruits' in Southeast Asia.</p>
+              </div>
+            </div>
+
+            {/* Experience Record Log */}
+            <div className="bg-white/90 rounded-xl p-4 border border-purple-200 shadow-2xs">
+              <span className="text-xs font-bold text-slate-900 block">Life Experience Record:</span>
+              <p className="text-xs text-purple-900 italic mt-1">"I don't know if I like it because I haven't never had one before."</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-purple-50/80 border-2 border-purple-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-[#182338] leading-relaxed">
             I don't know if I like mangosteen, I{" "}
             <SentenceSlot value={play.world.aux} filled={!!play.world.aux} />{" "}
             never had one.
@@ -234,11 +299,12 @@ export function Q08MangoDetectiveActivity({ question, value, activityState, onCh
         </div>
 
         <Bay label="Auxiliary Option Selector" tone="purple">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {options.map((opt) => (
               <WordPill
                 key={opt}
                 text={opt}
+                size="lg"
                 tone="purple"
                 selected={play.world.aux === opt}
                 onClick={() => play.set({ aux: opt })}
@@ -253,7 +319,7 @@ export function Q08MangoDetectiveActivity({ question, value, activityState, onCh
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q9 — 3D Germ Laboratory (Logical Connectors)
+   Q9 — Germ Defense Laboratory (Logical Connectors)
    Sentence: "Washing your hands thoroughly with soap prevents germs from spreading. ______ always wash them before eating food."
    Options: A. Nevertheless, B. In case, C. Because of, D. Therefore -> Key: D (Therefore)
    ══════════════════════════════════════════════════════════════════════ */
@@ -288,32 +354,58 @@ export function Q09HandwashingLabActivity({ question, value, activityState, onCh
       hints={["The second sentence is a direct logical result of the premise that soap stops germs. Use 'Therefore'."]}
     >
       <Board>
-        {/* Cause & Effect Visual Panel */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
-            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block">Premise / Cause</span>
-            <p className="text-xs text-slate-700 mt-1">Soap + Water = Germs eliminated</p>
+        {/* Cause-and-Effect Lab Stage */}
+        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-emerald-200/80 bg-gradient-to-b from-emerald-50 via-teal-50/30 to-sky-50/50 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                <HeartHandshake className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider block">Hygiene Research Lab</span>
+                <span className="text-[11px] font-medium text-slate-500">Cause ➔ Logical Consequence Relationship</span>
+              </div>
+            </div>
+
+            <span className="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-mono font-bold">
+              Logic: Deductive Result
+            </span>
           </div>
-          <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 text-center">
-            <span className="text-xs font-bold text-sky-800 uppercase tracking-wider block">Conclusion / Action</span>
-            <p className="text-xs text-slate-700 mt-1">Always wash before meals</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white/90 rounded-xl p-4 border border-emerald-200 shadow-2xs">
+              <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs mb-1">
+                <span className="text-lg">🧼</span>
+                <span>Premise 1: Soap Kills Pathogens</span>
+              </div>
+              <p className="text-[11.5px] text-slate-600">Thorough handwashing breaks lipid virus membranes and removes bacteria.</p>
+            </div>
+
+            <div className="bg-white/90 rounded-xl p-4 border border-sky-200 shadow-2xs">
+              <div className="flex items-center gap-2 text-sky-900 font-bold text-xs mb-1">
+                <span className="text-lg">🍽️</span>
+                <span>Logical Result: Meal Precaution</span>
+              </div>
+              <p className="text-[11.5px] text-slate-600">Consequently / For this reason, wash hands before every meal.</p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-purple-50/80 border border-purple-200 rounded-xl p-4 text-center">
-          <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
+        <div className="bg-emerald-50/80 border-2 border-emerald-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-[#182338] leading-relaxed">
             Washing your hands thoroughly with soap prevents germs from spreading.{" "}
             <SentenceSlot value={play.world.connector} filled={!!play.world.connector} />{" "}
             always wash them before eating food.
           </p>
         </div>
 
-        <Bay label="Consequence Connector" tone="emerald">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+        <Bay label="Consequence Connector Selector" tone="emerald">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {connectors.map((c) => (
               <WordPill
                 key={c}
                 text={c}
+                size="lg"
                 tone="emerald"
                 selected={play.world.connector === c}
                 onClick={() => play.set({ connector: c })}
@@ -328,7 +420,7 @@ export function Q09HandwashingLabActivity({ question, value, activityState, onCh
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q10 — 3D Geography Discovery (Predicate Adjective)
+   Q10 — World Geography Classroom (Predicate Adjective)
    Sentence: "My favourite period at school is geography. It ______ to learn about the world."
    Options: A. is interesting, B. interests, C. interested, D. interesting -> Key: A (is interesting)
    ══════════════════════════════════════════════════════════════════════ */
@@ -355,7 +447,7 @@ export function Q10GeographyDiscoveryActivity({ question, value, activityState, 
 
   return (
     <Shell
-      dim="3D"
+      dim="2D"
       play={play}
       question={question}
       title="Q10 · World Geography Classroom"
@@ -363,31 +455,44 @@ export function Q10GeographyDiscoveryActivity({ question, value, activityState, 
       hints={["Dummy subject 'It' takes linking verb + adjective + to-infinitive: 'It is interesting to learn...'."]}
     >
       <Board>
-        <World3D camera={{ position: [0, 2, 4.5], fov: 45 }} height="260px">
-          {/* Classroom Desk */}
-          <mesh position={[0, -0.6, 0]}>
-            <cylinderGeometry args={[2.5, 2.5, 0.2, 32]} />
-            <meshStandardMaterial color="#E0E7FF" />
-          </mesh>
-          {/* Globe Stand */}
-          <mesh position={[0, -0.1, 0]}>
-            <cylinderGeometry args={[0.1, 0.4, 0.8, 16]} />
-            <meshStandardMaterial color="#475569" />
-          </mesh>
-          {/* Globe Sphere */}
-          <mesh position={[0, 0.6, 0]} rotation={[0.4, 0.4, 0]}>
-            <sphereGeometry args={[0.55, 24, 24]} />
-            <meshStandardMaterial color="#0284C7" />
-          </mesh>
-          {/* Continent Rings */}
-          <mesh position={[0, 0.6, 0]} rotation={[0.4, 0.4, 0]}>
-            <ringGeometry args={[0.6, 0.65, 32]} />
-            <meshStandardMaterial color="#EAB308" />
-          </mesh>
-        </World3D>
+        {/* World Classroom Stage */}
+        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-indigo-200/80 bg-gradient-to-b from-indigo-50 via-sky-50/40 to-purple-50/50 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-200/60 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
+                <Globe className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-indigo-950 uppercase tracking-wider block">Class 6 Geography Studio</span>
+                <span className="text-[11px] font-medium text-slate-500">Period 3 · Exploring Oceans & Continents</span>
+              </div>
+            </div>
 
-        <div className="bg-indigo-50/80 border border-indigo-200 rounded-xl p-4 text-center">
-          <p className="text-sm sm:text-base font-semibold text-slate-800 leading-relaxed">
+            <span className="px-3 py-1 rounded-lg bg-indigo-100 text-indigo-900 border border-indigo-300 text-xs font-mono font-bold">
+              Structure: It + Be + Adj + To-V
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div className="bg-white/90 rounded-xl p-4 border border-indigo-200 shadow-2xs flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 text-white flex items-center justify-center text-3xl shadow-md animate-bounce-slow">
+                🌍
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 block">World Exploration</span>
+                <p className="text-[11px] text-slate-600 mt-0.5">Studying landscapes, climates, and civilizations.</p>
+              </div>
+            </div>
+
+            <div className="bg-white/90 rounded-xl p-4 border border-indigo-200 shadow-2xs">
+              <span className="text-xs font-bold text-slate-900 block">Subject Evaluation:</span>
+              <p className="text-xs text-indigo-900 italic mt-1">"My favourite period at school is geography. It is interesting to learn about the world."</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-[#182338] leading-relaxed">
             My favourite period at school is geography. It{" "}
             <SentenceSlot value={play.world.phrase} filled={!!play.world.phrase} />{" "}
             to learn about the world.
@@ -395,11 +500,12 @@ export function Q10GeographyDiscoveryActivity({ question, value, activityState, 
         </div>
 
         <Bay label="Predicate Phrase Selector" tone="indigo">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {phrases.map((p) => (
               <WordPill
                 key={p}
                 text={p}
+                size="lg"
                 tone="indigo"
                 selected={play.world.phrase === p}
                 onClick={() => play.set({ phrase: p })}

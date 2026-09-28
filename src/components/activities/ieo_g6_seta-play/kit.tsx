@@ -9,6 +9,20 @@ import { BookOpen, LucideIcon } from "lucide-react";
 
 export { Gauge, Btn };
 
+export type ColorTone =
+  | "purple"
+  | "indigo"
+  | "emerald"
+  | "amber"
+  | "sky"
+  | "slate"
+  | "violet"
+  | "pink"
+  | "rose"
+  | "cyan"
+  | "teal"
+  | "dark";
+
 /** Reusable interactive bay container with rich color tones */
 export function Bay({
   label,
@@ -19,22 +33,27 @@ export function Bay({
   label?: string;
   children: React.ReactNode;
   className?: string;
-  tone?: "purple" | "indigo" | "emerald" | "amber" | "sky" | "slate" | "violet" | "pink" | "dark";
+  tone?: ColorTone;
 }) {
-  const tones = {
+  const tones: Record<ColorTone, string> = {
     purple: "bg-purple-50/60 border-purple-200",
     indigo: "bg-indigo-50/60 border-indigo-200",
     emerald: "bg-emerald-50/60 border-emerald-200",
     amber: "bg-amber-50/60 border-amber-200",
     sky: "bg-sky-50/60 border-sky-200",
     pink: "bg-pink-50/60 border-pink-200",
+    rose: "bg-rose-50/60 border-rose-200",
+    cyan: "bg-cyan-50/60 border-cyan-200",
+    teal: "bg-teal-50/60 border-teal-200",
     slate: "bg-slate-50 border-slate-200",
     violet: "bg-violet-50/60 border-violet-200",
     dark: "bg-slate-900 border-slate-800 text-white",
-  }[tone];
+  };
+
+  const selectedTone = tones[tone] ?? tones.purple;
 
   return (
-    <div className={`relative rounded-2xl border-2 p-3 ${tones} ${className}`}>
+    <div className={`relative rounded-2xl border-2 p-3 ${selectedTone} ${className}`}>
       {label && (
         <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${tone === "dark" ? "text-slate-400" : "text-slate-500"}`}>
           {label}
@@ -208,10 +227,10 @@ export function WordPill({
   selected?: boolean;
   onClick?: () => void;
   disabled?: boolean;
-  tone?: "purple" | "indigo" | "emerald" | "amber" | "sky";
+  tone?: ColorTone;
   size?: "sm" | "md" | "lg";
 }) {
-  const toneClasses = {
+  const toneClasses: Record<ColorTone, string> = {
     purple: selected
       ? "bg-purple-600 text-white border-purple-700 shadow-md ring-2 ring-purple-300"
       : "bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-200",
@@ -227,7 +246,30 @@ export function WordPill({
     sky: selected
       ? "bg-sky-600 text-white border-sky-700 shadow-md ring-2 ring-sky-300"
       : "bg-sky-50 hover:bg-sky-100 text-sky-900 border-sky-200",
-  }[tone];
+    pink: selected
+      ? "bg-pink-600 text-white border-pink-700 shadow-md ring-2 ring-pink-300"
+      : "bg-pink-50 hover:bg-pink-100 text-pink-900 border-pink-200",
+    rose: selected
+      ? "bg-rose-600 text-white border-rose-700 shadow-md ring-2 ring-rose-300"
+      : "bg-rose-50 hover:bg-rose-100 text-rose-900 border-rose-200",
+    cyan: selected
+      ? "bg-cyan-600 text-white border-cyan-700 shadow-md ring-2 ring-cyan-300"
+      : "bg-cyan-50 hover:bg-cyan-100 text-cyan-900 border-cyan-200",
+    teal: selected
+      ? "bg-teal-600 text-white border-teal-700 shadow-md ring-2 ring-teal-300"
+      : "bg-teal-50 hover:bg-teal-100 text-teal-900 border-teal-200",
+    slate: selected
+      ? "bg-slate-700 text-white border-slate-800 shadow-md ring-2 ring-slate-300"
+      : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300",
+    violet: selected
+      ? "bg-violet-600 text-white border-violet-700 shadow-md ring-2 ring-violet-300"
+      : "bg-violet-50 hover:bg-violet-100 text-violet-900 border-violet-200",
+    dark: selected
+      ? "bg-slate-950 text-white border-black shadow-md ring-2 ring-slate-500"
+      : "bg-slate-800 hover:bg-slate-700 text-white border-slate-700",
+  };
+
+  const selectedTone = toneClasses[tone] ?? toneClasses.purple;
 
   const sizeClasses = {
     sm: "px-3 py-1 text-xs font-semibold rounded-lg",
@@ -240,7 +282,7 @@ export function WordPill({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`border transition-all cursor-pointer select-none active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${sizeClasses} ${toneClasses}`}
+      className={`border transition-all cursor-pointer select-none active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${sizeClasses} ${selectedTone}`}
     >
       {text}
     </button>
