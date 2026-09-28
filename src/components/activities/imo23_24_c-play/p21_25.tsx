@@ -2,25 +2,25 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { MoveRight, Lock, Landmark, BarChart3, Shirt } from "lucide-react";
+import { MoveRight, Lock, Landmark, BarChart3, Shirt, CheckCircle2 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText, matchOption } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board } from "./kit";
+import { Shell, Board, PlayCanvas } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q21 — The Fraction Rollercoaster (Fractions in Ascending Order)
    Fractions: 1/2 (0.5), 7/18 (0.389), 5/9 (0.556), 7/27 (0.259)
-   Ascending order: 7/27 < 7/18 < 1/2 < 5/9 -> Option A / C.
+   Ascending order: 7/27 < 7/18 < 1/2 < 5/9 -> Option C.
    ══════════════════════════════════════════════════════════════════════ */
 
 export function Q21FractionRollercoasterActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
   const fractions = [
-    { text: "7/27", val: 0.259 },
-    { text: "7/18", val: 0.389 },
-    { text: "1/2", val: 0.5 },
-    { text: "5/9", val: 0.556 },
+    { text: "7/27", val: 0.259, eq: "14/54" },
+    { text: "7/18", val: 0.389, eq: "21/54" },
+    { text: "1/2", val: 0.5, eq: "27/54" },
+    { text: "5/9", val: 0.556, eq: "30/54" },
   ];
 
   const play = usePlay<{ ordered: boolean }>({
@@ -28,7 +28,7 @@ export function Q21FractionRollercoasterActivity({ question, value, activityStat
     initial: { ordered: false },
     derive: (w) => {
       if (!w.ordered) return { note: "Sort fraction carriages from lowest to highest decimal value on the track." };
-      return { value: "7/27, 7/18, 1/2, 5/9", optionId: "A" };
+      return { value: "7/27, 7/18, 1/2, 5/9", optionId: matchText(question, "7/27, 7/18, 1/2, 5/9") ?? "C" };
     },
     activityState,
     value,
@@ -42,43 +42,47 @@ export function Q21FractionRollercoasterActivity({ question, value, activityStat
     <Shell
       play={play}
       question={question}
-      title="The Fraction Track Rollercoaster"
-      mission="Compare the four fraction carriages (1/2, 7/18, 5/9, 7/27). Calculate common denominator (54) or decimal equivalents to arrange them in strict ascending order from left to right."
+      title="The Fraction Number-Line Track"
+      mission="Compare the four fraction values (1/2, 7/18, 5/9, 7/27). Convert to a common denominator of 54 or compare decimal values to arrange them in strict ascending order (7/27 < 7/18 < 1/2 < 5/9)."
       icon={MoveRight}
       dim="2D"
       submitLabel="Submit Ascending Order"
       hints={[
         "Convert to common denominator 54: 7/27 = 14/54, 7/18 = 21/54, 1/2 = 27/54, 5/9 = 30/54.",
         "Comparing numerators: 14 < 21 < 27 < 30.",
-        "Ascending sequence: 7/27, 7/18, 1/2, 5/9.",
+        "Ascending sequence: 7/27, 7/18, 1/2, 5/9 (Option C).",
       ]}
       live={
         <>
-          <Gauge label="Track Order" value={w.ordered ? "Ascending" : "Unsorted"} tone={w.ordered ? "emerald" : "indigo"} />
+          <Gauge label="Track Order" value={w.ordered ? "Ascending (Correct)" : "Unsorted"} tone={w.ordered ? "emerald" : "indigo"} />
         </>
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-between border border-slate-700">
-          <div className="flex justify-between text-xs font-bold text-slate-400">
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-between border border-indigo-100 shadow-xs min-h-[160px]">
+          <div className="flex justify-between text-xs font-bold text-slate-500">
             <span>◀ Smallest (0)</span>
             <span>Largest (1) ▶</span>
           </div>
 
-          <div className="flex items-center justify-around gap-2 my-auto">
+          <div className="flex items-center justify-around gap-2 my-auto flex-wrap">
             {fractions.map((f, i) => (
               <div
                 key={f.text}
-                className={`p-2.5 rounded-xl border text-center transition-all ${w.ordered ? "bg-emerald-950/80 border-emerald-400" : "bg-slate-800 border-slate-600"}`}
+                className={`p-3 rounded-xl border-2 text-center transition-all min-w-[5rem] ${w.ordered ? "bg-emerald-50 border-emerald-400 shadow-xs" : "bg-slate-50 border-slate-200"}`}
               >
-                <div className="font-mono text-base font-black text-sky-300">{f.text}</div>
-                {w.ordered && <div className="text-[10px] font-mono text-emerald-400">≈ {f.val}</div>}
+                <div className="font-mono text-lg font-black text-indigo-950">{f.text}</div>
+                {w.ordered && (
+                  <div className="text-[10px] font-mono font-bold text-emerald-700 mt-1">
+                    = {f.eq} (≈{f.val})
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
-          <div className="text-center text-xs font-mono font-bold text-indigo-300">
-            {w.ordered ? "14/54 < 21/54 < 27/54 < 30/54" : "Common Denominator: 54"}
+          <div className="text-center text-xs font-mono font-bold text-indigo-900 bg-indigo-50/70 p-2 rounded-lg">
+            {w.ordered ? "14/54 < 21/54 < 27/54 < 30/54  ✓ Ascending Order Verified" : "Common Denominator: 54 (LCD of 2, 18, 9, 27)"}
           </div>
         </div>
       </Board>
@@ -125,8 +129,8 @@ export function Q22DivisibilityVaultActivity({ question, value, activityState, o
     <Shell
       play={play}
       question={question}
-      title="The Divisibility Security Vault"
-      mission="Find the smallest positive integer N which, when diminished by 3 (N − 3), passes all four modularity gates: divisible by 21, 28, 36, and 45 simultaneously."
+      title="The LCM Divisibility Gate Inspector"
+      mission="Find the smallest positive integer N which, when diminished by 3 (N − 3), passes all four modularity gates: divisible by 21, 28, 36, and 45 simultaneously (N = 1263)."
       icon={Lock}
       dim="2D"
       submitLabel="Submit Smallest Candidate"
@@ -140,32 +144,32 @@ export function Q22DivisibilityVaultActivity({ question, value, activityState, o
         <>
           <Gauge label="Candidate N" value={`${w.candidate}`} tone={w.candidate === 1263 ? "emerald" : "indigo"} />
           <Gauge label="N − 3" value={`${diff}`} tone="violet" />
-          <Gauge label="LCM Match" value={g21 && g28 && g36 && g45 ? "Passed All 4" : "Failed"} tone={g21 && g28 && g36 && g45 ? "emerald" : "amber"} />
+          <Gauge label="LCM Match" value={g21 && g28 && g36 && g45 ? "Passed All 4 Gates" : "Gates Incomplete"} tone={g21 && g28 && g36 && g45 ? "emerald" : "amber"} />
         </>
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-between border border-slate-700">
-          <div className="text-center font-mono text-xl font-black text-sky-400">
-            Testing Candidate: {w.candidate} (N − 3 = {diff})
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-between border border-indigo-100 shadow-xs space-y-3">
+          <div className="text-center font-mono text-lg font-black text-indigo-950">
+            Testing Number: <span className="text-indigo-600">{w.candidate}</span> (N − 3 = {diff})
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
-            <div className={`p-2 rounded-lg text-center border ${g21 ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-slate-800 border-slate-600 text-slate-400"}`}>
-              <div className="text-[10px] font-bold">GATE ÷21</div>
-              <div className="font-mono text-xs">{g21 ? "✓ OPEN" : "✗ LOCKED"}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className={`p-2.5 rounded-xl text-center border-2 transition-all ${g21 ? "bg-emerald-50 border-emerald-400 text-emerald-900" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+              <div className="text-[10px] font-extrabold">GATE ÷21</div>
+              <div className="font-mono text-xs font-black mt-1">{g21 ? "✓ 1260 = 21×60" : "✗ NOT DIVISIBLE"}</div>
             </div>
-            <div className={`p-2 rounded-lg text-center border ${g28 ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-slate-800 border-slate-600 text-slate-400"}`}>
-              <div className="text-[10px] font-bold">GATE ÷28</div>
-              <div className="font-mono text-xs">{g28 ? "✓ OPEN" : "✗ LOCKED"}</div>
+            <div className={`p-2.5 rounded-xl text-center border-2 transition-all ${g28 ? "bg-emerald-50 border-emerald-400 text-emerald-900" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+              <div className="text-[10px] font-extrabold">GATE ÷28</div>
+              <div className="font-mono text-xs font-black mt-1">{g28 ? "✓ 1260 = 28×45" : "✗ NOT DIVISIBLE"}</div>
             </div>
-            <div className={`p-2 rounded-lg text-center border ${g36 ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-slate-800 border-slate-600 text-slate-400"}`}>
-              <div className="text-[10px] font-bold">GATE ÷36</div>
-              <div className="font-mono text-xs">{g36 ? "✓ OPEN" : "✗ LOCKED"}</div>
+            <div className={`p-2.5 rounded-xl text-center border-2 transition-all ${g36 ? "bg-emerald-50 border-emerald-400 text-emerald-900" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+              <div className="text-[10px] font-extrabold">GATE ÷36</div>
+              <div className="font-mono text-xs font-black mt-1">{g36 ? "✓ 1260 = 36×35" : "✗ NOT DIVISIBLE"}</div>
             </div>
-            <div className={`p-2 rounded-lg text-center border ${g45 ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-slate-800 border-slate-600 text-slate-400"}`}>
-              <div className="text-[10px] font-bold">GATE ÷45</div>
-              <div className="font-mono text-xs">{g45 ? "✓ OPEN" : "✗ LOCKED"}</div>
+            <div className={`p-2.5 rounded-xl text-center border-2 transition-all ${g45 ? "bg-emerald-50 border-emerald-400 text-emerald-900" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
+              <div className="text-[10px] font-extrabold">GATE ÷45</div>
+              <div className="font-mono text-xs font-black mt-1">{g45 ? "✓ 1260 = 45×28" : "✗ NOT DIVISIBLE"}</div>
             </div>
           </div>
         </div>
@@ -210,8 +214,8 @@ export function Q23RomanEmpireComparisonActivity({ question, value, activityStat
     <Shell
       play={play}
       question={question}
-      title="The Roman Empire Comparison Hall"
-      mission="Translate the ancient Roman numeral expressions: Left = CCCLXXVI + CDXIV, Right = DCXIX + CCLXVIII. Compare their Hindu-Arabic sums to determine the relational operator (<, >, =)."
+      title="The Roman Numeral Calculator Hall"
+      mission="Translate the Roman numeral expressions: Left = CCCLXXVI + CDXIV, Right = DCXIX + CCLXVIII. Compare their integer values to determine the relational operator (<, >, =)."
       icon={Landmark}
       dim="2D"
       submitLabel="Submit Comparison (<)"
@@ -222,31 +226,31 @@ export function Q23RomanEmpireComparisonActivity({ question, value, activityStat
       ]}
       live={
         <>
-          <Gauge label="Left Monument" value={w.forged ? "790" : "CCCLXXVI+CDXIV"} tone="violet" />
+          <Gauge label="Left Expression" value={w.forged ? "790" : "CCCLXXVI+CDXIV"} tone="violet" />
           <Gauge label="Relation" value={w.comparator ?? "?"} tone={w.comparator === "<" ? "emerald" : "indigo"} />
-          <Gauge label="Right Monument" value={w.forged ? "887" : "DCXIX+CCLXVIII"} tone="violet" />
+          <Gauge label="Right Expression" value={w.forged ? "887" : "DCXIX+CCLXVIII"} tone="violet" />
         </>
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs flex-wrap gap-3 min-h-[160px]">
           {/* Left Column */}
-          <div className="p-3 rounded-xl bg-slate-800 border border-slate-600 text-center w-36">
-            <div className="text-[10px] font-bold text-slate-400 mb-1">MONUMENT I</div>
-            <div className="font-mono text-xs font-bold text-sky-400">CCCLXXVI + CDXIV</div>
-            <div className="font-mono text-xl font-black text-emerald-400 mt-2">{w.forged ? "790" : "---"}</div>
+          <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200 text-center w-40">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 mb-1">Expression I</div>
+            <div className="font-mono text-xs font-bold text-slate-800">CCCLXXVI + CDXIV</div>
+            <div className="font-mono text-2xl font-black text-indigo-900 mt-1.5">{w.forged ? "790" : "---"}</div>
           </div>
 
           {/* Comparator Box */}
-          <div className="w-14 h-14 rounded-2xl bg-indigo-950 border-2 border-indigo-400 flex items-center justify-center font-mono text-3xl font-black text-amber-300">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-center justify-center font-mono text-3xl font-black text-amber-700 shadow-xs">
             {w.comparator ?? "?"}
           </div>
 
           {/* Right Column */}
-          <div className="p-3 rounded-xl bg-slate-800 border border-slate-600 text-center w-36">
-            <div className="text-[10px] font-bold text-slate-400 mb-1">MONUMENT II</div>
-            <div className="font-mono text-xs font-bold text-sky-400">DCXIX + CCLXVIII</div>
-            <div className="font-mono text-xl font-black text-emerald-400 mt-2">{w.forged ? "887" : "---"}</div>
+          <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200 text-center w-40">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 mb-1">Expression II</div>
+            <div className="font-mono text-xs font-bold text-slate-800">DCXIX + CCLXVIII</div>
+            <div className="font-mono text-2xl font-black text-indigo-900 mt-1.5">{w.forged ? "887" : "---"}</div>
           </div>
         </div>
       </Board>
@@ -254,7 +258,7 @@ export function Q23RomanEmpireComparisonActivity({ question, value, activityStat
       <Bay label="Relational Comparison" tone="indigo">
         <div className="flex flex-wrap items-center gap-2">
           <Btn tone="violet" disabled={play.readOnly} onClick={() => play.patch({ forged: true })}>
-            🏛️ Forge Roman Numeral Values
+            🏛️ Decode Roman Numerals
           </Btn>
           <Btn tone="emerald" disabled={play.readOnly || !w.forged} onClick={() => play.patch({ comparator: "<" })}>
             ⚡ Apply Operator: &lt; (790 &lt; 887)
@@ -294,8 +298,8 @@ export function Q24ShirtFactoryDataFloorActivity({ question, value, activityStat
     <Shell
       play={play}
       question={question}
-      title="The Shirt Factory Data Floor"
-      mission="Study the shirt production line graph (Alok = 35, Virat = 20). If Alok's father gives him 12 additional shirts, determine how many more shirts Alok now possesses compared to Virat."
+      title="The Shirt Production Data Bar Chart"
+      mission="Study the shirt quantity bar chart (Alok = 35, Virat = 20). If Alok receives 12 additional shirts from his father, determine how many more shirts Alok has than Virat (27 shirts)."
       icon={BarChart3}
       dim="2D"
       submitLabel="Submit Shirt Difference"
@@ -313,22 +317,22 @@ export function Q24ShirtFactoryDataFloorActivity({ question, value, activityStat
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-end justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-end justify-around border border-indigo-100 shadow-xs h-48">
           {/* Alok Tower */}
-          <div className="flex flex-col items-center gap-1">
-            <span className="font-mono text-xs font-bold text-sky-300">{alokTotal}</span>
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="font-mono text-sm font-black text-indigo-900">{alokTotal}</span>
             <div
-              className={`w-14 rounded-t-lg transition-all ${w.alokAdded ? "bg-emerald-500" : "bg-sky-500"}`}
-              style={{ height: `${(alokTotal / 60) * 100}px` }}
+              className={`w-16 rounded-t-xl transition-all shadow-xs ${w.alokAdded ? "bg-emerald-500" : "bg-indigo-500"}`}
+              style={{ height: `${(alokTotal / 60) * 120}px` }}
             />
-            <span className="text-[10px] font-bold text-slate-400">Alok</span>
+            <span className="text-xs font-bold text-slate-700">Alok ({w.alokAdded ? "35+12" : "35"})</span>
           </div>
 
           {/* Virat Tower */}
-          <div className="flex flex-col items-center gap-1">
-            <span className="font-mono text-xs font-bold text-violet-300">{viratTotal}</span>
-            <div className="w-14 bg-violet-500 rounded-t-lg" style={{ height: `${(viratTotal / 60) * 100}px` }} />
-            <span className="text-[10px] font-bold text-slate-400">Virat</span>
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="font-mono text-sm font-black text-slate-800">{viratTotal}</span>
+            <div className="w-16 bg-slate-400 rounded-t-xl shadow-xs" style={{ height: `${(viratTotal / 60) * 120}px` }} />
+            <span className="text-xs font-bold text-slate-700">Virat (20)</span>
           </div>
         </div>
       </Board>
@@ -374,8 +378,8 @@ export function Q25FashionWarehouseRatioActivity({ question, value, activityStat
     <Shell
       play={play}
       question={question}
-      title="The Fashion Warehouse Ratio Machine"
-      mission="Read the line graph: Tarun = 60 shirts, Vinit = 40 shirts, Ronak = 45 shirts. Compute the simplified integer ratio of Tarun to (Vinit + Ronak) combined."
+      title="The Ratio Simplification Workshop"
+      mission="Read the bar chart quantities: Tarun = 60 shirts, Vinit = 40 shirts, Ronak = 45 shirts. Compute the simplified integer ratio of Tarun to (Vinit + Ronak) combined (12 : 17)."
       icon={Shirt}
       dim="2D"
       submitLabel="Submit Simplified Ratio (12:17)"
@@ -394,17 +398,17 @@ export function Q25FashionWarehouseRatioActivity({ question, value, activityStat
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center">
-            <div className="text-[10px] font-bold text-slate-400">TARUN</div>
-            <div className="font-mono text-2xl font-black text-sky-400">60</div>
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs flex-wrap gap-2 min-h-[150px]">
+          <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-200 text-center min-w-[7rem]">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700">Tarun</div>
+            <div className="font-mono text-2xl font-black text-indigo-900 mt-1">60</div>
           </div>
 
-          <div className="font-mono text-3xl font-black text-amber-400">:</div>
+          <div className="font-mono text-3xl font-black text-indigo-600">:</div>
 
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center">
-            <div className="text-[10px] font-bold text-slate-400">VINIT + RONAK</div>
-            <div className="font-mono text-2xl font-black text-violet-400">85 (40+45)</div>
+          <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-200 text-center min-w-[7rem]">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700">Vinit + Ronak</div>
+            <div className="font-mono text-2xl font-black text-indigo-900 mt-1">85 (40+45)</div>
           </div>
         </div>
       </Board>

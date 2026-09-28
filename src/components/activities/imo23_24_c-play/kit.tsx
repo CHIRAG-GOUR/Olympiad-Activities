@@ -78,37 +78,50 @@ export function Shell<W>({ play, question, hints = [], dim = "2D", ...rest }: Sh
   );
 }
 
-/** A modern game board container. */
+/** A modern game board container with crisp light Olympiad aesthetics. */
 export const Board = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div
-    className={`rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-violet-50/70 p-3 shadow-sm ${className}`}
+    className={`rounded-2xl border-2 border-indigo-100/80 bg-gradient-to-br from-indigo-50/40 via-white to-violet-50/40 p-3.5 shadow-sm ${className}`}
   >
     {children}
   </div>
 );
 
-/** 3D Canvas harness with lighting, OrbitControls and fallback */
+/** Light-themed interactive Canvas / Simulation card */
+export const PlayCanvas = ({ children, className = "", height = "h-56" }: { children: React.ReactNode; className?: string; height?: string }) => (
+  <div
+    className={`relative w-full ${height} rounded-xl bg-white border border-indigo-100 shadow-sm flex items-center justify-center p-2 overflow-hidden ${className}`}
+  >
+    {children}
+  </div>
+);
+
+/** 3D Canvas harness with light lavender background, studio lighting, OrbitControls and fallback */
 export function World3D({
   children,
   camera = { position: [0, 5, 8], fov: 45 },
   height = "h-64",
+  background = "#f5f3ff",
 }: {
   children: React.ReactNode;
   camera?: { position: [number, number, number]; fov?: number };
   height?: string;
+  background?: string;
 }) {
   return (
-    <div className={`relative w-full ${height} rounded-2xl overflow-hidden bg-slate-900 border border-slate-700 shadow-inner`}>
+    <div className={`relative w-full ${height} rounded-2xl overflow-hidden bg-gradient-to-b from-indigo-50/40 to-violet-50/30 border-2 border-indigo-100 shadow-sm`}>
       <Suspense
         fallback={
-          <div className="flex h-full items-center justify-center text-slate-400 text-xs font-bold">
+          <div className="flex h-full items-center justify-center text-indigo-600 text-xs font-bold">
             Loading 3D Simulation...
           </div>
         }
       >
         <Canvas camera={camera}>
-          <ambientLight intensity={0.7} />
-          <directionalLight position={[10, 15, 10]} intensity={1.2} castShadow />
+          <color attach="background" args={[background]} />
+          <ambientLight intensity={0.65} />
+          <hemisphereLight args={["#ffffff", "#ddd6fe", 1.2]} />
+          <directionalLight position={[10, 15, 10]} intensity={1.3} castShadow />
           <pointLight position={[-10, -5, -5]} intensity={0.4} />
           {children}
           <OrbitControls makeDefault enablePan={false} maxPolarAngle={Math.PI / 2 + 0.1} />

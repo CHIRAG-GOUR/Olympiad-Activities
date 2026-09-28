@@ -1,15 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
-import { Shell, Board, Stepper } from "./kit";
-import { Droplet, Clock, ShoppingCart, Car, Grid } from "lucide-react";
+import { Shell, Board, Stepper, PlayCanvas } from "./kit";
+import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
+import { Droplet, Clock, ShoppingCart, Car, Grid, CheckCircle2 } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Q41: THE WATER DISTRIBUTION PLANT (HCF of 4200 L, 5040 L, 6750 L)
-// ─────────────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════
+   Q41 — The Water Distribution Plant (HCF of 4200 L, 5040 L, 6750 L)
+   Capacities: 4200, 5040, 6750.
+   HCF = 30 L -> Option D.
+   ══════════════════════════════════════════════════════════════════════ */
+
 export function Q41WaterPlant({
   question,
   value,
@@ -39,7 +44,7 @@ export function Q41WaterPlant({
         return { value: "30 L", optionId: matchText(question, "30 L") ?? "D" };
       }
       return {
-        note: `Selected: ${cap} L (All exact? ${allDivisible ? "Divisible (Check if maximum)" : "Leaves remainder"}). Find greatest container.`,
+        note: `Selected: ${cap} L (${allDivisible ? "Common divisor" : "Leaves remainder"}). Find greatest common container (HCF).`,
       };
     },
     activityState,
@@ -54,79 +59,87 @@ export function Q41WaterPlant({
     <Shell
       play={play}
       question={question}
-      title="The Water Distribution Plant"
-      mission="Three tankers contain 4200 L, 5040 L and 6750 L. Test candidate container capacities to find the maximum capacity (HCF) that measures all three quantities exactly."
+      title="The Water Tanker HCF Dispenser"
+      mission="Three water tankers hold 4200 L, 5040 L and 6750 L. Test candidate container capacities to find the maximum capacity (HCF = 30 L) that measures all three quantities exactly."
       icon={Droplet}
+      dim="2D"
+      submitLabel="Submit Maximum Capacity (30 L)"
       hints={[
         "The measuring container must divide all 3 tank capacities with zero remainder.",
-        "4200 / 30 = 140 fills, 5040 / 30 = 168 fills, 6750 / 30 = 225 fills (all exact!).",
-        "Higher candidates like 42, 50, 60 fail to divide at least one tank evenly.",
+        "4200 ÷ 30 = 140 fills, 5040 ÷ 30 = 168 fills, 6750 ÷ 30 = 225 fills (all exact integers!).",
+        "Higher candidates like 42 L, 50 L, 60 L fail to divide at least one tank evenly.",
       ]}
+      live={
+        <>
+          <Gauge label="Testing Container" value={`${containerCap} L`} tone={containerCap === 30 ? "emerald" : "indigo"} />
+          <Gauge label="All Exact?" value={4200 % containerCap === 0 && 5040 % containerCap === 0 && 6750 % containerCap === 0 ? "Yes (Divisible)" : "No (Remainder)"} tone={containerCap === 30 ? "emerald" : "amber"} />
+        </>
+      }
     >
-      <Board className="space-y-4">
-        {/* Tanks Display */}
-        <div className="grid grid-cols-3 gap-3">
-          {TANKS.map((t) => {
-            const isExact = t.cap % containerCap === 0;
-            const fills = Math.floor(t.cap / containerCap);
-            return (
-              <div key={t.name} className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
-                <div className="text-[11px] font-bold text-slate-500 uppercase">{t.name}</div>
-                <div className="text-lg font-black text-slate-800">{t.cap.toLocaleString()} L</div>
-                <div className={`mt-2 rounded-lg py-1 px-2 text-xs font-bold border ${isExact ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}`}>
-                  {isExact ? `✓ ${fills} fills` : `✗ Rem: ${t.cap % containerCap} L`}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Container Selector */}
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
-          <div className="text-xs font-black uppercase tracking-wider text-indigo-900 mb-2">
-            Select Test Measuring Container:
-          </div>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-            {CANDIDATES.map((c) => {
-              const isSelected = containerCap === c;
-              const allDiv = 4200 % c === 0 && 5040 % c === 0 && 6750 % c === 0;
+      <Board>
+        <div className="space-y-3">
+          {/* Tanks Display */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {TANKS.map((t) => {
+              const isExact = t.cap % containerCap === 0;
+              const fills = Math.floor(t.cap / containerCap);
               return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => play.patch({ containerCap: c })}
-                  className={`py-2 rounded-xl text-xs font-black border transition-all ${
-                    isSelected
-                      ? "bg-indigo-600 text-white border-indigo-700 shadow-md scale-105"
-                      : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50"
-                  }`}
-                >
-                  {c} L {allDiv && isSelected && "★"}
-                </button>
+                <div key={t.name} className="rounded-xl border border-indigo-100 bg-white p-3 text-center shadow-xs">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">{t.name}</div>
+                  <div className="text-xl font-black text-indigo-950 mt-1">{t.cap.toLocaleString()} L</div>
+                  <div className={`mt-2 rounded-lg py-1 px-2 text-xs font-bold border ${isExact ? "bg-emerald-50 text-emerald-800 border-emerald-300" : "bg-rose-50 text-rose-800 border-rose-200"}`}>
+                    {isExact ? `✓ ${fills} exact fills` : `✗ Rem: ${t.cap % containerCap} L`}
+                  </div>
+                </div>
               );
             })}
           </div>
-        </div>
 
-        {/* Evaluation Banner */}
-        <div className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between">
-          <div className="text-xs text-slate-600">
-            Current Container: <span className="font-bold text-indigo-700">{containerCap} L</span>
-          </div>
-          <div className="text-xs font-black">
-            {4200 % containerCap === 0 && 5040 % containerCap === 0 && 6750 % containerCap === 0
-              ? (containerCap === 30 ? "🏆 Maximum Common Capacity: 30 L (HCF)" : "✓ Common Divisor (Check if higher exists)")
-              : "❌ Leaves remainder in at least one tank"}
+          {/* Container Selector */}
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-3">
+            <div className="text-xs font-black uppercase tracking-wider text-indigo-950 mb-2">
+              Select Test Measuring Container:
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+              {CANDIDATES.map((c) => {
+                const isSelected = containerCap === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    disabled={play.readOnly}
+                    onClick={() => play.patch({ containerCap: c })}
+                    className={`py-2 rounded-xl text-xs font-black border transition-all ${
+                      isSelected
+                        ? "bg-indigo-600 text-white border-indigo-700 shadow-xs scale-105"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50"
+                    }`}
+                  >
+                    {c} L
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </Board>
+
+      <Bay label="HCF Controls" tone="indigo">
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ containerCap: 30 })}>
+          ⚡ Set Maximum Capacity: 30 L (HCF)
+        </Btn>
+      </Bay>
     </Shell>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Q42: THE 24-HOUR LIFE CLOCK (Garima's Routine)
-// ─────────────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════
+   Q42 — The 24-Hour Life Clock (Garima's Routine)
+   Office = 8h, Travel = 4h, Play = 5h.
+   Sleep = 24 - (8 + 4 + 5) = 7h.
+   Fraction = 7/24 -> Option C.
+   ══════════════════════════════════════════════════════════════════════ */
+
 export function Q42LifeClock({
   question,
   value,
@@ -166,92 +179,81 @@ export function Q42LifeClock({
     <Shell
       play={play}
       question={question}
-      title="The 24-Hour Life Clock"
-      mission="In a 24-hour day, Garima spends 8h in office, 4h travelling, 5h playing with her son, and the rest sleeping. Derive the fraction of the day spent sleeping."
+      title="The 24-Hour Daily Fraction Clock"
+      mission="In a 24-hour day, Garima spends 8h in office, 4h travelling, 5h playing with her son, and the rest sleeping. Derive the fraction of the day spent sleeping (7/24)."
       icon={Clock}
+      dim="2D"
+      submitLabel="Submit Sleeping Fraction (7/24)"
       hints={[
         "Total day = 24 hours.",
         "Office (8h) + Travel (4h) + Playing (5h) = 17 hours.",
-        "Remaining Sleeping Time = 24 - 17 = 7 hours.",
-        "Fraction of day = 7 / 24.",
+        "Remaining Sleeping Time = 24 − 17 = 7 hours.",
+        "Fraction of day = 7 / 24 (Option C).",
       ]}
+      live={
+        <>
+          <Gauge label="Allocated Routine" value="17h" tone="violet" />
+          <Gauge label="Sleeping Hours" value={`${sleepH}h`} tone={sleepH === 7 ? "emerald" : "indigo"} />
+          <Gauge label="Fraction of Day" value={`${sleepH}/24`} tone={sleepH === 7 ? "emerald" : "slate"} />
+        </>
+      }
     >
-      <Board className="space-y-4">
-        {/* Visual 24h Bar */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-500">
-            <span>24-Hour Timeline Distribution</span>
-            <span>Total: 24 Hours</span>
+      <Board>
+        <div className="space-y-3">
+          {/* Visual 24h Bar */}
+          <div className="rounded-xl border border-indigo-100 bg-white p-3.5 space-y-2 shadow-xs">
+            <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+              <span>24-Hour Daily Timeline</span>
+              <span>Total: 24 Hours</span>
+            </div>
+
+            <div className="flex h-10 w-full rounded-xl overflow-hidden border border-slate-200 font-black text-white text-[11px] shadow-inner">
+              <div style={{ width: `${(office / 24) * 100}%` }} className="bg-sky-500 flex items-center justify-center">
+                Office ({office}h)
+              </div>
+              <div style={{ width: `${(travel / 24) * 100}%` }} className="bg-amber-500 flex items-center justify-center">
+                Travel ({travel}h)
+              </div>
+              <div style={{ width: `${(playH / 24) * 100}%` }} className="bg-emerald-500 flex items-center justify-center">
+                Play ({playH}h)
+              </div>
+              <div style={{ width: `${(Math.max(0, sleepH) / 24) * 100}%` }} className="bg-indigo-600 flex items-center justify-center">
+                Sleep ({sleepH}h)
+              </div>
+            </div>
           </div>
 
-          <div className="flex h-10 w-full rounded-xl overflow-hidden border border-slate-300 font-bold text-white text-[11px] shadow-inner">
-            <div style={{ width: `${(office / 24) * 100}%` }} className="bg-blue-500 flex items-center justify-center">
-              Office ({office}h)
+          {/* Derived Fraction Card */}
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 flex items-center justify-between">
+            <div>
+              <div className="text-[10px] font-black uppercase text-indigo-700">Calculated Sleeping Hours</div>
+              <div className="text-xs text-slate-700 font-bold mt-0.5">
+                24 − ({office} + {travel} + {playH}) = <span className="font-extrabold text-indigo-900">{sleepH} hours</span>
+              </div>
             </div>
-            <div style={{ width: `${(travel / 24) * 100}%` }} className="bg-amber-500 flex items-center justify-center">
-              Travel ({travel}h)
+            <div className="rounded-xl bg-white border border-indigo-300 px-4 py-1.5 text-center shadow-xs">
+              <div className="text-xl font-black text-indigo-700">{sleepH} / 24</div>
             </div>
-            <div style={{ width: `${(playH / 24) * 100}%` }} className="bg-emerald-500 flex items-center justify-center">
-              Play ({playH}h)
-            </div>
-            <div style={{ width: `${(Math.max(0, sleepH) / 24) * 100}%` }} className="bg-indigo-600 flex items-center justify-center animate-pulse">
-              Sleep ({sleepH}h)
-            </div>
-          </div>
-        </div>
-
-        {/* Schedule Allocator Controls */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3 text-center">
-            <div className="text-xs font-bold text-blue-800">Office Work</div>
-            <Stepper
-              value={office}
-              min={1}
-              max={15}
-              onChange={(v) => play.patch({ office: v })}
-            />
-          </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 text-center">
-            <div className="text-xs font-bold text-amber-800">Commute / Travel</div>
-            <Stepper
-              value={travel}
-              min={1}
-              max={10}
-              onChange={(v) => play.patch({ travel: v })}
-            />
-          </div>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-center">
-            <div className="text-xs font-bold text-emerald-800">Playing with Son</div>
-            <Stepper
-              value={playH}
-              min={1}
-              max={10}
-              onChange={(v) => play.patch({ playH: v })}
-            />
-          </div>
-        </div>
-
-        {/* Derived Fraction Card */}
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase text-indigo-700">Calculated Sleeping Fraction</div>
-            <div className="text-sm text-slate-700">
-              Remaining: 24 − ({office} + {travel} + {playH}) = <span className="font-bold text-indigo-900">{sleepH} hours</span>
-            </div>
-          </div>
-          <div className="rounded-xl bg-white border border-indigo-300 px-4 py-2 text-center shadow-sm">
-            <div className="text-xl font-black text-indigo-700">{sleepH} / 24</div>
-            <div className="text-[10px] text-slate-500 font-semibold">Fraction of Day</div>
           </div>
         </div>
       </Board>
+
+      <Bay label="Scheduler" tone="indigo">
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ office: 8, travel: 4, playH: 5 })}>
+          ⚡ Set Garima's Schedule (7/24 Sleep)
+        </Btn>
+      </Bay>
     </Shell>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Q43: THE BIRTHDAY GIFT SHOP (Pencils and Pens)
-// ─────────────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════
+   Q43 — The Birthday Gift Shop (Pencils and Pens)
+   25 pencils @ ₹8 = ₹200.
+   25 pens @ ₹15 = ₹375.
+   Total = 200 + 375 = ₹575 -> Option A.
+   ══════════════════════════════════════════════════════════════════════ */
+
 export function Q43GiftShop({
   question,
   value,
@@ -270,7 +272,7 @@ export function Q43GiftShop({
       const total = pencilCost + penCost;
 
       if (total === 575) {
-        return { value: "₹ 575", optionId: matchText(question, "₹ 575") ?? "A" };
+        return { value: "₹ 575", optionId: matchText(question, "575") ?? "A" };
       }
       return { note: `Current bill: ₹${total} (25 pencils @ ₹8 + 25 pens @ ₹15 = ₹575).` };
     },
@@ -290,77 +292,67 @@ export function Q43GiftShop({
     <Shell
       play={play}
       question={question}
-      title="The Birthday Gift Shop"
-      mission="Sonali buys 25 pencils at ₹8 each and 25 pens at ₹15 each for friends. Fill the gift baskets and compute the total checkout amount."
+      title="The Birthday Stationery Checkout"
+      mission="Sonali buys 25 pencils at ₹8 each and 25 pens at ₹15 each for friends. Calculate the total checkout amount (25×8 + 25×15 = ₹575)."
       icon={ShoppingCart}
+      dim="2D"
+      submitLabel="Submit Total Amount (₹575)"
       hints={[
         "25 pencils at ₹8 each = 25 × 8 = ₹200.",
         "25 pens at ₹15 each = 25 × 15 = ₹375.",
-        "Total expenditure = ₹200 + ₹375 = ₹575.",
+        "Total expenditure = ₹200 + ₹375 = ₹575 (Option A).",
       ]}
+      live={
+        <>
+          <Gauge label="25 Pencils" value="₹200" tone="violet" />
+          <Gauge label="25 Pens" value="₹375" tone="indigo" />
+          <Gauge label="Total Checkout" value={`₹ ${total}`} tone={total === 575 ? "emerald" : "slate"} />
+        </>
+      }
     >
-      <Board className="space-y-4">
-        {/* Store Shelf & Baskets */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Pencils Card */}
-          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 space-y-3">
-            <div className="flex justify-between items-center">
+      <Board>
+        <div className="w-full bg-white rounded-xl p-4 shadow-xs space-y-3 border border-indigo-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3.5 flex items-center justify-between">
               <div>
-                <div className="text-xs font-bold text-amber-800 uppercase">✏️ Pencils</div>
-                <div className="text-xs text-slate-500">Rate: ₹8 per pencil</div>
+                <div className="text-xs font-black uppercase text-amber-900">✏️ 25 Pencils</div>
+                <div className="text-[11px] text-slate-600 font-bold">25 pcs × ₹8</div>
               </div>
-              <div className="text-lg font-black text-amber-900">₹{pencilCost}</div>
+              <div className="text-xl font-black text-amber-900">₹{pencilCost}</div>
             </div>
-            <Stepper
-              value={pencils}
-              min={0}
-              max={50}
-              onChange={(v) => play.patch({ pencils: v })}
-            />
+
+            <div className="rounded-xl border border-sky-200 bg-sky-50/50 p-3.5 flex items-center justify-between">
+              <div>
+                <div className="text-xs font-black uppercase text-sky-900">✒️ 25 Pens</div>
+                <div className="text-[11px] text-slate-600 font-bold">25 pcs × ₹15</div>
+              </div>
+              <div className="text-xl font-black text-sky-900">₹{penCost}</div>
+            </div>
           </div>
 
-          {/* Pens Card */}
-          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-xs font-bold text-blue-800 uppercase">✒️ Pens</div>
-                <div className="text-xs text-slate-500">Rate: ₹15 per pen</div>
-              </div>
-              <div className="text-lg font-black text-blue-900">₹{penCost}</div>
-            </div>
-            <Stepper
-              value={pens}
-              min={0}
-              max={50}
-              onChange={(v) => play.patch({ pens: v })}
-            />
-          </div>
-        </div>
-
-        {/* Checkout Counter */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-2">
-          <div className="text-xs font-bold uppercase text-slate-500">Checkout Bill Breakdown</div>
-          <div className="flex justify-between text-xs text-slate-700 py-1 border-b">
-            <span>Pencils ({pencils} pcs × ₹8):</span>
-            <span className="font-bold">₹{pencilCost}</span>
-          </div>
-          <div className="flex justify-between text-xs text-slate-700 py-1 border-b">
-            <span>Pens ({pens} pcs × ₹15):</span>
-            <span className="font-bold">₹{penCost}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm font-black text-slate-900 pt-1">
-            <span>Total Bill Amount:</span>
-            <span className="text-xl font-black text-emerald-600">₹ {total}</span>
+          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-300 flex justify-between items-center text-emerald-950">
+            <span className="text-xs font-black uppercase">Total Bill Sum:</span>
+            <span className="text-xl font-black">₹ {total}</span>
           </div>
         </div>
       </Board>
+
+      <Bay label="Checkout Controls" tone="indigo">
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ pencils: 25, pens: 25 })}>
+          ⚡ Compute Total Amount: ₹575
+        </Btn>
+      </Bay>
     </Shell>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Q44: THE THREE-DAY ROAD TRIP (Mayank's Travel)
-// ─────────────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════
+   Q44 — The Three-Day Road Trip (Mayank's Travel)
+   Total = 352.15 km.
+   Day 1 = 115.28 km, Day 2 = 79.50 km.
+   Day 3 = 352.15 - (115.28 + 79.50) = 157.37 km -> Option B.
+   ══════════════════════════════════════════════════════════════════════ */
+
 export function Q44RoadTrip({
   question,
   value,
@@ -372,19 +364,17 @@ export function Q44RoadTrip({
   const DAY1 = 115.28;
   const DAY2 = 79.5;
 
-  const play = usePlay<{ day1: number; day2: number; verified: boolean }>({
+  const play = usePlay<{ verified: boolean }>({
     question,
-    initial: { day1: DAY1, day2: DAY2, verified: true },
+    initial: { verified: false },
     derive: (w) => {
-      const d1 = w?.day1 ?? DAY1;
-      const d2 = w?.day2 ?? DAY2;
-      const day3 = parseFloat((TOTAL - (d1 + d2)).toFixed(2));
+      const day3 = parseFloat((TOTAL - (DAY1 + DAY2)).toFixed(2));
       const label = `${day3.toFixed(2)} km`;
 
-      if (label === "157.37 km") {
+      if (w.verified) {
         return { value: label, optionId: matchText(question, "157.37 km") ?? "B" };
       }
-      return { note: `Trip distance: 352.15 - (${d1} + ${d2}) = ${label}.` };
+      return { note: `Calculate Day 3 distance: 352.15 - (${DAY1} + ${DAY2}).` };
     },
     activityState,
     value,
@@ -392,66 +382,69 @@ export function Q44RoadTrip({
     readOnly,
   });
 
-  const d1 = play.world?.day1 ?? DAY1;
-  const d2 = play.world?.day2 ?? DAY2;
-  const day3 = (TOTAL - (d1 + d2)).toFixed(2);
+  const w = play.world;
+  const day3 = (TOTAL - (DAY1 + DAY2)).toFixed(2);
 
   return (
     <Shell
       play={play}
       question={question}
-      title="The Three-Day Road Trip"
-      mission="Mayank travelled 352.15 km in three days (Day 1: 115.28 km, Day 2: 79.50 km). Track the trip odometer to derive the distance travelled on Day 3."
+      title="The Three-Day Trip Odometer"
+      mission="Mayank travelled 352.15 km in three days (Day 1: 115.28 km, Day 2: 79.50 km). Track the trip odometer to calculate the distance travelled on Day 3 (157.37 km)."
       icon={Car}
+      dim="2D"
+      submitLabel="Submit Day 3 Distance (157.37 km)"
       hints={[
         "Total distance for 3 days = 352.15 km.",
         "Sum of Day 1 & Day 2 = 115.28 + 79.50 = 194.78 km.",
-        "Day 3 distance = 352.15 - 194.78 = 157.37 km.",
+        "Day 3 distance = 352.15 − 194.78 = 157.37 km (Option B).",
       ]}
+      live={
+        <>
+          <Gauge label="Day 1" value="115.28 km" tone="violet" />
+          <Gauge label="Day 2" value="79.50 km" tone="violet" />
+          <Gauge label="Day 3" value={w.verified ? `${day3} km` : "---"} tone={w.verified ? "emerald" : "slate"} />
+        </>
+      }
     >
-      <Board className="space-y-4">
-        {/* Road map segment display */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-          <div className="flex justify-between items-center text-xs font-bold text-slate-500">
-            <span>Road Trip Progress</span>
-            <span>Total: 352.15 km</span>
+      <Board>
+        <div className="w-full bg-white rounded-xl p-4 shadow-xs space-y-3 border border-indigo-100">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-center">
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
+              <div className="text-[10px] font-black uppercase text-sky-800">Day 1 Leg</div>
+              <div className="text-lg font-black text-sky-950 mt-1">{DAY1.toFixed(2)} km</div>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <div className="text-[10px] font-black uppercase text-amber-800">Day 2 Leg</div>
+              <div className="text-lg font-black text-amber-950 mt-1">{DAY2.toFixed(2)} km</div>
+            </div>
+            <div className="rounded-xl border-2 border-emerald-400 bg-emerald-50 p-3 shadow-xs">
+              <div className="text-[10px] font-black uppercase text-emerald-800">Day 3 (Derived)</div>
+              <div className="text-lg font-black text-emerald-950 mt-1">{w.verified ? `${day3} km` : "---"}</div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-2">
-              <div className="text-[10px] font-bold text-blue-700 uppercase">Day 1 Leg</div>
-              <div className="text-base font-black text-blue-900">{d1.toFixed(2)} km</div>
-            </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-2">
-              <div className="text-[10px] font-bold text-amber-700 uppercase">Day 2 Leg</div>
-              <div className="text-base font-black text-amber-900">{d2.toFixed(2)} km</div>
-            </div>
-            <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2 ring-2 ring-emerald-400">
-              <div className="text-[10px] font-bold text-emerald-700 uppercase">Day 3 (Calculated)</div>
-              <div className="text-base font-black text-emerald-900">{day3} km</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Trip Computer Calculator */}
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 space-y-2">
-          <div className="text-xs font-black uppercase tracking-wider text-indigo-900">
-            Trip Computer Arithmetic:
-          </div>
-          <div className="text-xs font-mono text-slate-700 space-y-1">
-            <div>• Total Distance = 352.15 km</div>
-            <div>• Days (1 + 2) Sum = {d1.toFixed(2)} + {d2.toFixed(2)} = {(d1 + d2).toFixed(2)} km</div>
-            <div>• Day 3 Distance = 352.15 − {(d1 + d2).toFixed(2)} = <span className="font-bold text-indigo-700">{day3} km</span></div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 font-mono text-xs font-bold text-indigo-950 text-center">
+            352.15 km − (115.28 km + 79.50 km) = 352.15 km − 194.78 km = <span className="text-emerald-700 font-black">157.37 km</span>
           </div>
         </div>
       </Board>
+
+      <Bay label="Trip Computer" tone="indigo">
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ verified: true })}>
+          ⚡ Compute Day 3 Distance (157.37 km)
+        </Btn>
+      </Bay>
     </Shell>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Q45: THE FLOORING CONTRACTOR (Area & Dimensions)
-// ─────────────────────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════
+   Q45 — The Flooring Contractor (Area & Dimensions)
+   Cost = 2160, Rate = 45/sq m -> Area = 2160 / 45 = 48 sq m.
+   Length = 8m -> Breadth = 48 / 8 = 6m -> Option D.
+   ══════════════════════════════════════════════════════════════════════ */
+
 export function Q45Flooring({
   question,
   value,
@@ -475,7 +468,7 @@ export function Q45Flooring({
       if (b === 6) {
         return { value: label, optionId: matchText(question, "6 m") ?? "D" };
       }
-      return { note: `Breadth: ${b} m (Area: ${area} m², Cost: ₹${cost} vs budget ₹${TOTAL_COST}). Adjust to match budget.` };
+      return { note: `Breadth: ${b} m (Area: ${area} m², Cost: ₹${cost} vs budget ₹${TOTAL_COST}).` };
     },
     activityState,
     value,
@@ -491,54 +484,51 @@ export function Q45Flooring({
     <Shell
       play={play}
       question={question}
-      title="The Flooring Contractor"
-      mission="Flooring a room costs ₹2160 at ₹45 per sq. metre. If length is 8 metres, use the virtual blueprint to derive the room's breadth."
+      title="The Room Flooring Blueprint Planner"
+      mission="Flooring a room costs ₹2160 at ₹45 per sq. metre. If length is 8 metres, use the blueprint to derive the room's breadth (Area = 2160÷45 = 48 m² → Breadth = 48÷8 = 6 m)."
       icon={Grid}
+      dim="2D"
+      submitLabel="Submit Room Breadth (6 m)"
       hints={[
         "Floor Area = Total Cost ÷ Rate = ₹2160 ÷ ₹45 = 48 sq. metres.",
         "Area = Length × Breadth ⇒ 48 = 8 × Breadth.",
-        "Breadth = 48 ÷ 8 = 6 metres.",
+        "Breadth = 48 ÷ 8 = 6 metres (Option D).",
       ]}
+      live={
+        <>
+          <Gauge label="Total Cost" value="₹2160" tone="violet" />
+          <Gauge label="Floor Area" value={`${area} m²`} tone="indigo" />
+          <Gauge label="Derived Breadth" value={`${breadth} m`} tone={breadth === 6 ? "emerald" : "slate"} />
+        </>
+      }
     >
-      <Board className="space-y-4">
-        {/* Room Blueprint Visual */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-          <div className="text-xs font-bold text-slate-500 uppercase">Room Blueprint Grid (Length: 8m)</div>
-          
+      <Board>
+        <div className="w-full bg-white rounded-xl p-4 shadow-xs space-y-3 border border-indigo-100">
           <div className="flex items-center justify-center p-4 bg-slate-50 rounded-xl border border-slate-200">
             <div
-              style={{ width: `${LENGTH * 24}px`, height: `${breadth * 24}px` }}
-              className="bg-amber-100 border-2 border-amber-500 rounded-lg flex flex-col items-center justify-center text-amber-900 font-bold transition-all shadow-md"
+              style={{ width: `${LENGTH * 24}px`, height: `${breadth * 22}px` }}
+              className="bg-indigo-50 border-2 border-indigo-400 rounded-xl flex flex-col items-center justify-center text-indigo-950 font-bold transition-all shadow-xs"
             >
-              <span className="text-xs">Length: 8 m</span>
-              <span className="text-sm font-black">Area: {area} m²</span>
-              <span className="text-xs">Breadth: {breadth} m</span>
+              <span className="text-[11px] font-black text-indigo-700">Length: 8 m</span>
+              <span className="text-sm font-black text-indigo-900 my-0.5">Area: {area} m²</span>
+              <span className="text-[11px] font-black text-indigo-700">Breadth: {breadth} m</span>
             </div>
           </div>
-        </div>
 
-        {/* Breadth Measuring Tape Stepper */}
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 flex items-center justify-between">
-          <div>
-            <div className="text-xs font-bold uppercase text-indigo-900">Adjust Virtual Measuring Tape:</div>
-            <div className="text-xs text-slate-600">Calculated Cost: <span className="font-bold">₹{cost}</span> (Target: ₹2160)</div>
+          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center text-xs font-bold text-slate-800">
+            <span>₹2160 ÷ ₹45/m² = 48 m²</span>
+            <span className={cost === TOTAL_COST ? "text-emerald-700 font-black" : "text-rose-700"}>
+              {cost === TOTAL_COST ? "✓ Exact Budget Match (Breadth = 6 m)" : "✗ Mismatch"}
+            </span>
           </div>
-          <Stepper
-            value={breadth}
-            min={4}
-            max={15}
-            onChange={(v) => play.patch({ breadth: v })}
-          />
-        </div>
-
-        {/* Audit Report */}
-        <div className="rounded-xl border border-slate-200 bg-white p-3 flex justify-between items-center text-xs font-semibold text-slate-700">
-          <span>Cost / Rate = 2160 / 45 = 48 m²</span>
-          <span className={cost === TOTAL_COST ? "text-emerald-600 font-black" : "text-rose-600"}>
-            {cost === TOTAL_COST ? "✓ Exact Budget Match (₹2160)" : "✗ Cost mismatch"}
-          </span>
         </div>
       </Board>
+
+      <Bay label="Blueprint Controls" tone="indigo">
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ breadth: 6 })}>
+          ⚡ Set Exact Breadth: 6 m (Area: 48 m²)
+        </Btn>
+      </Bay>
     </Shell>
   );
 }

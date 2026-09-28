@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Crosshair, UserCheck, PenTool, Scissors, Cpu } from "lucide-react";
+import { Crosshair, UserCheck, PenTool, Scissors, Cpu, CheckCircle2 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText, matchOption } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board } from "./kit";
+import { Shell, Board, PlayCanvas } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q6 — The Laser Alignment Lab (Dot Placement Conditions)
@@ -36,7 +36,7 @@ export function Q06LaserAlignmentLabActivity({ question, value, activityState, o
     <Shell
       play={play}
       question={question}
-      title="The Laser Alignment Lab"
+      title="The Dot Placement Criteria Inspector"
       mission="Study the dot conditions in the problem figure (one dot in Triangle ∩ Square, another in Circle only). Scan candidate figures to find the one satisfying identical spatial intersection zones."
       icon={Crosshair}
       dim="2D"
@@ -54,17 +54,19 @@ export function Q06LaserAlignmentLabActivity({ question, value, activityState, o
       }
     >
       <Board>
-        <div className="flex flex-col items-center justify-center p-3 bg-slate-900 rounded-xl border border-slate-700">
-          <div className="text-xs font-bold text-sky-300 mb-2">REFERENCE FIGURE CONDITIONS</div>
-          <svg viewBox="0 0 160 100" className="w-48 h-28">
-            <circle cx="60" cy="50" r="35" fill="#3b82f6" fillOpacity="0.25" stroke="#60a5fa" strokeWidth="2" />
-            <rect x="50" y="30" width="55" height="50" fill="#a855f7" fillOpacity="0.25" stroke="#c084fc" strokeWidth="2" />
-            <polygon points="80,15 130,85 30,85" fill="#10b981" fillOpacity="0.2" stroke="#34d399" strokeWidth="2" />
+        <PlayCanvas height="h-56" className="bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/40 flex-col">
+          <div className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-900 mb-1">Reference Figure Dot Conditions</div>
+          <svg viewBox="0 0 180 110" className="w-56 h-36">
+            <circle cx="70" cy="55" r="40" fill="#dbeafe" fillOpacity="0.6" stroke="#3b82f6" strokeWidth="2" />
+            <rect x="60" y="30" width="65" height="55" fill="#f3e8ff" fillOpacity="0.6" stroke="#a855f7" strokeWidth="2" />
+            <polygon points="95,15 150,95 40,95" fill="#d1fae5" fillOpacity="0.5" stroke="#10b981" strokeWidth="2" />
             {/* Dots */}
-            <circle cx="70" cy="65" r="3.5" fill="#ef4444" stroke="#fff" strokeWidth="1" />
-            <circle cx="40" cy="45" r="3.5" fill="#ef4444" stroke="#fff" strokeWidth="1" />
+            <circle cx="85" cy="72" r="4.5" fill="#ef4444" stroke="#ffffff" strokeWidth="1.5" />
+            <text x="85" y="85" fill="#991b1b" fontSize="7" fontWeight="bold" textAnchor="middle">Dot 1</text>
+            <circle cx="48" cy="50" r="4.5" fill="#ef4444" stroke="#ffffff" strokeWidth="1.5" />
+            <text x="48" y="40" fill="#991b1b" fontSize="7" fontWeight="bold" textAnchor="middle">Dot 2</text>
           </svg>
-        </div>
+        </PlayCanvas>
       </Board>
 
       <Bay label="Candidate Figures" tone="indigo">
@@ -117,7 +119,7 @@ export function Q07SchoolRankingCeremonyActivity({ question, value, activityStat
       play={play}
       question={question}
       title="The School Assembly Ranking Board"
-      mission="In a class of 28 students, Gautam is 15th from the bottom. Operate the vertical ranking elevator to position Gautam so his rank from the bottom is exactly 15th, and read his rank from the top."
+      mission="In a class of 28 students, Gautam is 15th from the bottom. Operate the ranking elevator to position Gautam so his rank from the bottom is exactly 15th, and read his rank from the top."
       icon={UserCheck}
       dim="2D"
       submitLabel="Submit Rank From Top"
@@ -133,25 +135,25 @@ export function Q07SchoolRankingCeremonyActivity({ question, value, activityStat
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-between border border-slate-700">
-          <div className="flex justify-between text-xs font-bold text-slate-400">
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-between border border-indigo-100 shadow-xs space-y-4">
+          <div className="flex justify-between text-xs font-black text-slate-600">
             <span>🔝 Top Rank: 1st</span>
             <span>🔻 Bottom Rank: 28th</span>
           </div>
 
-          {/* Ranking Elevator Slider */}
-          <div className="relative w-full h-12 bg-slate-800 rounded-xl p-1.5 flex items-center border border-slate-700">
+          {/* Ranking Track */}
+          <div className="relative w-full h-14 bg-gradient-to-r from-indigo-50 via-slate-50 to-violet-50 rounded-xl p-2 flex items-center border border-indigo-200">
             <div
-              className="absolute h-9 px-3 rounded-lg bg-indigo-600 border border-indigo-400 flex items-center justify-center text-white font-bold text-xs shadow-md transition-all"
-              style={{ left: `${((w.rankTop - 1) / (total - 1)) * 80}%` }}
+              className="absolute h-10 px-3.5 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-md transition-all"
+              style={{ left: `${((w.rankTop - 1) / (total - 1)) * 82}%` }}
             >
-              👦 Gautam ({w.rankTop}th)
+              👦 Gautam ({w.rankTop}th from Top)
             </div>
           </div>
 
-          <div className="flex justify-between text-xs font-mono font-bold text-sky-400">
-            <span>Rank from Top: {w.rankTop}th</span>
-            <span>Rank from Bottom: {rankFromBottom}th</span>
+          <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 text-xs font-bold text-slate-800">
+            <span>Rank from Top: <strong className="text-indigo-600 font-mono text-sm">{w.rankTop}th</strong></span>
+            <span>Rank from Bottom: <strong className="text-violet-600 font-mono text-sm">{rankFromBottom}th</strong></span>
           </div>
         </div>
       </Board>
@@ -180,13 +182,6 @@ export function Q07SchoolRankingCeremonyActivity({ question, value, activityStat
    ══════════════════════════════════════════════════════════════════════ */
 
 export function Q08LineDrawingEngineActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const lines = [
-    "Outer Horizontal Top", "Outer Horizontal Bottom",
-    "Outer Vertical Left", "Outer Vertical Right",
-    "Inner Triangle Top-Left", "Inner Triangle Top-Right", "Inner Triangle Base",
-    "Diagonal Beam 1", "Diagonal Beam 2", "Middle Divider", "Base Support",
-  ];
-
   const play = usePlay<{ drawnCount: number }>({
     question,
     initial: { drawnCount: 0 },
@@ -209,8 +204,8 @@ export function Q08LineDrawingEngineActivity({ question, value, activityState, o
     <Shell
       play={play}
       question={question}
-      title="The Line-Drawing Engine"
-      mission="Operate the precision drafting robot to construct the geometric blueprint using the absolute minimum number of straight continuous line strokes."
+      title="The Precision Line Drafter"
+      mission="Operate the precision drafting tool to construct the geometric figure using the absolute minimum number of straight continuous line strokes (11 lines total)."
       icon={PenTool}
       dim="2D"
       submitLabel="Submit Line Count"
@@ -228,21 +223,21 @@ export function Q08LineDrawingEngineActivity({ question, value, activityState, o
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-2 flex items-center justify-center border border-slate-700">
-          <svg viewBox="0 0 200 120" className="w-full h-full">
+        <PlayCanvas height="h-56" className="bg-gradient-to-br from-slate-50 to-indigo-50/30">
+          <svg viewBox="0 0 200 130" className="w-full h-full">
             {/* Outline Box */}
-            <rect x="40" y="20" width="120" height="80" fill="none" stroke={w.drawnCount >= 4 ? "#38bdf8" : "#334155"} strokeWidth="2.5" />
+            <rect x="35" y="15" width="130" height="90" fill="none" stroke={w.drawnCount >= 4 ? "#4f46e5" : "#cbd5e1"} strokeWidth="2.5" />
             {/* Diagonals & cross lines */}
-            <line x1="40" y1="20" x2="160" y2="100" stroke={w.drawnCount >= 6 ? "#818cf8" : "#334155"} strokeWidth="2" />
-            <line x1="160" y1="20" x2="40" y2="100" stroke={w.drawnCount >= 8 ? "#818cf8" : "#334155"} strokeWidth="2" />
-            <line x1="100" y1="20" x2="100" y2="100" stroke={w.drawnCount >= 9 ? "#a855f7" : "#334155"} strokeWidth="2" />
-            <line x1="40" y1="60" x2="160" y2="60" stroke={w.drawnCount >= 10 ? "#a855f7" : "#334155"} strokeWidth="2" />
-            <polygon points="100,20 160,60 100,100 40,60" fill="none" stroke={w.drawnCount >= 11 ? "#34d399" : "#334155"} strokeWidth="2" />
+            <line x1="35" y1="15" x2="165" y2="105" stroke={w.drawnCount >= 6 ? "#0284c7" : "#e2e8f0"} strokeWidth="2" />
+            <line x1="165" y1="15" x2="35" y2="105" stroke={w.drawnCount >= 8 ? "#0284c7" : "#e2e8f0"} strokeWidth="2" />
+            <line x1="100" y1="15" x2="100" y2="105" stroke={w.drawnCount >= 9 ? "#9333ea" : "#e2e8f0"} strokeWidth="2" />
+            <line x1="35" y1="60" x2="165" y2="60" stroke={w.drawnCount >= 10 ? "#9333ea" : "#e2e8f0"} strokeWidth="2" />
+            <polygon points="100,15 165,60 100,105 35,60" fill="none" stroke={w.drawnCount >= 11 ? "#059669" : "#e2e8f0"} strokeWidth="2.5" />
           </svg>
-        </div>
+        </PlayCanvas>
       </Board>
 
-      <Bay label="Drafting Robot Controls" tone="indigo">
+      <Bay label="Drafting Controls" tone="indigo">
         <div className="flex flex-wrap items-center gap-2">
           <Btn tone="slate" disabled={play.readOnly || w.drawnCount <= 0} onClick={() => play.patch({ drawnCount: Math.max(0, w.drawnCount - 1) })}>
             Undo Stroke
@@ -284,8 +279,8 @@ export function Q09OrigamiLabActivity({ question, value, activityState, onChange
     <Shell
       play={play}
       question={question}
-      title="The Origami Folding Lab"
-      mission="A square paper is folded along the horizontal midline (P), then along the vertical midline (Q). A triangular notch is cut out of the folded corner (R). Unfold the sheet to discover the complete symmetrical punched pattern."
+      title="The Origami Folding & Punching Studio"
+      mission="A square paper is folded along the horizontal midline (P), then along the vertical midline (Q). A triangular notch is cut out of the folded corner (R). Unfold the sheet to discover the complete symmetrical punched pattern (Pattern C)."
       icon={Scissors}
       dim="2D"
       submitLabel="Submit Unfolded Pattern"
@@ -302,41 +297,41 @@ export function Q09OrigamiLabActivity({ question, value, activityState, onChange
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs min-h-[160px]">
           {!w.unfolded ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap justify-center">
               <div className="text-center">
-                <div className="text-[10px] font-bold text-slate-400 mb-1">FIG P (Half)</div>
-                <div className="w-16 h-16 bg-indigo-800 border border-indigo-400 rounded-sm" />
+                <div className="text-[10px] font-bold text-slate-500 mb-1">FIG P (Half)</div>
+                <div className="w-16 h-16 bg-indigo-100 border-2 border-indigo-300 rounded-sm" />
               </div>
-              <div className="text-slate-500 font-bold">→</div>
+              <div className="text-slate-400 font-bold">→</div>
               <div className="text-center">
-                <div className="text-[10px] font-bold text-slate-400 mb-1">FIG Q (Quarter)</div>
-                <div className="w-12 h-12 bg-indigo-700 border border-indigo-400 rounded-sm" />
+                <div className="text-[10px] font-bold text-slate-500 mb-1">FIG Q (Quarter)</div>
+                <div className="w-12 h-12 bg-indigo-200 border-2 border-indigo-400 rounded-sm" />
               </div>
-              <div className="text-slate-500 font-bold">→</div>
+              <div className="text-slate-400 font-bold">→</div>
               <div className="text-center">
-                <div className="text-[10px] font-bold text-slate-400 mb-1">FIG R (Cut)</div>
-                <div className="w-12 h-12 bg-indigo-600 border border-red-400 rounded-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 clip-triangle" />
+                <div className="text-[10px] font-bold text-slate-500 mb-1">FIG R (Cut)</div>
+                <div className="w-12 h-12 bg-indigo-300 border-2 border-red-400 rounded-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-4 h-4 bg-red-500" />
                 </div>
               </div>
             </div>
           ) : (
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
-              <div className="text-xs font-bold text-emerald-400 mb-1">UNFOLDED SYMMETRY (Pattern C)</div>
-              <div className="w-28 h-28 bg-indigo-900 border-2 border-emerald-400 rounded-md relative grid grid-cols-2 grid-rows-2 p-1 gap-1">
-                <div className="relative border border-indigo-700/50 flex items-center justify-center">
-                  <div className="w-4 h-4 bg-emerald-400 rotate-45" />
+              <div className="text-xs font-black text-emerald-700 mb-1.5">UNFOLDED SYMMETRY (Pattern C)</div>
+              <div className="w-32 h-32 bg-indigo-50 border-2 border-emerald-500 rounded-lg relative grid grid-cols-2 grid-rows-2 p-1.5 gap-1.5 shadow-xs">
+                <div className="relative border border-indigo-200 bg-white flex items-center justify-center rounded">
+                  <div className="w-4 h-4 bg-emerald-500 rotate-45" />
                 </div>
-                <div className="relative border border-indigo-700/50 flex items-center justify-center">
-                  <div className="w-4 h-4 bg-emerald-400 rotate-45" />
+                <div className="relative border border-indigo-200 bg-white flex items-center justify-center rounded">
+                  <div className="w-4 h-4 bg-emerald-500 rotate-45" />
                 </div>
-                <div className="relative border border-indigo-700/50 flex items-center justify-center">
-                  <div className="w-4 h-4 bg-emerald-400 rotate-45" />
+                <div className="relative border border-indigo-200 bg-white flex items-center justify-center rounded">
+                  <div className="w-4 h-4 bg-emerald-500 rotate-45" />
                 </div>
-                <div className="relative border border-indigo-700/50 flex items-center justify-center">
-                  <div className="w-4 h-4 bg-emerald-400 rotate-45" />
+                <div className="relative border border-indigo-200 bg-white flex items-center justify-center rounded">
+                  <div className="w-4 h-4 bg-emerald-500 rotate-45" />
                 </div>
               </div>
             </motion.div>
@@ -386,7 +381,7 @@ export function Q10OperatorPowerGridActivity({ question, value, activityState, o
     <Shell
       play={play}
       question={question}
-      title="The Operator Power Grid"
+      title="The BODMAS Operator Substitution Grid"
       mission="Map the symbolic operator modules: A → ÷, B → +, C → −, D → ×. Slot them into the power circuit: 17 [B] 33 [A] 11 [C] 5 [D] 2 and evaluate intermediate energy flows using BODMAS rules."
       icon={Cpu}
       dim="2D"
@@ -405,24 +400,24 @@ export function Q10OperatorPowerGridActivity({ question, value, activityState, o
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-center gap-3 border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-center gap-3 border border-indigo-100 shadow-xs">
           {/* Circuit Pipeline */}
-          <div className="flex items-center justify-around text-center flex-wrap gap-1">
-            <div className="px-3 py-1.5 rounded-lg bg-indigo-950 border border-indigo-500 font-mono font-black text-lg text-indigo-300">17</div>
-            <div className="font-mono text-base font-bold text-amber-400">{w.opsSlotted ? "+" : "[B]"}</div>
-            <div className="px-3 py-1.5 rounded-lg bg-indigo-950 border border-indigo-500 font-mono font-black text-lg text-indigo-300">33</div>
-            <div className="font-mono text-base font-bold text-amber-400">{w.opsSlotted ? "÷" : "[A]"}</div>
-            <div className="px-3 py-1.5 rounded-lg bg-indigo-950 border border-indigo-500 font-mono font-black text-lg text-indigo-300">11</div>
-            <div className="font-mono text-base font-bold text-amber-400">{w.opsSlotted ? "−" : "[C]"}</div>
-            <div className="px-3 py-1.5 rounded-lg bg-indigo-950 border border-indigo-500 font-mono font-black text-lg text-indigo-300">5</div>
-            <div className="font-mono text-base font-bold text-amber-400">{w.opsSlotted ? "×" : "[D]"}</div>
-            <div className="px-3 py-1.5 rounded-lg bg-indigo-950 border border-indigo-500 font-mono font-black text-lg text-indigo-300">2</div>
+          <div className="flex items-center justify-around text-center flex-wrap gap-1.5">
+            <div className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 font-mono font-black text-lg text-indigo-950">17</div>
+            <div className="font-mono text-base font-bold text-amber-600">{w.opsSlotted ? "+" : "[B]"}</div>
+            <div className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 font-mono font-black text-lg text-indigo-950">33</div>
+            <div className="font-mono text-base font-bold text-amber-600">{w.opsSlotted ? "÷" : "[A]"}</div>
+            <div className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 font-mono font-black text-lg text-indigo-950">11</div>
+            <div className="font-mono text-base font-bold text-amber-600">{w.opsSlotted ? "−" : "[C]"}</div>
+            <div className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 font-mono font-black text-lg text-indigo-950">5</div>
+            <div className="font-mono text-base font-bold text-amber-600">{w.opsSlotted ? "×" : "[D]"}</div>
+            <div className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 font-mono font-black text-lg text-indigo-950">2</div>
           </div>
 
           {/* Evaluation Flow */}
           {w.evaluated && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center font-mono text-xs font-bold text-emerald-300 bg-emerald-950/60 p-2 rounded-lg border border-emerald-500">
-              = 17 + 3 − 10 = 20 − 10 = <span className="text-base text-emerald-200">10</span>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center font-mono text-sm font-bold text-emerald-900 bg-emerald-50 p-2.5 rounded-xl border border-emerald-300">
+              = 17 + 3 − 10 = 20 − 10 = <span className="text-lg font-black text-emerald-600">10</span>
             </motion.div>
           )}
         </div>

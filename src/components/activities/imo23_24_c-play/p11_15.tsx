@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Grid3X3, Users, FlipHorizontal, RefreshCw, Sparkles } from "lucide-react";
+import { Grid3X3, Users, FlipHorizontal, RefreshCw, Sparkles, CheckCircle2 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchText, matchOption } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board } from "./kit";
+import { Shell, Board, PlayCanvas } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q11 — The Shape Matrix Core (3×3 Figure Matrix)
@@ -36,14 +36,14 @@ export function Q11ShapeMatrixCoreActivity({ question, value, activityState, onC
     <Shell
       play={play}
       question={question}
-      title="The Holographic Matrix Core"
-      mission="Inspect the 3×3 figure matrix. Row 1 features squares, Row 2 features circles, Row 3 features triangles with varying internal/external line elements. Slot the correct geometric core into the missing cell."
+      title="The 3×3 Shape Matrix Inspector"
+      mission="Inspect the 3×3 figure matrix. Row 1 features squares, Row 2 features circles, Row 3 features triangles with progressive internal elements. Slot the correct geometric core into the missing bottom-right cell."
       icon={Grid3X3}
       dim="2D"
       submitLabel="Submit Matrix Figure"
       hints={[
         "Check shape by row: Row 1 = Square, Row 2 = Circle, Row 3 = Triangle.",
-        "Check line orientations by column: Col 1 = Vertical, Col 2 = Horizontal, Col 3 = Inverted T with dots.",
+        "Check line orientations by column: Col 1 = 1 element, Col 2 = 2 elements, Col 3 = 3 elements with inverted base.",
         "Slotting Candidate B satisfies all dual row and column invariants.",
       ]}
       live={
@@ -53,19 +53,19 @@ export function Q11ShapeMatrixCoreActivity({ question, value, activityState, onC
       }
     >
       <Board>
-        <div className="w-56 h-56 mx-auto grid grid-cols-3 grid-rows-3 gap-1.5 p-2 bg-slate-900 rounded-2xl border-2 border-indigo-500 shadow-lg">
+        <div className="w-60 h-60 mx-auto grid grid-cols-3 grid-rows-3 gap-2 p-2.5 bg-slate-100 rounded-2xl border-2 border-indigo-200 shadow-sm">
           {/* Row 1: Squares */}
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-sky-400 font-bold text-xs">⬛-1</div>
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-sky-400 font-bold text-xs">⬛-2</div>
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-sky-400 font-bold text-xs">⬛-3</div>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-indigo-700 font-extrabold text-sm shadow-xs">⬛-1</div>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-indigo-700 font-extrabold text-sm shadow-xs">⬛-2</div>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-indigo-700 font-extrabold text-sm shadow-xs">⬛-3</div>
           {/* Row 2: Circles */}
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-violet-400 font-bold text-xs">●-1</div>
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-violet-400 font-bold text-xs">●-2</div>
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-violet-400 font-bold text-xs">●-3</div>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-sky-700 font-extrabold text-sm shadow-xs">●-1</div>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-sky-700 font-extrabold text-sm shadow-xs">●-2</div>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-sky-700 font-extrabold text-sm shadow-xs">●-3</div>
           {/* Row 3: Triangles */}
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-emerald-400 font-bold text-xs">▲-1</div>
-          <div className="bg-indigo-950/80 rounded-lg flex items-center justify-center border border-indigo-700 text-emerald-400 font-bold text-xs">▲-2</div>
-          <div className={`rounded-lg flex items-center justify-center border-2 border-dashed ${w.slottedTile === "B" ? "border-emerald-400 bg-emerald-950 text-emerald-300 font-black" : "border-amber-400 bg-slate-800 text-amber-300 font-bold"} text-xs`}>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-emerald-700 font-extrabold text-sm shadow-xs">▲-1</div>
+          <div className="bg-white rounded-xl flex items-center justify-center border border-slate-200 text-emerald-700 font-extrabold text-sm shadow-xs">▲-2</div>
+          <div className={`rounded-xl flex items-center justify-center border-2 border-dashed ${w.slottedTile === "B" ? "border-emerald-500 bg-emerald-50 text-emerald-800 font-black" : "border-amber-400 bg-white text-amber-700 font-bold"} text-xs shadow-xs`}>
             {w.slottedTile ? `▲ (${w.slottedTile})` : "Slot ?"}
           </div>
         </div>
@@ -116,8 +116,8 @@ export function Q12FamilyTreeHouseActivity({ question, value, activityState, onC
     <Shell
       play={play}
       question={question}
-      title="The Family Tree House"
-      mission="Vijay points to Sara: 'She is the daughter of my father's father.' Connect the genealogical nodes in the family tree house to reveal Sara's exact familial relationship to Vijay."
+      title="The Family Tree Lineage Mapper"
+      mission="Vijay points to Sara: 'She is the daughter of my father's father.' Connect the genealogical nodes in the family tree to reveal Sara's exact familial relationship to Vijay."
       icon={Users}
       dim="2D"
       submitLabel="Submit Kinship Relationship"
@@ -133,33 +133,33 @@ export function Q12FamilyTreeHouseActivity({ question, value, activityState, onC
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-between border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-between border border-indigo-100 shadow-xs space-y-3 min-h-[180px]">
           {/* Generation 1: Grandfather */}
           <div className="text-center">
-            <span className="px-3 py-1 bg-violet-950 border border-violet-500 rounded-lg text-violet-300 font-bold text-xs">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-violet-50 border border-violet-200 rounded-xl text-violet-900 font-extrabold text-xs">
               👴 Paternal Grandfather ("Father's Father")
             </span>
           </div>
 
           {/* Connective Lines */}
-          <div className="flex justify-around text-slate-500 font-black text-xs">
+          <div className="flex justify-around text-slate-500 font-bold text-xs px-8">
             <span>↙ Son</span>
             <span>↘ Daughter</span>
           </div>
 
           {/* Generation 2: Father & Sara */}
-          <div className="flex justify-around">
-            <span className="px-3 py-1 bg-sky-950 border border-sky-500 rounded-lg text-sky-300 font-bold text-xs">
+          <div className="flex justify-around items-center">
+            <span className="px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-xl text-sky-900 font-extrabold text-xs">
               👨 Vijay's Father
             </span>
-            <span className={`px-3 py-1 rounded-lg font-bold text-xs border ${w.nodesConnected ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-slate-800 border-slate-600 text-slate-400"}`}>
+            <span className={`px-3 py-1.5 rounded-xl font-extrabold text-xs border ${w.nodesConnected ? "bg-emerald-50 border-emerald-300 text-emerald-900" : "bg-slate-50 border-slate-200 text-slate-500"}`}>
               👩 Sara (Daughter)
             </span>
           </div>
 
           {/* Generation 3: Vijay */}
           <div className="flex justify-start pl-8">
-            <span className="px-3 py-1 bg-indigo-950 border border-indigo-500 rounded-lg text-indigo-300 font-bold text-xs">
+            <span className="px-3.5 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900 font-extrabold text-xs">
               👦 Vijay (Son)
             </span>
           </div>
@@ -209,8 +209,8 @@ export function Q13MirrorDimensionActivity({ question, value, activityState, onC
     <Shell
       play={play}
       question={question}
-      title="The Mirror Dimension"
-      mission="A vertical reflective plane is placed to the LEFT of 'F @ M # L ? Y'. Activate the reflection beam to compute the left-sided geometric inversion of each engraved glyph."
+      title="The Optical Mirror Reflection Studio"
+      mission="A vertical reflective plane is placed to the LEFT of 'F @ M # L ? Y'. Activate the reflection beam to compute the left-sided geometric inversion of each character."
       icon={FlipHorizontal}
       dim="2D"
       submitLabel="Submit Mirror Image"
@@ -227,26 +227,26 @@ export function Q13MirrorDimensionActivity({ question, value, activityState, onC
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs min-h-[160px]">
           {/* Left Reflection */}
           {w.reflected ? (
-            <div className="p-3 bg-indigo-950/80 rounded-xl border border-emerald-400 text-center">
-              <div className="text-[10px] font-bold text-emerald-400 mb-1">REFLECTED IMAGE (Image B)</div>
-              <div className="font-mono text-xl font-black text-emerald-300 tracking-wider">
+            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-300 text-center">
+              <div className="text-[10px] font-black uppercase tracking-wider text-emerald-800 mb-1">Reflected Image (Image B)</div>
+              <div className="font-mono text-xl font-black text-emerald-700 tracking-wider">
                 Y ? L # M @ F
               </div>
             </div>
           ) : (
-            <div className="text-slate-500 font-bold text-xs italic">Awaiting Reflection...</div>
+            <div className="text-slate-400 font-bold text-xs italic">Awaiting Reflection...</div>
           )}
 
           {/* Mirror Plane */}
-          <div className={`w-1.5 h-32 rounded-full ${w.mirrorPlaced ? "bg-cyan-400 shadow-[0_0_15px_#22d3ee]" : "bg-slate-700"}`} />
+          <div className={`w-1.5 h-28 rounded-full ${w.mirrorPlaced ? "bg-cyan-500 shadow-sm" : "bg-slate-300"}`} />
 
           {/* Original Glyphs */}
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center">
-            <div className="text-[10px] font-bold text-slate-400 mb-1">ORIGINAL OBJECT</div>
-            <div className="font-mono text-xl font-black text-sky-400 tracking-wider">
+          <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-200 text-center">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 mb-1">Original String</div>
+            <div className="font-mono text-xl font-black text-slate-800 tracking-wider">
               {original}
             </div>
           </div>
@@ -292,8 +292,8 @@ export function Q14ContinuingSeriesActivity({ question, value, activityState, on
     <Shell
       play={play}
       question={question}
-      title="The Four-Stage Symbol Machine"
-      mission="Study the 4 sequential transformation panels. The internal arrow rotates 45° clockwise while the perimeter pin shifts alternately. Configure and generate the 5th panel in the sequence."
+      title="The Sequential Figure Progression Wheel"
+      mission="Study the 4 sequential transformation panels. The internal dial rotates 45° clockwise while the perimeter pin shifts alternately. Configure and generate the 5th panel in the sequence."
       icon={RefreshCw}
       dim="2D"
       submitLabel="Submit 5th Series Figure"
@@ -309,20 +309,20 @@ export function Q14ContinuingSeriesActivity({ question, value, activityState, on
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs flex-wrap gap-2">
           {[1, 2, 3, 4, 5].map((stage) => (
             <div
               key={stage}
-              className={`w-14 h-16 rounded-xl border p-1 text-center flex flex-col items-center justify-between ${w.currentStage === stage ? "border-emerald-400 bg-emerald-950/70" : stage < w.currentStage ? "border-indigo-500 bg-indigo-950/40" : "border-slate-700 bg-slate-800"}`}
+              className={`w-14 h-20 rounded-xl border p-1 text-center flex flex-col items-center justify-between transition-all ${w.currentStage === stage ? "border-emerald-500 bg-emerald-50 shadow-xs" : stage < w.currentStage ? "border-indigo-300 bg-indigo-50/40" : "border-slate-200 bg-slate-50"}`}
             >
-              <span className="text-[9px] font-bold text-slate-400">P-{stage}</span>
+              <span className="text-[10px] font-black text-slate-600">P-{stage}</span>
               <div
-                className="w-7 h-7 rounded-full border border-sky-400 flex items-center justify-center transition-transform"
+                className="w-8 h-8 rounded-full border-2 border-indigo-400 bg-white flex items-center justify-center transition-transform shadow-xs"
                 style={{ transform: `rotate(${(stage - 1) * 45}deg)` }}
               >
-                <div className="w-0.5 h-3.5 bg-sky-300 rounded-full" />
+                <div className="w-1 h-4 bg-indigo-600 rounded-full" />
               </div>
-              <span className="text-[9px] font-mono text-slate-300">{stage === 5 ? "(C)" : `${(stage - 1) * 45}°`}</span>
+              <span className="text-[10px] font-mono font-bold text-slate-700">{stage === 5 ? "(Fig C)" : `${(stage - 1) * 45}°`}</span>
             </div>
           ))}
         </div>
@@ -371,8 +371,8 @@ export function Q15TransformationForgeActivity({ question, value, activityState,
     <Shell
       play={play}
       question={question}
-      title="The Analogy Transformation Forge"
-      mission="Discover the mathematical transformation rule from Figure 1 :: Figure 2 (vertical reflection + shading inversion). Apply the forged rule to Figure 3 to produce the missing fourth analogue."
+      title="The Geometric Analogy Studio"
+      mission="Discover the mathematical transformation rule from Figure 1 :: Figure 2 (vertical reflection + shading inversion). Apply the forged rule to Figure 3 to produce the missing fourth analogue (Figure C)."
       icon={Sparkles}
       dim="2D"
       submitLabel="Submit Analogy Figure"
@@ -389,34 +389,34 @@ export function Q15TransformationForgeActivity({ question, value, activityState,
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs flex-wrap gap-2 min-h-[160px]">
           {/* Pair 1 */}
           <div className="flex items-center gap-2">
-            <div className="w-16 h-16 bg-slate-800 rounded-xl border border-indigo-400 flex items-center justify-center">
-              <span className="text-xl">▲○</span>
+            <div className="w-16 h-16 bg-slate-50 rounded-xl border border-indigo-200 flex items-center justify-center shadow-xs">
+              <span className="text-2xl">▲○</span>
             </div>
             <span className="text-slate-400 font-bold">:</span>
-            <div className="w-16 h-16 bg-indigo-950 rounded-xl border border-emerald-400 flex items-center justify-center">
-              <span className="text-xl">▼●</span>
+            <div className="w-16 h-16 bg-indigo-50 rounded-xl border border-emerald-300 flex items-center justify-center shadow-xs">
+              <span className="text-2xl text-emerald-700">▼●</span>
             </div>
           </div>
 
-          <span className="text-amber-400 font-black text-lg">::</span>
+          <span className="text-indigo-600 font-black text-xl">::</span>
 
           {/* Pair 2 */}
           <div className="flex items-center gap-2">
-            <div className="w-16 h-16 bg-slate-800 rounded-xl border border-indigo-400 flex items-center justify-center">
-              <span className="text-xl">⬟□</span>
+            <div className="w-16 h-16 bg-slate-50 rounded-xl border border-indigo-200 flex items-center justify-center shadow-xs">
+              <span className="text-2xl">⬟□</span>
             </div>
             <span className="text-slate-400 font-bold">:</span>
-            <div className={`w-16 h-16 rounded-xl border flex items-center justify-center ${w.transformed ? "bg-emerald-950 border-emerald-400" : "bg-slate-800 border-dashed border-slate-600"}`}>
-              <span className="text-xl">{w.transformed ? "⯝■" : "?"}</span>
+            <div className={`w-16 h-16 rounded-xl border-2 flex items-center justify-center shadow-xs transition-all ${w.transformed ? "bg-emerald-50 border-emerald-400" : "bg-slate-50 border-dashed border-slate-300"}`}>
+              <span className={`text-2xl ${w.transformed ? "text-emerald-700 font-bold" : "text-slate-400"}`}>{w.transformed ? "⯝■" : "?"}</span>
             </div>
           </div>
         </div>
       </Board>
 
-      <Bay label="Forge Operations" tone="indigo">
+      <Bay label="Analogy Operations" tone="indigo">
         <div className="flex flex-wrap items-center gap-2">
           <Btn tone="violet" disabled={play.readOnly} onClick={() => play.patch({ ruleDiscovered: true })}>
             🔍 Extract Analogy Rule

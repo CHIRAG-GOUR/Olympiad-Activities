@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { GitCommit, Zap, Compass, Sparkles, Building2 } from "lucide-react";
+import { GitCommit, Zap, Compass, Sparkles, Building2, CheckCircle2 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText, matchOption } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board } from "./kit";
+import { Shell, Board, PlayCanvas } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q16 — The Line Intersection Observatory (Intersecting Line Pairs)
@@ -36,7 +36,7 @@ export function Q16LineIntersectionObservatoryActivity({ question, value, activi
       play={play}
       question={question}
       title="The Line Intersection Observatory"
-      mission="Inspect the intersecting lines r, s, p, q. Activate the junction optical sensors where two lines cross to tally the exact count of unique intersecting line pairs."
+      mission="Inspect the intersecting lines r, s, p, q. Activate the optical junction sensors where two lines cross to tally the exact count of unique intersecting line pairs (3 pairs)."
       icon={GitCommit}
       dim="2D"
       submitLabel="Submit Intersecting Pairs"
@@ -53,29 +53,44 @@ export function Q16LineIntersectionObservatoryActivity({ question, value, activi
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-center border border-slate-700">
+        <PlayCanvas height="h-56" className="bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/40">
           <svg viewBox="0 0 200 120" className="w-full h-full">
             {/* Parallel lines r and s */}
-            <line x1="20" y1="35" x2="180" y2="35" stroke="#38bdf8" strokeWidth="2.5" />
-            <text x="185" y="38" fill="#38bdf8" fontSize="10" fontWeight="bold">r</text>
+            <line x1="20" y1="35" x2="180" y2="35" stroke="#3b82f6" strokeWidth="2.5" />
+            <text x="185" y="38" fill="#1e40af" fontSize="11" fontWeight="bold">r</text>
 
-            <line x1="20" y1="85" x2="180" y2="85" stroke="#38bdf8" strokeWidth="2.5" />
-            <text x="185" y="88" fill="#38bdf8" fontSize="10" fontWeight="bold">s</text>
+            <line x1="20" y1="85" x2="180" y2="85" stroke="#3b82f6" strokeWidth="2.5" />
+            <text x="185" y="88" fill="#1e40af" fontSize="11" fontWeight="bold">s</text>
 
             {/* Transversal line p */}
-            <line x1="50" y1="10" x2="150" y2="110" stroke="#a855f7" strokeWidth="2.5" />
-            <text x="155" y="115" fill="#a855f7" fontSize="10" fontWeight="bold">p</text>
+            <line x1="50" y1="10" x2="150" y2="110" stroke="#8b5cf6" strokeWidth="2.5" />
+            <text x="155" y="115" fill="#6d28d9" fontSize="11" fontWeight="bold">p</text>
 
             {/* Line q intersecting p */}
-            <line x1="30" y1="110" x2="170" y2="60" stroke="#f59e0b" strokeWidth="2" />
-            <text x="175" y="63" fill="#f59e0b" fontSize="10" fontWeight="bold">q</text>
+            <line x1="30" y1="110" x2="170" y2="60" stroke="#f59e0b" strokeWidth="2.5" />
+            <text x="175" y="63" fill="#b45309" fontSize="11" fontWeight="bold">q</text>
 
             {/* Active sensor dots */}
-            {w.detectedPairs >= 1 && <circle cx="75" cy="35" r="4.5" fill="#10b981" stroke="#fff" strokeWidth="1.5" />}
-            {w.detectedPairs >= 2 && <circle cx="125" cy="85" r="4.5" fill="#10b981" stroke="#fff" strokeWidth="1.5" />}
-            {w.detectedPairs >= 3 && <circle cx="106" cy="66" r="4.5" fill="#10b981" stroke="#fff" strokeWidth="1.5" />}
+            {w.detectedPairs >= 1 && (
+              <g>
+                <circle cx="75" cy="35" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                <text x="75" y="26" fill="#047857" fontSize="8" fontWeight="bold" textAnchor="middle">p × r</text>
+              </g>
+            )}
+            {w.detectedPairs >= 2 && (
+              <g>
+                <circle cx="125" cy="85" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                <text x="125" y="98" fill="#047857" fontSize="8" fontWeight="bold" textAnchor="middle">p × s</text>
+              </g>
+            )}
+            {w.detectedPairs >= 3 && (
+              <g>
+                <circle cx="106" cy="66" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                <text x="120" y="63" fill="#047857" fontSize="8" fontWeight="bold">p × q</text>
+              </g>
+            )}
           </svg>
-        </div>
+        </PlayCanvas>
       </Board>
 
       <Bay label="Sensor Scanner" tone="indigo">
@@ -131,8 +146,8 @@ export function Q17IntegerPowerChallengeActivity({ question, value, activityStat
     <Shell
       play={play}
       question={question}
-      title="The Integer Conveyor Tower"
-      mission="Evaluate the four signed arithmetic expressions on four conveyor engines. Determine which calculation tower yields the maximum algebraic value."
+      title="The Integer Comparison Calculator"
+      mission="Evaluate the four signed integer expressions on four calculation towers. Determine which arithmetic tower yields the maximum algebraic value (+3 from Tower B)."
       icon={Zap}
       dim="2D"
       submitLabel="Submit Maximum Expression"
@@ -150,23 +165,25 @@ export function Q17IntegerPowerChallengeActivity({ question, value, activityStat
       }
     >
       <Board>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
           {expressions.map((e) => (
             <div
               key={e.label}
-              className={`p-2 rounded-xl border text-center flex flex-col justify-between ${w.calculated && e.label === "B" ? "bg-emerald-950/80 border-emerald-400" : "bg-slate-900 border-slate-700"}`}
+              className={`p-3 rounded-xl border text-center flex flex-col justify-between transition-all ${w.calculated && e.label === "B" ? "bg-emerald-50 border-emerald-400 shadow-sm" : "bg-white border-slate-200 shadow-xs"}`}
             >
-              <div className="text-[10px] font-bold text-slate-400">Tower {e.label}</div>
-              <div className="text-[10px] font-mono text-slate-300 my-1">{e.expr}</div>
-              <div className="font-mono text-base font-black text-sky-400">{w.calculated ? (e.val > 0 ? `+${e.val}` : e.val) : "---"}</div>
+              <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">Tower {e.label}</div>
+              <div className="text-xs font-mono font-bold text-slate-800 my-1.5">{e.expr}</div>
+              <div className={`font-mono text-lg font-black ${w.calculated && e.label === "B" ? "text-emerald-700" : "text-indigo-900"}`}>
+                {w.calculated ? (e.val > 0 ? `+${e.val}` : e.val) : "---"}
+              </div>
             </div>
           ))}
         </div>
       </Board>
 
-      <Bay label="Conveyor Engine" tone="indigo">
+      <Bay label="Calculation Engine" tone="indigo">
         <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ calculated: true, maxOption: "B" })}>
-          ⚡ Run Conveyor Calculations & Identify Maximum (Tower B)
+          ⚡ Calculate All Expressions & Identify Maximum (Tower B)
         </Btn>
       </Bay>
     </Shell>
@@ -199,8 +216,8 @@ export function Q18AngleObservatoryActivity({ question, value, activityState, on
     <Shell
       play={play}
       question={question}
-      title="The Angle Observatory"
-      mission="Scan all pair-wise ray sectors originating from vertex O. Use the optical angle probe to detect and tally all obtuse angles (strictly greater than 90° and less than 180°)."
+      title="The Angle Protractor & Sector Scanner"
+      mission="Scan all pair-wise ray sectors originating from vertex O. Use the angle scanner to detect and tally all obtuse angles (strictly greater than 90° and less than 180°)."
       icon={Compass}
       dim="2D"
       submitLabel="Submit Obtuse Angle Count"
@@ -216,22 +233,31 @@ export function Q18AngleObservatoryActivity({ question, value, activityState, on
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-2 flex items-center justify-center border border-slate-700">
-          <svg viewBox="0 0 200 120" className="w-full h-full">
-            {/* Rays from (100, 70) */}
-            <line x1="100" y1="70" x2="170" y2="70" stroke="#38bdf8" strokeWidth="2.5" />
-            <line x1="100" y1="70" x2="150" y2="20" stroke="#818cf8" strokeWidth="2.5" />
-            <line x1="100" y1="70" x2="100" y2="15" stroke="#a855f7" strokeWidth="2.5" />
-            <line x1="100" y1="70" x2="40" y2="25" stroke="#f59e0b" strokeWidth="2.5" />
-            <line x1="100" y1="70" x2="30" y2="70" stroke="#ec4899" strokeWidth="2.5" />
+        <PlayCanvas height="h-56" className="bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/40">
+          <svg viewBox="0 0 220 130" className="w-full h-full">
+            {/* Rays from (110, 80) */}
+            <line x1="110" y1="80" x2="190" y2="80" stroke="#0284c7" strokeWidth="2.5" />
+            <text x="195" y="84" fill="#0369a1" fontSize="10" fontWeight="bold">A</text>
 
-            <circle cx="100" cy="70" r="4" fill="#fff" />
-            <text x="96" y="85" fill="#cbd5e1" fontSize="10" fontWeight="bold">O</text>
+            <line x1="110" y1="80" x2="170" y2="25" stroke="#4f46e5" strokeWidth="2.5" />
+            <text x="174" y="24" fill="#3730a3" fontSize="10" fontWeight="bold">B</text>
+
+            <line x1="110" y1="80" x2="110" y2="15" stroke="#7c3aed" strokeWidth="2.5" />
+            <text x="106" y="10" fill="#5b21b6" fontSize="10" fontWeight="bold">C</text>
+
+            <line x1="110" y1="80" x2="40" y2="30" stroke="#d97706" strokeWidth="2.5" />
+            <text x="28" y="32" fill="#92400e" fontSize="10" fontWeight="bold">D</text>
+
+            <line x1="110" y1="80" x2="25" y2="80" stroke="#dc2626" strokeWidth="2.5" />
+            <text x="14" y="84" fill="#991b1b" fontSize="10" fontWeight="bold">E</text>
+
+            <circle cx="110" cy="80" r="5" fill="#1e1b4b" />
+            <text x="106" y="98" fill="#1e1b4b" fontSize="11" fontWeight="bold">O</text>
 
             {/* Obtuse Arc Indicators */}
-            {w.obtuseCount >= 1 && <path d="M 140 70 A 40 40 0 0 0 65 37" fill="none" stroke="#10b981" strokeWidth="2" strokeDasharray="2 2" />}
+            {w.obtuseCount >= 1 && <path d="M 160 80 A 50 50 0 0 0 68 45" fill="none" stroke="#10b981" strokeWidth="2.5" strokeDasharray="3 3" />}
           </svg>
-        </div>
+        </PlayCanvas>
       </Board>
 
       <Bay label="Angle Scanner" tone="indigo">
@@ -259,12 +285,12 @@ export function Q18AngleObservatoryActivity({ question, value, activityState, on
 
 export function Q19SymmetryScannerActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
   const digits = [
-    { d: "3", sym: true, line: "Horizontal" },
-    { d: "5", sym: false, line: "None" },
-    { d: "1", sym: false, line: "None" },
-    { d: "0", sym: true, line: "Dual (H + V)" },
-    { d: "6", sym: false, line: "None" },
-    { d: "7", sym: false, line: "None" },
+    { d: "3", sym: true, line: "Horizontal Axis" },
+    { d: "5", sym: false, line: "No Axis" },
+    { d: "1", sym: false, line: "No Axis" },
+    { d: "0", sym: true, line: "Dual Axis (H + V)" },
+    { d: "6", sym: false, line: "No Axis" },
+    { d: "7", sym: false, line: "No Axis" },
   ];
 
   const play = usePlay<{ scanned: boolean; count: number }>({
@@ -286,8 +312,8 @@ export function Q19SymmetryScannerActivity({ question, value, activityState, onC
     <Shell
       play={play}
       question={question}
-      title="The Symmetry Scanner"
-      mission="Send the digits 3, 5, 1, 0, 6, 7 through a dual-axis symmetry laser. Determine how many of these digits possess at least one line of symmetry."
+      title="The Reflectional Symmetry Inspector"
+      mission="Send the numbers 3, 5, 1, 0, 6, 7 through the symmetry axis scanner. Determine how many of these digits possess at least one line of reflectional symmetry (2 digits: '3' and '0')."
       icon={Sparkles}
       dim="2D"
       submitLabel="Submit Symmetric Count"
@@ -304,14 +330,14 @@ export function Q19SymmetryScannerActivity({ question, value, activityState, onC
       }
     >
       <Board>
-        <div className="grid grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
           {digits.map((item) => (
             <div
               key={item.d}
-              className={`p-2 rounded-xl border text-center ${w.scanned ? (item.sym ? "bg-emerald-950/80 border-emerald-400" : "bg-slate-900 border-slate-700 opacity-60") : "bg-slate-900 border-slate-700"}`}
+              className={`p-3 rounded-xl border text-center transition-all ${w.scanned ? (item.sym ? "bg-emerald-50 border-emerald-400 shadow-xs" : "bg-slate-50 border-slate-200 opacity-60") : "bg-white border-indigo-100 shadow-xs"}`}
             >
-              <div className="font-mono text-2xl font-black text-indigo-200">{item.d}</div>
-              <div className="text-[9px] font-bold text-slate-400 mt-1">
+              <div className="font-mono text-3xl font-black text-indigo-950">{item.d}</div>
+              <div className="text-[10px] font-bold text-slate-600 mt-1.5">
                 {w.scanned ? (item.sym ? `✓ ${item.line}` : "✗ No Axis") : "Pending"}
               </div>
             </div>
@@ -354,8 +380,8 @@ export function Q20ArchitectureFloorLabActivity({ question, value, activityState
     <Shell
       play={play}
       question={question}
-      title="The Architecture Floor Lab"
-      mission="The architectural blueprint shows a stepped polygon with perimeter dimensions (2cm, 1.5cm, 3cm, 1cm, 2cm, 3cm, 6cm). Decompose the floor into rectangular sections and compute the exact total area."
+      title="The Stepped Composite Area Workshop"
+      mission="The architectural blueprint shows a stepped polygon with perimeter dimensions (2cm, 1.5cm, 3cm, 1cm, 2cm, 3cm, 6cm). Decompose the floor into rectangular sections and compute the exact total area (25 sq. cm)."
       icon={Building2}
       dim="2D"
       submitLabel="Submit Calculated Area"
@@ -374,26 +400,29 @@ export function Q20ArchitectureFloorLabActivity({ question, value, activityState
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-2 flex items-center justify-center border border-slate-700">
-          <svg viewBox="0 0 200 120" className="w-full h-full">
+        <PlayCanvas height="h-56" className="bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/40">
+          <svg viewBox="0 0 200 130" className="w-full h-full">
             {/* Stepped Polygon */}
             <path
-              d="M 40 100 L 160 100 L 160 40 L 120 40 L 120 60 L 80 60 L 80 80 L 40 80 Z"
-              fill={w.decomposed ? "#4338ca" : "#312e81"}
-              stroke="#6366f1"
-              strokeWidth="2"
+              d="M 40 105 L 160 105 L 160 40 L 120 40 L 120 60 L 80 60 L 80 80 L 40 80 Z"
+              fill={w.decomposed ? "#c7d2fe" : "#e0e7ff"}
+              stroke="#4f46e5"
+              strokeWidth="2.5"
             />
             {w.decomposed && (
-              <>
-                <line x1="80" y1="80" x2="80" y2="100" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="3 3" />
-                <line x1="120" y1="60" x2="120" y2="100" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="3 3" />
-                <text x="55" y="93" fill="#bae6fd" fontSize="8" fontWeight="bold">3 cm²</text>
-                <text x="95" y="83" fill="#bae6fd" fontSize="8" fontWeight="bold">4 cm²</text>
-                <text x="135" y="73" fill="#bae6fd" fontSize="8" fontWeight="bold">18 cm²</text>
-              </>
+              <g>
+                <line x1="80" y1="80" x2="80" y2="105" stroke="#0284c7" strokeWidth="2" strokeDasharray="3 3" />
+                <line x1="120" y1="60" x2="120" y2="105" stroke="#0284c7" strokeWidth="2" strokeDasharray="3 3" />
+                <rect x="48" y="88" width="24" height="14" rx="3" fill="#ffffff" stroke="#cbd5e1" />
+                <text x="60" y="98" fill="#1e40af" fontSize="8" fontWeight="bold" textAnchor="middle">3 cm²</text>
+                <rect x="88" y="78" width="24" height="14" rx="3" fill="#ffffff" stroke="#cbd5e1" />
+                <text x="100" y="88" fill="#1e40af" fontSize="8" fontWeight="bold" textAnchor="middle">4 cm²</text>
+                <rect x="128" y="68" width="26" height="14" rx="3" fill="#ffffff" stroke="#cbd5e1" />
+                <text x="141" y="78" fill="#1e40af" fontSize="8" fontWeight="bold" textAnchor="middle">18 cm²</text>
+              </g>
             )}
           </svg>
-        </div>
+        </PlayCanvas>
       </Board>
 
       <Bay label="Architect Tools" tone="indigo">

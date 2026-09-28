@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Atom, FileCheck2, Spline, CircleParking, Binary } from "lucide-react";
+import { Atom, FileCheck2, Spline, CircleParking, Binary, CheckCircle2 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText, matchOption } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board } from "./kit";
+import { Shell, Board, PlayCanvas } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q31 — The Variable Reactor (a = 35, b = 11, c = 23 -> a × (c - b))
@@ -39,8 +39,8 @@ export function Q31VariableReactorActivity({ question, value, activityState, onC
     <Shell
       play={play}
       question={question}
-      title="The Variable Reactor Chamber"
-      mission="Given variable constants a = 35, b = 11, and c = 23, operate the subtraction and multiplication chambers to compute: a × (c − b)."
+      title="The Algebraic Variable Reactor"
+      mission="Given variable values a = 35, b = 11, and c = 23, evaluate the nested expression: a × (c − b) = 35 × (23 − 11) = 420."
       icon={Atom}
       dim="2D"
       submitLabel="Submit Reactor Output (420)"
@@ -51,20 +51,20 @@ export function Q31VariableReactorActivity({ question, value, activityState, onC
       ]}
       live={
         <>
-          <Gauge label="Chamber (c − b)" value={w.subDone ? "12" : "23 − 11"} tone="violet" />
+          <Gauge label="Inner (c − b)" value={w.subDone ? "12" : "23 − 11"} tone="violet" />
           <Gauge label="Final Output" value={w.multDone ? "420" : "Standby"} tone={w.multDone ? "emerald" : "indigo"} />
         </>
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-around border border-slate-700">
-          <div className="flex justify-around">
-            <div className="px-3 py-1 bg-sky-950 border border-sky-500 rounded-lg text-sky-300 font-mono font-bold text-xs">a = 35</div>
-            <div className="px-3 py-1 bg-violet-950 border border-violet-500 rounded-lg text-violet-300 font-mono font-bold text-xs">b = 11</div>
-            <div className="px-3 py-1 bg-emerald-950 border border-emerald-500 rounded-lg text-emerald-300 font-mono font-bold text-xs">c = 23</div>
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-around border border-indigo-100 shadow-xs space-y-3 min-h-[160px]">
+          <div className="flex justify-around flex-wrap gap-2">
+            <div className="px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-950 font-mono font-black text-sm">a = 35</div>
+            <div className="px-4 py-2 bg-violet-50 border border-violet-200 rounded-xl text-violet-950 font-mono font-black text-sm">b = 11</div>
+            <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-950 font-mono font-black text-sm">c = 23</div>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-600 text-center font-mono text-base font-black text-indigo-300">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center font-mono text-base font-black text-indigo-950">
             Expression: 35 × (23 − 11) {w.subDone ? "= 35 × 12" : ""} {w.multDone ? "= 420" : ""}
           </div>
         </div>
@@ -113,13 +113,13 @@ export function Q32NumberSystemControlRoomActivity({ question, value, activitySt
     <Shell
       play={play}
       question={question}
-      title="The Numeration Verification Room"
+      title="The Number System Truth Verifier"
       mission="Audit the two statements: Statement I: Predecessor of the largest 7-digit even number. Statement II: 54,137,083 written in the International numeration system."
       icon={FileCheck2}
       dim="2D"
       submitLabel="Submit Statement Verdict"
       hints={[
-        "Statement I validates numeric predecessor properties.",
+        "Statement I: Largest 7-digit even number = 9,999,998; its predecessor is 9,999,997 (which is odd, statement verified).",
         "Statement II: 54,137,083 = 54 Million 137 Thousand 83 = Fifty four million one hundred thirty seven thousand and eighty three.",
         "Both statements are true (Option C).",
       ]}
@@ -132,12 +132,14 @@ export function Q32NumberSystemControlRoomActivity({ question, value, activitySt
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-around border border-slate-700">
-          <div className={`p-2 rounded-lg border text-xs ${w.s1Verified ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-slate-800 border-slate-700 text-slate-300"}`}>
-            <span className="font-bold">STATEMENT I:</span> Predecessor of largest 7-digit even number.
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-around border border-indigo-100 shadow-xs space-y-3 min-h-[160px]">
+          <div className={`p-3 rounded-xl border text-xs font-bold transition-all ${w.s1Verified ? "bg-emerald-50 border-emerald-300 text-emerald-950" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+            <span className="font-extrabold text-indigo-700 mr-2">STATEMENT I:</span>
+            Predecessor of the largest 7-digit even number.
           </div>
-          <div className={`p-2 rounded-lg border text-xs ${w.s2Verified ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-slate-800 border-slate-700 text-slate-300"}`}>
-            <span className="font-bold">STATEMENT II:</span> 54,137,083 = "Fifty four million one hundred thirty seven thousand and eighty three".
+          <div className={`p-3 rounded-xl border text-xs font-bold transition-all ${w.s2Verified ? "bg-emerald-50 border-emerald-300 text-emerald-950" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+            <span className="font-extrabold text-indigo-700 mr-2">STATEMENT II:</span>
+            In International system of numeration, 54,137,083 is written as "Fifty four million one hundred thirty seven thousand and eighty three".
           </div>
         </div>
       </Board>
@@ -185,13 +187,13 @@ export function Q33CurveGalleryActivity({ question, value, activityState, onChan
     <Shell
       play={play}
       question={question}
-      title="The Geometric Curve Gallery"
-      mission="Trace each of the 5 glowing curves in the gallery. A curve is CLOSED if its endpoint returns to its starting point without breaks; otherwise it is OPEN. Count the total open curves."
+      title="The Open & Closed Curve Inspector"
+      mission="Trace each of the 5 geometric curves. A curve is CLOSED if its endpoint joins its starting point without break; otherwise it is OPEN. Count the total open curves (3 open curves)."
       icon={Spline}
       dim="2D"
       submitLabel="Submit Open Curve Count"
       hints={[
-        "Curve 1 (Spiral), Curve 3 (S-curve), and Curve 4 (Zigzag) have separate start and end endpoints → OPEN.",
+        "Curve 1 (Spiral), Curve 3 (S-curve), and Curve 4 (Zigzag) have open separate endpoints → OPEN.",
         "Curve 2 and Curve 5 form continuous closed loops → CLOSED.",
         "Total open curves = 3 (Option A).",
       ]}
@@ -202,15 +204,15 @@ export function Q33CurveGalleryActivity({ question, value, activityState, onChan
       }
     >
       <Board>
-        <div className="grid grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {curves.map((c) => (
             <div
               key={c.id}
-              className={`p-2 rounded-xl border text-center ${w.openCount >= 3 ? (c.open ? "bg-emerald-950/80 border-emerald-400" : "bg-slate-900 border-slate-700 opacity-50") : "bg-slate-900 border-slate-700"}`}
+              className={`p-3 rounded-xl border text-center transition-all ${w.openCount >= 3 ? (c.open ? "bg-emerald-50 border-emerald-400 shadow-xs" : "bg-slate-50 border-slate-200 opacity-60") : "bg-white border-indigo-100 shadow-xs"}`}
             >
-              <div className="text-[10px] font-bold text-slate-400">Curve {c.id}</div>
-              <div className="font-mono text-xs font-bold text-sky-400 my-2">{c.name}</div>
-              <div className="text-[9px] font-bold text-emerald-300">{w.openCount >= 3 ? (c.open ? "OPEN" : "CLOSED") : "Untraced"}</div>
+              <div className="text-[10px] font-black uppercase text-slate-500">Curve {c.id}</div>
+              <div className="font-mono text-xs font-bold text-indigo-900 my-2">{c.name}</div>
+              <div className="text-[10px] font-black text-emerald-800">{w.openCount >= 3 ? (c.open ? "✓ OPEN" : "CLOSED") : "Untraced"}</div>
             </div>
           ))}
         </div>
@@ -218,7 +220,7 @@ export function Q33CurveGalleryActivity({ question, value, activityState, onChan
 
       <Bay label="Curve Tracer" tone="indigo">
         <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ openCount: 3 })}>
-          ⚡ Trace All Wires & Count 3 Open Curves
+          ⚡ Trace All Curves & Count 3 Open Curves
         </Btn>
       </Bay>
     </Shell>
@@ -253,8 +255,8 @@ export function Q34SmartParkingGarageActivity({ question, value, activityState, 
     <Shell
       play={play}
       question={question}
-      title="The Smart Parking Garage Terminal"
-      mission="A vehicle is parked from 5:00 PM to 9:45 PM (4 hours 45 mins). Tariff: First hour = ₹18.50, and ₹5 for every additional half hour or part thereof. Compute total parking fee."
+      title="The Smart Parking Tariff Calculator"
+      mission="A vehicle is parked from 5:00 PM to 9:45 PM (4 hours 45 mins). Tariff: First hour = ₹18.50, and ₹5 for every additional half hour or part thereof. Compute total parking fee (₹58.50)."
       icon={CircleParking}
       dim="2D"
       submitLabel="Submit Parking Fee (₹58.50)"
@@ -275,14 +277,15 @@ export function Q34SmartParkingGarageActivity({ question, value, activityState, 
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-around border border-slate-700">
-          <div className="flex justify-around text-xs font-mono font-bold text-sky-400">
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-around border border-indigo-100 shadow-xs space-y-3 min-h-[160px]">
+          <div className="flex justify-around text-xs font-mono font-bold text-indigo-900 bg-indigo-50/60 p-2.5 rounded-xl border border-indigo-200">
             <span>In: 5:00 PM</span>
+            <span>Duration: 4 Hours 45 Mins</span>
             <span>Out: 9:45 PM</span>
           </div>
 
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center font-mono text-sm font-bold text-emerald-300">
-            {w.calculated ? "₹18.50 + (8 × ₹5.00) = ₹58.50" : "Parking Meter Ready"}
+          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-300 text-center font-mono text-sm font-bold text-emerald-950">
+            {w.calculated ? "₹18.50 (1st hour) + (8 units × ₹5.00) = ₹58.50" : "Tariff Calculator Ready"}
           </div>
         </div>
       </Board>
@@ -324,8 +327,8 @@ export function Q35PlaceValueFactoryActivity({ question, value, activityState, o
     <Shell
       play={play}
       question={question}
-      title="The Place-Value Extraction Factory"
-      mission="In the number 4325907, calculate: (Place value of 9) + (Place value of 3) − (Face value of 5)."
+      title="The Place Value & Face Value Abacus"
+      mission="In the number 4325907, calculate: (Place value of 9) + (Place value of 3) − (Face value of 5) = 900 + 300000 − 5 = 300895."
       icon={Binary}
       dim="2D"
       submitLabel="Submit Place-Value Result (300895)"
@@ -345,19 +348,19 @@ export function Q35PlaceValueFactoryActivity({ question, value, activityState, o
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-around border border-slate-700">
-          <div className="flex justify-around font-mono text-2xl font-black text-slate-300">
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-around border border-indigo-100 shadow-xs space-y-3 min-h-[160px]">
+          <div className="flex justify-around font-mono text-2xl font-black text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             <span>4</span>
-            <span className="text-sky-400">3</span>
+            <span className="text-indigo-600">3</span>
             <span>2</span>
-            <span className="text-amber-400">5</span>
-            <span className="text-violet-400">9</span>
+            <span className="text-amber-600">5</span>
+            <span className="text-violet-600">9</span>
             <span>0</span>
             <span>7</span>
           </div>
 
-          <div className="text-center font-mono text-sm font-bold text-emerald-300">
-            {w.computed ? "300,000 + 900 − 5 = 300,895" : "4,325,907"}
+          <div className="text-center font-mono text-sm font-bold text-emerald-950 bg-emerald-50 p-2.5 rounded-xl border border-emerald-300">
+            {w.computed ? "300,000 + 900 − 5 = 300,895" : "Number: 4,325,907"}
           </div>
         </div>
       </Board>

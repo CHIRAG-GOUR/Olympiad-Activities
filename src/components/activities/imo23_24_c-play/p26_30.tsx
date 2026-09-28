@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Scale, Clock, Fuel, ShieldCheck, Ruler } from "lucide-react";
+import { Scale, Clock, Fuel, ShieldCheck, Ruler, CheckCircle2 } from "lucide-react";
 import { ActivityComponentProps } from "../kit/types";
 import { matchNumber, matchText, matchOption } from "../imo6a/shared";
 import { usePlay } from "../imo6a-play/engine";
 import { Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Shell, Board } from "./kit";
+import { Shell, Board, PlayCanvas } from "./kit";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q26 — The Algebra Balance Chamber ("Twice product = thrice difference")
@@ -36,8 +36,8 @@ export function Q26AlgebraBalanceChamberActivity({ question, value, activityStat
     <Shell
       play={play}
       question={question}
-      title="The Algebra Balance Chamber"
-      mission="Translate the verbal mathematical statement into a balanced algebraic equation: 'Twice the product of m and n is equal to thrice of their difference'."
+      title="The Algebraic Equation Balance Scale"
+      mission="Translate the mathematical statement into a balanced equation: 'Twice the product of m and n is equal to thrice of their difference' (2mn = 3(m − n))."
       icon={Scale}
       dim="2D"
       submitLabel="Submit Algebraic Equation"
@@ -50,24 +50,24 @@ export function Q26AlgebraBalanceChamberActivity({ question, value, activityStat
         <>
           <Gauge label="Left Pan" value={w.leftAssembled ? "2mn" : "Empty"} tone="violet" />
           <Gauge label="Right Pan" value={w.rightAssembled ? "3(m − n)" : "Empty"} tone="indigo" />
-          <Gauge label="Balance State" value={w.leftAssembled && w.rightAssembled ? "Equilibrium (2mn = 3(m-n))" : "Unbalanced"} tone={w.leftAssembled && w.rightAssembled ? "emerald" : "slate"} />
+          <Gauge label="Balance State" value={w.leftAssembled && w.rightAssembled ? "Balanced: 2mn = 3(m-n)" : "Unbalanced"} tone={w.leftAssembled && w.rightAssembled ? "emerald" : "slate"} />
         </>
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs flex-wrap gap-3 min-h-[160px]">
           {/* Left Pan */}
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center w-36">
-            <div className="text-[10px] font-bold text-slate-400 mb-1">LEFT PAN (Twice Product)</div>
-            <div className="font-mono text-xl font-black text-sky-400">{w.leftAssembled ? "2mn" : "---"}</div>
+          <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-200 text-center w-40">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 mb-1">Left Pan (Twice Product)</div>
+            <div className="font-mono text-2xl font-black text-indigo-900">{w.leftAssembled ? "2mn" : "---"}</div>
           </div>
 
-          <div className="font-mono text-3xl font-black text-emerald-400">=</div>
+          <div className="font-mono text-3xl font-black text-indigo-600">=</div>
 
           {/* Right Pan */}
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center w-36">
-            <div className="text-[10px] font-bold text-slate-400 mb-1">RIGHT PAN (Thrice Diff)</div>
-            <div className="font-mono text-xl font-black text-violet-400">{w.rightAssembled ? "3(m − n)" : "---"}</div>
+          <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-200 text-center w-40">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 mb-1">Right Pan (Thrice Diff)</div>
+            <div className="font-mono text-2xl font-black text-indigo-900">{w.rightAssembled ? "3(m − n)" : "---"}</div>
           </div>
         </div>
       </Board>
@@ -115,8 +115,8 @@ export function Q27ClockworkTowerActivity({ question, value, activityState, onCh
     <Shell
       play={play}
       question={question}
-      title="The Clockwork Revolution Tower"
-      mission="1 complete revolution of a clock hand is 360° (12 hour units). Identify the clock face where the angle between the hour and minute hands measures exactly 1/4 of a revolution (90°)."
+      title="The Clockwork Revolution Observatory"
+      mission="1 complete revolution of a clock hand is 360°. Identify which clock face shows the angle between hour and minute hands measuring exactly 1/4 of a revolution (90° right angle)."
       icon={Clock}
       dim="2D"
       submitLabel="Submit 1/4 Turn Clock"
@@ -133,28 +133,28 @@ export function Q27ClockworkTowerActivity({ question, value, activityState, onCh
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs flex-wrap gap-2">
           {["A", "B", "C", "D"].map((clk) => (
             <div
               key={clk}
-              className={`p-2 rounded-xl border text-center flex flex-col items-center gap-1 ${w.selectedClock === clk ? "bg-emerald-950/80 border-emerald-400" : "bg-slate-800 border-slate-700"}`}
+              className={`p-3 rounded-xl border-2 text-center flex flex-col items-center gap-1.5 transition-all ${w.selectedClock === clk ? "bg-emerald-50 border-emerald-400 shadow-xs" : "bg-slate-50 border-slate-200"}`}
             >
-              <span className="text-[10px] font-bold text-slate-400">Clock {clk}</span>
-              <div className="w-16 h-16 rounded-full border-2 border-indigo-400 bg-indigo-950/60 relative flex items-center justify-center">
+              <span className="text-xs font-black text-slate-700">Clock {clk}</span>
+              <div className="w-16 h-16 rounded-full border-2 border-indigo-300 bg-white relative flex items-center justify-center shadow-xs">
                 {/* Center pin */}
-                <div className="w-2 h-2 rounded-full bg-amber-400 z-10" />
+                <div className="w-2 h-2 rounded-full bg-indigo-900 z-10" />
                 {/* Hand 1 (12 o'clock) */}
-                <div className="absolute top-2 w-0.5 h-6 bg-sky-400" />
+                <div className="absolute top-2.5 w-0.5 h-6 bg-slate-700 rounded-full" />
                 {/* Hand 2: Clock A = 3 o'clock (90°), B = 6 o'clock (180°), C = 4 o'clock (120°), D = 2 o'clock (60°) */}
                 <div
-                  className="absolute w-0.5 h-5 bg-pink-400 origin-bottom"
+                  className="absolute w-1 h-5 bg-indigo-600 rounded-full origin-bottom"
                   style={{
                     transform: `rotate(${clk === "A" ? 90 : clk === "B" ? 180 : clk === "C" ? 120 : 60}deg)`,
                     bottom: "50%",
                   }}
                 />
               </div>
-              <span className="text-[9px] font-mono text-emerald-300 font-bold">
+              <span className="text-[10px] font-mono font-extrabold text-indigo-900">
                 {clk === "A" ? "90° (1/4)" : clk === "B" ? "180° (1/2)" : clk === "C" ? "120°" : "60°"}
               </span>
             </div>
@@ -207,8 +207,8 @@ export function Q28DecimalFuelStationActivity({ question, value, activityState, 
     <Shell
       play={play}
       question={question}
-      title="The Decimal Fuel Station"
-      mission="Operate the calibrated precision valves on the decimal tank system to evaluate: (0.5 ÷ 0.05) + (0.05 ÷ 0.5)."
+      title="The Decimal Tank Quotient Dispenser"
+      mission="Operate the precision valves to evaluate the dual decimal expression: (0.5 ÷ 0.05) + (0.05 ÷ 0.5) = 10 + 0.1 = 10.1."
       icon={Fuel}
       dim="2D"
       submitLabel="Submit Decimal Sum (10.1)"
@@ -221,22 +221,22 @@ export function Q28DecimalFuelStationActivity({ question, value, activityState, 
         <>
           <Gauge label="Tank 1 (0.5÷0.05)" value={w.valvesOpened ? "10.0" : "0.0"} tone="violet" />
           <Gauge label="Tank 2 (0.05÷0.5)" value={w.valvesOpened ? "0.1" : "0.0"} tone="indigo" />
-          <Gauge label="Combined Volume" value={w.total ? `${w.total}` : "0.0"} tone={w.total === 10.1 ? "emerald" : "slate"} />
+          <Gauge label="Combined Value" value={w.total ? `${w.total}` : "0.0"} tone={w.total === 10.1 ? "emerald" : "slate"} />
         </>
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-around border border-slate-700">
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center w-36">
-            <div className="text-[10px] font-bold text-slate-400 mb-1">0.5 ÷ 0.05</div>
-            <div className="font-mono text-2xl font-black text-sky-400">{w.valvesOpened ? "10" : "---"}</div>
+        <div className="w-full bg-white rounded-xl p-4 flex items-center justify-around border border-indigo-100 shadow-xs flex-wrap gap-2 min-h-[150px]">
+          <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-200 text-center w-40">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 mb-1">0.5 ÷ 0.05</div>
+            <div className="font-mono text-2xl font-black text-indigo-900">{w.valvesOpened ? "10" : "---"}</div>
           </div>
 
-          <div className="font-mono text-3xl font-black text-amber-400">+</div>
+          <div className="font-mono text-3xl font-black text-indigo-600">+</div>
 
-          <div className="p-3 bg-slate-800 rounded-xl border border-slate-600 text-center w-36">
-            <div className="text-[10px] font-bold text-slate-400 mb-1">0.05 ÷ 0.5</div>
-            <div className="font-mono text-2xl font-black text-violet-400">{w.valvesOpened ? "0.1" : "---"}</div>
+          <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-200 text-center w-40">
+            <div className="text-[10px] font-black uppercase tracking-wider text-indigo-700 mb-1">0.05 ÷ 0.5</div>
+            <div className="font-mono text-2xl font-black text-indigo-900">{w.valvesOpened ? "0.1" : "---"}</div>
           </div>
         </div>
       </Board>
@@ -280,8 +280,8 @@ export function Q29NumberSecurityLockActivity({ question, value, activityState, 
     <Shell
       play={play}
       question={question}
-      title="The Security Lock Dial (Divisibility by 3)"
-      mission="The security lock sequence is 455?656. A number is divisible by 3 if the sum of its digits is a multiple of 3. Turn the central dial to find the smallest whole number (0–9) that unlocks the vault."
+      title="The Divisibility by 3 Vault Dial"
+      mission="The security lock sequence is 455?656. A number is divisible by 3 if the sum of all its digits is a multiple of 3. Turn the central dial to find the smallest whole number (2) that unlocks the vault."
       icon={ShieldCheck}
       dim="2D"
       submitLabel="Submit Smallest Digit (2)"
@@ -299,12 +299,12 @@ export function Q29NumberSecurityLockActivity({ question, value, activityState, 
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex flex-col justify-between items-center border border-slate-700">
-          <div className="flex items-center gap-2 font-mono text-2xl font-black text-slate-300">
+        <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-between items-center border border-indigo-100 shadow-xs space-y-3">
+          <div className="flex items-center gap-2 font-mono text-2xl font-black text-slate-800 flex-wrap justify-center">
             <span>4</span>
             <span>5</span>
             <span>5</span>
-            <span className={`px-2 py-0.5 rounded-lg border-2 ${isDiv3 ? "bg-emerald-950 border-emerald-400 text-emerald-300" : "bg-amber-950 border-amber-400 text-amber-300"}`}>
+            <span className={`px-2.5 py-1 rounded-xl border-2 ${isDiv3 ? "bg-emerald-50 border-emerald-500 text-emerald-800" : "bg-amber-50 border-amber-400 text-amber-800"}`}>
               {w.dialedDigit}
             </span>
             <span>6</span>
@@ -312,8 +312,8 @@ export function Q29NumberSecurityLockActivity({ question, value, activityState, 
             <span>6</span>
           </div>
 
-          <div className="font-mono text-xs font-bold text-slate-400">
-            Digit Sum: 31 + {w.dialedDigit} = {currentSum} ({isDiv3 ? "Multiple of 3" : "Not a multiple of 3"})
+          <div className="font-mono text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+            Digit Sum: 31 + {w.dialedDigit} = {currentSum} ({isDiv3 ? "✓ Divisible by 3" : "✗ Not divisible by 3"})
           </div>
         </div>
       </Board>
@@ -325,7 +325,7 @@ export function Q29NumberSecurityLockActivity({ question, value, activityState, 
               key={d}
               disabled={play.readOnly}
               onClick={() => play.patch({ dialedDigit: d })}
-              className={`w-8 h-8 rounded-lg font-mono font-bold text-xs border ${w.dialedDigit === d ? "bg-indigo-600 border-indigo-300 text-white" : "bg-slate-800 border-slate-700 text-slate-300"}`}
+              className={`w-8 h-8 rounded-lg font-mono font-bold text-xs border ${w.dialedDigit === d ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200 text-slate-700 hover:bg-indigo-50"}`}
             >
               {d}
             </button>
@@ -368,8 +368,8 @@ export function Q30TileBorderFactoryActivity({ question, value, activityState, o
     <Shell
       play={play}
       question={question}
-      title="The Tile Perimeter Surveyor"
-      mission="The shaded shape is formed on a square tile grid where each unit square has side 4 cm. Walk the boundary to count all exposed outer unit edges and calculate the total perimeter in cm."
+      title="The Grid Tile Perimeter Surveyor"
+      mission="The shaded shape is formed on a square tile grid where each unit square has side 4 cm. Walk the boundary to count all exposed outer unit edges and calculate the total perimeter (24 × 4 cm = 96 cm)."
       icon={Ruler}
       dim="2D"
       submitLabel="Submit Perimeter (96 cm)"
@@ -388,24 +388,24 @@ export function Q30TileBorderFactoryActivity({ question, value, activityState, o
       }
     >
       <Board>
-        <div className="w-full h-44 bg-slate-900 rounded-xl p-3 flex items-center justify-center border border-slate-700">
-          <svg viewBox="0 0 160 120" className="w-44 h-36">
+        <PlayCanvas height="h-56" className="bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/40">
+          <svg viewBox="0 0 160 120" className="w-48 h-36">
             <defs>
-              <pattern id="tileGrid" width="16" height="16" patternUnits="userSpaceOnUse">
-                <rect width="16" height="16" fill="none" stroke="#334155" strokeWidth="0.5" />
+              <pattern id="tileGridLight" width="16" height="16" patternUnits="userSpaceOnUse">
+                <rect width="16" height="16" fill="none" stroke="#e2e8f0" strokeWidth="0.8" />
               </pattern>
             </defs>
-            <rect width="160" height="120" fill="url(#tileGrid)" />
+            <rect width="160" height="120" fill="url(#tileGridLight)" />
 
             {/* Shaded Shape Path */}
             <path
               d="M 32 32 L 80 32 L 80 48 L 112 48 L 112 80 L 64 80 L 64 64 L 32 64 Z"
-              fill="#4338ca"
-              stroke={w.measured ? "#10b981" : "#818cf8"}
-              strokeWidth={w.measured ? "3" : "1.5"}
+              fill="#c7d2fe"
+              stroke={w.measured ? "#059669" : "#4f46e5"}
+              strokeWidth={w.measured ? "3" : "2"}
             />
           </svg>
-        </div>
+        </PlayCanvas>
       </Board>
 
       <Bay label="Surveyor Controls" tone="indigo">
