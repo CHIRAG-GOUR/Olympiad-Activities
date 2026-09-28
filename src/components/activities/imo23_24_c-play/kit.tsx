@@ -4,8 +4,7 @@ import React, { Suspense } from "react";
 import { Question } from "@/types/question";
 import { Play } from "../imo6a-play/engine";
 import { PlayShell, PlayShellProps, Btn } from "../imo6a-play/PlayShell";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Stage3D } from "../kit/Stage3D";
 
 /**
  * Shared layout, shell, controls, and Canvas 3D harness for SOF IMO 2023-24 Class 6 Set C.
@@ -88,9 +87,18 @@ export const Board = ({ children, className = "" }: { children: React.ReactNode;
 );
 
 /** Light-themed interactive Canvas / Simulation card */
-export const PlayCanvas = ({ children, className = "", height = "h-56" }: { children: React.ReactNode; className?: string; height?: string }) => (
+export const PlayCanvas = ({
+  children,
+  className = "",
+  height = "h-[clamp(200px,34vw,300px)]",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  height?: string;
+}) => (
+  // Fluid by default; a caller passing its own h-* class still wins.
   <div
-    className={`relative w-full ${height} rounded-xl bg-white border border-indigo-100 shadow-sm flex items-center justify-center p-2 overflow-hidden ${className}`}
+    className={`relative flex w-full ${height} items-center justify-center overflow-hidden rounded-xl border border-indigo-100 bg-white p-2 shadow-sm ${className}`}
   >
     {children}
   </div>
@@ -108,26 +116,18 @@ export function World3D({
   height?: string;
   background?: string;
 }) {
+  // This pack passes a Tailwind height class ("h-64"); the shared stage takes either a
+  // CSS length or a class, so route it to whichever the caller actually gave.
+  const isClass = /^h-/.test(height);
   return (
-    <div className={`relative w-full ${height} rounded-2xl overflow-hidden bg-gradient-to-b from-indigo-50/40 to-violet-50/30 border-2 border-indigo-100 shadow-sm`}>
-      <Suspense
-        fallback={
-          <div className="flex h-full items-center justify-center text-indigo-600 text-xs font-bold">
-            Loading 3D Simulation...
-          </div>
-        }
-      >
-        <Canvas camera={camera}>
-          <color attach="background" args={[background]} />
-          <ambientLight intensity={0.65} />
-          <hemisphereLight args={["#ffffff", "#ddd6fe", 1.2]} />
-          <directionalLight position={[10, 15, 10]} intensity={1.3} castShadow />
-          <pointLight position={[-10, -5, -5]} intensity={0.4} />
-          {children}
-          <OrbitControls makeDefault enablePan={false} maxPolarAngle={Math.PI / 2 + 0.1} />
-        </Canvas>
-      </Suspense>
-    </div>
+    <Stage3D
+      camera={camera}
+      background={background}
+      height={isClass ? undefined : height}
+      className={isClass ? height : undefined}
+    >
+      {children}
+    </Stage3D>
   );
 }
 

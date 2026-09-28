@@ -1,12 +1,10 @@
 "use client";
 
-import React, { Suspense, ReactNode, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import React, { ReactNode, useState } from "react";
 import { PlayShell, PlayShellProps, Bay, Gauge, Btn } from "../imo6a-play/PlayShell";
-import { Layers } from "lucide-react";
 import { Play } from "../imo6a-play/engine";
 import { Question } from "@/types/question";
+import { Stage3D } from "../kit/Stage3D";
 
 export { Bay, Gauge, Btn };
 
@@ -35,41 +33,9 @@ export function World3D({
   autoRotate?: boolean;
 }) {
   return (
-    <div
-      style={{ height }}
-      className="w-full relative rounded-2xl overflow-hidden border-2 border-indigo-100 bg-gradient-to-b from-indigo-50/50 via-white to-violet-50/50 shadow-inner"
-    >
-      <Canvas
-        camera={{ position: camera.position, fov: camera.fov ?? 45 }}
-        style={{ background: "transparent" }}
-        shadows
-      >
-        <ambientLight intensity={0.8} />
-        <hemisphereLight intensity={0.6} groundColor="#e0e7ff" />
-        <directionalLight
-          position={[10, 15, 10]}
-          intensity={1.2}
-          castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-        />
-        <directionalLight position={[-10, 8, -5]} intensity={0.4} color="#818cf8" />
-        <Suspense fallback={null}>{children}</Suspense>
-        {controls && (
-          <OrbitControls
-            enableDamping
-            dampingFactor={0.05}
-            autoRotate={autoRotate}
-            autoRotateSpeed={1.0}
-            maxPolarAngle={Math.PI / 2 + 0.1}
-          />
-        )}
-      </Canvas>
-      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg border border-indigo-100 shadow-xs text-[10px] font-bold text-indigo-900 pointer-events-none">
-        <Layers className="w-3.5 h-3.5 text-indigo-600" />
-        <span>3D Studio</span>
-      </div>
-    </div>
+    <Stage3D camera={camera} height={height} controls={controls} autoRotate={autoRotate}>
+      {children}
+    </Stage3D>
   );
 }
 
@@ -97,17 +63,21 @@ export function Board({
  */
 export function PlayCanvas({
   children,
-  height = "260px",
+  height,
   className = "",
 }: {
   children: ReactNode;
   height?: string;
   className?: string;
 }) {
+  // Left fluid unless a caller insists: a fixed 260px was cramped on a phone and small
+  // on a desktop, and these boards are the whole question.
   return (
     <div
-      style={{ height }}
-      className={`w-full relative rounded-xl border-2 border-indigo-100 bg-white shadow-inner flex items-center justify-center overflow-hidden ${className}`}
+      style={height ? { height } : undefined}
+      className={`relative flex w-full items-center justify-center overflow-hidden rounded-xl border-2 border-indigo-100 bg-white shadow-inner ${
+        height ? "" : "h-[clamp(200px,34vw,300px)]"
+      } ${className}`}
     >
       {children}
     </div>
