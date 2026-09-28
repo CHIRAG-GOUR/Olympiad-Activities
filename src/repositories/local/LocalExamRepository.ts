@@ -3,8 +3,8 @@ import { Exam } from "@/types/exam";
 import { SEED_EXAMS, reconcileWithSeed } from "@/lib/seedData";
 import { idbClient } from "@/services/persistence/indexeddb";
 
-// Key bumped to v8 for the newly added SOF IMO Class 6 Master Interactive Edition.
-const LOCAL_STORAGE_KEY = "olympiad_exams_repo_v8";
+// Key bumped to v9 for mathematically verified answer keys and activities.
+const LOCAL_STORAGE_KEY = "olympiad_exams_repo_v9";
 
 export class LocalExamRepository implements IExamRepository {
   private inMemory: Exam[] | null = null;

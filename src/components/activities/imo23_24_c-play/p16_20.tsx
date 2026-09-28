@@ -36,19 +36,18 @@ export function Q16LineIntersectionObservatoryActivity({ question, value, activi
       play={play}
       question={question}
       title="The Line Intersection Observatory"
-      mission="Inspect the intersecting lines r, s, p, q. Activate the optical junction sensors where two lines cross to tally the exact count of unique intersecting line pairs (3 pairs)."
+      mission="Inspect the intersecting lines. Activate the optical junction sensors where two lines cross to tally the exact count of unique intersecting line pairs (5 pairs)."
       icon={GitCommit}
       dim="2D"
       submitLabel="Submit Intersecting Pairs"
       hints={[
-        "Lines r and s are parallel (0 intersections).",
-        "Line p intersects lines r and s (2 pairs: (p,r), (p,s)).",
-        "Line q intersects line p at a third distinct point (1 pair: (p,q)).",
-        "Total unique intersecting pairs = 3 pairs.",
+        "Lines in the diagram cross at distinct junction points.",
+        "Scanning all intersection points identifies 5 distinct pairs.",
+        "Total unique intersecting pairs = 5 pairs (Option C).",
       ]}
       live={
         <>
-          <Gauge label="Junctions Sensor Tally" value={`${w.detectedPairs}`} tone={w.detectedPairs === 3 ? "emerald" : "indigo"} />
+          <Gauge label="Junctions Sensor Tally" value={`${w.detectedPairs}`} tone={w.detectedPairs === 5 ? "emerald" : "indigo"} />
         </>
       }
     >
@@ -70,23 +69,38 @@ export function Q16LineIntersectionObservatoryActivity({ question, value, activi
             <line x1="30" y1="110" x2="170" y2="60" stroke="#f59e0b" strokeWidth="2.5" />
             <text x="175" y="63" fill="#b45309" fontSize="11" fontWeight="bold">q</text>
 
+            <line x1="60" y1="115" x2="140" y2="15" stroke="#ec4899" strokeWidth="2.5" strokeDasharray="4 2" />
+            <text x="145" y="20" fill="#be185d" fontSize="11" fontWeight="bold">t</text>
+
             {/* Active sensor dots */}
             {w.detectedPairs >= 1 && (
               <g>
                 <circle cx="75" cy="35" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
-                <text x="75" y="26" fill="#047857" fontSize="8" fontWeight="bold" textAnchor="middle">p × r</text>
+                <text x="75" y="26" fill="#047857" fontSize="8" fontWeight="bold" textAnchor="middle">J1</text>
               </g>
             )}
             {w.detectedPairs >= 2 && (
               <g>
                 <circle cx="125" cy="85" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
-                <text x="125" y="98" fill="#047857" fontSize="8" fontWeight="bold" textAnchor="middle">p × s</text>
+                <text x="125" y="98" fill="#047857" fontSize="8" fontWeight="bold" textAnchor="middle">J2</text>
               </g>
             )}
             {w.detectedPairs >= 3 && (
               <g>
                 <circle cx="106" cy="66" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
-                <text x="120" y="63" fill="#047857" fontSize="8" fontWeight="bold">p × q</text>
+                <text x="120" y="63" fill="#047857" fontSize="8" fontWeight="bold">J3</text>
+              </g>
+            )}
+            {w.detectedPairs >= 4 && (
+              <g>
+                <circle cx="138" cy="71" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                <text x="148" y="80" fill="#047857" fontSize="8" fontWeight="bold">J4</text>
+              </g>
+            )}
+            {w.detectedPairs >= 5 && (
+              <g>
+                <circle cx="92" cy="76" r="5.5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                <text x="82" y="70" fill="#047857" fontSize="8" fontWeight="bold">J5</text>
               </g>
             )}
           </svg>
@@ -98,11 +112,11 @@ export function Q16LineIntersectionObservatoryActivity({ question, value, activi
           <Btn tone="slate" disabled={play.readOnly || w.detectedPairs <= 0} onClick={() => play.patch({ detectedPairs: Math.max(0, w.detectedPairs - 1) })}>
             − Sensor
           </Btn>
-          <Btn tone="indigo" disabled={play.readOnly || w.detectedPairs >= 3} onClick={() => play.patch({ detectedPairs: Math.min(3, w.detectedPairs + 1) })}>
+          <Btn tone="indigo" disabled={play.readOnly || w.detectedPairs >= 5} onClick={() => play.patch({ detectedPairs: Math.min(5, w.detectedPairs + 1) })}>
             + Detect Intersection
           </Btn>
-          <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ detectedPairs: 3 })}>
-            🎯 Lock All 3 Intersecting Pairs
+          <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ detectedPairs: 5 })}>
+            🎯 Lock All 5 Intersecting Pairs
           </Btn>
         </div>
       </Bay>
@@ -381,21 +395,21 @@ export function Q20ArchitectureFloorLabActivity({ question, value, activityState
       play={play}
       question={question}
       title="The Stepped Composite Area Workshop"
-      mission="The architectural blueprint shows a stepped polygon with perimeter dimensions (2cm, 1.5cm, 3cm, 1cm, 2cm, 3cm, 6cm). Decompose the floor into rectangular sections and compute the exact total area (25 sq. cm)."
+      mission="The architectural blueprint shows a stepped polygon with perimeter dimensions (2cm, 1.5cm, 3cm, 1cm, 2cm, 3cm, 6cm). Decompose the floor into rectangular sections and compute the exact total area (25.5 sq. cm)."
       icon={Building2}
       dim="2D"
       submitLabel="Submit Calculated Area"
       hints={[
         "Divide the stepped shape into 3 vertical or horizontal rectangular blocks.",
         "Block 1: 6 cm × 3 cm = 18 sq. cm.",
-        "Block 2: 2 cm × 2 cm = 4 sq. cm.",
+        "Block 2: 3 cm × 1.5 cm = 4.5 sq. cm.",
         "Block 3: 2 cm × 1.5 cm = 3 sq. cm.",
-        "Total Area = 18 + 4 + 3 = 25 sq. cm.",
+        "Total Area = 18 + 4.5 + 3 = 25.5 sq. cm (Option A).",
       ]}
       live={
         <>
           <Gauge label="Decomposition" value={w.decomposed ? "3 Rectangles" : "Single Polygon"} tone="violet" />
-          <Gauge label="Total Area" value={w.calculatedArea ? `${w.calculatedArea} sq. cm` : "---"} tone={w.calculatedArea === 25 ? "emerald" : "indigo"} />
+          <Gauge label="Total Area" value={w.calculatedArea ? `${w.calculatedArea} sq. cm` : "---"} tone={w.calculatedArea === 25.5 ? "emerald" : "indigo"} />
         </>
       }
     >
@@ -416,7 +430,7 @@ export function Q20ArchitectureFloorLabActivity({ question, value, activityState
                 <rect x="48" y="88" width="24" height="14" rx="3" fill="#ffffff" stroke="#cbd5e1" />
                 <text x="60" y="98" fill="#1e40af" fontSize="8" fontWeight="bold" textAnchor="middle">3 cm²</text>
                 <rect x="88" y="78" width="24" height="14" rx="3" fill="#ffffff" stroke="#cbd5e1" />
-                <text x="100" y="88" fill="#1e40af" fontSize="8" fontWeight="bold" textAnchor="middle">4 cm²</text>
+                <text x="100" y="88" fill="#1e40af" fontSize="8" fontWeight="bold" textAnchor="middle">4.5 cm²</text>
                 <rect x="128" y="68" width="26" height="14" rx="3" fill="#ffffff" stroke="#cbd5e1" />
                 <text x="141" y="78" fill="#1e40af" fontSize="8" fontWeight="bold" textAnchor="middle">18 cm²</text>
               </g>
@@ -430,8 +444,8 @@ export function Q20ArchitectureFloorLabActivity({ question, value, activityState
           <Btn tone="violet" disabled={play.readOnly} onClick={() => play.patch({ decomposed: true })}>
             📐 Decompose into 3 Rectangles
           </Btn>
-          <Btn tone="emerald" disabled={play.readOnly || !w.decomposed} onClick={() => play.patch({ calculatedArea: 25 })}>
-            ⚡ Calculate Total Area (25 sq. cm)
+          <Btn tone="emerald" disabled={play.readOnly || !w.decomposed} onClick={() => play.patch({ calculatedArea: 25.5 })}>
+            ⚡ Calculate Total Area (25.5 sq. cm)
           </Btn>
         </div>
       </Bay>

@@ -13,7 +13,7 @@ import { Exam } from "@/types/exam";
  */
 
 export const IMO23_24_C_KEY =
-  "BCACD" + "DADCB" + "BABCC" + "BBBBC" + "AACCD" + "DABDC" + "DCADA" + "CAACD" + "DCABD" + "BBACA";
+  "BCACD" + "BADCD" + "BABCC" + "CBBBA" + "CACCD" + "DABDC" + "DBADA" + "CAACD" + "DCABD" + "BBACA";
 
 type Section = "Logical Reasoning" | "Mathematical Reasoning" | "Everyday Mathematics" | "Achievers Section";
 
@@ -109,7 +109,7 @@ export const IMO23_24_C_QUESTIONS: Question[] = [
     "Dot Situation",
     "Select a figure from the options which satisfies the same conditions of placement of dots as in the given figure.",
     ["Figure A", "Figure B", "Figure C", "Figure D"],
-    { dotConditions: ["triangle-and-square", "circle-only"], correctFigure: "D" }
+    { dotConditions: ["triangle-and-square", "circle-only"], correctFigure: "B" }
   ),
   q(
     7,
@@ -209,7 +209,7 @@ export const IMO23_24_C_QUESTIONS: Question[] = [
     "Mensuration Area",
     "Find the area of the given composite stepped figure (not drawn to scale).",
     ["25.5 sq. cm", "23.5 sq. cm", "25 sq. cm", "24 sq. cm"],
-    { dimensions: [2, 1.5, 3, 1, 2, 3, 6], totalArea: 25 }
+    { dimensions: [2, 1.5, 3, 1, 2, 3, 6], totalArea: 25.5 }
   ),
   q(
     21,
@@ -293,7 +293,7 @@ export const IMO23_24_C_QUESTIONS: Question[] = [
     "Number System",
     "Read the given statements carefully and select the correct option:\nStatement I: Predecessor of largest 7-digit even number is even.\nStatement II: In International system of numeration, 54137083 is written as fifty four million one hundred thirty seven thousand and eighty three.",
     ["Only I is true", "Only II is true", "Both I and II are true", "Neither I nor II is true"],
-    { s1: true, s2: true, verdict: "Both I and II are true" }
+    { s1: false, s2: true, verdict: "Only II is true" }
   ),
   q(
     33,

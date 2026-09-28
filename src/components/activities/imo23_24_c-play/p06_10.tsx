@@ -44,12 +44,12 @@ export function Q06LaserAlignmentLabActivity({ question, value, activityState, o
       hints={[
         "Check Dot 1: It lies inside the Triangle and Square simultaneously, but outside the Circle.",
         "Check Dot 2: It lies exclusively inside the Circle.",
-        "Scan the candidates: Only Figure D has independent regions for both required intersections.",
+        "Scan the candidates: Only Figure B has independent regions for both required intersections.",
       ]}
       live={
         <>
-          <Gauge label="Scanned Figure" value={w.selectedFig ?? "None"} tone={w.selectedFig === "D" ? "emerald" : "indigo"} />
-          <Gauge label="Dot Criteria Valid" value={w.selectedFig === "D" ? "100% Match" : w.selectedFig ? "Invalid" : "Waiting"} tone={w.selectedFig === "D" ? "emerald" : "amber"} />
+          <Gauge label="Scanned Figure" value={w.selectedFig ?? "None"} tone={w.selectedFig === "B" ? "emerald" : "indigo"} />
+          <Gauge label="Dot Criteria Valid" value={w.selectedFig === "B" ? "100% Match" : w.selectedFig ? "Invalid" : "Waiting"} tone={w.selectedFig === "B" ? "emerald" : "amber"} />
         </>
       }
     >

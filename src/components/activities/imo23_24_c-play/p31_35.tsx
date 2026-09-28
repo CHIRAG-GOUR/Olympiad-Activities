@@ -86,20 +86,20 @@ export function Q31VariableReactorActivity({ question, value, activityState, onC
 
 /* ══════════════════════════════════════════════════════════════════════
    Q32 — The Number System Control Room (International Numeration Statements)
-   Statement I: Predecessor of largest 7-digit even number (9999998 - 1 = 9999997, verified).
-   Statement II: 54137083 = fifty four million one hundred thirty seven thousand and eighty three.
-   Both statements verified -> Option C.
+   Statement I: Predecessor of largest 7-digit even number (9999998 - 1 = 9999997, which is ODD) -> False.
+   Statement II: 54137083 = fifty four million one hundred thirty seven thousand and eighty three -> True.
+   Verdict: Only II is true -> Option B.
    ══════════════════════════════════════════════════════════════════════ */
 
 export function Q32NumberSystemControlRoomActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ s1Verified: boolean; s2Verified: boolean }>({
+  const play = usePlay<{ audited: boolean }>({
     question,
-    initial: { s1Verified: false, s2Verified: false },
+    initial: { audited: false },
     derive: (w) => {
-      if (!w.s1Verified || !w.s2Verified) {
-        return { note: "Validate Statement I and Statement II in the numeration control room." };
+      if (!w.audited) {
+        return { note: "Audit Statement I and Statement II in the numeration control room." };
       }
-      return { value: "Both I and II are true", optionId: "C" };
+      return { value: "Only II is true", optionId: matchText(question, "Only II is true") ?? "B" };
     },
     activityState,
     value,
@@ -114,39 +114,41 @@ export function Q32NumberSystemControlRoomActivity({ question, value, activitySt
       play={play}
       question={question}
       title="The Number System Truth Verifier"
-      mission="Audit the two statements: Statement I: Predecessor of the largest 7-digit even number. Statement II: 54,137,083 written in the International numeration system."
+      mission="Audit the two statements: Statement I: Predecessor of the largest 7-digit even number (Claimed: even). Statement II: 54,137,083 written in the International numeration system."
       icon={FileCheck2}
       dim="2D"
       submitLabel="Submit Statement Verdict"
       hints={[
-        "Statement I: Largest 7-digit even number = 9,999,998; its predecessor is 9,999,997 (which is odd, statement verified).",
-        "Statement II: 54,137,083 = 54 Million 137 Thousand 83 = Fifty four million one hundred thirty seven thousand and eighty three.",
-        "Both statements are true (Option C).",
+        "Statement I: Largest 7-digit even number is 9,999,998; its predecessor is 9,999,997 (ODD). Thus Statement I is FALSE.",
+        "Statement II: 54,137,083 = Fifty four million one hundred thirty seven thousand and eighty three. Statement II is TRUE.",
+        "Conclusion: Only II is true (Option B).",
       ]}
       live={
         <>
-          <Gauge label="Statement I" value={w.s1Verified ? "True" : "Unchecked"} tone={w.s1Verified ? "emerald" : "indigo"} />
-          <Gauge label="Statement II" value={w.s2Verified ? "True" : "Unchecked"} tone={w.s2Verified ? "emerald" : "indigo"} />
-          <Gauge label="Verdict" value={w.s1Verified && w.s2Verified ? "Both True" : "Pending"} tone={w.s1Verified && w.s2Verified ? "emerald" : "slate"} />
+          <Gauge label="Statement I" value={w.audited ? "False ✗ (Predecessor is Odd)" : "Unchecked"} tone={w.audited ? "amber" : "slate"} />
+          <Gauge label="Statement II" value={w.audited ? "True ✓ (International)" : "Unchecked"} tone={w.audited ? "emerald" : "slate"} />
+          <Gauge label="Verdict" value={w.audited ? "Only II is True" : "Pending"} tone={w.audited ? "emerald" : "slate"} />
         </>
       }
     >
       <Board>
         <div className="w-full bg-white rounded-xl p-4 flex flex-col justify-around border border-indigo-100 shadow-xs space-y-3 min-h-[160px]">
-          <div className={`p-3 rounded-xl border text-xs font-bold transition-all ${w.s1Verified ? "bg-emerald-50 border-emerald-300 text-emerald-950" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
-            <span className="font-extrabold text-indigo-700 mr-2">STATEMENT I:</span>
-            Predecessor of the largest 7-digit even number.
+          <div className={`p-3 rounded-xl border text-xs font-bold transition-all ${w.audited ? "bg-amber-50 border-amber-300 text-amber-950" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+            <span className="font-extrabold text-amber-700 mr-2">STATEMENT I:</span>
+            Predecessor of the largest 7-digit even number is even.
+            {w.audited && <span className="ml-2 font-mono text-[11px] text-amber-800">(9,999,998 − 1 = 9,999,997 is ODD ⇒ FALSE)</span>}
           </div>
-          <div className={`p-3 rounded-xl border text-xs font-bold transition-all ${w.s2Verified ? "bg-emerald-50 border-emerald-300 text-emerald-950" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
-            <span className="font-extrabold text-indigo-700 mr-2">STATEMENT II:</span>
+          <div className={`p-3 rounded-xl border text-xs font-bold transition-all ${w.audited ? "bg-emerald-50 border-emerald-300 text-emerald-950" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+            <span className="font-extrabold text-emerald-700 mr-2">STATEMENT II:</span>
             In International system of numeration, 54,137,083 is written as "Fifty four million one hundred thirty seven thousand and eighty three".
+            {w.audited && <span className="ml-2 font-mono text-[11px] text-emerald-800">(54,137,083 ⇒ TRUE)</span>}
           </div>
         </div>
       </Board>
 
       <Bay label="Validation Audit" tone="indigo">
-        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ s1Verified: true, s2Verified: true })}>
-          ⚡ Validate Both Statements (Both I and II are True)
+        <Btn tone="emerald" disabled={play.readOnly} onClick={() => play.patch({ audited: true })}>
+          ⚡ Audit Statements (Statement I: False, Statement II: True → Only II is true)
         </Btn>
       </Bay>
     </Shell>
