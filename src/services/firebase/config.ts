@@ -12,13 +12,13 @@ import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
  */
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBRpGwa_39FWQL3fMK1uOJGS_EcK0aRC9Q",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "olympiad-dashboard.firebaseapp.com",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "olympiad-dashboard",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "olympiad-dashboard.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "669684257120",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:669684257120:web:4fa938433a01dd289d0e05",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-LE0ZCH3L4L",
 };
 
 /**
@@ -40,8 +40,9 @@ let isRealFirebaseConfigured = false;
 
 try {
   if (
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+    firebaseConfig.projectId &&
+    firebaseConfig.apiKey &&
+    !firebaseConfig.apiKey.includes("MockKey")
   ) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     // `ignoreUndefinedProperties` matters for exam sessions: an activity that has not
