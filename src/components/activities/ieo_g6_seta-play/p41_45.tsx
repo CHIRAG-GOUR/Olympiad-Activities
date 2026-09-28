@@ -3,8 +3,16 @@
 import React from "react";
 import { ActivityComponentProps } from "../kit/types";
 import { usePlay } from "../imo6a-play/engine";
-import { Shell, Board, WordPill, SentenceSlot, Bay } from "./kit";
-import { MessageSquare, Eye, UtensilsCrossed, Scissors, Footprints, Sparkles, CheckCircle2, HeartPulse, User } from "lucide-react";
+import { Shell, Board, WordPill, SentenceSlot, Bay, World3D } from "./kit";
+import { HeartPulse, Eye, UtensilsCrossed, Scissors, Footprints } from "lucide-react";
+import {
+  MedicalInfirmary3D,
+  SuburbanGarden3D,
+  CafeBistro3D,
+  BikeWorkshop3D,
+  MountainSummit3D,
+  Avatar3D,
+} from "./components3D";
 
 /* ══════════════════════════════════════════════════════════════════════
    Q41 — First Aid & Past Inquiry (Did)
@@ -34,17 +42,17 @@ export function Q41BruisedKneeActivity({ question, value, activityState, onChang
 
   return (
     <Shell
-      dim="2D"
+      dim="3D"
       play={play}
       question={question}
-      title="Q41 · First-Aid Station Past Inquiry"
-      subtitle="Complete Mother's question inquiring about how the bruised knee occurred"
+      title="Q41 · First-Aid Station Past Inquiry 3D"
+      subtitle="Complete Mother's inquiry about how the knee injury occurred in the 3D first-aid clinic"
       hints={["Past simple yes/no questions use auxiliary 'Did' + subject + base verb ('Did you fall over?')."]}
     >
       <Board>
-        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-rose-200/80 bg-gradient-to-b from-rose-50/80 via-amber-50/40 to-slate-50/50 p-5 sm:p-6 shadow-sm">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rose-200/60 pb-3 mb-4">
+        {/* 3D Scene */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-rose-200/80 bg-gradient-to-b from-rose-50/80 via-amber-50/40 to-slate-50/50 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rose-200/60 p-4 bg-white/60 backdrop-blur-xs">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs">
                 <HeartPulse className="h-4 w-4" />
@@ -54,104 +62,43 @@ export function Q41BruisedKneeActivity({ question, value, activityState, onChang
                 <span className="text-[11px] font-medium text-slate-500">Section 5: Spoken & Written Expression</span>
               </div>
             </div>
+
             <span className="text-xs font-bold px-3 py-1 rounded-lg bg-rose-100 text-rose-900 border border-rose-300">
               🩹 Auxiliary: Did you fall?
             </span>
           </div>
 
-          {/* Mother & Son First-Aid Scene */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-            <div className="md:col-span-7 bg-white/90 backdrop-blur-xs rounded-xl border border-rose-100 p-4 shadow-xs">
-              <div className="relative h-48 rounded-xl bg-gradient-to-b from-amber-50 via-rose-50 to-slate-100 border border-rose-300/60 flex items-center justify-center p-2 overflow-hidden">
-                <svg viewBox="0 0 380 180" className="w-full h-full">
-                  {/* First aid kit box on floor */}
-                  <g transform="translate(40, 115)">
-                    <rect x="0" y="0" width="45" height="32" rx="4" fill="#FFFFFF" stroke="#DC2626" strokeWidth="2" />
-                    <rect x="18" y="8" width="9" height="16" fill="#DC2626" />
-                    <rect x="14.5" y="11.5" width="16" height="9" fill="#DC2626" />
-                  </g>
-
-                  {/* Mother kneeling down gently */}
-                  <g transform="translate(100, 45)">
-                    {/* Head */}
-                    <circle cx="20" cy="18" r="12" fill="#FED7AA" stroke="#EA580C" strokeWidth="1" />
-                    <path d="M 8 18 Q 20 4 32 18 Z" fill="#78350F" />
-                    <circle cx="16" cy="18" r="1.5" fill="#1E293B" />
-                    <circle cx="24" cy="18" r="1.5" fill="#1E293B" />
-                    <path d="M 16 23 Q 20 26 24 23" stroke="#1E293B" strokeWidth="1.5" fill="none" />
-                    {/* Dress */}
-                    <path d="M 10 28 L 2 70 L 38 70 L 30 28 Z" fill="#9333EA" />
-                    {/* Outstretched caring hands with bandage */}
-                    <path d="M 30 45 L 60 65" stroke="#FED7AA" strokeWidth="4" strokeLinecap="round" />
-                    <rect x="58" y="60" width="12" height="10" rx="2" fill="#FEF3C7" stroke="#D97706" strokeWidth="1" />
-                  </g>
-
-                  {/* Son seated with bandaged knee */}
-                  <g transform="translate(200, 50)">
-                    <circle cx="20" cy="18" r="11" fill="#FDE68A" stroke="#D97706" strokeWidth="1" />
-                    <circle cx="16" cy="18" r="1.5" fill="#1E293B" />
-                    <circle cx="24" cy="18" r="1.5" fill="#1E293B" />
-                    <path d="M 16 24 Q 20 21 24 24" stroke="#1E293B" strokeWidth="1.5" fill="none" />
-                    <path d="M 10 28 L 4 60 L 36 60 L 30 28 Z" fill="#2563EB" />
-                    {/* Leg with bruised knee bandage */}
-                    <path d="M 12 60 L 12 85" stroke="#1E293B" strokeWidth="4" />
-                    <path d="M 28 60 L 45 75 L 45 90" stroke="#1E293B" strokeWidth="4" />
-                    {/* Bruise patch */}
-                    <circle cx="45" cy="75" r="5" fill="#DC2626" opacity="0.8" />
-                    <rect x="39" y="72" width="12" height="6" rx="1" fill="#FEF3C7" stroke="#D97706" strokeWidth="1" />
-                  </g>
-
-                  {/* Dialogue Bubble */}
-                  <g transform="translate(140, 10)">
-                    <rect x="0" y="0" width="180" height="28" rx="6" fill="#FFFFFF" stroke="#9333EA" strokeWidth="1.5" />
-                    <text x="90" y="18" textAnchor="middle" fill="#6B21A8" fontSize="9" fontWeight="bold">
-                      "Did you fall over? Oh dear!"
-                    </text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-
-            <div className="md:col-span-5 space-y-3">
-              <div className="bg-white rounded-xl border border-rose-200 p-4 shadow-xs">
-                <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider block mb-1">Past Question Structure</span>
-                <div className="text-xs text-slate-700 font-mono bg-rose-50/70 p-2.5 rounded-lg border border-rose-200/60 leading-relaxed">
-                  <span className="text-rose-600 font-bold">Did</span> + subject (you) + base verb (fall)
-                </div>
-                <p className="text-[11px] text-slate-500 mt-2">
-                  "Did" establishes the past tense, while "fall" stays in its base form.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sentence Prompt */}
-          <div className="mt-5 rounded-xl border-2 border-rose-300/80 bg-white p-4 text-center shadow-xs">
-            <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-              Mother: "Oh, dear!{" "}
-              <SentenceSlot value={play.world.aux} filled={!!play.world.aux} />{" "}
-              you fall over? You have bruised your knee!"
-            </p>
-          </div>
-
-          {/* Selector Bay */}
-          <div className="mt-4">
-            <Bay label="Select Question Auxiliary" tone="rose">
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {auxs.map((a) => (
-                  <WordPill
-                    key={a}
-                    text={a}
-                    tone="rose"
-                    selected={play.world.aux === a}
-                    onClick={() => play.set({ aux: a })}
-                    disabled={play.locked}
-                  />
-                ))}
-              </div>
-            </Bay>
-          </div>
+          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+            <MedicalInfirmary3D position={[0, 0, 0]} />
+            <Avatar3D position={[-0.8, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#9333EA" hairStyle="bun" pose="kneeling" />
+            <Avatar3D position={[0.7, 0, 0.3]} rotation={[0, -0.6, 0]} shirtColor="#2563EB" hairStyle="short" pose="sitting" expression="worried" />
+          </World3D>
         </div>
+
+        {/* Sentence Prompt */}
+        <div className="bg-rose-50/80 border-2 border-rose-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            Mother: "Oh, dear!{" "}
+            <SentenceSlot value={play.world.aux} filled={!!play.world.aux} />{" "}
+            you fall over? You have bruised your knee!"
+          </p>
+        </div>
+
+        {/* Selector Bay */}
+        <Bay label="Select Question Auxiliary" tone="rose">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {auxs.map((a) => (
+              <WordPill
+                key={a}
+                text={a}
+                tone="rose"
+                selected={play.world.aux === a}
+                onClick={() => play.set({ aux: a })}
+                disabled={play.locked}
+              />
+            ))}
+          </div>
+        </Bay>
       </Board>
     </Shell>
   );
@@ -185,17 +132,17 @@ export function Q42CuriousNeighbourActivity({ question, value, activityState, on
 
   return (
     <Shell
-      dim="2D"
+      dim="3D"
       play={play}
       question={question}
-      title="Q42 · Neighbour Character Assessment"
+      title="Q42 · Neighbour Character Assessment 3D"
       subtitle="Identify the character adjective describing someone who constantly pries and asks questions"
       hints={["A person who is excessively curious about other people's private business is 'nosey'."]}
     >
       <Board>
-        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-slate-50/50 p-5 sm:p-6 shadow-sm">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 pb-3 mb-4">
+        {/* 3D Scene */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-slate-50/50 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 p-4 bg-white/60 backdrop-blur-xs">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
                 <Eye className="h-4 w-4" />
@@ -205,86 +152,42 @@ export function Q42CuriousNeighbourActivity({ question, value, activityState, on
                 <span className="text-[11px] font-medium text-slate-500">Evaluating Overly Inquisitive Behavior</span>
               </div>
             </div>
+
             <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
               👀 Trait: Nosey
             </span>
           </div>
 
-          {/* Fence Peeking Illustration */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-            <div className="md:col-span-7 bg-white/90 backdrop-blur-xs rounded-xl border border-amber-100 p-4 shadow-xs">
-              <div className="relative h-48 rounded-xl bg-gradient-to-b from-sky-100 via-amber-50 to-emerald-100 border border-amber-300/60 flex items-center justify-center p-2 overflow-hidden">
-                <svg viewBox="0 0 380 180" className="w-full h-full">
-                  {/* Wooden Garden Fence */}
-                  {[30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((x) => (
-                    <polygon key={x} points={`${x},60 ${x + 10},40 ${x + 20},60 ${x + 20},160 ${x},160`} fill="#D97706" stroke="#92400E" strokeWidth="1.5" />
-                  ))}
-                  <rect x="20" y="80" width="340" height="10" fill="#B45309" />
-                  <rect x="20" y="130" width="340" height="10" fill="#B45309" />
-
-                  {/* Mr Williams peeking over fence with binoculars */}
-                  <g transform="translate(145, 10)">
-                    {/* Head */}
-                    <circle cx="25" cy="25" r="15" fill="#FED7AA" stroke="#EA580C" strokeWidth="1" />
-                    {/* Balding grey hair */}
-                    <path d="M 12 25 Q 12 12 25 12 Q 38 12 38 25" stroke="#94A3B8" strokeWidth="3" fill="none" />
-                    {/* Spectacles & Binoculars */}
-                    <rect x="14" y="20" width="10" height="8" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="1" />
-                    <rect x="26" y="20" width="10" height="8" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="1" />
-                    <line x1="24" y1="24" x2="26" y2="24" stroke="#1E293B" strokeWidth="2" />
-                  </g>
-
-                  {/* Christy chatting on right */}
-                  <g transform="translate(280, 60)">
-                    <circle cx="20" cy="20" r="13" fill="#FDE68A" stroke="#D97706" strokeWidth="1" />
-                    <path d="M 8 20 Q 20 6 32 20 Z" fill="#92400E" />
-                    <circle cx="16" cy="20" r="1.5" fill="#1E293B" />
-                    <circle cx="24" cy="20" r="1.5" fill="#1E293B" />
-                    <path d="M 10 32 L 4 65 L 36 65 L 30 32 Z" fill="#EC4899" />
-                  </g>
-                </svg>
-              </div>
-            </div>
-
-            <div className="md:col-span-5 space-y-3">
-              <div className="bg-white rounded-xl border border-amber-200 p-4 shadow-xs">
-                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-1">Character Adjective Meaning</span>
-                <div className="text-xs text-slate-700 font-mono bg-amber-50/70 p-2.5 rounded-lg border border-amber-200/60 leading-relaxed">
-                  <span className="text-amber-600 font-bold">nosey</span> = prying into other people's affairs
-                </div>
-                <p className="text-[11px] text-slate-500 mt-2">
-                  "Spatial" relates to space; "repentant" means regretful; "punctual" means on time. "Nosey" fits the description.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sentence Prompt */}
-          <div className="mt-5 rounded-xl border-2 border-amber-300/80 bg-white p-4 text-center shadow-xs">
-            <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-              Christy: "Oh! That old man is always asking questions. He is so{" "}
-              <SentenceSlot value={play.world.trait} filled={!!play.world.trait} />."
-            </p>
-          </div>
-
-          {/* Selector Bay */}
-          <div className="mt-4">
-            <Bay label="Select Personality Adjective" tone="amber">
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {traits.map((t) => (
-                  <WordPill
-                    key={t}
-                    text={t}
-                    tone="amber"
-                    selected={play.world.trait === t}
-                    onClick={() => play.set({ trait: t })}
-                    disabled={play.locked}
-                  />
-                ))}
-              </div>
-            </Bay>
-          </div>
+          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+            <SuburbanGarden3D position={[0, 0, 0]} />
+            <Avatar3D position={[-0.8, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#D97706" hairStyle="short" pose="gesturing" />
+            <Avatar3D position={[0.9, 0, 0.3]} rotation={[0, -0.6, 0]} shirtColor="#EC4899" hairStyle="ponytail" pose="standing" />
+          </World3D>
         </div>
+
+        {/* Sentence Prompt */}
+        <div className="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            Christy: "Oh! That old man is always asking questions. He is so{" "}
+            <SentenceSlot value={play.world.trait} filled={!!play.world.trait} />."
+          </p>
+        </div>
+
+        {/* Selector Bay */}
+        <Bay label="Select Personality Adjective" tone="amber">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {traits.map((t) => (
+              <WordPill
+                key={t}
+                text={t}
+                tone="amber"
+                selected={play.world.trait === t}
+                onClick={() => play.set({ trait: t })}
+                disabled={play.locked}
+              />
+            ))}
+          </div>
+        </Bay>
       </Board>
     </Shell>
   );
@@ -333,17 +236,17 @@ export function Q43DinnerResponseActivity({ question, value, activityState, onCh
 
   return (
     <Shell
-      dim="2D"
+      dim="3D"
       play={play}
       question={question}
-      title="Q43 · Social Dialogue: Dinner Invitation Response"
+      title="Q43 · Social Bistro Dialogue: Dinner Invitation 3D"
       subtitle="Select the polite, natural conversational response to accept the dinner invitation"
       hints={["'Certainly. What time in the evening?' provides courteous acceptance while clarifying logistics."]}
     >
       <Board>
-        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-indigo-200/80 bg-gradient-to-b from-indigo-50/80 via-purple-50/40 to-slate-50/50 p-5 sm:p-6 shadow-sm">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-200/60 pb-3 mb-4">
+        {/* 3D Scene */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-indigo-200/80 bg-gradient-to-b from-indigo-50/80 via-purple-50/40 to-slate-50/50 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-200/60 p-4 bg-white/60 backdrop-blur-xs">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
                 <UtensilsCrossed className="h-4 w-4" />
@@ -353,70 +256,55 @@ export function Q43DinnerResponseActivity({ question, value, activityState, onCh
                 <span className="text-[11px] font-medium text-slate-500">Polite Pragmatic Dialogue</span>
               </div>
             </div>
+
             <span className="text-xs font-bold px-3 py-1 rounded-lg bg-indigo-100 text-indigo-900 border border-indigo-300">
               🍽️ Response: Certainly. What time?
             </span>
           </div>
 
-          {/* Dinner Reservation Table Canvas */}
-          <div className="bg-white rounded-xl border border-indigo-200 p-4 shadow-xs mb-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="bg-indigo-50/80 border border-indigo-200 rounded-xl p-3 sm:w-1/2">
-                <span className="text-[11px] font-bold text-indigo-800 uppercase block mb-1">Jenna (Inviting)</span>
-                <p className="text-xs font-semibold text-slate-800">
-                  "Are you free for dinner in the evening?"
-                </p>
-              </div>
-
-              <div className="bg-purple-50/80 border border-purple-200 rounded-xl p-3 sm:w-1/2">
-                <span className="text-[11px] font-bold text-purple-800 uppercase block mb-1">Shetty (Responding)</span>
-                <p className="text-xs font-semibold text-slate-800">
-                  {play.world.reply ?? "Select reply..."}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Reply Choices */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            {replies.map((r) => {
-              const active = play.world.reply === r;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => !play.locked && play.set({ reply: r })}
-                  className={`p-3.5 rounded-xl border-2 text-left font-semibold text-xs sm:text-sm transition-all flex items-center justify-between ${
-                    active
-                      ? "border-indigo-600 bg-indigo-50 text-indigo-950 shadow-md ring-2 ring-indigo-200"
-                      : "border-slate-200 bg-white text-slate-800 hover:border-slate-300 shadow-xs"
-                  }`}
-                >
-                  <span>{r}</span>
-                  {active && <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 ml-2" />}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Selector Bay */}
-          <div className="mt-2">
-            <Bay label="Confirm Polite Response" tone="indigo">
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {replies.map((r) => (
-                  <WordPill
-                    key={r}
-                    text={r}
-                    tone="indigo"
-                    selected={play.world.reply === r}
-                    onClick={() => play.set({ reply: r })}
-                    disabled={play.locked}
-                  />
-                ))}
-              </div>
-            </Bay>
-          </div>
+          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+            <CafeBistro3D position={[0, 0, 0]} />
+            <Avatar3D position={[-0.9, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#6366F1" hairStyle="short" pose="sitting" />
+            <Avatar3D position={[0.9, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#A855F7" hairStyle="bun" pose="sitting" />
+          </World3D>
         </div>
+
+        {/* Reply Choices */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {replies.map((r) => {
+            const active = play.world.reply === r;
+            return (
+              <button
+                key={r}
+                type="button"
+                onClick={() => !play.locked && play.set({ reply: r })}
+                className={`p-3.5 rounded-xl border-2 text-left font-semibold text-xs sm:text-sm transition-all flex items-center justify-between ${
+                  active
+                    ? "border-indigo-600 bg-indigo-50 text-indigo-950 shadow-md ring-2 ring-indigo-200"
+                    : "border-slate-200 bg-white text-slate-800 hover:border-slate-300 shadow-xs"
+                }`}
+              >
+                <span>{r}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Selector Bay */}
+        <Bay label="Confirm Polite Response" tone="indigo">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {replies.map((r) => (
+              <WordPill
+                key={r}
+                text={r}
+                tone="indigo"
+                selected={play.world.reply === r}
+                onClick={() => play.set({ reply: r })}
+                disabled={play.locked}
+              />
+            ))}
+          </div>
+        </Bay>
       </Board>
     </Shell>
   );
@@ -451,17 +339,17 @@ export function Q44StitchInTimeActivity({ question, value, activityState, onChan
 
   return (
     <Shell
-      dim="2D"
+      dim="3D"
       play={play}
       question={question}
-      title="Q44 · Famous Proverbs: Timely Maintenance"
-      subtitle="Complete the timeless English proverb on timely repair and diligence"
+      title="Q44 · Bicycle Workshop Proverb 3D"
+      subtitle="Complete the timeless English proverb on timely repair and diligence at the 3D repair workshop"
       hints={["The traditional proverb is: 'A stitch in time saves nine'."]}
     >
       <Board>
-        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-slate-50/50 p-5 sm:p-6 shadow-sm">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 pb-3 mb-4">
+        {/* 3D Scene */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-slate-50/50 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 p-4 bg-white/60 backdrop-blur-xs">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
                 <Scissors className="h-4 w-4" />
@@ -471,78 +359,41 @@ export function Q44StitchInTimeActivity({ question, value, activityState, onChan
                 <span className="text-[11px] font-medium text-slate-500">Fixing Small Issues Before They Escalate</span>
               </div>
             </div>
+
             <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
               🧵 Proverb: A Stitch in Time Saves Nine
             </span>
           </div>
 
-          {/* Needle & Bike Workshop Canvas */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-            <div className="md:col-span-7 bg-white/90 backdrop-blur-xs rounded-xl border border-amber-100 p-4 shadow-xs">
-              <div className="relative h-48 rounded-xl bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 border border-amber-300/60 flex items-center justify-center p-2 overflow-hidden">
-                <svg viewBox="0 0 380 180" className="w-full h-full">
-                  {/* Golden Needle & Thread Motif */}
-                  <g transform="translate(60, 40)">
-                    {/* Needle */}
-                    <line x1="0" y1="80" x2="80" y2="10" stroke="#CBD5E1" strokeWidth="4" strokeLinecap="round" />
-                    <ellipse cx="75" cy="14" rx="2" ry="5" fill="#1E293B" transform="rotate(-40 75 14)" />
-                    {/* Golden Thread */}
-                    <path d="M 75 14 Q 100 0 120 30 T 160 30 T 200 30" fill="none" stroke="#F59E0B" strokeWidth="2.5" strokeDasharray="4,4" />
-                  </g>
-
-                  {/* Bike Repair Icon */}
-                  <g transform="translate(240, 50)">
-                    <circle cx="20" cy="30" r="16" fill="none" stroke="#2563EB" strokeWidth="3" />
-                    <circle cx="65" cy="30" r="16" fill="none" stroke="#2563EB" strokeWidth="3" />
-                    <line x1="20" y1="30" x2="42" y2="15" stroke="#1D4ED8" strokeWidth="3" />
-                    <line x1="42" y1="15" x2="65" y2="30" stroke="#1D4ED8" strokeWidth="3" />
-                    <line x1="20" y1="30" x2="50" y2="30" stroke="#1D4ED8" strokeWidth="3" />
-                    {/* Wrench */}
-                    <path d="M 40 5 L 55 -10" stroke="#64748B" strokeWidth="4" strokeLinecap="round" />
-                  </g>
-                </svg>
-              </div>
-            </div>
-
-            <div className="md:col-span-5 space-y-3">
-              <div className="bg-white rounded-xl border border-amber-200 p-4 shadow-xs">
-                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-1">Proverb Meaning</span>
-                <div className="text-xs text-slate-700 font-mono bg-amber-50/70 p-2.5 rounded-lg border border-amber-200/60 leading-relaxed">
-                  A stitch in time <span className="text-amber-600 font-bold">saves nine</span>
-                </div>
-                <p className="text-[11px] text-slate-500 mt-2">
-                  Taking quick action to fix a small rip now saves having to make nine stitches later.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sentence Prompt */}
-          <div className="mt-5 rounded-xl border-2 border-amber-300/80 bg-white p-4 text-center shadow-xs">
-            <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-              Tim: "Yes, a stitch in time{" "}
-              <SentenceSlot value={play.world.proverbEnd} filled={!!play.world.proverbEnd} />."
-            </p>
-          </div>
-
-          {/* Selector Bay */}
-          <div className="mt-4">
-            <Bay label="Select Proverb Ending" tone="amber">
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {endings.map((e) => (
-                  <WordPill
-                    key={e}
-                    text={e}
-                    tone="amber"
-                    selected={play.world.proverbEnd === e}
-                    onClick={() => play.set({ proverbEnd: e })}
-                    disabled={play.locked}
-                  />
-                ))}
-              </div>
-            </Bay>
-          </div>
+          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+            <BikeWorkshop3D position={[0, 0, 0]} />
+            <Avatar3D position={[1.1, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#2563EB" hairStyle="cap" pose="kneeling" />
+          </World3D>
         </div>
+
+        {/* Sentence Prompt */}
+        <div className="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            Tim: "Yes, a stitch in time{" "}
+            <SentenceSlot value={play.world.proverbEnd} filled={!!play.world.proverbEnd} />."
+          </p>
+        </div>
+
+        {/* Selector Bay */}
+        <Bay label="Select Proverb Ending" tone="amber">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {endings.map((e) => (
+              <WordPill
+                key={e}
+                text={e}
+                tone="amber"
+                selected={play.world.proverbEnd === e}
+                onClick={() => play.set({ proverbEnd: e })}
+                disabled={play.locked}
+              />
+            ))}
+          </div>
+        </Bay>
       </Board>
     </Shell>
   );
@@ -551,7 +402,7 @@ export function Q44StitchInTimeActivity({ question, value, activityState, onChan
 /* ══════════════════════════════════════════════════════════════════════
    Q45 — Negative Agreement (Neither)
    Alan: "I am so tired. I don't feel like walking any more."
-   Sherry: "Me ______" / "______"
+   Sherry: "Me ______"
    Options: A. as well as, B. also, C. neither, D. no -> Key: C (neither)
    ══════════════════════════════════════════════════════════════════════ */
 export function Q45NegativeAgreementActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
@@ -577,17 +428,17 @@ export function Q45NegativeAgreementActivity({ question, value, activityState, o
 
   return (
     <Shell
-      dim="2D"
+      dim="3D"
       play={play}
       question={question}
-      title="Q45 · Conversational Negative Agreement"
-      subtitle="Complete Sherry's concurrence with Alan's statement of fatigue"
+      title="Q45 · Mountain Trail Negative Agreement 3D"
+      subtitle="Complete Sherry's concurrence with Alan's fatigue on the 3D mountain summit"
       hints={["To agree with a negative statement ('I don't feel like...'), English uses 'neither' (e.g. 'Me neither')."]}
     >
       <Board>
-        <div className="relative w-full overflow-hidden rounded-2xl border-2 border-teal-200/80 bg-gradient-to-b from-teal-50/80 via-emerald-50/40 to-slate-50/50 p-5 sm:p-6 shadow-sm">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-teal-200/60 pb-3 mb-4">
+        {/* 3D Scene */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-teal-200/80 bg-gradient-to-b from-teal-50/80 via-emerald-50/40 to-slate-50/50 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-teal-200/60 p-4 bg-white/60 backdrop-blur-xs">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-600 text-white shadow-xs">
                 <Footprints className="h-4 w-4" />
@@ -597,82 +448,43 @@ export function Q45NegativeAgreementActivity({ question, value, activityState, o
                 <span className="text-[11px] font-medium text-slate-500">Agreeing with a Negative Assertion</span>
               </div>
             </div>
+
             <span className="text-xs font-bold px-3 py-1 rounded-lg bg-teal-100 text-teal-900 border border-teal-300">
               🤝 Agreement: Me Neither
             </span>
           </div>
 
-          {/* Tired Hikers Scene */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-            <div className="md:col-span-7 bg-white/90 backdrop-blur-xs rounded-xl border border-teal-100 p-4 shadow-xs">
-              <div className="relative h-48 rounded-xl bg-gradient-to-b from-sky-100 via-teal-50 to-emerald-100 border border-teal-300/60 flex items-center justify-center p-2 overflow-hidden">
-                <svg viewBox="0 0 380 180" className="w-full h-full">
-                  {/* Rest Boulder */}
-                  <ellipse cx="190" cy="140" rx="140" ry="30" fill="#64748B" />
-
-                  {/* Alan resting exhausted on left */}
-                  <g transform="translate(100, 55)">
-                    <circle cx="20" cy="18" r="11" fill="#FDE68A" stroke="#D97706" strokeWidth="1" />
-                    <circle cx="16" cy="18" r="1.5" fill="#1E293B" />
-                    <circle cx="24" cy="18" r="1.5" fill="#1E293B" />
-                    <path d="M 16 25 Q 20 22 24 25" stroke="#1E293B" strokeWidth="1.5" fill="none" />
-                    <path d="M 10 28 L 4 65 L 36 65 L 30 28 Z" fill="#3B82F6" />
-                    <text x="20" y="-5" textAnchor="middle" fill="#1E40AF" fontSize="8" fontWeight="bold">ALAN</text>
-                  </g>
-
-                  {/* Sherry resting on right */}
-                  <g transform="translate(240, 55)">
-                    <circle cx="20" cy="18" r="11" fill="#FED7AA" stroke="#EA580C" strokeWidth="1" />
-                    <circle cx="16" cy="18" r="1.5" fill="#1E293B" />
-                    <circle cx="24" cy="18" r="1.5" fill="#1E293B" />
-                    <path d="M 16 25 Q 20 22 24 25" stroke="#1E293B" strokeWidth="1.5" fill="none" />
-                    <path d="M 10 28 L 4 65 L 36 65 L 30 28 Z" fill="#EC4899" />
-                    <text x="20" y="-5" textAnchor="middle" fill="#BE185D" fontSize="8" fontWeight="bold">SHERRY</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-
-            <div className="md:col-span-5 space-y-3">
-              <div className="bg-white rounded-xl border border-teal-200 p-4 shadow-xs">
-                <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider block mb-1">Negative Agreement Rule</span>
-                <div className="text-xs text-slate-700 font-mono bg-teal-50/70 p-2.5 rounded-lg border border-teal-200/60 leading-relaxed">
-                  Negative clause ("don't") → <span className="text-teal-700 font-bold">neither</span>
-                </div>
-                <p className="text-[11px] text-slate-500 mt-2">
-                  "Also" and "too" agree with positive sentences; "neither" agrees with negative ones.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sentence Prompt */}
-          <div className="mt-5 rounded-xl border-2 border-teal-300/80 bg-white p-4 text-center shadow-xs">
-            <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-              Alan: "I am so tired. I don't feel like walking any more."<br />
-              Sherry: "Me{" "}
-              <SentenceSlot value={play.world.particle} filled={!!play.world.particle} />."
-            </p>
-          </div>
-
-          {/* Selector Bay */}
-          <div className="mt-4">
-            <Bay label="Select Agreement Particle" tone="emerald">
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                {particles.map((p) => (
-                  <WordPill
-                    key={p}
-                    text={p}
-                    tone="emerald"
-                    selected={play.world.particle === p}
-                    onClick={() => play.set({ particle: p })}
-                    disabled={play.locked}
-                  />
-                ))}
-              </div>
-            </Bay>
-          </div>
+          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+            <MountainSummit3D position={[0, 0, 0]} />
+            <Avatar3D position={[-0.8, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#0284C7" hairStyle="cap" pose="sitting" expression="worried" />
+            <Avatar3D position={[0.8, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#EC4899" hairStyle="ponytail" pose="sitting" expression="worried" />
+          </World3D>
         </div>
+
+        {/* Sentence Prompt */}
+        <div className="bg-teal-50/80 border-2 border-teal-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            Alan: "I am so tired. I don't feel like walking any more."<br />
+            Sherry: "Me{" "}
+            <SentenceSlot value={play.world.particle} filled={!!play.world.particle} />."
+          </p>
+        </div>
+
+        {/* Selector Bay */}
+        <Bay label="Select Agreement Particle" tone="emerald">
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {particles.map((p) => (
+              <WordPill
+                key={p}
+                text={p}
+                tone="emerald"
+                selected={play.world.particle === p}
+                onClick={() => play.set({ particle: p })}
+                disabled={play.locked}
+              />
+            ))}
+          </div>
+        </Bay>
       </Board>
     </Shell>
   );
