@@ -2,8 +2,8 @@ import { IQuestionRepository, QuestionFilters } from "../interfaces/IQuestionRep
 import { Question } from "@/types/question";
 import { SEED_QUESTIONS, reconcileWithSeed } from "@/lib/seedData";
 
-// Key bumped to v7 for the newly added 10th SOF IMO Class 6 Set A paper.
-const LOCAL_STORAGE_KEY = "olympiad_questions_repo_v7";
+// Key bumped to v8 for the newly added SOF IMO Class 6 Master Interactive Edition.
+const LOCAL_STORAGE_KEY = "olympiad_questions_repo_v8";
 
 export class LocalQuestionRepository implements IQuestionRepository {
   private inMemory: Question[] | null = null;

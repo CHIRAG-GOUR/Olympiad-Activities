@@ -14,6 +14,7 @@ import { IMO6B2_QUESTIONS, IMO6B2_EXAM } from "@/data/imo6b2";
 import { IMO6P3_QUESTIONS, IMO6P3_EXAM } from "@/data/imo6p3";
 import { IMO23_24_C_QUESTIONS, IMO23_24_C_EXAM } from "@/data/imo23_24_c";
 import { IMO10_G6_SETA_QUESTIONS, IMO10_G6_SETA_EXAM } from "@/data/imo10_g6_seta";
+import { IMO_INTERACTIVE_G6_QUESTIONS, IMO_INTERACTIVE_G6_EXAM } from "@/data/imo_interactive_g6";
 
 /**
  * Seeded content: seven SOF Olympiad papers for Class 6.
@@ -67,6 +68,7 @@ export function preferSeed<T extends { id: string; seedRev?: string }>(stored: T
 }
 
 export const SEED_QUESTIONS: Question[] = stamp([
+  ...IMO_INTERACTIVE_G6_QUESTIONS,
   ...IMO10_G6_SETA_QUESTIONS,
   ...IMO23_24_C_QUESTIONS,
   ...IMO6A_QUESTIONS,
@@ -76,6 +78,7 @@ export const SEED_QUESTIONS: Question[] = stamp([
   ...IMO6P3_QUESTIONS,
 ]);
 export const SEED_EXAMS: Exam[] = stamp([
+  IMO_INTERACTIVE_G6_EXAM,
   IMO10_G6_SETA_EXAM,
   IMO23_24_C_EXAM,
   IMO6A_EXAM,
