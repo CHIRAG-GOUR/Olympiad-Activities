@@ -1,0 +1,60 @@
+name: Deploy Olympiad Activities to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Verification Checks
+        run: |
+          npm run verify:shapes
+          npm run verify:imo6a
+          npm run verify:imo6p3
+
+      - name: Build Static Export
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_ENV: production
+          NEXT_PUBLIC_DATA_PROVIDER: local
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: olympiad-dashboard
+          NEXT_PUBLIC_FIREBASE_DATABASE_ID: olympiad
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: olympiad-dashboard.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: olympiad-dashboard.firebasestorage.app
+
+      - name: Deploy with Firebase Action
+        if: env.FIREBASE_TOKEN != ''
+        run: npx firebase-tools deploy --only hosting:the-olympiad-dashboard --project olympiad-dashboard --token "${{ secrets.FIREBASE_TOKEN }}"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Deploy with Firebase Hosting Action (Service Account)
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_OLYMPIAD_DASHBOARD }}'
+          channelId: live
+          projectId: olympiad-dashboard
+          target: the-olympiad-dashboard
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OLYMPIAD_DASHBOARD }}

@@ -2,5 +2,15 @@
   "projects": {
     "default": "olympiad-dashboard",
     "production": "olympiad-dashboard"
+  },
+  "targets": {
+    "olympiad-dashboard": {
+      "hosting": {
+        "the-olympiad-dashboard": [
+          "the-olympiad-dashboard"
+        ]
+      }
+    }
   }
 }
+
