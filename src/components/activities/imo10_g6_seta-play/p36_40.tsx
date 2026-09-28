@@ -21,7 +21,7 @@ export function Q36JourneyDistanceActivity({ question, value, activityState, onC
       if (d === 144) {
         return {
           value: "144 km",
-          optionId: matchText(question, "144 km") ?? "C",
+          optionId: matchText(question, "144 km"),
         };
       }
       return { note: `Distance: ${d} km. Train(2/3)=${((2 / 3) * d).toFixed(1)} km, Bus(1/4)=${((1 / 4) * d).toFixed(1)} km. Difference must be 60 km.` };
@@ -97,7 +97,7 @@ export function Q37PackingRobotActivity({ question, value, activityState, onChan
       if (s === 36) {
         return {
           value: "36",
-          optionId: matchText(question, "36") ?? "A",
+          optionId: matchText(question, "36"),
         };
       }
       return { note: `Stickers: ${s}. Must be divisible by 2, 3, and 4 between 30 and 40.` };
@@ -170,7 +170,7 @@ export function Q38FlooringCarpetActivity({ question, value, activityState, onCh
       if (c === 416) {
         return {
           value: "₹416",
-          optionId: matchText(question, "₹416") ?? "D",
+          optionId: matchText(question, "₹416"),
         };
       }
       return { note: `Calculated Cost: ₹${c}. Sum rectangular carpets (@ ₹6/m²) and square carpet (@ ₹8/m²).` };
@@ -241,7 +241,7 @@ export function Q39WeightBalanceActivity({ question, value, activityState, onCha
       if (wt === 138) {
         return {
           value: "138 kg",
-          optionId: matchText(question, "138 kg") ?? "C",
+          optionId: matchText(question, "138 kg"),
         };
       }
       return { note: `Total: ${wt} kg. Kiara(34.5) + Uncle(3 × 34.5 = 103.5) = 138 kg.` };
@@ -312,7 +312,7 @@ export function Q40RopeCuttingActivity({ question, value, activityState, onChang
       if (len === 4) {
         return {
           value: "4 m",
-          optionId: matchText(question, "4 m") ?? "B",
+          optionId: matchText(question, "4 m"),
         };
       }
       return { note: `Cutter set to: ${len} m. Piece length must divide both 16 m and 20 m.` };

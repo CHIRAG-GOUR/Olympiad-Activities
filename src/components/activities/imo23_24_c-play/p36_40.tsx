@@ -21,7 +21,7 @@ export function Q36FruitMarketAlgebraActivity({ question, value, activityState, 
     initial: { checkoutBuilt: false },
     derive: (w) => {
       if (!w.checkoutBuilt) return { note: "Combine 5 apples and 4 mango crates into checkout register." };
-      return { value: "9x + 20", optionId: matchText(question, "9x + 20") ?? "C" };
+      return { value: "9x + 20", optionId: matchText(question, "9x + 20") };
     },
     activityState,
     value,
@@ -93,7 +93,7 @@ export function Q37PublishingHouseActivity({ question, value, activityState, onC
     initial: { calculated: false },
     derive: (w) => {
       if (!w.calculated) return { note: "Feed 1950 page stacks into word counter." };
-      return { value: `${totalWords}`, optionId: matchNumber(question, totalWords) ?? "A" };
+      return { value: `${totalWords}`, optionId: matchNumber(question, totalWords) };
     },
     activityState,
     value,
@@ -161,7 +161,7 @@ export function Q38PolarNavigationMapActivity({ question, value, activityState, 
     initial: { measured: false },
     derive: (w) => {
       if (!w.measured) return { note: "Deploy vehicles North and South and measure separation distance." };
-      return { value: `${total} km`, optionId: matchText(question, `${total}`) ?? "A" };
+      return { value: `${total} km`, optionId: matchText(question, `${total}`) };
     },
     activityState,
     value,
@@ -239,7 +239,7 @@ export function Q39PartyCrowdSimulatorActivity({ question, value, activityState,
       const finalGirls = w.initialGirls + 30;
       const is2to5 = finalBoys * 5 === finalGirls * 2;
       if (!is2to5) return { note: `Initial girls = ${w.initialGirls} gives ratio ${finalBoys}:${finalGirls} ≠ 2:5.` };
-      return { value: `${w.initialGirls} girls`, optionId: matchNumber(question, w.initialGirls) ?? (w.initialGirls === 70 ? "C" : undefined) };
+      return { value: `${w.initialGirls} girls`, optionId: matchNumber(question, w.initialGirls) };
     },
     activityState,
     value,
@@ -318,7 +318,7 @@ export function Q40MusicSchoolScheduleActivity({ question, value, activityState,
     initial: { computed: false },
     derive: (w) => {
       if (!w.computed) return { note: "Allocate 24 teaching hours into 3/4-hour class blocks." };
-      return { value: "32 classes", optionId: matchNumber(question, 32) ?? "D" };
+      return { value: "32 classes", optionId: matchNumber(question, 32) };
     },
     activityState,
     value,

@@ -21,7 +21,7 @@ export function Q41ColdStorageEggActivity({ question, value, activityState, onCh
       if (e === "1,529,184,780") {
         return {
           value: "1,529,184,780",
-          optionId: matchText(question, "1,529,184,780") ?? "A",
+          optionId: matchText(question, "1,529,184,780"),
         };
       }
       return { note: `Calculated: ${e} eggs. Subtract Delhi and Punjab shipments, then multiply by 30.` };
@@ -98,7 +98,7 @@ export function Q42ShoppingDiscountActivity({ question, value, activityState, on
       if (s === 28.99) {
         return {
           value: "₹28.99",
-          optionId: matchText(question, "₹28.99") ?? "A",
+          optionId: matchText(question, "₹28.99"),
         };
       }
       return { note: `Savings: ₹${s}. Original(₹428.98) - Sale(₹399.99).` };
@@ -169,7 +169,7 @@ export function Q43ColouredRodActivity({ question, value, activityState, onChang
       if (len === 16) {
         return {
           value: "16 m",
-          optionId: matchText(question, "16 m") ?? "A",
+          optionId: matchText(question, "16 m"),
         };
       }
       return { note: `Total Rod Length: ${len} m. Adjust length so violet section equals 12.08 m.` };
@@ -240,7 +240,7 @@ export function Q44OilTankActivity({ question, value, activityState, onChange, r
       if (oil === 315.75) {
         return {
           value: "315.75 litres",
-          optionId: matchText(question, "315.75 litres") ?? "D",
+          optionId: matchText(question, "315.75 litres"),
         };
       }
       return { note: `Remaining Oil: ${oil} L. Drum capacity = 705 L − (135.75 + 253.50).` };
@@ -311,7 +311,7 @@ export function Q45DeliveryLoadActivity({ question, value, activityState, onChan
       if (kg === 15056) {
         return {
           value: "15,056 kg",
-          optionId: matchText(question, "15,056 kg") ?? "B",
+          optionId: matchText(question, "15,056 kg"),
         };
       }
       return { note: `Total weight: ${kg} kg. Truck(582 × 16) + Van(359 × 16) = 941 × 16.` };

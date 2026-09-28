@@ -21,7 +21,7 @@ export function Q31NumberCardDetectiveActivity({ question, value, activityState,
       if (c === 9) {
         return {
           value: "9",
-          optionId: matchText(question, "9") ?? "C",
+          optionId: matchText(question, "9"),
         };
       }
       return { note: `Investigating card: ${c}. Sanchi's product is 63.` };
@@ -112,7 +112,7 @@ export function Q32RemainderLockActivity({ question, value, activityState, onCha
       if (d === 68) {
         return {
           value: "68",
-          optionId: matchText(question, "68") ?? "C",
+          optionId: matchText(question, "68"),
         };
       }
       return { note: `Divisor: ${d}. Modulo test: 1025%${d}=${1025 % d} (need 5), 1299%${d}=${1299 % d} (need 7), 1575%${d}=${1575 % d} (need 11).` };
@@ -184,7 +184,7 @@ export function Q33RoundingTowerActivity({ question, value, activityState, onCha
       if (s === "214653 rounded to nearest ten thousand is 210000") {
         return {
           value: "214653 rounded to nearest ten thousand is 210000",
-          optionId: matchText(question, "214653 rounded to nearest ten thousand is 210000") ?? "D",
+          optionId: matchText(question, "214653 rounded to nearest ten thousand is 210000"),
         };
       }
       return { note: `Audited statement: ${s}. Examine thousands digit (4 < 5 rounds down).` };
@@ -271,7 +271,7 @@ export function Q34FractionRangoliActivity({ question, value, activityState, onC
       if (art === "Sidak") {
         return {
           value: "Sidak",
-          optionId: matchText(question, "Sidak") ?? "D",
+          optionId: matchText(question, "Sidak"),
         };
       }
       return { note: `Comparing: ${art}. Compare decimal fractions.` };
@@ -352,7 +352,7 @@ export function Q35ZeroDetectorActivity({ question, value, activityState, onChan
       if (exp === "1 / 0") {
         return {
           value: "1 / 0",
-          optionId: matchText(question, "1 / 0") ?? "A",
+          optionId: matchText(question, "1 / 0"),
         };
       }
       return { note: `Expression: ${exp}. Division by zero is undefined.` };

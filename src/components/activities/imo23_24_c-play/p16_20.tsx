@@ -21,7 +21,7 @@ export function Q16LineIntersectionObservatoryActivity({ question, value, activi
     initial: { detectedPairs: 0 },
     derive: (w) => {
       if (w.detectedPairs === 0) return { note: "Activate sensors at all line crossing junctions." };
-      return { value: `${w.detectedPairs}`, optionId: matchNumber(question, w.detectedPairs) ?? (w.detectedPairs === 3 ? "B" : undefined) };
+      return { value: `${w.detectedPairs}`, optionId: matchNumber(question, w.detectedPairs) };
     },
     activityState,
     value,
@@ -202,7 +202,7 @@ export function Q18AngleObservatoryActivity({ question, value, activityState, on
     initial: { obtuseCount: 0 },
     derive: (w) => {
       if (w.obtuseCount === 0) return { note: "Scan all angle sectors around vertex O (angles between 90° and 180°)." };
-      return { value: `${w.obtuseCount}`, optionId: matchNumber(question, w.obtuseCount) ?? (w.obtuseCount === 4 ? "B" : undefined) };
+      return { value: `${w.obtuseCount}`, optionId: matchNumber(question, w.obtuseCount) };
     },
     activityState,
     value,
@@ -298,7 +298,7 @@ export function Q19SymmetryScannerActivity({ question, value, activityState, onC
     initial: { scanned: false, count: 0 },
     derive: (w) => {
       if (!w.scanned) return { note: "Scan all 6 digits for lines of reflectional symmetry." };
-      return { value: `${w.count}`, optionId: matchNumber(question, w.count) ?? (w.count === 2 ? "B" : undefined) };
+      return { value: `${w.count}`, optionId: matchNumber(question, w.count) };
     },
     activityState,
     value,
@@ -366,7 +366,7 @@ export function Q20ArchitectureFloorLabActivity({ question, value, activityState
     initial: { decomposed: false, calculatedArea: 0 },
     derive: (w) => {
       if (w.calculatedArea === 0) return { note: "Decompose composite stepped floor into rectangles and calculate area." };
-      return { value: `${w.calculatedArea} sq. cm`, optionId: matchText(question, `${w.calculatedArea}`) ?? "C" };
+      return { value: `${w.calculatedArea} sq. cm`, optionId: matchText(question, `${w.calculatedArea}`) };
     },
     activityState,
     value,

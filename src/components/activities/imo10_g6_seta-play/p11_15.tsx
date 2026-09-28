@@ -21,7 +21,7 @@ export function Q11CircleObservatoryActivity({ question, value, activityState, o
       if (c === 7) {
         return {
           value: "7",
-          optionId: matchText(question, "7") ?? "A",
+          optionId: matchText(question, "7"),
         };
       }
       return { note: `Counted: ${c} circles. Trace each complete circle ring.` };
@@ -103,11 +103,11 @@ export function Q12MissingCornerActivity({ question, value, activityState, onCha
     question,
     initial: { selectedCorner: "A" },
     derive: (w) => {
-      const cor = w?.selectedCorner ?? "A";
+      const cor = w?.selectedCorner;
       if (cor === "A") {
         return {
           value: "Option A",
-          optionId: matchText(question, "Option A") ?? "A",
+          optionId: matchText(question, "Option A"),
         };
       }
       return { note: `Corner piece: ${cor}. Rotate and snap into missing quadrant.` };
@@ -118,7 +118,7 @@ export function Q12MissingCornerActivity({ question, value, activityState, onCha
     readOnly,
   });
 
-  const cor = play.world?.selectedCorner ?? "A";
+  const cor = play.world?.selectedCorner;
 
   return (
     <Shell
@@ -177,7 +177,7 @@ export function Q13ClassroomQueueActivity({ question, value, activityState, onCh
       if (tot === 39) {
         return {
           value: "39",
-          optionId: matchText(question, "39") ?? "B",
+          optionId: matchText(question, "39"),
         };
       }
       return { note: `Assembly total: ${tot}. Formula: Top(14) + Bottom(26) - 1.` };
@@ -261,7 +261,7 @@ export function Q14MultiplicationMachineActivity({ question, value, activityStat
       if (p === 40) {
         return {
           value: "40",
-          optionId: matchText(question, "40") ?? "B",
+          optionId: matchText(question, "40"),
         };
       }
       return { note: `Calculated: ${p}. Feed 8 and 5 into gear multiplication slots.` };
@@ -332,7 +332,7 @@ export function Q15NavigationMazeActivity({ question, value, activityState, onCh
       if (h === "North") {
         return {
           value: "North",
-          optionId: matchText(question, "North") ?? "C",
+          optionId: matchText(question, "North"),
         };
       }
       return { note: `Heading: ${h}. Follow path: East 5km -> Left 3km -> Right 5km -> Left.` };

@@ -25,7 +25,7 @@ export function Q31VariableReactorActivity({ question, value, activityState, onC
     initial: { subDone: false, multDone: false },
     derive: (w) => {
       if (!w.multDone) return { note: "Load variable crystals and trigger reactor chambers: a × (c − b)." };
-      return { value: "420", optionId: matchNumber(question, 420) ?? "D" };
+      return { value: "420", optionId: matchNumber(question, 420) };
     },
     activityState,
     value,
@@ -173,7 +173,7 @@ export function Q33CurveGalleryActivity({ question, value, activityState, onChan
     initial: { openCount: 0 },
     derive: (w) => {
       if (w.openCount === 0) return { note: "Trace all 5 wire curves from start to end to tally open curves." };
-      return { value: `${w.openCount}`, optionId: matchNumber(question, w.openCount) ?? (w.openCount === 3 ? "A" : undefined) };
+      return { value: `${w.openCount}`, optionId: matchNumber(question, w.openCount) };
     },
     activityState,
     value,
@@ -241,7 +241,7 @@ export function Q34SmartParkingGarageActivity({ question, value, activityState, 
     initial: { calculated: false },
     derive: (w) => {
       if (!w.calculated) return { note: "Calculate parking duration and apply billing rate tariff." };
-      return { value: "₹ 58.50", optionId: matchText(question, "58.50") ?? "D" };
+      return { value: "₹ 58.50", optionId: matchText(question, "58.50") };
     },
     activityState,
     value,
@@ -313,7 +313,7 @@ export function Q35PlaceValueFactoryActivity({ question, value, activityState, o
     initial: { computed: false },
     derive: (w) => {
       if (!w.computed) return { note: "Extract place values of 9 and 3, subtract face value of 5." };
-      return { value: "300895", optionId: matchNumber(question, 300895) ?? "A" };
+      return { value: "300895", optionId: matchNumber(question, 300895) };
     },
     activityState,
     value,

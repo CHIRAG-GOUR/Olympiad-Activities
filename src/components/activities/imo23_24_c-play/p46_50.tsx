@@ -37,7 +37,7 @@ export function Q46LogicCourtroom({
       if (s1 === "F" && s2 === "F") {
         return {
           value: "Both Statement-I and Statement-II are false.",
-          optionId: matchText(question, "Both Statement-I and Statement-II are false.") ?? "B",
+          optionId: matchText(question, "Both Statement-I and Statement-II are false."),
         };
       }
       return { note: `Current Verdict: S1 is ${s1}, S2 is ${s2}. Investigate both chambers.` };
@@ -186,7 +186,7 @@ export function Q47LineTower({
       if (perp === 3 && inter === 7 && conc === 0) {
         return {
           value: "(i) 3, (ii) 7, (iii) 0",
-          optionId: matchText(question, "(i) 3, (ii) 7, (iii) 0") ?? "B",
+          optionId: matchText(question, "(i) 3, (ii) 7, (iii) 0"),
         };
       }
       return { note: `Inspected: Perpendicular=${perp}, Intersecting=${inter}, Concurrent=${conc}. Discover correct counts.` };
@@ -334,7 +334,7 @@ export function Q48CafeteriaData({
       if (r1 === "q" && r2 === "r" && r3 === "p") {
         return {
           value: "(i) → (q); (ii) → (r); (iii) → (p)",
-          optionId: matchText(question, "(i) → (q); (ii) → (r); (iii) → (p)") ?? "A",
+          optionId: matchText(question, "(i) → (q); (ii) → (r); (iii) → (p)"),
         };
       }
       return { note: `Current mapping: (i)→(${r1}), (ii)→(${r2}), (iii)→(${r3}). Match exact ratio cables.` };
@@ -515,7 +515,7 @@ export function Q49VerificationChamber({
       if (s1 === "T" && s2 === "F" && s3 === "F") {
         return {
           value: "T, F, F",
-          optionId: matchText(question, "T, F, F") ?? "C",
+          optionId: matchText(question, "T, F, F"),
         };
       }
       return { note: `Truth values: (${s1}, ${s2}, ${s3}). Verify each mathematical theorem.` };
@@ -681,7 +681,7 @@ export function Q50LaptopAnalytics({
       if (diffSQ === 10 && fracPR === "17/38") {
         return {
           value: "(i) 10, (ii) 17/38",
-          optionId: matchText(question, "(i) 10, (ii) 17/38") ?? "A",
+          optionId: matchText(question, "(i) 10, (ii) 17/38"),
         };
       }
       return { note: `Analytics: S-Q Difference = ${diffSQ}, (P+R)/Total = ${fracPR}. Discover correct metrics.` };

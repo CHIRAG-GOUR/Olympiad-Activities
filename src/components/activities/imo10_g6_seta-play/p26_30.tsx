@@ -21,7 +21,7 @@ export function Q26CollinearScannerActivity({ question, value, activityState, on
       if (c === 15) {
         return {
           value: "15",
-          optionId: matchText(question, "15") ?? "C",
+          optionId: matchText(question, "15"),
         };
       }
       return { note: `Counted: ${c} collinear sets. Sweep laser line along diagram lines.` };
@@ -91,7 +91,7 @@ export function Q27PrimePolygonActivity({ question, value, activityState, onChan
       if (s === 5) {
         return {
           value: "5",
-          optionId: matchText(question, "5") ?? "B",
+          optionId: matchText(question, "5"),
         };
       }
       return { note: `Polygon sides: ${s}. Add the two least consecutive primes (2 + 3).` };
@@ -162,7 +162,7 @@ export function Q28PrimeMinerActivity({ question, value, activityState, onChange
       if (p === 17) {
         return {
           value: "17",
-          optionId: matchText(question, "17") ?? "C",
+          optionId: matchText(question, "17"),
         };
       }
       return { note: `Mined: ${p} primes. Collect primes in 16–80 and 90–100.` };
@@ -233,7 +233,7 @@ export function Q29SolidIdentificationActivity({ question, value, activityState,
       if (s === "Square/Rectangular Pyramid") {
         return {
           value: "Square/Rectangular Pyramid",
-          optionId: matchText(question, "Square/Rectangular Pyramid") ?? "A",
+          optionId: matchText(question, "Square/Rectangular Pyramid"),
         };
       }
       return { note: `Inspected: ${s}. Scanner requires F=5, E=8, V=5.` };
@@ -323,7 +323,7 @@ export function Q30AngleLabActivity({ question, value, activityState, onChange, 
       if (c === "Two right angles") {
         return {
           value: "Two right angles",
-          optionId: matchText(question, "Two right angles") ?? "D",
+          optionId: matchText(question, "Two right angles"),
         };
       }
       return { note: `Combination: ${c}. Test whether sum can form an obtuse angle (90° < θ < 180°).` };

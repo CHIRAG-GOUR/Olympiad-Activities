@@ -31,7 +31,7 @@ export function Q01CampusNavActivity({ question, value, activityState, onChange,
         return { note: `Step ${w.currentStep + 1} of ${steps.length}: Guide Riya along her path.` };
       }
       if (!w.measured) return { note: "Activate surveying drone to measure straight-line distance to college." };
-      return { value: "40 m", optionId: matchText(question, "40 m") ?? "B" };
+      return { value: "40 m", optionId: matchText(question, "40 m") };
     },
     activityState,
     value,
@@ -294,7 +294,7 @@ export function Q03CodebreakerMachineActivity({ question, value, activityState, 
     derive: (w) => {
       const code = w.dialed.join("");
       if (code.includes("_")) return { note: "Deduce letter codes and assemble ASHRAM on the console." };
-      return { value: code, optionId: matchText(question, code) ?? (code === correctCode ? "A" : undefined) };
+      return { value: code, optionId: matchText(question, code) };
     },
     activityState,
     value,

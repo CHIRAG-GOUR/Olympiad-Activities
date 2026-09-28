@@ -193,7 +193,7 @@ export function Q28DecimalFuelStationActivity({ question, value, activityState, 
     initial: { valvesOpened: false, total: 0 },
     derive: (w) => {
       if (w.total === 0) return { note: "Open valves to meter decimal tank quotients." };
-      return { value: `${w.total}`, optionId: matchNumber(question, w.total) ?? "B" };
+      return { value: `${w.total}`, optionId: matchNumber(question, w.total) };
     },
     activityState,
     value,
@@ -264,7 +264,7 @@ export function Q29NumberSecurityLockActivity({ question, value, activityState, 
     derive: (w) => {
       const sum = baseSum + w.dialedDigit;
       if (sum % 3 !== 0) return { note: `Sum = ${sum} is not divisible by 3. Adjust dial.` };
-      return { value: `${w.dialedDigit}`, optionId: matchNumber(question, w.dialedDigit) ?? (w.dialedDigit === 2 ? "D" : undefined) };
+      return { value: `${w.dialedDigit}`, optionId: matchNumber(question, w.dialedDigit) };
     },
     activityState,
     value,
@@ -354,7 +354,7 @@ export function Q30TileBorderFactoryActivity({ question, value, activityState, o
     initial: { measured: false },
     derive: (w) => {
       if (!w.measured) return { note: "Walk perimeter robot around shaded boundary to count exposed tile edges." };
-      return { value: "96 cm", optionId: matchText(question, "96 cm") ?? "C" };
+      return { value: "96 cm", optionId: matchText(question, "96 cm") };
     },
     activityState,
     value,

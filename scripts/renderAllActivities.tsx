@@ -29,6 +29,8 @@ import { IMO6B2_QUESTIONS } from "../src/data/imo6b2";
 import { IMO_CLASS6_SETB_QUESTIONS } from "../src/data/sofImoClass6SetB";
 import { IMO6P3_QUESTIONS } from "../src/data/imo6p3";
 import { IMO23_24_C_QUESTIONS } from "../src/data/imo23_24_c";
+import { IMO10_G6_SETA_QUESTIONS } from "../src/data/imo10_g6_seta";
+import { IMO_INTERACTIVE_G6_QUESTIONS } from "../src/data/imo_interactive_g6";
 import { getQuestionActivity } from "../src/components/activities/ActivityRegistry";
 import { reviveNestedArrays } from "../src/repositories/firebase/decodeFirestore";
 import type { Question } from "../src/types/question";
@@ -132,6 +134,8 @@ const PAPERS: Paper[] = [
   { label: "Set B", questions: IMO_CLASS6_SETB_QUESTIONS, viaRegistry: true },
   { label: "Paper 3", questions: IMO6P3_QUESTIONS, viaRegistry: true },
   { label: "Set C (2023-24)", questions: IMO23_24_C_QUESTIONS, viaRegistry: true },
+  { label: "10th SOF Set A", questions: IMO10_G6_SETA_QUESTIONS, viaRegistry: true },
+  { label: "Interactive Edition", questions: IMO_INTERACTIVE_G6_QUESTIONS, viaRegistry: true },
 ];
 
 async function componentsFor(paper: Paper): Promise<Map<number, { name: string; comp: Comp }>> {

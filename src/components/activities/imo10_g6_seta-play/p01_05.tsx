@@ -54,7 +54,7 @@ export function Q01NumberForgeActivity({ question, value, activityState, onChang
       if (num === 49) {
         return {
           value: "49",
-          optionId: matchText(question, "49") ?? "A",
+          optionId: matchText(question, "49"),
         };
       }
       return { note: `Machine Input: ${num} (√${num} = ${Math.sqrt(num).toFixed(2)}). Forge output 7.` };
@@ -149,7 +149,7 @@ export function Q02PaperFoldingActivity({ question, value, activityState, onChan
       if (w?.unfolded) {
         return {
           value: "Pattern C",
-          optionId: matchText(question, "Pattern C") ?? "C",
+          optionId: matchText(question, "Pattern C"),
         };
       }
       return { note: "Execute folds, apply corner cuts, and press Unfold to reveal pattern." };
@@ -258,7 +258,7 @@ export function Q03MirrorChamberActivity({ question, value, activityState, onCha
       if (w?.mirrorPlaced) {
         return {
           value: "Image D",
-          optionId: matchText(question, "Image D") ?? "D",
+          optionId: matchText(question, "Image D"),
         };
       }
       return { note: "Place mirror plane MN to reflect Fig. (X)." };
@@ -372,7 +372,7 @@ export function Q04AnimalEcologyActivity({ question, value, activityState, onCha
       if (a === "Rabbit") {
         return {
           value: "Rabbit",
-          optionId: matchText(question, "Rabbit") ?? "C",
+          optionId: matchText(question, "Rabbit"),
         };
       }
       return { note: `Auditing: ${a}. Discover dietary classification (Herbivore vs Carnivore).` };
@@ -444,11 +444,11 @@ export function Q05CubeNetFactoryActivity({ question, value, activityState, onCh
     question,
     initial: { selectedNet: "B", folded: true },
     derive: (w) => {
-      const net = w?.selectedNet ?? "B";
+      const net = w?.selectedNet;
       if (net === "B") {
         return {
           value: "Net B",
-          optionId: matchText(question, "Net B") ?? "B",
+          optionId: matchText(question, "Net B"),
         };
       }
       return { note: `Net ${net} chosen. Fold faces to test cube closure.` };
@@ -459,7 +459,7 @@ export function Q05CubeNetFactoryActivity({ question, value, activityState, onCh
     readOnly,
   });
 
-  const net = play.world?.selectedNet ?? "B";
+  const net = play.world?.selectedNet;
   const folded = play.world?.folded ?? true;
 
   return (

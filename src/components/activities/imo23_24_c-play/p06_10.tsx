@@ -102,7 +102,7 @@ export function Q07SchoolRankingCeremonyActivity({ question, value, activityStat
       const rankFromBottom = total - w.rankTop + 1;
       return {
         value: `${w.rankTop}th`,
-        optionId: matchText(question, `${w.rankTop}th`) ?? (w.rankTop === 14 ? "A" : undefined),
+        optionId: matchText(question, `${w.rankTop}th`),
       };
     },
     activityState,
@@ -189,7 +189,7 @@ export function Q08LineDrawingEngineActivity({ question, value, activityState, o
       if (w.drawnCount === 0) return { note: "Draw all unique straight continuous lines required to build the figure." };
       return {
         value: `${w.drawnCount}`,
-        optionId: matchNumber(question, w.drawnCount) ?? (w.drawnCount === 11 ? "D" : undefined),
+        optionId: matchNumber(question, w.drawnCount),
       };
     },
     activityState,
@@ -367,7 +367,7 @@ export function Q10OperatorPowerGridActivity({ question, value, activityState, o
       if (!w.opsSlotted || !w.evaluated) {
         return { note: "Slot arithmetic modules (A=÷, B=+, C=−, D=×) and trigger grid power flow." };
       }
-      return { value: "10", optionId: matchNumber(question, 10) ?? "D" };
+      return { value: "10", optionId: matchNumber(question, 10) };
     },
     activityState,
     value,

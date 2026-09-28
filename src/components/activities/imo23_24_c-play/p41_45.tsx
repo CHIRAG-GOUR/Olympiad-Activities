@@ -41,7 +41,7 @@ export function Q41WaterPlant({
       const allDivisible = validAlpha && validBeta && validGamma;
 
       if (cap === 30 && allDivisible) {
-        return { value: "30 L", optionId: matchText(question, "30 L") ?? "D" };
+        return { value: "30 L", optionId: matchText(question, "30 L") };
       }
       return {
         note: `Selected: ${cap} L (${allDivisible ? "Common divisor" : "Leaves remainder"}). Find greatest common container (HCF).`,
@@ -158,7 +158,7 @@ export function Q42LifeClock({
       const sleepH = 24 - allocated;
 
       if (sleepH === 7) {
-        return { value: "7/24", optionId: matchText(question, "7/24") ?? "C" };
+        return { value: "7/24", optionId: matchText(question, "7/24") };
       }
       return {
         note: `Current sleeping time: ${sleepH} hours (${sleepH}/24). Configure schedule blocks.`,
@@ -272,7 +272,7 @@ export function Q43GiftShop({
       const total = pencilCost + penCost;
 
       if (total === 575) {
-        return { value: "₹ 575", optionId: matchText(question, "575") ?? "A" };
+        return { value: "₹ 575", optionId: matchText(question, "575") };
       }
       return { note: `Current bill: ₹${total} (25 pencils @ ₹8 + 25 pens @ ₹15 = ₹575).` };
     },
@@ -372,7 +372,7 @@ export function Q44RoadTrip({
       const label = `${day3.toFixed(2)} km`;
 
       if (w.verified) {
-        return { value: label, optionId: matchText(question, "157.37 km") ?? "B" };
+        return { value: label, optionId: matchText(question, "157.37 km") };
       }
       return { note: `Calculate Day 3 distance: 352.15 - (${DAY1} + ${DAY2}).` };
     },
@@ -466,7 +466,7 @@ export function Q45Flooring({
       const label = `${b} m`;
 
       if (b === 6) {
-        return { value: label, optionId: matchText(question, "6 m") ?? "D" };
+        return { value: label, optionId: matchText(question, "6 m") };
       }
       return { note: `Breadth: ${b} m (Area: ${area} m², Cost: ₹${cost} vs budget ₹${TOTAL_COST}).` };
     },

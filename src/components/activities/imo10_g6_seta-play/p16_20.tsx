@@ -21,7 +21,7 @@ export function Q16PriorityCalculationActivity({ question, value, activityState,
       if (res === 42.845) {
         return {
           value: "42.845",
-          optionId: matchText(question, "42.845") ?? "D",
+          optionId: matchText(question, "42.845"),
         };
       }
       return { note: `Calculated: ${res}. Resolve inner parenthesis (3.6 - 1.5) first.` };
@@ -110,7 +110,7 @@ export function Q17OperatorMazeActivity({ question, value, activityState, onChan
       if (pair === "I and IV") {
         return {
           value: "I and IV",
-          optionId: matchText(question, "I and IV") ?? "B",
+          optionId: matchText(question, "I and IV"),
         };
       }
       return { note: `Audited: ${pair}. Route gates to discover identical outputs.` };
@@ -181,7 +181,7 @@ export function Q18RomanMetricDetectiveActivity({ question, value, activityState
       if (c === "Both (i) and (iii)") {
         return {
           value: "Both (i) and (iii)",
-          optionId: matchText(question, "Both (i) and (iii)") ?? "A",
+          optionId: matchText(question, "Both (i) and (iii)"),
         };
       }
       return { note: `Audited claims: ${c}. Verify Roman numeral 84 and 1 kg metric conversion.` };
@@ -270,7 +270,7 @@ export function Q19DistributivePropertyActivity({ question, value, activityState
       if (f === "258 × 1000 + 258 × 8") {
         return {
           value: "258 × 1000 + 258 × 8",
-          optionId: matchText(question, "258 × 1000 + 258 × 8") ?? "B",
+          optionId: matchText(question, "258 × 1000 + 258 × 8"),
         };
       }
       return { note: `Form: ${f}. Split 1008 into (1000 + 8) and distribute 258.` };
@@ -345,7 +345,7 @@ export function Q20IntegerElevatorActivity({ question, value, activityState, onC
       if (s === "Petrol price reduced by ₹12") {
         return {
           value: "Petrol price reduced by ₹12",
-          optionId: matchText(question, "Petrol price reduced by ₹12") ?? "B",
+          optionId: matchText(question, "Petrol price reduced by ₹12"),
         };
       }
       return { note: `Situation: ${s}. Negative sign (−) represents reductions, drops, or losses.` };

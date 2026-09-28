@@ -84,7 +84,10 @@ export function normalise(text: string): string {
   return text
     .toLowerCase()
     .replace(/[−–—]/g, "-")
-    .replace(/[^a-z0-9+\-./:> ]/g, "")
+    // `<`, `>` and `=` are answers in their own right on comparison questions, so they
+    // must survive normalisation — stripping `<` collapsed it to "" and let it match any
+    // other symbol-only option.
+    .replace(/[^a-z0-9+\-./:<>= ]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }

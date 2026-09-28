@@ -21,7 +21,7 @@ export function Q21EShapedAreaActivity({ question, value, activityState, onChang
       if (a === 15) {
         return {
           value: "15 cm²",
-          optionId: matchText(question, "15 cm²") ?? "B",
+          optionId: matchText(question, "15 cm²"),
         };
       }
       return { note: `Calculated Area: ${a} cm². Decompose E-shape into vertical and horizontal bars.` };
@@ -124,7 +124,7 @@ export function Q22FractionShadingActivity({ question, value, activityState, onC
       if (m === "P-4, Q-3, R-2, S-1") {
         return {
           value: "P-4, Q-3, R-2, S-1",
-          optionId: matchText(question, "P-4, Q-3, R-2, S-1") ?? "C",
+          optionId: matchText(question, "P-4, Q-3, R-2, S-1"),
         };
       }
       return { note: `Mapping: ${m}. Connect each numerical fraction to shaded disc.` };
@@ -199,7 +199,7 @@ export function Q23SymmetryGalleryActivity({ question, value, activityState, onC
       if (c === 10) {
         return {
           value: "10",
-          optionId: matchText(question, "10") ?? "B",
+          optionId: matchText(question, "10"),
         };
       }
       return { note: `Counted: ${c} symmetric shapes. Scan each figure across vertical/horizontal planes.` };
@@ -269,7 +269,7 @@ export function Q24FramedPictureActivity({ question, value, activityState, onCha
       if (a === 48) {
         return {
           value: "48 cm²",
-          optionId: matchText(question, "48 cm²") ?? "A",
+          optionId: matchText(question, "48 cm²"),
         };
       }
       return { note: `Inner area: ${a} cm². Subtract 2 cm border from both sides.` };
@@ -355,7 +355,7 @@ export function Q25IntegerBalanceActivity({ question, value, activityState, onCh
       if (c === ">") {
         return {
           value: ">",
-          optionId: matchText(question, ">") ?? "A",
+          optionId: matchText(question, ">"),
         };
       }
       return { note: `Comparator: ${c}. Compare Box A (-37) and Box B (-55).` };

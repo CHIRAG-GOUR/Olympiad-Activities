@@ -28,7 +28,7 @@ export function Q21FractionRollercoasterActivity({ question, value, activityStat
     initial: { ordered: false },
     derive: (w) => {
       if (!w.ordered) return { note: "Sort fraction carriages from lowest to highest decimal value on the track." };
-      return { value: "7/27, 7/18, 1/2, 5/9", optionId: matchText(question, "7/27, 7/18, 1/2, 5/9") ?? "C" };
+      return { value: "7/27, 7/18, 1/2, 5/9", optionId: matchText(question, "7/27, 7/18, 1/2, 5/9") };
     },
     activityState,
     value,
@@ -110,7 +110,7 @@ export function Q22DivisibilityVaultActivity({ question, value, activityState, o
       const diff = w.candidate - 3;
       const valid = diff > 0 && diff % 21 === 0 && diff % 28 === 0 && diff % 36 === 0 && diff % 45 === 0;
       if (!valid) return { note: "Find number N such that (N - 3) is divisible by 21, 28, 36, and 45." };
-      return { value: `${w.candidate}`, optionId: matchNumber(question, w.candidate) ?? "A" };
+      return { value: `${w.candidate}`, optionId: matchNumber(question, w.candidate) };
     },
     activityState,
     value,
@@ -200,7 +200,7 @@ export function Q23RomanEmpireComparisonActivity({ question, value, activityStat
     initial: { forged: false, comparator: null },
     derive: (w) => {
       if (!w.comparator) return { note: "Forge Roman numeral stone totals and apply comparison operator." };
-      return { value: w.comparator, optionId: matchText(question, w.comparator) ?? "C" };
+      return { value: w.comparator, optionId: matchText(question, w.comparator) };
     },
     activityState,
     value,
@@ -282,7 +282,7 @@ export function Q24ShirtFactoryDataFloorActivity({ question, value, activityStat
     initial: { alokAdded: false, diffCalculated: false },
     derive: (w) => {
       if (!w.diffCalculated) return { note: "Add 12 shirts to Alok's tower and calculate difference from Virat." };
-      return { value: "27 shirts", optionId: matchNumber(question, 27) ?? "C" };
+      return { value: "27 shirts", optionId: matchNumber(question, 27) };
     },
     activityState,
     value,
@@ -364,7 +364,7 @@ export function Q25FashionWarehouseRatioActivity({ question, value, activityStat
     initial: { simplified: false },
     derive: (w) => {
       if (!w.simplified) return { note: "Aggregate crates (Tarun vs Vinit+Ronak) and simplify the ratio." };
-      return { value: "12:17", optionId: matchText(question, "12:17") ?? "D" };
+      return { value: "12:17", optionId: matchText(question, "12:17") };
     },
     activityState,
     value,

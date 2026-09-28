@@ -26,7 +26,7 @@ export function Q46SolidMatchingActivity({ question, value, activityState, onCha
       if (code === "P-2, Q-3, R-1, S-4") {
         return {
           value: "P-2, Q-3, R-1, S-4",
-          optionId: matchText(question, "P-2, Q-3, R-1, S-4") ?? "A",
+          optionId: matchText(question, "P-2, Q-3, R-1, S-4"),
         };
       }
       return { note: `Mapping: ${code}. Inspect base geometry and apex/prism structure of P, Q, R, S.` };
@@ -107,7 +107,7 @@ export function Q47StrawberryBakeryActivity({ question, value, activityState, on
       if (c === "(a) 40, (b) 1/8") {
         return {
           value: "(a) 40, (b) 1/8",
-          optionId: matchText(question, "(a) 40, (b) 1/8") ?? "D",
+          optionId: matchText(question, "(a) 40, (b) 1/8"),
         };
       }
       return { note: `Combination: ${c}. Solve: (1 - 1/8 - 1/4)x = 25 strawberries.` };
@@ -189,7 +189,7 @@ export function Q48PrimeLogicActivity({ question, value, activityState, onChange
       if (v === "Neither Statement I nor Statement II") {
         return {
           value: "Neither Statement I nor Statement II",
-          optionId: matchText(question, "Neither Statement I nor Statement II") ?? "D",
+          optionId: matchText(question, "Neither Statement I nor Statement II"),
         };
       }
       return { note: `Verdict: ${v}. Test counterexample 2 (even prime).` };
@@ -268,7 +268,7 @@ export function Q49SportsObservatoryActivity({ question, value, activityState, o
       if (d === 250) {
         return {
           value: "250 million",
-          optionId: matchText(question, "250 million") ?? "D",
+          optionId: matchText(question, "250 million"),
         };
       }
       return { note: `Difference: ${d} million. Sum Basketball bars (1200M) and Badminton bars (950M).` };
@@ -339,7 +339,7 @@ export function Q50TennisAccumulatorActivity({ question, value, activityState, o
       if (tot === 1700) {
         return {
           value: "1700 million",
-          optionId: matchText(question, "1700 million") ?? "D",
+          optionId: matchText(question, "1700 million"),
         };
       }
       return { note: `Tennis Total: ${tot} million. Sum all 6 yearly Tennis stadium crowd towers.` };

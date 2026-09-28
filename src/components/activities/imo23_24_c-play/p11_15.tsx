@@ -102,7 +102,7 @@ export function Q12FamilyTreeHouseActivity({ question, value, activityState, onC
     initial: { nodesConnected: false, relationship: null },
     derive: (w) => {
       if (!w.relationship) return { note: "Trace the lineage: Vijay → Father → Grandfather → Daughter (Sara)." };
-      return { value: w.relationship, optionId: matchText(question, w.relationship) ?? "A" };
+      return { value: w.relationship, optionId: matchText(question, w.relationship) };
     },
     activityState,
     value,

@@ -34,7 +34,7 @@ export function Q06CompassNavActivity({ question, value, activityState, onChange
       if (turn === 315) {
         return {
           value: "Nirula's",
-          optionId: matchText(question, "Nirula's") ?? "D",
+          optionId: matchText(question, "Nirula's"),
         };
       }
       return { note: `Turn angle: ${turn}°. Rotate dial 315° anti-clockwise.` };
@@ -148,7 +148,7 @@ export function Q07WordSwapGardenActivity({ question, value, activityState, onCh
       if (obj === "tree") {
         return {
           value: "wall",
-          optionId: matchText(question, "wall") ?? "C",
+          optionId: matchText(question, "wall"),
         };
       }
       return { note: `Picked: ${obj}. Fruit grows on tree, which is named 'wall'.` };
@@ -224,11 +224,11 @@ export function Q08EmbeddedShapeActivity({ question, value, activityState, onCha
     question,
     initial: { selectedFigure: "A" },
     derive: (w) => {
-      const fig = w?.selectedFigure ?? "A";
+      const fig = w?.selectedFigure;
       if (fig === "A") {
         return {
           value: "Figure A",
-          optionId: matchText(question, "Figure A") ?? "A",
+          optionId: matchText(question, "Figure A"),
         };
       }
       return { note: `Figure ${fig} selected. Use laser beam to verify embedded geometry.` };
@@ -239,7 +239,7 @@ export function Q08EmbeddedShapeActivity({ question, value, activityState, onCha
     readOnly,
   });
 
-  const fig = play.world?.selectedFigure ?? "A";
+  const fig = play.world?.selectedFigure;
 
   return (
     <Shell
@@ -323,7 +323,7 @@ export function Q09PatternTransformationActivity({ question, value, activityStat
       if (w?.transformed) {
         return {
           value: "Figure B",
-          optionId: matchText(question, "Figure B") ?? "B",
+          optionId: matchText(question, "Figure B"),
         };
       }
       return { note: "Operate the pattern transformation machine to generate Fig. (4)." };
@@ -400,7 +400,7 @@ export function Q10NumberVaultActivity({ question, value, activityState, onChang
       if (code === 64) {
         return {
           value: "64",
-          optionId: matchText(question, "64") ?? "A",
+          optionId: matchText(question, "64"),
         };
       }
       return { note: `Lock Dial at: ${code}. Solve 4-number operation.` };
