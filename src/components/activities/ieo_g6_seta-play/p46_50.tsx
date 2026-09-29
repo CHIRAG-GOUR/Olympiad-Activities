@@ -9,7 +9,7 @@ import {
   AbsurdBicycle3D,
   CommunalKitchen3D,
   SwimmingPool3D,
-  OpticalScanner3D,
+  LexicalVault3D,
   CarRideDropoff3D,
   Avatar3D,
 } from "./components3D";
@@ -33,7 +33,7 @@ export function Q46RidiculousBikeActivity({ question, value, activityState, onCh
       return {
         value: w.adj,
         optionId: map[w.adj],
-        note: w.adj === "preposterous" ? "Correct: 'preposterous' means utterly absurd, ridiculous, or contrary to reason" : `Selected: ${w.adj}`,
+        note: `Selected: ${w.adj}`,
       };
     },
   });
@@ -47,7 +47,7 @@ export function Q46RidiculousBikeActivity({ question, value, activityState, onCh
       question={question}
       title="Q46 · Achievers: Absurd Idea Evaluation 3D"
       subtitle="Identify the advanced vocabulary term describing a dangerous and utterly ridiculous proposal"
-      hints={["'Preposterous' means completely contrary to reason or common sense; utterly absurd."]}
+      hints={["Riding a bike with a dog on your lap would be silly.", "Which word means absurd or ridiculous?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -68,9 +68,9 @@ export function Q46RidiculousBikeActivity({ question, value, activityState, onCh
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <AbsurdBicycle3D position={[0, 0, 0]} />
-            <Avatar3D position={[0, 0.4, 0]} rotation={[0, 0, 0]} shirtColor="#3B82F6" hairStyle="cap" pose="biking" expression="worried" />
+            <Avatar3D position={[-0.3, 0.02, 0]} rotation={[0, Math.PI / 2, 0]} shirtColor="#3B82F6" hairStyle="cap" pose="biking" expression="worried" />
           </World3D>
         </div>
 
@@ -122,7 +122,7 @@ export function Q47SharedHostelKitchenActivity({ question, value, activityState,
       return {
         value: w.adj,
         optionId: map[w.adj],
-        note: w.adj === "communal" ? "Correct: 'communal' describes facilities shared by a community or group" : `Selected: ${w.adj}`,
+        note: `Selected: ${w.adj}`,
       };
     },
   });
@@ -136,7 +136,7 @@ export function Q47SharedHostelKitchenActivity({ question, value, activityState,
       question={question}
       title="Q47 · Achievers: Shared Hostel Kitchen 3D"
       subtitle="Identify the social adjective describing facilities shared amongst travellers from different places"
-      hints={["'Communal' (from community) refers to resources, spaces, or kitchens shared collectively."]}
+      hints={["The kitchen was shared with other people.", "Which word is linked to 'community' and means shared?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -157,7 +157,7 @@ export function Q47SharedHostelKitchenActivity({ question, value, activityState,
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <CommunalKitchen3D position={[0, 0, 0]} />
             <Avatar3D position={[-0.9, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#0D9488" hairStyle="short" pose="gesturing" />
             <Avatar3D position={[0.9, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#8B5CF6" hairStyle="bun" pose="gesturing" />
@@ -212,7 +212,7 @@ export function Q48SwimmingPropulsionActivity({ question, value, activityState, 
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "propel" ? "Correct: 'propel' means to drive, push, or thrust someone or something forward" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -226,7 +226,7 @@ export function Q48SwimmingPropulsionActivity({ question, value, activityState, 
       question={question}
       title="Q48 · Achievers: Hydrodynamic Propulsion 3D"
       subtitle="Examine how arm strokes generate forward thrust and propel a swimmer through the 3D pool lane"
-      hints={["'Propel' means to drive, push, or thrust forward in a specific direction (as in jet propulsion or arm strokes)."]}
+      hints={["Your arms move you forward through the water.", "Which verb means to push or drive forward?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -247,9 +247,9 @@ export function Q48SwimmingPropulsionActivity({ question, value, activityState, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <SwimmingPool3D position={[0, 0, 0]} />
-            <Avatar3D position={[0, 0.2, 0]} rotation={[1.4, 0, 0]} shirtColor="#0284C7" hairStyle="swimcap" pose="swimming" />
+            <Avatar3D position={[0, -0.1, 0]} rotation={[0, Math.PI / 2, 0]} shirtColor="#0284C7" hairStyle="swimcap" pose="swimming" />
           </World3D>
         </div>
 
@@ -301,17 +301,17 @@ export function Q49AdvancedSpellingActivity({ question, value, activityState, on
       return {
         value: w.selectedWord,
         optionId: map[w.selectedWord],
-        note: w.selectedWord === "Convalesence" ? "Correct error flagged: 'Convalesence' is missing 'sc' (correct: 'Convalescence')" : `Selected: ${w.selectedWord}`,
+        note: `Selected: ${w.selectedWord}`,
       };
     },
   });
 
   const words = ["Credulous", "Convalesence", "Contagious", "Contemporary"];
   const definitions: Record<string, string> = {
-    Credulous: "✓ Correctly spelt: Having or showing too great a readiness to believe things.",
-    Convalesence: "❌ Misspelled! Correct: 'Convalescence' (the gradual recovery of health and strength after illness, with 'sc').",
-    Contagious: "✓ Correctly spelt: Spread from one person or organism to another by direct or indirect contact.",
-    Contemporary: "✓ Correctly spelt: Living or occurring at the same time; modern.",
+    Credulous: "Meaning: too ready to believe things.",
+    Convalesence: "Meaning: the time of slowly getting better after an illness.",
+    Contagious: "Meaning: able to spread from one person to another.",
+    Contemporary: "Meaning: belonging to the same time; modern.",
   };
 
   return (
@@ -321,7 +321,7 @@ export function Q49AdvancedSpellingActivity({ question, value, activityState, on
       question={question}
       title="Q49 · Achievers: Lexical Forensic Spelling 3D"
       subtitle="Inspect 3D optical holographic columns and flag the single misspelling"
-      hints={["Pay close attention to Latin roots with 'sc' in 'convalescence' (from Latin convalescere)."]}
+      hints={["Say each word slowly and check the spelling letter by letter.", "Look closely at the middle of the long word that means getting better after an illness."]}
     >
       <Board>
         {/* 3D Scene */}
@@ -342,8 +342,8 @@ export function Q49AdvancedSpellingActivity({ question, value, activityState, on
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
-            <OpticalScanner3D position={[0, 0, 0]} />
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
             <Avatar3D position={[1.1, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#E11D48" hairStyle="short" pose="gesturing" />
           </World3D>
         </div>
@@ -433,7 +433,7 @@ export function Q50FavorRepaymentActivity({ question, value, activityState, onCh
       return {
         value: w.reply,
         optionId: map[w.reply],
-        note: w.reply.includes("Don't be silly") ? "Correct: A modest, warm, and natural English dismissal of a personal favour" : `Selected: ${w.reply}`,
+        note: `Selected: ${w.reply}`,
       };
     },
   });
@@ -452,7 +452,7 @@ export function Q50FavorRepaymentActivity({ question, value, activityState, onCh
       question={question}
       title="Q50 · Achievers: Pragmatic Social Dialogue 3D"
       subtitle="Select the gracious conversational response acknowledging and modestly dismissing a favor at the 3D car drop-off"
-      hints={["'Don't be silly, it was nothing' is standard English for graciously minimizing a good deed done for a friend."]}
+      hints={["Joy is thanking Mohit for a kind favour.", "Which reply graciously plays down the favour?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -473,7 +473,7 @@ export function Q50FavorRepaymentActivity({ question, value, activityState, onCh
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <CarRideDropoff3D position={[0, 0, 0]} />
             <Avatar3D position={[-0.8, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#2563EB" hairStyle="short" pose="gesturing" />
             <Avatar3D position={[1.2, 0, 0.3]} rotation={[0, -0.6, 0]} shirtColor="#EC4899" hairStyle="ponytail" pose="gesturing" />

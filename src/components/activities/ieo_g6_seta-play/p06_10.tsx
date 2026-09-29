@@ -32,7 +32,7 @@ export function Q06RestaurantTimelineActivity({ question, value, activityState, 
       return {
         value: w.connector,
         optionId: map[w.connector],
-        note: w.connector === "since" ? "Correct: 'since' marks the starting point with Present Perfect" : `Selected: ${w.connector}`,
+        note: `Selected: ${w.connector}`,
       };
     },
   });
@@ -46,7 +46,7 @@ export function Q06RestaurantTimelineActivity({ question, value, activityState, 
       question={question}
       title="Q6 · Restaurant Timeline 3D Studio"
       subtitle="Examine the restaurant's 5-year timeline and connect the starting point conjunction"
-      hints={["'have not visited' pairs with 'since' to denote action from a fixed past starting point until now."]}
+      hints={["The restaurant opened five years ago, and the speaker has not been back from that moment until now.", "Which word points back to a starting time in the past?"]}
     >
       <Board>
         {/* 3D Restaurant Scene */}
@@ -67,7 +67,7 @@ export function Q06RestaurantTimelineActivity({ question, value, activityState, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.6], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.6], fov: 45 }}>
             <ChefKitchen3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -119,7 +119,7 @@ export function Q07MagicBagActivity({ question, value, activityState, onChange, 
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "look" ? "Correct: Present sensory observation of plural subject 'They'" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -133,7 +133,7 @@ export function Q07MagicBagActivity({ question, value, activityState, onChange, 
       question={question}
       title="Q7 · Airport Baggage Scale 3D"
       subtitle="Inspect the heavy suitcases on the check-in conveyor and select the present sensory verb"
-      hints={["'Can I help you...' is present dialogue. With plural subject 'They', use base sensory verb 'look'."]}
+      hints={["The speaker is looking at the bags right now.", "The subject is 'They', and the verb 'look' can describe how something appears."]}
     >
       <Board>
         {/* 3D Airport Check-in Scene */}
@@ -154,7 +154,7 @@ export function Q07MagicBagActivity({ question, value, activityState, onChange, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.6, 6.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.6, 6.0], fov: 45 }}>
             <AirportLuggage3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -206,7 +206,7 @@ export function Q08MangoDetectiveActivity({ question, value, activityState, onCh
       return {
         value: w.aux,
         optionId: map[w.aux],
-        note: w.aux === "haven't" ? "Targeted answer key form: 'haven't'" : `Selected: ${w.aux}`,
+        note: `Selected: ${w.aux}`,
       };
     },
   });
@@ -220,7 +220,7 @@ export function Q08MangoDetectiveActivity({ question, value, activityState, onCh
       question={question}
       title="Q8 · Botanical Specimen 3D Lab"
       subtitle="Examine the tropical botanical herbs and record the tasting experience"
-      hints={["Examine the experience log and select the auxiliary verb form from the options."]}
+      hints={["'never had one' needs a helping verb that goes with 'had'.", "Read the sentence aloud with each option and listen to which one sounds right."]}
     >
       <Board>
         {/* 3D Botanical Herbarium */}
@@ -241,7 +241,7 @@ export function Q08MangoDetectiveActivity({ question, value, activityState, onCh
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
             <Herbarium3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -293,7 +293,7 @@ export function Q09HandwashingLabActivity({ question, value, activityState, onCh
       return {
         value: w.connector,
         optionId: map[w.connector],
-        note: w.connector === "Therefore" ? "Correct logical consequence: 'Therefore'" : `Selected: ${w.connector}`,
+        note: `Selected: ${w.connector}`,
       };
     },
   });
@@ -307,7 +307,7 @@ export function Q09HandwashingLabActivity({ question, value, activityState, onCh
       question={question}
       title="Q9 · Hygiene Science 3D Scanner"
       subtitle="Analyze the cause-and-effect relationship inside the optics lab and select the connector"
-      hints={["The second sentence is a direct logical result of the premise that soap stops germs. Use 'Therefore'."]}
+      hints={["The first sentence gives a fact; the second tells you what to do because of it.", "Which word introduces a result or conclusion?"]}
     >
       <Board>
         {/* 3D Science Scanner */}
@@ -328,7 +328,7 @@ export function Q09HandwashingLabActivity({ question, value, activityState, onCh
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.6], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.6], fov: 45 }}>
             <OpticalScanner3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -380,7 +380,7 @@ export function Q10GeographyDiscoveryActivity({ question, value, activityState, 
       return {
         value: w.phrase,
         optionId: map[w.phrase],
-        note: w.phrase === "is interesting" ? "Correct: 'It is interesting to learn...'" : `Selected: ${w.phrase}`,
+        note: `Selected: ${w.phrase}`,
       };
     },
   });
@@ -394,7 +394,7 @@ export function Q10GeographyDiscoveryActivity({ question, value, activityState, 
       question={question}
       title="Q10 · World Geography 3D Studio"
       subtitle="Examine the world globe and install the predicate adjective phrase"
-      hints={["Dummy subject 'It' takes linking verb + adjective + to-infinitive: 'It is interesting to learn...'."]}
+      hints={["'It ______ to learn about the world' — 'It' stands for 'learning about the world'.", "You need a linking verb followed by an adjective."]}
     >
       <Board>
         {/* 3D World Globe Classroom */}
@@ -415,7 +415,7 @@ export function Q10GeographyDiscoveryActivity({ question, value, activityState, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
             <LanguageGlobe3D position={[0, 0, 0]} />
           </World3D>
         </div>

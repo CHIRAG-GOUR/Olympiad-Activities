@@ -41,7 +41,7 @@ export function Q31BeaverAnatomyActivity({ question, value, activityState, onCha
       return {
         value: w.feature,
         optionId: map[w.feature],
-        note: w.feature === "They have huge front teeth." ? "Correct passage fact: Beavers possess prominent, continuously growing orange incisors" : `Selected: ${w.feature}`,
+        note: `Selected: ${w.feature}`,
       };
     },
   });
@@ -60,7 +60,7 @@ export function Q31BeaverAnatomyActivity({ question, value, activityState, onCha
       question={question}
       title="Q31 · Beaver Zoological Anatomy & Adaptation 3D"
       subtitle="Examine the 3D biological adaptations that enable beavers to fell trees and build dams"
-      hints={["The passage specifically notes their massive, self-sharpening front incisor teeth used to fell birch trees."]}
+      hints={["Look for the sentence that describes what a beaver looks like.", "Which feature does the passage call remarkable?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -81,7 +81,7 @@ export function Q31BeaverAnatomyActivity({ question, value, activityState, onCha
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.4, 4.6], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.4, 4.6], fov: 45 }}>
             <BeaverHabitat3D position={[0, 0, 0]} />
             <Avatar3D position={[1.2, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#D97706" hairStyle="cap" pose="kneeling" />
           </World3D>
@@ -156,7 +156,7 @@ export function Q32PatagoniaEcoImpactActivity({ question, value, activityState, 
       return {
         value: w.outcome,
         optionId: map[w.outcome],
-        note: w.outcome === "They adversely affected the environment." ? "Correct: With no natural predators, beavers multiplied rapidly and flooded native Patagonian forests" : `Selected: ${w.outcome}`,
+        note: `Selected: ${w.outcome}`,
       };
     },
   });
@@ -175,7 +175,7 @@ export function Q32PatagoniaEcoImpactActivity({ question, value, activityState, 
       question={question}
       title="Q32 · Patagonia Ecological Impact Assessment 3D"
       subtitle="Analyze the 3D environmental landscape and identify the disruption caused by non-native introduction"
-      hints={["Without natural predators like bears or wolves in Patagonia, beavers flooded and destroyed vast tracts of native forest."]}
+      hints={["Find the part of the passage about beavers in Patagonia.", "Did the fur business succeed? What happened to the forests?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -196,7 +196,7 @@ export function Q32PatagoniaEcoImpactActivity({ question, value, activityState, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
             <GlacierExpedition3D position={[0, 0, 0]} />
             <Avatar3D position={[0.7, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#DC2626" expression="worried" pose="standing" />
           </World3D>
@@ -271,7 +271,7 @@ export function Q33DamFunctionActivity({ question, value, activityState, onChang
       return {
         value: w.purpose,
         optionId: map[w.purpose],
-        note: w.purpose === "For protection and food" ? "Correct: Dams create deep ponds that protect the lodge from predators and store branches for winter food" : `Selected: ${w.purpose}`,
+        note: `Selected: ${w.purpose}`,
       };
     },
   });
@@ -290,7 +290,7 @@ export function Q33DamFunctionActivity({ question, value, activityState, onChang
       question={question}
       title="Q33 · Beaver Engineering: Dam Architecture 3D"
       subtitle="Examine the 3D dam construction and determine the dual survival benefits: protection and winter food"
-      hints={["Deep water behind the dam prevents freezing down to the bed and keeps lodges safe from land predators."]}
+      hints={["Find the sentence that explains what the dam does for the beaver.", "Think about both safety and food."]}
     >
       <Board>
         {/* 3D Scene */}
@@ -311,7 +311,7 @@ export function Q33DamFunctionActivity({ question, value, activityState, onChang
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
             <BeaverHabitat3D position={[0, 0, 0]} />
             <Avatar3D position={[-1.3, 0, 0.5]} rotation={[0, 0.7, 0]} shirtColor="#059669" hairStyle="short" pose="gesturing" />
           </World3D>
@@ -377,7 +377,7 @@ export function Q34GoaRelocationActivity({ question, value, activityState, onCha
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "moved" ? "Correct: 'moved to a new house' expresses residential relocation" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -391,7 +391,7 @@ export function Q34GoaRelocationActivity({ question, value, activityState, onCha
       question={question}
       title="Q34 · Moving to Sunny Goa 3D"
       subtitle="Complete the email greeting announcing the family's house relocation to sunny Goa"
-      hints={["To change one's permanent residence to a new home is to 'move house' or 'have moved to a new house'."]}
+      hints={["The writer now lives in a new house in Goa.", "Which verb describes going to live in a new home?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -412,7 +412,7 @@ export function Q34GoaRelocationActivity({ question, value, activityState, onCha
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <GoaVilla3D position={[0, 0, 0]} />
             <Avatar3D position={[0.8, 0, 0.5]} rotation={[0, -0.6, 0]} shirtColor="#0284C7" hairStyle="cap" pose="standing" />
           </World3D>
@@ -466,7 +466,7 @@ export function Q35HospitalityInviteActivity({ question, value, activityState, o
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "visit" ? "Correct: 'visit more often' expresses the natural desire for friendly social calls" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -480,7 +480,7 @@ export function Q35HospitalityInviteActivity({ question, value, activityState, o
       question={question}
       title="Q35 · Goa Verandah & Hospitality Invitation 3D"
       subtitle="Complete the friendly invite encouraging frequent visits now that the distance is reduced"
-      hints={["When you live closer to friends, you hope they can come over and 'visit' more often."]}
+      hints={["The writer now lives closer and hopes the friend will come to see them more often.", "Which verb means to go and see someone?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -501,7 +501,7 @@ export function Q35HospitalityInviteActivity({ question, value, activityState, o
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <VillaVerandah3D position={[0, 0, 0]} />
             <Avatar3D position={[0.8, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#059669" hairStyle="ponytail" pose="gesturing" />
           </World3D>

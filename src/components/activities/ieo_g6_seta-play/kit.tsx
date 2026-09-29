@@ -1,10 +1,11 @@
 "use client";
 
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { PlayShell, Gauge, Btn } from "../imo6a-play/PlayShell";
 import { Play } from "../imo6a-play/engine";
 import { Question } from "@/types/question";
 import { Stage3D } from "../kit/Stage3D";
+import { StageFX } from "./scene";
 import { BookOpen, LucideIcon } from "lucide-react";
 
 export { Gauge, Btn };
@@ -74,16 +75,39 @@ export function World3D({
   height = "320px",
   controls = true,
   autoRotate = false,
+  cue,
+  sky = "#EAF3FF",
+  ground = "#E7ECF3",
 }: {
   children: ReactNode;
   camera?: { position: [number, number, number]; fov?: number };
   height?: string;
   controls?: boolean;
   autoRotate?: boolean;
+  /** The student's current choice. Each change plays the scene's (answer-neutral) reaction. */
+  cue?: unknown;
+  sky?: string;
+  ground?: string;
 }) {
+  const key = JSON.stringify(cue ?? null);
+  const first = useRef(key);
+  const [n, setN] = useState(0);
+  const [burst, setBurst] = useState(false);
+  useEffect(() => {
+    if (key === first.current) return;
+    first.current = key;
+    setN((x) => x + 1);
+    setBurst(true);
+    const t = setTimeout(() => setBurst(false), 1600);
+    return () => clearTimeout(t);
+  }, [key]);
+  const camDistance = Math.hypot(...camera.position);
+
   return (
-    <Stage3D camera={camera} height={height} controls={controls} autoRotate={autoRotate}>
-      {children}
+    <Stage3D camera={camera} height={height} controls={controls} autoRotate={autoRotate} background={sky}>
+      <StageFX n={n} burst={burst} sky={sky} ground={ground} camDistance={camDistance}>
+        {children}
+      </StageFX>
     </Stage3D>
   );
 }

@@ -32,7 +32,7 @@ export function Q16OldPlaygroundActivity({ question, value, activityState, onCha
       return {
         value: w.phrase,
         optionId: map[w.phrase],
-        note: w.phrase === "used to" ? "Correct: 'used to be' denotes a former enduring state that no longer exists" : `Selected: ${w.phrase}`,
+        note: `Selected: ${w.phrase}`,
       };
     },
   });
@@ -46,7 +46,7 @@ export function Q16OldPlaygroundActivity({ question, value, activityState, onCha
       question={question}
       title="Q16 · Playground Landscape 3D Studio"
       subtitle="Contrast the former green playground with current soil and select the past state phrase"
-      hints={["To describe a past condition or habit that is no longer true, followed by base verb 'be', use 'used to'."]}
+      hints={["'Now it is bare soil' tells you the grass is gone — it was true in the past, not now.", "Which phrase describes a past state that is no longer true?"]}
     >
       <Board>
         {/* 3D Playground Scene */}
@@ -67,7 +67,7 @@ export function Q16OldPlaygroundActivity({ question, value, activityState, onCha
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
             <PlaygroundPark3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -121,7 +121,7 @@ export function Q17BeachMemoryActivity({ question, value, activityState, onChang
       return {
         value: w.modal,
         optionId: map[w.modal],
-        note: w.modal === "would" ? "Correct: 'would' expresses repeated, nostalgic past actions during holidays" : `Selected: ${w.modal}`,
+        note: `Selected: ${w.modal}`,
       };
     },
   });
@@ -135,7 +135,7 @@ export function Q17BeachMemoryActivity({ question, value, activityState, onChang
       question={question}
       title="Q17 · Seaside Beach 3D Studio"
       subtitle="Complete the nostalgic recollection of childhood summer habits by the seaside"
-      hints={["'Would + base verb' is used to describe typical, repeated activities carried out in the past during holidays or childhood."]}
+      hints={["The sentence describes something that happened again and again on past holidays.", "Look for a modal that can describe repeated past actions, like 'used to'."]}
     >
       <Board>
         {/* 3D Beach Scene */}
@@ -156,7 +156,7 @@ export function Q17BeachMemoryActivity({ question, value, activityState, onChang
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
             <BeachSeaside3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -210,7 +210,7 @@ export function Q18BotanicalHerbariumActivity({ question, value, activityState, 
       return {
         value: w.prep,
         optionId: map[w.prep],
-        note: w.prep === "with" ? "Correct collocation: A person is 'familiar with' a topic or names" : `Selected: ${w.prep}`,
+        note: `Selected: ${w.prep}`,
       };
     },
   });
@@ -224,7 +224,7 @@ export function Q18BotanicalHerbariumActivity({ question, value, activityState, 
       question={question}
       title="Q18 · Botanical Herbarium 3D"
       subtitle="Complete the statement regarding familiarity with plant scientific names in the greenhouse"
-      hints={["When a person has knowledge of or experience with something, they are 'familiar with' it."]}
+      hints={["Which preposition usually follows 'familiar'?", "Try each option in: 'I am familiar ___ this song.'"]}
     >
       <Board>
         {/* 3D Botanical Herbarium */}
@@ -245,7 +245,7 @@ export function Q18BotanicalHerbariumActivity({ question, value, activityState, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
             <Herbarium3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -299,7 +299,7 @@ export function Q19BenchDurationActivity({ question, value, activityState, onCha
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "will have" ? "Correct: 'will have been sitting' expresses an ongoing duration up to a future point (4 PM)" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -313,7 +313,7 @@ export function Q19BenchDurationActivity({ question, value, activityState, onCha
       question={question}
       title="Q19 · Park Bench Clock 3D Studio"
       subtitle="Complete the future perfect continuous calculation for the lady resting on the bench"
-      hints={["'By [future time]' marking a duration requires Future Perfect Continuous: 'will have been + verb-ing'."]}
+      hints={["'By 4 pm' points to a moment in the future, and the sitting will have lasted up to then.", "'___ been sitting' — which helper verb looks forward to a future moment?"]}
     >
       <Board>
         {/* 3D Park Bench & Grand Clock */}
@@ -334,7 +334,7 @@ export function Q19BenchDurationActivity({ question, value, activityState, onCha
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
             <ParkBenchClock3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -388,7 +388,7 @@ export function Q20LuckyGiftActivity({ question, value, activityState, onChange,
       return {
         value: w.pronoun,
         optionId: map[w.pronoun],
-        note: w.pronoun === "who" ? "Correct: 'who' is the subject relative pronoun referring to a human person (child)" : `Selected: ${w.pronoun}`,
+        note: `Selected: ${w.pronoun}`,
       };
     },
   });
@@ -402,7 +402,7 @@ export function Q20LuckyGiftActivity({ question, value, activityState, onChange,
       question={question}
       title="Q20 · Antique Gift Unboxing 3D"
       subtitle="Complete the relative clause identifying the fortunate child who receives the special present"
-      hints={["Use 'who' as the subject pronoun when referring to people performing an action ('receives')."]}
+      hints={["The blank starts a phrase describing the child, and that phrase needs a subject for 'receives'.", "Which option refers to a person and can act as the subject of a verb?"]}
     >
       <Board>
         {/* 3D Gift Table Scene */}
@@ -423,7 +423,7 @@ export function Q20LuckyGiftActivity({ question, value, activityState, onChange,
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.0], fov: 45 }}>
             <GiftUnboxing3D position={[0, 0, 0]} />
           </World3D>
         </div>

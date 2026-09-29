@@ -33,7 +33,7 @@ export function Q41BruisedKneeActivity({ question, value, activityState, onChang
       return {
         value: w.aux,
         optionId: map[w.aux],
-        note: w.aux === "Did" ? "Correct: 'Did you fall over?' forms a past simple inquiry with base verb 'fall'" : `Selected: ${w.aux}`,
+        note: `Selected: ${w.aux}`,
       };
     },
   });
@@ -47,7 +47,7 @@ export function Q41BruisedKneeActivity({ question, value, activityState, onChang
       question={question}
       title="Q41 · First-Aid Station Past Inquiry 3D"
       subtitle="Complete Mother's inquiry about how the knee injury occurred in the 3D first-aid clinic"
-      hints={["Past simple yes/no questions use auxiliary 'Did' + subject + base verb ('Did you fall over?')."]}
+      hints={["The mother is asking about something that has already happened.", "Which helper starts a past-tense yes/no question?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -68,7 +68,7 @@ export function Q41BruisedKneeActivity({ question, value, activityState, onChang
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <MedicalInfirmary3D position={[0, 0, 0]} />
             <Avatar3D position={[-0.8, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#9333EA" hairStyle="bun" pose="kneeling" />
             <Avatar3D position={[0.7, 0, 0.3]} rotation={[0, -0.6, 0]} shirtColor="#2563EB" hairStyle="short" pose="sitting" expression="worried" />
@@ -123,7 +123,7 @@ export function Q42CuriousNeighbourActivity({ question, value, activityState, on
       return {
         value: w.trait,
         optionId: map[w.trait],
-        note: w.trait === "nosey" ? "Correct: 'nosey' (nosy) describes someone who pries into other people's affairs and asks too many questions" : `Selected: ${w.trait}`,
+        note: `Selected: ${w.trait}`,
       };
     },
   });
@@ -137,7 +137,7 @@ export function Q42CuriousNeighbourActivity({ question, value, activityState, on
       question={question}
       title="Q42 · Neighbour Character Assessment 3D"
       subtitle="Identify the character adjective describing someone who constantly pries and asks questions"
-      hints={["A person who is excessively curious about other people's private business is 'nosey'."]}
+      hints={["Christy says Mr Williams is always asking questions.", "Which word describes someone too curious about other people's business?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -158,7 +158,7 @@ export function Q42CuriousNeighbourActivity({ question, value, activityState, on
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <SuburbanGarden3D position={[0, 0, 0]} />
             <Avatar3D position={[-0.8, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#D97706" hairStyle="short" pose="gesturing" />
             <Avatar3D position={[0.9, 0, 0.3]} rotation={[0, -0.6, 0]} shirtColor="#EC4899" hairStyle="ponytail" pose="standing" />
@@ -222,7 +222,7 @@ export function Q43DinnerResponseActivity({ question, value, activityState, onCh
       return {
         value: w.reply,
         optionId: map[w.reply],
-        note: w.reply.includes("Certainly") ? "Correct: Polite affirmative acceptance paired with time confirmation" : `Selected: ${w.reply}`,
+        note: `Selected: ${w.reply}`,
       };
     },
   });
@@ -241,7 +241,7 @@ export function Q43DinnerResponseActivity({ question, value, activityState, onCh
       question={question}
       title="Q43 · Social Bistro Dialogue: Dinner Invitation 3D"
       subtitle="Select the polite, natural conversational response to accept the dinner invitation"
-      hints={["'Certainly. What time in the evening?' provides courteous acceptance while clarifying logistics."]}
+      hints={["Jenna asks an invitation question, so the reply should accept it politely.", "The best reply also asks something useful for making the plan."]}
     >
       <Board>
         {/* 3D Scene */}
@@ -262,7 +262,7 @@ export function Q43DinnerResponseActivity({ question, value, activityState, onCh
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <CafeBistro3D position={[0, 0, 0]} />
             <Avatar3D position={[-0.9, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#6366F1" hairStyle="short" pose="sitting" />
             <Avatar3D position={[0.9, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#A855F7" hairStyle="bun" pose="sitting" />
@@ -330,7 +330,7 @@ export function Q44StitchInTimeActivity({ question, value, activityState, onChan
       return {
         value: w.proverbEnd,
         optionId: map[w.proverbEnd],
-        note: w.proverbEnd === "saves nine" ? "Correct proverb: 'A stitch in time saves nine' (timely action prevents larger problems)" : `Selected: ${w.proverbEnd}`,
+        note: `Selected: ${w.proverbEnd}`,
       };
     },
   });
@@ -344,7 +344,7 @@ export function Q44StitchInTimeActivity({ question, value, activityState, onChan
       question={question}
       title="Q44 · Bicycle Workshop Proverb 3D"
       subtitle="Complete the timeless English proverb on timely repair and diligence at the 3D repair workshop"
-      hints={["The traditional proverb is: 'A stitch in time saves nine'."]}
+      hints={["Mary says fixing the bike now will stop a bigger problem later.", "Which ending completes the well-known proverb?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -365,7 +365,7 @@ export function Q44StitchInTimeActivity({ question, value, activityState, onChan
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <BikeWorkshop3D position={[0, 0, 0]} />
             <Avatar3D position={[1.1, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#2563EB" hairStyle="cap" pose="kneeling" />
           </World3D>
@@ -419,7 +419,7 @@ export function Q45NegativeAgreementActivity({ question, value, activityState, o
       return {
         value: w.particle,
         optionId: map[w.particle],
-        note: w.particle === "neither" ? "Correct: 'neither' (Me neither / Neither do I) agrees with a negative sentence ('don't feel like')" : `Selected: ${w.particle}`,
+        note: `Selected: ${w.particle}`,
       };
     },
   });
@@ -433,7 +433,7 @@ export function Q45NegativeAgreementActivity({ question, value, activityState, o
       question={question}
       title="Q45 · Mountain Trail Negative Agreement 3D"
       subtitle="Complete Sherry's concurrence with Alan's fatigue on the 3D mountain summit"
-      hints={["To agree with a negative statement ('I don't feel like...'), English uses 'neither' (e.g. 'Me neither')."]}
+      hints={["Alan says he does NOT feel like walking any more.", "Which word agrees with a negative statement?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -454,7 +454,7 @@ export function Q45NegativeAgreementActivity({ question, value, activityState, o
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <MountainSummit3D position={[0, 0, 0]} />
             <Avatar3D position={[-0.8, 0, 0.4]} rotation={[0, 0.6, 0]} shirtColor="#0284C7" hairStyle="cap" pose="sitting" expression="worried" />
             <Avatar3D position={[0.8, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#EC4899" hairStyle="ponytail" pose="sitting" expression="worried" />

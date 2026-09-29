@@ -31,17 +31,17 @@ export function Q26SpellingInspectorActivity({ question, value, activityState, o
       return {
         value: w.selectedWord,
         optionId: map[w.selectedWord],
-        note: w.selectedWord === "Amature" ? "Correct error flagged: 'Amature' is misspelled (correct: 'Amateur' with -eur)" : `Selected: ${w.selectedWord}`,
+        note: `Selected: ${w.selectedWord}`,
       };
     },
   });
 
   const words = ["Amature", "Anarchist", "Stoic", "Insolvent"];
   const definitions: Record<string, string> = {
-    Amature: "❌ Misspelled! Correct: 'Amateur' (a non-professional or hobbyist, from French -eur).",
-    Anarchist: "✓ Correctly spelt: A person who believes in or advocates anarchism.",
-    Stoic: "✓ Correctly spelt: A person who can endure pain or hardship without showing feelings.",
-    Insolvent: "✓ Correctly spelt: Unable to pay debts owed; bankrupt.",
+    Amature: "Meaning: a person who does something for enjoyment, not as a paid job.",
+    Anarchist: "Meaning: a person who believes a country should have no government.",
+    Stoic: "Meaning: a person who bears pain or hardship without complaining.",
+    Insolvent: "Meaning: unable to pay the money that is owed.",
   };
 
   return (
@@ -51,7 +51,7 @@ export function Q26SpellingInspectorActivity({ question, value, activityState, o
       question={question}
       title="Q26 · Lexical Forensic Spelling Vault 3D"
       subtitle="Inspect 3D vocabulary pedestals and flag the single word containing an orthographic error"
-      hints={["Look closely at the suffix of the first word: English uses French ending '-eur' in 'amateur'."]}
+      hints={["Read each word slowly, letter by letter.", "Check the endings: which one looks unusual for an English word borrowed from French?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -72,7 +72,7 @@ export function Q26SpellingInspectorActivity({ question, value, activityState, o
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <LexicalVault3D position={[0, 0, 0]} />
             <Avatar3D position={[0.9, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#E11D48" pantsColor="#1E293B" hairStyle="short" pose="gesturing" />
           </World3D>
@@ -112,7 +112,7 @@ export function Q26SpellingInspectorActivity({ question, value, activityState, o
               <AlertCircle className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-slate-900 uppercase">Spelling Analysis Result</h4>
+              <h4 className="text-xs font-bold text-slate-900 uppercase">Word Meaning</h4>
               <p className="text-xs text-slate-600 mt-0.5">
                 {play.world.selectedWord
                   ? definitions[play.world.selectedWord]
@@ -170,7 +170,7 @@ export function Q27PassageTitleActivity({ question, value, activityState, onChan
       return {
         value: w.titleChoice,
         optionId: map[w.titleChoice],
-        note: w.titleChoice.includes("returning") ? "Correct: The passage highlights beaver conservation, reintroduction, and their return" : `Selected: ${w.titleChoice}`,
+        note: `Selected: ${w.titleChoice}`,
       };
     },
   });
@@ -189,7 +189,7 @@ export function Q27PassageTitleActivity({ question, value, activityState, onChan
       question={question}
       title="Q27 · Beaver Wetland Habitat & Title Synthesis 3D"
       subtitle="Examine the 3D beaver river ecosystem and select the overarching headline title"
-      hints={["The central thesis covers how beavers are being brought back and reintroduced to their historical habitats."]}
+      hints={["A good title covers the whole passage, not just one detail.", "Think about what the passage says is happening to beavers in Europe today."]}
     >
       <Board>
         {/* 3D Scene */}
@@ -210,7 +210,7 @@ export function Q27PassageTitleActivity({ question, value, activityState, onChan
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
             <BeaverHabitat3D position={[0, 0, 0]} />
             <Avatar3D position={[1.4, 0, 0.4]} rotation={[0, -0.7, 0]} shirtColor="#059669" hairStyle="cap" pose="standing" />
           </World3D>
@@ -276,7 +276,7 @@ export function Q28HistoricalTimelineActivity({ question, value, activityState, 
       return {
         value: w.era,
         optionId: map[w.era],
-        note: w.era === "1940s" ? "Correct passage fact: 20 beavers were introduced to Tierra del Fuego in 1946 (1940s)" : `Selected: ${w.era}`,
+        note: `Selected: ${w.era}`,
       };
     },
   });
@@ -290,7 +290,7 @@ export function Q28HistoricalTimelineActivity({ question, value, activityState, 
       question={question}
       title="Q28 · South American Introduction Expedition 3D"
       subtitle="Examine the 3D Patagonian expedition terrain and identify the decade of introduction"
-      hints={["According to the passage, beavers were imported to Argentina/Chile in the 1940s to establish a commercial fur industry."]}
+      hints={["Find the part of the passage about South America.", "Look for a date or decade next to the words 'Argentina' or 'Chile'."]}
     >
       <Board>
         {/* 3D Scene */}
@@ -311,7 +311,7 @@ export function Q28HistoricalTimelineActivity({ question, value, activityState, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
             <GlacierExpedition3D position={[0, 0, 0]} />
             <Avatar3D position={[0.8, 0, 0.5]} rotation={[0, -0.6, 0]} shirtColor="#2563EB" hairStyle="cap" hasBackpack backpackColor="#F59E0B" pose="standing" />
           </World3D>
@@ -377,7 +377,7 @@ export function Q29EuropeanRewildingActivity({ question, value, activityState, o
       return {
         value: w.reason,
         optionId: map[w.reason],
-        note: w.reason === "because there were none left" ? "Correct: European reintroduction programs were launched because native populations had become completely extinct" : `Selected: ${w.reason}`,
+        note: `Selected: ${w.reason}`,
       };
     },
   });
@@ -396,7 +396,7 @@ export function Q29EuropeanRewildingActivity({ question, value, activityState, o
       question={question}
       title="Q29 · European Conservation & Rewilding 3D"
       subtitle="Examine the restored river wetland and determine why beavers were reintroduced"
-      hints={["Centuries of over-trapping left zero wild beavers across most European nations, necessitating reintroduction."]}
+      hints={["Find where the passage explains the situation in Europe before the beavers came back.", "What had happened to the wild beavers there?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -417,7 +417,7 @@ export function Q29EuropeanRewildingActivity({ question, value, activityState, o
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
             <BeaverHabitat3D position={[0, 0, 0]} />
             <Avatar3D position={[-1.2, 0, 0.4]} rotation={[0, 0.7, 0]} shirtColor="#0D9488" hairStyle="ponytail" pose="gesturing" />
           </World3D>
@@ -492,7 +492,7 @@ export function Q30FurHuntingActivity({ question, value, activityState, onChange
       return {
         value: w.cause,
         optionId: map[w.cause],
-        note: w.cause === "Hunted for fur" ? "Correct: Beavers were hunted nearly to extinction for their valuable, waterproof pelts" : `Selected: ${w.cause}`,
+        note: `Selected: ${w.cause}`,
       };
     },
   });
@@ -511,7 +511,7 @@ export function Q30FurHuntingActivity({ question, value, activityState, onChange
       question={question}
       title="Q30 · Historical Fur Trade & Population Decline 3D"
       subtitle="Examine the riverbank habitat and identify the commercial factor that drove population loss"
-      hints={["Beavers possess dense, water-repellent fur that was intensely prized for luxury felt hats and coats."]}
+      hints={["Find where the passage explains why people hunted beavers.", "What part of the beaver did people want?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -532,7 +532,7 @@ export function Q30FurHuntingActivity({ question, value, activityState, onChange
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
             <BeaverHabitat3D position={[0, 0, 0]} />
             <Avatar3D position={[1.1, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#D97706" hairStyle="bun" pose="gesturing" />
           </World3D>

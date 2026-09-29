@@ -33,7 +33,7 @@ export function Q21ArtStudioActivity({ question, value, activityState, onChange,
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "replicate" ? "Correct: 'replicate' means to reproduce, duplicate, or copy an artwork accurately" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -47,7 +47,7 @@ export function Q21ArtStudioActivity({ question, value, activityState, onChange,
       question={question}
       title="Q21 · Masterpiece Art Studio 3D"
       subtitle="Select the precise verb describing reproducing the master oil painting on easel"
-      hints={["'Replicate' means to make an exact replica, reproduction, or copy of an existing work."]}
+      hints={["The speaker wants to make their own copy of the picture.", "Which word means to copy something exactly?"]}
     >
       <Board>
         {/* 3D Art Studio Scene */}
@@ -68,7 +68,7 @@ export function Q21ArtStudioActivity({ question, value, activityState, onChange,
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.0], fov: 45 }}>
             <ArtStudio3D position={[0, 0, 0]} />
             <Avatar3D position={[0.9, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#7C3AED" hairStyle="beret" pose="gesturing" />
           </World3D>
@@ -122,7 +122,7 @@ export function Q22CakeRegretActivity({ question, value, activityState, onChange
       return {
         value: w.adverb,
         optionId: map[w.adverb],
-        note: w.adverb === "only" ? "Correct: 'If only' expresses strong hypothetical wish or regret about the past" : `Selected: ${w.adverb}`,
+        note: `Selected: ${w.adverb}`,
       };
     },
   });
@@ -136,7 +136,7 @@ export function Q22CakeRegretActivity({ question, value, activityState, onChange
       question={question}
       title="Q22 · Grand Banquet Feast 3D"
       subtitle="Complete the idiom of regret describing overeating at the grand banquet table"
-      hints={["'If only...' is a fixed English expression used to convey deep regret about an action already done."]}
+      hints={["'If ___ I had not eaten...' expresses a regret about the past.", "Try each word in the blank and read the sentence aloud."]}
     >
       <Board>
         {/* 3D Banquet Hall Scene */}
@@ -157,7 +157,7 @@ export function Q22CakeRegretActivity({ question, value, activityState, onChange
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
             <GrandBanquetHall3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -210,7 +210,7 @@ export function Q23QuietSoundActivity({ question, value, activityState, onChange
       return {
         value: w.adj,
         optionId: map[w.adj],
-        note: w.adj === "audible" ? "Correct: 'audible' means loud enough to be heard" : `Selected: ${w.adj}`,
+        note: `Selected: ${w.adj}`,
       };
     },
   });
@@ -224,7 +224,7 @@ export function Q23QuietSoundActivity({ question, value, activityState, onChange
       question={question}
       title="Q23 · Acoustic Testing Chamber 3D"
       subtitle="Identify the hearing-related adjective describing faint or barely perceptible music"
-      hints={["'Audible' stems from Latin 'audire' (to hear) and means capable of being heard."]}
+      hints={["The music was so quiet it could hardly be heard.", "Look for the word linked with hearing (think 'audio')."]}
     >
       <Board>
         {/* 3D Sound Chamber */}
@@ -245,7 +245,7 @@ export function Q23QuietSoundActivity({ question, value, activityState, onChange
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
             <AcousticSoundLab3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -298,7 +298,7 @@ export function Q24SchoolDisciplineActivity({ question, value, activityState, on
       return {
         value: w.modal,
         optionId: map[w.modal],
-        note: w.modal === "should" ? "Correct: 'should' expresses a deserved or expected disciplinary outcome" : `Selected: ${w.modal}`,
+        note: `Selected: ${w.modal}`,
       };
     },
   });
@@ -312,7 +312,7 @@ export function Q24SchoolDisciplineActivity({ question, value, activityState, on
       question={question}
       title="Q24 · School Conduct 3D Auditorium"
       subtitle="Identify the modal verb expressing a justified disciplinary consequence"
-      hints={["'Should + base verb' is used to express what is fitting, proper, or deserved according to rules."]}
+      hints={["The speaker thinks a detention is what he deserves.", "Pick the modal that fits straight before 'get'. Check whether 'ought' would need 'to'."]}
     >
       <Board>
         {/* 3D Classroom Auditorium */}
@@ -333,7 +333,7 @@ export function Q24SchoolDisciplineActivity({ question, value, activityState, on
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
             <ClassroomAuditorium3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -386,7 +386,7 @@ export function Q25MarineCreaturesActivity({ question, value, activityState, onC
       return {
         value: w.adj,
         optionId: map[w.adj],
-        note: w.adj === "marine" ? "Correct: 'marine life' is the scientific collocation for oceanic fauna" : `Selected: ${w.adj}`,
+        note: `Selected: ${w.adj}`,
       };
     },
   });
@@ -400,7 +400,7 @@ export function Q25MarineCreaturesActivity({ question, value, activityState, onC
       question={question}
       title="Q25 · Deep Ocean Marine 3D World"
       subtitle="Select the correct adjective modifying ocean life and deep-sea creatures"
-      hints={["'Marine' relates directly to the sea or ocean (as in 'marine life', 'marine biologist')."]}
+      hints={["The blank describes the kind of life found in the sea.", "Three options are places where boats stop. Which word is an adjective meaning 'of the sea'?"]}
     >
       <Board>
         {/* 3D Deep Ocean Reef */}
@@ -421,7 +421,7 @@ export function Q25MarineCreaturesActivity({ question, value, activityState, onC
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
+          <World3D cue={play.world} sky="#C9ECFF" ground="#F0DCA0" height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
             <MarineReef3D position={[0, 0, 0]} />
           </World3D>
         </div>

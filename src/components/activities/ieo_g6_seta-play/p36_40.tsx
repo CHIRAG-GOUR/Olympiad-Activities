@@ -33,7 +33,7 @@ export function Q36NewHouseShowroomActivity({ question, value, activityState, on
       return {
         value: w.adj,
         optionId: map[w.adj],
-        note: w.adj === "exquisite" ? "Correct: 'exquisite' means exceptionally beautiful, refined, and delightful" : `Selected: ${w.adj}`,
+        note: `Selected: ${w.adj}`,
       };
     },
   });
@@ -47,7 +47,7 @@ export function Q36NewHouseShowroomActivity({ question, value, activityState, on
       question={question}
       title="Q36 · Goa Modern Villa Architectural Showcase 3D"
       subtitle="Select the refined adjective praising the 3D coastal home with its elegant balcony and air conditioning"
-      hints={["'Exquisite' is the only positive adjective describing something elegant, high-quality, and beautiful."]}
+      hints={["The house has a balcony and air conditioning — does the writer like it?", "Pick the only positive word; check what the others mean."]}
     >
       <Board>
         {/* 3D Scene */}
@@ -68,7 +68,7 @@ export function Q36NewHouseShowroomActivity({ question, value, activityState, on
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <GoaVilla3D position={[0, 0, 0]} />
             <Avatar3D position={[1.1, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#7C3AED" hairStyle="ponytail" pose="gesturing" />
           </World3D>
@@ -122,7 +122,7 @@ export function Q37SchoolWalkActivity({ question, value, activityState, onChange
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "walk" ? "Correct: 'walk there in the mornings' describes the short pedestrian commute" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -136,7 +136,7 @@ export function Q37SchoolWalkActivity({ question, value, activityState, onChange
       question={question}
       title="Q37 · Morning School Commute Trail 3D"
       subtitle="Complete the sentence explaining the short walking commute along the 3D scenic morning pathway"
-      hints={["Because the new house is 'quite near' the school, the siblings can easily travel on foot ('walk')."]}
+      hints={["The school is quite near, so how could the children get there?", "Which verb is a way of travelling?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -157,7 +157,7 @@ export function Q37SchoolWalkActivity({ question, value, activityState, onChange
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <TrailGreeting3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -210,7 +210,7 @@ export function Q38DualSchoolActivity({ question, value, activityState, onChange
       return {
         value: w.quantifier,
         optionId: map[w.quantifier],
-        note: w.quantifier === "both" ? "Correct: 'we are both going' properly refers to the two siblings" : `Selected: ${w.quantifier}`,
+        note: `Selected: ${w.quantifier}`,
       };
     },
   });
@@ -224,7 +224,7 @@ export function Q38DualSchoolActivity({ question, value, activityState, onChange
       question={question}
       title="Q38 · Sibling School Enrolment 3D"
       subtitle="Complete the statement referring to the two siblings attending their new school"
-      hints={["'Both' is the grammatical pronoun/quantifier used to refer to two people together ('we are both going')."]}
+      hints={["The blank refers to two people, 'my brother and I'.", "Which word goes with 'we are ___ going' to mean 'the two of us'?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -245,7 +245,7 @@ export function Q38DualSchoolActivity({ question, value, activityState, onChange
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
             <ClassroomAuditorium3D position={[0, 0, 0]} />
             <Avatar3D position={[-0.5, 0, 0.4]} rotation={[0, 0.4, 0]} shirtColor="#2563EB" hairStyle="short" hasBackpack backpackColor="#F59E0B" pose="standing" />
             <Avatar3D position={[0.5, 0, 0.4]} rotation={[0, -0.4, 0]} shirtColor="#EC4899" hairStyle="ponytail" hasBackpack backpackColor="#8B5CF6" pose="standing" />
@@ -300,7 +300,7 @@ export function Q39PartyPlanningActivity({ question, value, activityState, onCha
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "planning" ? "Correct collocation: 'planning a party' expresses organizing an event" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -314,7 +314,7 @@ export function Q39PartyPlanningActivity({ question, value, activityState, onCha
       question={question}
       title="Q39 · Housewarming Party Event Planner 3D"
       subtitle="Select the natural English collocation for preparing and hosting a housewarming party"
-      hints={["In English, one 'plans a party', 'hosts a party', or 'throws a party'."]}
+      hints={["The writer is organising a party for the future.", "Which verb do we normally use with 'a party' when we are arranging it?"]}
     >
       <Board>
         {/* 3D Scene */}
@@ -335,7 +335,7 @@ export function Q39PartyPlanningActivity({ question, value, activityState, onCha
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <GrandBanquetHall3D position={[0, 0, 0]} />
             <Avatar3D position={[1.0, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#EC4899" hairStyle="bun" pose="gesturing" />
           </World3D>
@@ -389,7 +389,7 @@ export function Q40FoodPrepActivity({ question, value, activityState, onChange, 
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "prepare" ? "Correct: 'will prepare' uses the bare infinitive for culinary cooking" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -403,7 +403,7 @@ export function Q40FoodPrepActivity({ question, value, activityState, onChange, 
       question={question}
       title="Q40 · Gourmet Kitchen Culinary Preparation 3D"
       subtitle="Complete the sentence with the base verb describing preparing delicious delicacies on the 3D feast table"
-      hints={["After modal auxiliary 'will', use base verb 'prepare' ('will prepare lots of nice things to eat')."]}
+      hints={["The blank follows 'will'.", "After 'will', which form must the verb take? Only one option is a plain verb that fits."]}
     >
       <Board>
         {/* 3D Scene */}
@@ -424,7 +424,7 @@ export function Q40FoodPrepActivity({ question, value, activityState, onChange, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
             <DiningTable3D position={[0, 0, 0]} />
             <Avatar3D position={[-1.0, 0, 0.3]} rotation={[0, 0.6, 0]} shirtColor="#EF4444" hairStyle="short" pose="gesturing" />
           </World3D>

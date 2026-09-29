@@ -33,7 +33,7 @@ export function Q01MorningRoutineActivity({ question, value, activityState, onCh
       return {
         value: w.selectedVerb,
         optionId: map[w.selectedVerb],
-        note: w.selectedVerb === "eat" ? "Grammatically correct: Present Simple routine with subject 'I'" : `Selected: ${w.selectedVerb}`,
+        note: `Selected: ${w.selectedVerb}`,
       };
     },
   });
@@ -47,7 +47,7 @@ export function Q01MorningRoutineActivity({ question, value, activityState, onCh
       question={question}
       title="Q1 · Morning Routine 3D Studio"
       subtitle="Interact with the 3D morning kitchen scene and install the correct habitual verb"
-      hints={["A recurring routine done every morning before work expresses a regular, habitual action in Present Simple (base verb 'eat')."]}
+      hints={["This is something you do every morning — a habit. Which tense do we use for habits?", "Look at the verb just before it: 'I wake up'. The blank should match that form."]}
     >
       <Board>
         {/* 3D Morning Kitchen Scene */}
@@ -80,7 +80,7 @@ export function Q01MorningRoutineActivity({ question, value, activityState, onCh
           </div>
 
           {/* Real 3D Interactive World */}
-          <World3D height="300px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+          <World3D cue={play.world} height="300px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
             <DiningTable3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -134,7 +134,7 @@ export function Q02PackingRobotActivity({ question, value, activityState, onChan
       return {
         value: w.phrase,
         optionId: map[w.phrase],
-        note: w.phrase === "have to" ? "Grammatically correct obligation: 'have to pack'" : `Selected: ${w.phrase}`,
+        note: `Selected: ${w.phrase}`,
       };
     },
   });
@@ -148,7 +148,7 @@ export function Q02PackingRobotActivity({ question, value, activityState, onChan
       question={question}
       title="Q2 · Airport Baggage Terminal 3D"
       subtitle="Explore the airport carousel and install the modal phrase of obligation"
-      hints={["To express necessity or obligation for a base verb like 'pack', use 'have to'."]}
+      hints={["The speaker needs to do something before leaving. Which option shows something you must do?", "Only one option can be followed straight away by a verb like 'pack'."]}
     >
       <Board>
         {/* 3D Airport Terminal Scene */}
@@ -166,14 +166,14 @@ export function Q02PackingRobotActivity({ question, value, activityState, onChan
 
             <div className="flex items-center gap-2 text-xs font-bold">
               <span className={`px-2.5 py-1 rounded-lg border ${
-                play.world.phrase === "have to" ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-900 border-amber-300 animate-pulse"
+                play.world.phrase ? "bg-sky-100 text-sky-900 border-sky-300" : "bg-amber-100 text-amber-900 border-amber-300 animate-pulse"
               }`}>
-                {play.world.phrase === "have to" ? "✓ Luggage Obligation Met" : "⏳ Obligation Pending"}
+                {play.world.phrase ? `🧳 Plan: "${play.world.phrase} pack"` : "⏳ Obligation Pending"}
               </span>
             </div>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.8, 6.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.8, 6.2], fov: 45 }}>
             <AirportLuggage3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -225,7 +225,7 @@ export function Q03MemoryKitchenActivity({ question, value, activityState, onCha
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "helped" ? "Correct Past Simple narration: 'helped'" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -239,7 +239,7 @@ export function Q03MemoryKitchenActivity({ question, value, activityState, onCha
       question={question}
       title="Q3 · Childhood Memory Kitchen 3D"
       subtitle="Complete the retrospective childhood narrative inside the 3D kitchen"
-      hints={["'When I was a child' sets the completed past timeframe, requiring simple past 'helped'."]}
+      hints={["'When I was a child' puts the whole sentence in the finished past.", "It is a one-word past form — not a present form, and not an '-ing' form."]}
     >
       <Board>
         {/* 3D Chef Kitchen Scene */}
@@ -262,7 +262,7 @@ export function Q03MemoryKitchenActivity({ question, value, activityState, onCha
             </div>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.6], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.6], fov: 45 }}>
             <ChefKitchen3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -319,7 +319,7 @@ export function Q04LanguageMapActivity({ question, value, activityState, onChang
       return {
         value: w.pair,
         optionId: map[w.pair],
-        note: w.pair === "No article, an" ? "Correct: Languages take zero article, 'easy' begins with vowel sound (an)" : `Selected: ${w.pair}`,
+        note: `Selected: ${w.pair}`,
       };
     },
   });
@@ -333,7 +333,7 @@ export function Q04LanguageMapActivity({ question, value, activityState, onChang
       question={question}
       title="Q4 · Global Language Museum 3D"
       subtitle="Examine the world globe and install the correct article pair"
-      hints={["Names of languages (German) do not take articles. 'Easy language' is singular countable starting with a vowel sound, so it takes 'an'."]}
+      hints={["Do we say 'the English' or just 'English' when we mean the language?", "For the second blank, say 'easy' aloud: does it start with a vowel sound?"]}
     >
       <Board>
         {/* 3D Global Language Dais */}
@@ -356,7 +356,7 @@ export function Q04LanguageMapActivity({ question, value, activityState, onChang
             </div>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
             <LanguageGlobe3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -418,7 +418,7 @@ export function Q05BusStopTimeActivity({ question, value, activityState, onChang
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "hate" ? "Correct Present Simple: 'I hate waiting'" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -432,7 +432,7 @@ export function Q05BusStopTimeActivity({ question, value, activityState, onChang
       question={question}
       title="Q5 · City Bus Stop 3D Station"
       subtitle="Observe the bus shelter scene and select the verb expressing habitual emotion"
-      hints={["'It is always late' indicates a general present condition. With subject 'I', use base form 'hate'."]}
+      hints={["'It is always late' — is the speaker describing now, or the past?", "The subject is 'I'. Which form of the verb goes with 'I'?"]}
     >
       <Board>
         {/* 3D Bus Stop Station */}
@@ -446,7 +446,7 @@ export function Q05BusStopTimeActivity({ question, value, activityState, onChang
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.4, 6.2], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.4, 6.2], fov: 45 }}>
             <BusStopShelter3D position={[0, 0, 0]} />
           </World3D>
         </div>

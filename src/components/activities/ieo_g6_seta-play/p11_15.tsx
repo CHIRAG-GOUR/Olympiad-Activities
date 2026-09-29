@@ -33,14 +33,13 @@ export function Q11IceCreamShopActivity({ question, value, activityState, onChan
       return {
         value: w.phrase,
         optionId: map[w.phrase],
-        note: w.phrase === "we go" ? "Grammatically correct: 'Shall we go' forms a polite joint suggestion with base verb" : `Selected: ${w.phrase}`,
+        note: `Selected: ${w.phrase}`,
       };
     },
   });
 
   const phrases = ["you going", "you gone", "we go", "we going"];
   const isSelected = !!play.world.phrase;
-  const isCorrect = play.world.phrase === "we go";
 
   return (
     <Shell
@@ -49,7 +48,7 @@ export function Q11IceCreamShopActivity({ question, value, activityState, onChan
       question={question}
       title="Q11 · Ice-Cream Parlour 3D Studio"
       subtitle="Complete the joint invitation outside the 3D ice-cream parlour by selecting the modal phrase"
-      hints={["'Shall we + base verb' is the standard English construction for proposing a shared activity or treat."]}
+      hints={["'Shall ___ ...' is making a suggestion that includes the speaker too.", "After 'Shall' plus a subject, the verb stays in its plain form."]}
     >
       <Board>
         {/* 3D Ice Cream Parlour Scene */}
@@ -67,14 +66,14 @@ export function Q11IceCreamShopActivity({ question, value, activityState, onChan
 
             <div className="flex items-center gap-2 text-xs font-bold">
               <span className={`px-2.5 py-1 rounded-lg border flex items-center gap-1 transition-all ${
-                isSelected ? (isCorrect ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-purple-100 text-purple-800 border-purple-300") : "bg-pink-100 text-pink-900 border-pink-300"
+                isSelected ? "bg-purple-100 text-purple-800 border-purple-300" : "bg-pink-100 text-pink-900 border-pink-300"
               }`}>
                 {isSelected ? `Dialogue: Shall ${play.world.phrase}...` : "Proposing an outing..."}
               </span>
             </div>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 5.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 5.0], fov: 45 }}>
             <IceCreamParlour3D position={[0, 0, 0]} />
             <Avatar3D position={[0.8, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#3B82F6" pose="holding_cone" hairStyle="cap" />
           </World3D>
@@ -129,7 +128,7 @@ export function Q12CricketMemoryActivity({ question, value, activityState, onCha
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "wasn't" ? "Correct: 'wasn't' indicates he was absent from yesterday's practice session" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -143,7 +142,7 @@ export function Q12CricketMemoryActivity({ question, value, activityState, onCha
       question={question}
       title="Q12 · Cricket Academy 3D Stadium"
       subtitle="Complete the statement regarding the player's absence from yesterday's cricket training"
-      hints={["'Yesterday' indicates past simple. 'I don't know where he was' confirms he was NOT present ('wasn't')."]}
+      hints={["'yesterday' tells you the time of the sentence.", "'I don't know where he was' tells you something about whether he was there. Try each option aloud."]}
     >
       <Board>
         {/* 3D Cricket Pitch Scene */}
@@ -164,7 +163,7 @@ export function Q12CricketMemoryActivity({ question, value, activityState, onCha
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
             <CricketPitch3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -218,7 +217,7 @@ export function Q13StormWarningActivity({ question, value, activityState, onChan
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "will have" ? "Correct: Future Perfect 'will have + made' looks forward to completed arrival" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -232,7 +231,7 @@ export function Q13StormWarningActivity({ question, value, activityState, onChan
       question={question}
       title="Q13 · Radar Weather Station 3D"
       subtitle="Complete the future perfect expectation for safe arrival home through the storm"
-      hints={["Future Perfect ('will have + past participle') describes an action expected to be completed before a specified future moment."]}
+      hints={["The speaker hopes that, by the time of the call later, getting home will already be finished.", "That is a future action completed before another future moment: 'will ___ + made'."]}
     >
       <Board>
         {/* 3D Weather Station Scene */}
@@ -253,7 +252,7 @@ export function Q13StormWarningActivity({ question, value, activityState, onChan
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
             <WeatherStation3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -307,7 +306,7 @@ export function Q14ParkPathActivity({ question, value, activityState, onChange, 
       return {
         value: w.prep,
         optionId: map[w.prep],
-        note: w.prep === "to" ? "Correct: 'go to' denotes movement towards another destination" : `Selected: ${w.prep}`,
+        note: `Selected: ${w.prep}`,
       };
     },
   });
@@ -321,7 +320,7 @@ export function Q14ParkPathActivity({ question, value, activityState, onChange, 
       question={question}
       title="Q14 · Botanical Park Trail 3D"
       subtitle="Examine the directional park trail and select the preposition of movement"
-      hints={["The verb 'go' expressing movement towards a place or destination pairs with the preposition 'to'."]}
+      hints={["The speakers want to move towards another park.", "Which preposition shows movement towards a place?"]}
     >
       <Board>
         {/* 3D Botanical Park Trail */}
@@ -342,7 +341,7 @@ export function Q14ParkPathActivity({ question, value, activityState, onChange, 
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
             <ParkTrail3D position={[0, 0, 0]} />
           </World3D>
         </div>
@@ -396,7 +395,7 @@ export function Q15TrainPlatformActivity({ question, value, activityState, onCha
       return {
         value: w.verb,
         optionId: map[w.verb],
-        note: w.verb === "waiting" ? "Correct: Prepositional phrase 'instead of' requires gerund 'waiting'" : `Selected: ${w.verb}`,
+        note: `Selected: ${w.verb}`,
       };
     },
   });
@@ -410,7 +409,7 @@ export function Q15TrainPlatformActivity({ question, value, activityState, onCha
       question={question}
       title="Q15 · Train Station Platform 3D"
       subtitle="Complete the sentence explaining why Reena moved ahead without waiting for latecomers"
-      hints={["'Instead of' is a prepositional phrase, so any following verb must take the gerund (-ing) form: 'instead of waiting'."]}
+      hints={["'instead of' is followed by a verb here.", "Try each form of 'wait' after 'instead of' and read the sentence aloud."]}
     >
       <Board>
         {/* 3D Train Station Platform */}
@@ -431,7 +430,7 @@ export function Q15TrainPlatformActivity({ question, value, activityState, onCha
             </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 3.5, 6.0], fov: 45 }}>
+          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.5, 6.0], fov: 45 }}>
             <TrainPlatform3D position={[0, 0, 0]} />
             <Avatar3D
               position={[-0.4, 0.5, 0.4]}
