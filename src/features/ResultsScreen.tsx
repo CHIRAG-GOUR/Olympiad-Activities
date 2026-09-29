@@ -34,6 +34,7 @@ export default function ResultsScreen() {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState<"all" | "math" | "english">("all");
   const [selectedExamId, setSelectedExamId] = useState("all");
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -58,12 +59,18 @@ export default function ResultsScreen() {
     load();
   }, []);
 
-  // Filtered List
+  // Filtered List with Strict Classwise and Subjectwise sorting
   const filteredAttempts = attempts.filter((att) => {
     const matchesSearch =
       att.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       att.student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (att.student.schoolName && att.student.schoolName.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const title = (att.examTitle || "").toLowerCase();
+    const matchesSubject =
+      selectedSubject === "all" ||
+      (selectedSubject === "math" && (title.includes("math") || title.includes("imo") || !title.includes("eng"))) ||
+      (selectedSubject === "english" && (title.includes("eng") || title.includes("ieo")));
 
     const matchesExam = selectedExamId === "all" || att.examId === selectedExamId;
     const matchesClass = selectedClass === "all" || String(att.student.grade) === selectedClass;
@@ -72,7 +79,7 @@ export default function ResultsScreen() {
       (selectedStatus === "passed" && att.isPassed) ||
       (selectedStatus === "failed" && !att.isPassed);
 
-    return matchesSearch && matchesExam && matchesClass && matchesStatus;
+    return matchesSearch && matchesSubject && matchesExam && matchesClass && matchesStatus;
   });
 
   return (
@@ -83,13 +90,13 @@ export default function ResultsScreen() {
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
             <span>Evaluation Ledger</span>
             <span className="text-[#667085]">•</span>
-            <span>Official Examination Records</span>
+            <span>Classwise & Subjectwise Official Records</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182338] mt-1">
-            Results & Reports
+            Results & Score Reports
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
-            Review completed examinations, student scores and detailed answer reports.
+            Review completed examinations, score certificates, and detailed diagnostic reports sorted strictly by subject and class.
           </p>
         </div>
 
@@ -105,61 +112,102 @@ export default function ResultsScreen() {
 
       <div className="space-y-6">
         
-        {/* 2. COMPACT PROFESSIONAL FILTERS (Requirement 17) */}
-        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-subtle flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          <div className="flex flex-1 items-center gap-3 flex-wrap">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search candidate name or roll number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
-              />
-            </div>
-
-            {/* Exam Filter */}
-            <select
-              value={selectedExamId}
-              onChange={(e) => setSelectedExamId(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+        {/* 2. SUBJECT SELECTION TABS & COMPACT PROFESSIONAL FILTERS */}
+        <div className="space-y-3">
+          {/* Subject Switcher */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedSubject("all")}
+              className={`h-9 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                selectedSubject === "all"
+                  ? "bg-[#182338] text-white border-[#182338] shadow-xs"
+                  : "bg-white text-[#667085] border-[#E1E7EF] hover:bg-slate-50"
+              }`}
             >
-              <option value="all">All Examinations</option>
-              {exams.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.title}
-                </option>
-              ))}
-            </select>
-
-            {/* Class Filter */}
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+              All Subjects
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedSubject("math")}
+              className={`h-9 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
+                selectedSubject === "math"
+                  ? "bg-[#2468B2] text-white border-[#2468B2] shadow-xs"
+                  : "bg-white text-[#2468B2] border-[#E1E7EF] hover:bg-blue-50"
+              }`}
             >
-              <option value="all">All Classes</option>
-              <option value="6">Class 6</option>
-              <option value="7">Class 7</option>
-              <option value="8">Class 8</option>
-            </select>
-
-            {/* Status Filter */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+              <span>Mathematics (IMO)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedSubject("english")}
+              className={`h-9 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
+                selectedSubject === "english"
+                  ? "bg-[#9333EA] text-white border-[#9333EA] shadow-xs"
+                  : "bg-white text-[#9333EA] border-[#E1E7EF] hover:bg-purple-50"
+              }`}
             >
-              <option value="all">All Statuses</option>
-              <option value="passed">Passed Tier</option>
-              <option value="failed">Review Needed</option>
-            </select>
+              <span>English (IEO)</span>
+            </button>
           </div>
 
-          <div className="text-xs text-[#667085] font-semibold text-right">
-            Showing <strong className="text-[#2468B2] font-bold">{filteredAttempts.length}</strong> evaluated records
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-subtle flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            <div className="flex flex-1 items-center gap-3 flex-wrap">
+              {/* Search Input */}
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search candidate name or roll number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
+                />
+              </div>
+
+              {/* Class Filter (Classes 1 - 12) */}
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+              >
+                <option value="all">All Classes (Grades 1–12)</option>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
+                  <option key={g} value={String(g)}>
+                    Class {g}
+                  </option>
+                ))}
+              </select>
+
+              {/* Exam Filter */}
+              <select
+                value={selectedExamId}
+                onChange={(e) => setSelectedExamId(e.target.value)}
+                className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer max-w-[200px]"
+              >
+                <option value="all">All Examinations</option>
+                {exams.map((ex) => (
+                  <option key={ex.id} value={ex.id}>
+                    {ex.title}
+                  </option>
+                ))}
+              </select>
+
+              {/* Status Filter */}
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="passed">Passed Tier</option>
+                <option value="failed">Review Needed</option>
+              </select>
+            </div>
+
+            <div className="text-xs text-[#667085] font-semibold text-right">
+              Showing <strong className="text-[#2468B2] font-bold">{filteredAttempts.length}</strong> sorted records
+            </div>
           </div>
         </div>
 
@@ -223,11 +271,26 @@ export default function ResultsScreen() {
 
                         <td className="p-4">
                           <div className="font-bold text-[#182338]">{att.examTitle}</div>
-                          <div className="text-[11px] font-mono text-[#2468B2]">{att.examCode}</div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                (att.examTitle || "").toLowerCase().includes("eng") || (att.examTitle || "").toLowerCase().includes("ieo")
+                                  ? "bg-[#FAF5FF] text-[#9333EA] border border-[#F3E8FF]"
+                                  : "bg-[#EEF4FF] text-[#2468B2] border border-[#D0E1FD]"
+                              }`}
+                            >
+                              {(att.examTitle || "").toLowerCase().includes("eng") || (att.examTitle || "").toLowerCase().includes("ieo")
+                                ? "English (IEO)"
+                                : "Mathematics (IMO)"}
+                            </span>
+                            <span className="text-[11px] font-mono text-[#667085]">{att.examCode}</span>
+                          </div>
                         </td>
 
-                        <td className="p-4 text-center font-bold text-[#182338]">
-                          Class {att.student.grade || 6}
+                        <td className="p-4 text-center">
+                          <span className="px-2 py-0.5 rounded-md font-bold text-xs bg-slate-100 text-slate-800 border border-slate-200">
+                            Class {att.student.grade || 6}
+                          </span>
                         </td>
 
                         <td className="p-4 text-center font-mono font-bold text-sm text-[#2468B2]">

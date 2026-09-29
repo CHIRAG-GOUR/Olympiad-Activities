@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { userRepository, attemptRepository } from "@/repositories";
 import { UserProfile } from "@/lib/auth/rbac";
 import { ExamAttempt } from "@/types/attempt";
@@ -16,11 +17,13 @@ import {
   FileText,
   Clock,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function StudentsScreen() {
   // Links resolve into the route group the active role actually owns.
-  const { activeRole } = useAuth();
+  const router = useRouter();
+  const { activeRole, canSwitchRole, switchRole } = useAuth();
   const roleBase = ROLE_PREFIX[activeRole];
   const [students, setStudents] = useState<UserProfile[]>([]);
   const [attempts, setAttempts] = useState<ExamAttempt[]>([]);
@@ -157,12 +160,28 @@ export default function StudentsScreen() {
                           </span>
                         </td>
                         <td className="p-4 text-right">
-                          <Link
-                            href={`${roleBase}/results`}
-                            className="px-3 py-1.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold transition-all inline-block"
-                          >
-                            View Scores
-                          </Link>
+                          <div className="flex items-center justify-end gap-2">
+                            {canSwitchRole && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  switchRole("STUDENT");
+                                  router.push("/student/dashboard");
+                                }}
+                                className="px-3 py-1.5 bg-[#FFF4E5] hover:bg-[#FFE6C2] text-[#B54708] border border-[#FEDF89] rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer"
+                                title="Login and view platform as Student"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Login as Student</span>
+                              </button>
+                            )}
+                            <Link
+                              href={`${roleBase}/results`}
+                              className="px-3 py-1.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold transition-all inline-block"
+                            >
+                              View Scores
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );

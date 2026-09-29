@@ -33,9 +33,25 @@ export interface StoredSession {
   issuedAt: string;
 }
 
+export interface SignUpRequest {
+  email: string;
+  password: string;
+  name: string;
+  role: "STUDENT" | "TEACHER";
+  schoolName?: string;
+  grade?: number | string;
+  subject?: string;
+}
+
+export type SignUpOutcome =
+  | { ok: true; profile: UserProfile; activeRole: UserRole }
+  | { ok: false; code: "empty" | "email-already-in-use" | "weak-password" | "invalid-email" | "error"; message: string };
+
 export interface AuthService {
   signIn(request: SignInRequest): Promise<SignInOutcome>;
+  signUp(request: SignUpRequest): Promise<SignUpOutcome>;
   signOut(): Promise<void>;
+  sendPasswordReset(email: string): Promise<{ ok: boolean; message: string }>;
   restore(): Promise<StoredSession | null>;
   /** Changes the operating role of the current session. Refused if not entitled. */
   setActiveRole(role: UserRole): Promise<boolean>;
@@ -57,6 +73,20 @@ class UnconfiguredAuthService implements AuthService {
       code: "unknown-email",
       message:
         "Sign-in is unavailable because Firebase is not configured for this deployment.",
+    };
+  }
+  async signUp(): Promise<SignUpOutcome> {
+    return {
+      ok: false,
+      code: "error",
+      message:
+        "Sign-up is unavailable because Firebase is not configured for this deployment.",
+    };
+  }
+  async sendPasswordReset(): Promise<{ ok: boolean; message: string }> {
+    return {
+      ok: false,
+      message: "Password reset is unavailable because Firebase is not configured.",
     };
   }
   async signOut(): Promise<void> {}

@@ -1,5 +1,8 @@
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   setPersistence,
@@ -9,7 +12,8 @@ import {
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/services/firebase/config";
 import { UserProfile, UserRole, availableRolesFor, bootstrapRoleFor } from "./rbac";
-import type { AuthService, SignInRequest, SignInOutcome, StoredSession } from "./authService";
+import type { AuthService, SignInRequest, SignInOutcome, SignUpRequest, SignUpOutcome, StoredSession } from "./authService";
+import { NotificationService } from "@/services/notifications/NotificationService";
 
 /**
  * Firebase Authentication implementation of `AuthService`.
@@ -230,6 +234,107 @@ export class FirebaseAuthService implements AuthService {
     this.writeCachedSession(session);
 
     return { ok: true, profile, activeRole: role };
+  }
+
+  async signUp(request: SignUpRequest): Promise<SignUpOutcome> {
+    if (!request.email?.trim() || !request.password || !request.name?.trim()) {
+      return { ok: false, code: "empty", message: "Please fill in your name, email, and password." };
+    }
+    if (request.password.length < 6) {
+      return { ok: false, code: "weak-password", message: "Password must be at least 6 characters long." };
+    }
+    if (!auth) {
+      return { ok: false, code: "error", message: "Authentication service is unavailable." };
+    }
+
+    let user: FirebaseUser;
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      const credential = await createUserWithEmailAndPassword(auth, request.email.trim(), request.password);
+      user = credential.user;
+      await updateProfile(user, { displayName: request.name.trim() });
+    } catch (err: any) {
+      const code = err?.code || "";
+      if (code === "auth/email-already-in-use") {
+        return { ok: false, code: "email-already-in-use", message: "An account with this email address already exists. Try signing in instead." };
+      }
+      if (code === "auth/invalid-email") {
+        return { ok: false, code: "invalid-email", message: "Please enter a valid email address." };
+      }
+      if (code === "auth/weak-password") {
+        return { ok: false, code: "weak-password", message: "Password is too weak. Please use at least 6 characters." };
+      }
+      return { ok: false, code: "error", message: err?.message || "Sign-up failed. Please check your details." };
+    }
+
+    const profile: UserProfile = {
+      id: user.uid,
+      email: user.email ?? request.email.trim(),
+      name: request.name.trim(),
+      role: request.role,
+      status: "active",
+      schoolName: request.schoolName?.trim() || "",
+      grade: request.grade || (request.role === "STUDENT" ? 6 : undefined),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save profile to Firestore
+    if (db) {
+      try {
+        await setDoc(doc(db, "users", user.uid), profile);
+      } catch (e) {
+        console.warn("[FirebaseAuthService] Firestore setDoc failed:", e);
+      }
+    }
+
+    // Save session in cache and operating role
+    this.writeActiveRole(request.role);
+    const session: StoredSession = { profile, activeRole: request.role, issuedAt: new Date().toISOString() };
+    this.writeCachedSession(session);
+
+    // Notify Super Admin in real-time
+    NotificationService.addNotification({
+      type: "USER_REGISTERED",
+      title: `New ${request.role === "STUDENT" ? "Student" : "Teacher"} Registered`,
+      message: `${request.name} registered as a ${request.role === "STUDENT" ? `Student (Class ${request.grade || 6})` : "Teacher"}${request.schoolName ? ` · ${request.schoolName}` : ""}.`,
+      userName: request.name,
+      userEmail: request.email,
+      userRole: request.role,
+      grade: request.grade,
+      schoolName: request.schoolName,
+    }).catch(() => {});
+
+    return { ok: true, profile, activeRole: request.role };
+  }
+
+  async sendPasswordReset(email: string): Promise<{ ok: boolean; message: string }> {
+    if (!email?.trim()) {
+      return { ok: false, message: "Please enter your registered email address." };
+    }
+    if (!auth) {
+      return { ok: false, message: "Authentication service is unavailable." };
+    }
+
+    try {
+      const redirectUrl = typeof window !== "undefined" ? `${window.location.origin}/login` : "https://the-olympiad-dashboard.web.app/login";
+      await sendPasswordResetEmail(auth, email.trim(), {
+        url: redirectUrl,
+        handleCodeInApp: false,
+      });
+      return {
+        ok: true,
+        message: `Password reset instructions sent to ${email.trim()}. Please check your email inbox and click the reset button.`,
+      };
+    } catch (err: any) {
+      const code = err?.code || "";
+      if (code === "auth/user-not-found") {
+        return { ok: false, message: "No account found with this email address." };
+      }
+      if (code === "auth/invalid-email") {
+        return { ok: false, message: "Please enter a valid email address." };
+      }
+      return { ok: false, message: err?.message || "Failed to send password reset email. Please try again." };
+    }
   }
 
   async signOut(): Promise<void> {

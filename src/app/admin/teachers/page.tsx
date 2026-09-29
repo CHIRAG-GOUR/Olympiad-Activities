@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { userRepository, examRepository } from "@/repositories";
 import { UserProfile } from "@/lib/auth/rbac";
 import { Exam } from "@/types/exam";
@@ -18,6 +20,8 @@ import {
 } from "lucide-react";
 
 export default function TeachersDirectoryPage() {
+  const router = useRouter();
+  const { switchRole } = useAuth();
   const [teachers, setTeachers] = useState<UserProfile[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -192,12 +196,26 @@ export default function TeachersDirectoryPage() {
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <Link
-                          href="/admin/exams"
-                          className="px-3 py-1.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold transition-all inline-block"
-                        >
-                          View Papers
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              switchRole("TEACHER");
+                              router.push("/teacher/dashboard");
+                            }}
+                            className="px-3 py-1.5 bg-[#FFF4E5] hover:bg-[#FFE6C2] text-[#B54708] border border-[#FEDF89] rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer"
+                            title="Login and view platform as Teacher"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span>Login as Teacher</span>
+                          </button>
+                          <Link
+                            href="/admin/exams"
+                            className="px-3 py-1.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold transition-all inline-block"
+                          >
+                            View Papers
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

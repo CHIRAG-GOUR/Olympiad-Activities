@@ -201,12 +201,13 @@ export function bootstrapRoleFor(email: string | undefined | null): UserRole | n
   return FOUNDING_ADMINS.includes(email.trim().toLowerCase()) ? "SUPER_ADMIN" : null;
 }
 
-export function canSwitchRole(email: string | undefined | null): boolean {
+export function canSwitchRole(email: string | undefined | null, role?: UserRole): boolean {
+  if (role === "SUPER_ADMIN") return true;
   if (!email) return false;
   return MULTI_ROLE_ACCOUNTS.includes(email.trim().toLowerCase());
 }
 
-/** Roles a given account may operate as. */
+/** Roles a given account may operate as. Super Admins can operate as any role. */
 export function availableRolesFor(email: string | undefined | null, assignedRole: UserRole): UserRole[] {
-  return canSwitchRole(email) ? [...USER_ROLES] : [assignedRole];
+  return canSwitchRole(email, assignedRole) ? [...USER_ROLES] : [assignedRole];
 }

@@ -33,6 +33,8 @@ export interface AuthContextType {
   /** Authorization scope handed to the data-access layer. */
   scope: AccessScope | null;
   signIn: (email: string, password: string, role: UserRole) => Promise<SignInOutcome>;
+  signUp: (request: import("@/lib/auth/authService").SignUpRequest) => Promise<import("@/lib/auth/authService").SignUpOutcome>;
+  sendPasswordReset: (email: string) => Promise<{ ok: boolean; message: string }>;
   signOut: () => void;
   switchRole: (role: UserRole) => void;
   can: (permission: Permission) => boolean;
@@ -115,6 +117,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const signUp = useCallback(
+    async (request: import("@/lib/auth/authService").SignUpRequest): Promise<import("@/lib/auth/authService").SignUpOutcome> => {
+      const outcome = await authService.signUp(request);
+      if (outcome.ok) {
+        setAccount(outcome.profile);
+        setActiveRole(outcome.activeRole);
+      }
+      return outcome;
+    },
+    []
+  );
+
+  const sendPasswordReset = useCallback(async (email: string) => {
+    return await authService.sendPasswordReset(email);
+  }, []);
+
   const signOut = useCallback(() => {
     void authService.signOut();
     setAccount(null);
@@ -126,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [account]
   );
 
-  const canSwitch = useMemo(() => accountCanSwitchRole(account?.email), [account]);
+  const canSwitch = useMemo(() => accountCanSwitchRole(account?.email, account?.role), [account]);
 
   /**
    * Changes which experience is rendered. Refused unless the account is entitled to the
@@ -165,6 +183,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isReady,
       scope,
       signIn,
+      signUp,
+      sendPasswordReset,
       signOut,
       switchRole,
       can,
@@ -172,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       canAny,
       logout: signOut,
     }),
-    [account, activeRole, availableRoles, canSwitch, isReady, scope, signIn, signOut, switchRole, can, canAll, canAny]
+    [account, activeRole, availableRoles, canSwitch, isReady, scope, signIn, signUp, sendPasswordReset, signOut, switchRole, can, canAll, canAny]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

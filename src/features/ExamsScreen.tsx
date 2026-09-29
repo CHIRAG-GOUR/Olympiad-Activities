@@ -32,6 +32,7 @@ export default function ExamsScreen() {
   const roleBase = ROLE_PREFIX[activeRole];
   const [exams, setExams] = useState<Exam[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClass, setSelectedClass] = useState("all");
   const [activeTab, setActiveTab] = useState<SubjectTabKey>("math");
   const [layoutMode, setLayoutMode] = useState<"list" | "grid">("list");
   const [loading, setLoading] = useState(true);
@@ -91,16 +92,24 @@ export default function ExamsScreen() {
     return exams;
   }, [activeTab, mathExams, englishExams, exams]);
 
-  // Search filter
+  // Search & Class filter
   const filtered = useMemo(() => {
-    return currentTabExams.filter(
-      (e) =>
+    return currentTabExams.filter((e) => {
+      const matchesSearch =
         e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.subtitle && e.subtitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (e.description && e.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [currentTabExams, searchTerm]);
+        (e.description && e.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesClass =
+        selectedClass === "all" ||
+        String(e.grade || 6) === selectedClass ||
+        e.title.toLowerCase().includes(`class ${selectedClass}`) ||
+        e.title.toLowerCase().includes(`grade ${selectedClass}`);
+
+      return matchesSearch && matchesClass;
+    });
+  }, [currentTabExams, searchTerm, selectedClass]);
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
@@ -231,11 +240,22 @@ export default function ExamsScreen() {
           </button>
         </div>
 
-        {/* Grade Badge & View Mode Toggle */}
+        {/* Class Filter Dropdown & View Mode Toggle */}
         <div className="flex items-center gap-2 px-2">
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold font-mono">
-            <GraduationCap className="w-3.5 h-3.5 text-amber-700" />
-            <span>Grade 6</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200">
+            <GraduationCap className="w-3.5 h-3.5 text-[#2468B2]" />
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="bg-transparent text-xs font-bold text-[#182338] focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="all">All Classes</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
+                <option key={g} value={String(g)}>
+                  Class {g}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center border border-slate-200 rounded-lg p-0.5 bg-slate-50">

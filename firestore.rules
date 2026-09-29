@@ -81,12 +81,22 @@ service cloud.firestore {
     // promote themselves: role and status changes are reserved to an admin.
     match /users/{userId} {
       allow read: if isStaff() || isOwner(userId);
-      allow create, delete: if isSuperAdmin();
+      allow create: if isSuperAdmin() || isOwner(userId);
+      allow delete: if isSuperAdmin();
       allow update: if isSuperAdmin() || (
         isOwner(userId) &&
         request.resource.data.role == resource.data.role &&
         request.resource.data.status == resource.data.status
       );
+    }
+
+    // ------------------------------------------------------------------
+    // Notifications
+    // ------------------------------------------------------------------
+    // Staff/Admins monitor registration and examination alerts
+    match /notifications/{notificationId} {
+      allow read, update, delete: if isSuperAdmin();
+      allow create: if isAuthenticated();
     }
 
     // ------------------------------------------------------------------
