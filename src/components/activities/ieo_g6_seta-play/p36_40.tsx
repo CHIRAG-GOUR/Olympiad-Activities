@@ -1,455 +1,564 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ActivityComponentProps } from "../kit/types";
 import { usePlay } from "../imo6a-play/engine";
 import { Shell, Board, WordPill, SentenceSlot, Bay, World3D } from "./kit";
-import { Home, Footprints, Users, PartyPopper, Utensils, Wind } from "lucide-react";
 import {
-  GoaVilla3D,
-  TrailGreeting3D,
-  ClassroomAuditorium3D,
-  GrandBanquetHall3D,
-  DiningTable3D,
+  Home,
+  MapPin,
+  Users2,
+  Plane,
+  AlertTriangle,
+  BookOpen,
+} from "lucide-react";
+import {
+  SuburbanGarden3D,
+  LanguageGlobe3D,
   Avatar3D,
 } from "./components3D";
+import { IEO_READING_PASSAGE_CASEY } from "@/data/ieo_g6_seta";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q36 — Architectural Adjective (Exquisite)
-   Sentence: "It is a/an ______ new house with a balcony and air conditioning."
-   Options: A. pugnacious, B. hideous, C. exquisite, D. drab -> Key: C (exquisite)
+   Q36 — 🏘️ 3D Neighbourhood Story World (Passage Title)
+   Question: "Choose the best title or heading for the passage."
+   Options: A. Summer Holidays, B. The Biggest House, C. My Friend Next Door, D. Camping on Holiday -> Key: C
    ══════════════════════════════════════════════════════════════════════ */
-export function Q36NewHouseShowroomActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ adj?: string }>({
+export function Q36NewHouseShowroomActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const [showPassage, setShowPassage] = useState(false);
+
+  const play = usePlay<{ selectedTitle?: string; storyExplored: boolean }>({
     question,
-    initial: { adj: undefined },
+    initial: { selectedTitle: undefined, storyExplored: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.adj) return { note: "Select the appreciative architectural adjective" };
-      const map: Record<string, string> = { pugnacious: "A", hideous: "B", exquisite: "C", drab: "D" };
+      if (!w.selectedTitle) return { note: "Explore the suburban neighbourhood story and select the central title" };
+      const map: Record<string, string> = {
+        "Summer Holidays": "A",
+        "The Biggest House": "B",
+        "My Friend Next Door": "C",
+        "Camping on Holiday": "D",
+      };
       return {
-        value: w.adj,
-        optionId: map[w.adj],
-        note: `Selected: ${w.adj}`,
+        value: w.selectedTitle,
+        optionId: map[w.selectedTitle],
+        note:
+          w.selectedTitle === "My Friend Next Door"
+            ? "Central theme: The relationship between Casey and her neighbour Margaret is the main focus ('My Friend Next Door')."
+            : `Selected title: ${w.selectedTitle}`,
       };
     },
   });
 
-  const adjs = ["pugnacious", "hideous", "exquisite", "drab"];
+  const titles = [
+    "Summer Holidays",
+    "The Biggest House",
+    "My Friend Next Door",
+    "Camping on Holiday",
+  ];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q36 · Goa Modern Villa Architectural Showcase 3D"
-      subtitle="Select the refined adjective praising the 3D coastal home with its elegant balcony and air conditioning"
-      hints={["The house has a balcony and air conditioning — does the writer like it?", "Pick the only positive word; check what the others mean."]}
+      title="Q36 · 🏘️ 3D Neighbourhood Story World"
+      subtitle="Examine Casey and Margaret's dynamic and select 'My Friend Next Door'"
+      hints={[
+        "The central story line revolves around Casey's interactions and disagreements with her next-door neighbour Margaret.",
+      ]}
     >
       <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-purple-200/80 bg-gradient-to-b from-purple-50/80 via-pink-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-white shadow-xs">
-                <Home className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-purple-950 uppercase tracking-wider block">Goa Coastal Residence · Feature Highlights</span>
-                <span className="text-[11px] font-medium text-slate-500">Balcony Ocean View · Modern Climate Control</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1.5">
-              <Wind className="w-3.5 h-3.5 text-purple-600" /> Air Conditioned
-            </span>
-          </div>
-
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
-            <GoaVilla3D position={[0, 0, 0]} />
-            <Avatar3D position={[1.1, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#7C3AED" hairStyle="ponytail" pose="gesturing" />
-          </World3D>
-        </div>
-
-        {/* Sentence Prompt */}
-        <div className="bg-purple-50/80 border-2 border-purple-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            It is a/an{" "}
-            <SentenceSlot value={play.world.adj} filled={!!play.world.adj} />{" "}
-            new house with a balcony and air conditioning.
-          </p>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Architectural Adjective" tone="purple">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {adjs.map((a) => (
-              <WordPill
-                key={a}
-                text={a}
-                tone="purple"
-                selected={play.world.adj === a}
-                onClick={() => play.set({ adj: a })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q37 — School Commute Verb (Walk)
-   Sentence: "It is also quite near my school so my brother and I can ______ there in the mornings."
-   Options: A. draw, B. tumble, C. lay, D. walk -> Key: D (walk)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q37SchoolWalkActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ verb?: string }>({
-    question,
-    initial: { verb: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.verb) return { note: "Select the commute locomotion verb" };
-      const map: Record<string, string> = { draw: "A", tumble: "B", lay: "C", walk: "D" };
-      return {
-        value: w.verb,
-        optionId: map[w.verb],
-        note: `Selected: ${w.verb}`,
-      };
-    },
-  });
-
-  const verbs = ["draw", "tumble", "lay", "walk"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q37 · Morning School Commute Trail 3D"
-      subtitle="Complete the sentence explaining the short walking commute along the 3D scenic morning pathway"
-      hints={["The school is quite near, so how could the children get there?", "Which verb is a way of travelling?"]}
-    >
-      <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-200/80 bg-gradient-to-b from-emerald-50/80 via-teal-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-                <Footprints className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider block">Morning Trail · 8:15 AM</span>
-                <span className="text-[11px] font-medium text-slate-500">Distance: 500 Metres · 8-Minute Scenic Walk</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300">
-              🚶 Commute: Walk
-            </span>
-          </div>
-
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
-            <TrailGreeting3D position={[0, 0, 0]} />
-          </World3D>
-        </div>
-
-        {/* Sentence Prompt */}
-        <div className="bg-emerald-50/80 border-2 border-emerald-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            It is also quite near my school so my brother and I can{" "}
-            <SentenceSlot value={play.world.verb} filled={!!play.world.verb} />{" "}
-            there in the mornings.
-          </p>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Commute Verb" tone="emerald">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {verbs.map((v) => (
-              <WordPill
-                key={v}
-                text={v}
-                tone="emerald"
-                selected={play.world.verb === v}
-                onClick={() => play.set({ verb: v })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q38 — Dual Subject Quantifier (Both)
-   Sentence: "As we have moved house, we are ______ going to a new school."
-   Options: A. two, B. both, C. together, D. couple -> Key: B (both)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q38DualSchoolActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ quantifier?: string }>({
-    question,
-    initial: { quantifier: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.quantifier) return { note: "Select the dual pronoun/quantifier" };
-      const map: Record<string, string> = { two: "A", both: "B", together: "C", couple: "D" };
-      return {
-        value: w.quantifier,
-        optionId: map[w.quantifier],
-        note: `Selected: ${w.quantifier}`,
-      };
-    },
-  });
-
-  const quantifiers = ["two", "both", "together", "couple"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q38 · Sibling School Enrolment 3D"
-      subtitle="Complete the statement referring to the two siblings attending their new school"
-      hints={["The blank refers to two people, 'my brother and I'.", "Which word goes with 'we are ___ going' to mean 'the two of us'?"]}
-    >
-      <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-indigo-200/80 bg-gradient-to-b from-indigo-50/80 via-blue-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
-                <Users className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-indigo-950 uppercase tracking-wider block">New School Enrolment · Brother & Sister</span>
-                <span className="text-[11px] font-medium text-slate-500">Two Siblings Starting Classes Together</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-indigo-100 text-indigo-900 border border-indigo-300">
-              👥 Quantifier: Both
-            </span>
-          </div>
-
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
-            <ClassroomAuditorium3D position={[0, 0, 0]} />
-            <Avatar3D position={[-0.5, 0, 0.4]} rotation={[0, 0.4, 0]} shirtColor="#2563EB" hairStyle="short" hasBackpack backpackColor="#F59E0B" pose="standing" />
-            <Avatar3D position={[0.5, 0, 0.4]} rotation={[0, -0.4, 0]} shirtColor="#EC4899" hairStyle="ponytail" hasBackpack backpackColor="#8B5CF6" pose="standing" />
-          </World3D>
-        </div>
-
-        {/* Sentence Prompt */}
-        <div className="bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            As we have moved house, we are{" "}
-            <SentenceSlot value={play.world.quantifier} filled={!!play.world.quantifier} />{" "}
-            going to a new school.
-          </p>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Dual Quantifier" tone="indigo">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {quantifiers.map((q) => (
-              <WordPill
-                key={q}
-                text={q}
-                tone="indigo"
-                selected={play.world.quantifier === q}
-                onClick={() => play.set({ quantifier: q })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q39 — Party Organizing Collocation (Planning)
-   Sentence: "I am ______ a moving in party and wondered if you would like to come."
-   Options: A. creating, B. planning, C. making, D. doing -> Key: B (planning)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q39PartyPlanningActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ verb?: string }>({
-    question,
-    initial: { verb: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.verb) return { note: "Select the verb collocating with organizing a party" };
-      const map: Record<string, string> = { creating: "A", planning: "B", making: "C", doing: "D" };
-      return {
-        value: w.verb,
-        optionId: map[w.verb],
-        note: `Selected: ${w.verb}`,
-      };
-    },
-  });
-
-  const verbs = ["creating", "planning", "making", "doing"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q39 · Housewarming Party Event Planner 3D"
-      subtitle="Select the natural English collocation for preparing and hosting a housewarming party"
-      hints={["The writer is organising a party for the future.", "Which verb do we normally use with 'a party' when we are arranging it?"]}
-    >
-      <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-pink-200/80 bg-gradient-to-b from-pink-50/80 via-purple-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-pink-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-pink-500 text-white shadow-xs">
-                <PartyPopper className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-pink-950 uppercase tracking-wider block">Housewarming Party Planning Checklist</span>
-                <span className="text-[11px] font-medium text-slate-500">Invitations · Music · Refreshments</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-pink-100 text-pink-900 border border-pink-300">
-              🎉 Collocation: Planning a Party
-            </span>
-          </div>
-
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
-            <GrandBanquetHall3D position={[0, 0, 0]} />
-            <Avatar3D position={[1.0, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#EC4899" hairStyle="bun" pose="gesturing" />
-          </World3D>
-        </div>
-
-        {/* Sentence Prompt */}
-        <div className="bg-pink-50/80 border-2 border-pink-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            I am{" "}
-            <SentenceSlot value={play.world.verb} filled={!!play.world.verb} />{" "}
-            a moving in party and wondered if you would like to come.
-          </p>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Event Verb" tone="pink">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {verbs.map((v) => (
-              <WordPill
-                key={v}
-                text={v}
-                tone="pink"
-                selected={play.world.verb === v}
-                onClick={() => play.set({ verb: v })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q40 — Culinary Preparation Verb (Prepare)
-   Sentence: "My mother and I will ______ lots of nice things to eat..."
-   Options: A. measure, B. making, C. prepare, D. transform -> Key: C (prepare)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q40FoodPrepActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ verb?: string }>({
-    question,
-    initial: { verb: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.verb) return { note: "Select the culinary base verb following modal 'will'" };
-      const map: Record<string, string> = { measure: "A", making: "B", prepare: "C", transform: "D" };
-      return {
-        value: w.verb,
-        optionId: map[w.verb],
-        note: `Selected: ${w.verb}`,
-      };
-    },
-  });
-
-  const verbs = ["measure", "making", "prepare", "transform"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q40 · Gourmet Kitchen Culinary Preparation 3D"
-      subtitle="Complete the sentence with the base verb describing preparing delicious delicacies on the 3D feast table"
-      hints={["The blank follows 'will'.", "After 'will', which form must the verb take? Only one option is a plain verb that fits."]}
-    >
-      <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Suburban Neighbourhood */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-300/80 bg-gradient-to-b from-amber-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-amber-200/60 p-3.5 bg-white/80">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
-                <Utensils className="h-4 w-4" />
+                <Home className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-amber-950 uppercase tracking-wider block">Kitchen Prep Counter · Party Feast</span>
-                <span className="text-[11px] font-medium text-slate-500">Delicious Snacks & Delicacies</span>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  Baltimore Suburban Neighborhood
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Casey&apos;s House (Left) & Margaret&apos;s House (Right)
+                </span>
               </div>
             </div>
 
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
-              🍳 Verb: Prepare
-            </span>
+            <button
+              onClick={() => setShowPassage(!showPassage)}
+              className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition-all flex items-center gap-1"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              {showPassage ? "Hide Passage" : "Read Passage"}
+            </button>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
-            <DiningTable3D position={[0, 0, 0]} />
-            <Avatar3D position={[-1.0, 0, 0.3]} rotation={[0, 0.6, 0]} shirtColor="#EF4444" hairStyle="short" pose="gesturing" />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <SuburbanGarden3D position={[0, 0, 0]} />
+            <Avatar3D position={[-0.8, 0, 0]} pose="standing" shirtColor="#2563EB" hairStyle="short" />
+            <Avatar3D position={[0.8, 0, 0]} pose="standing" shirtColor="#EC4899" hairStyle="ponytail" />
           </World3D>
+
+          {showPassage && (
+            <div className="p-4 bg-amber-950 text-amber-100 border-t border-amber-800 text-xs leading-relaxed max-h-48 overflow-y-auto">
+              <h4 className="font-bold text-amber-300 text-sm mb-1.5">Passage 2: Casey & Margaret</h4>
+              <p className="whitespace-pre-line text-amber-200">{IEO_READING_PASSAGE_CASEY}</p>
+            </div>
+          )}
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+        {/* Live Title Slot */}
+        <div className="bg-amber-50/90 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
           <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            My mother and I will{" "}
-            <SentenceSlot value={play.world.verb} filled={!!play.world.verb} />{" "}
-            lots of nice things to eat...
+            Passage Title ={" "}
+            <SentenceSlot value={play.world.selectedTitle} filled={!!play.world.selectedTitle} />
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Culinary Verb" tone="amber">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {verbs.map((v) => (
+        {/* Title Bay */}
+        <Bay label="Story Title Selection Bay" tone="amber">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {titles.map((t) => (
               <WordPill
-                key={v}
-                text={v}
-                tone="amber"
-                selected={play.world.verb === v}
-                onClick={() => play.set({ verb: v })}
-                disabled={play.locked}
+                key={t}
+                word={t}
+                selected={play.world.selectedTitle === t}
+                onClick={() => play.patch({ selectedTitle: t })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q37 — 🗺️ 3D Baltimore Map Explorer
+   Question: "Where was Casey's house?"
+   Options: A. In the middle of a city, B. On the periphery of a city, C. In the countryside, D. Near a campsite -> Key: B
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q37SchoolWalkActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedLocation?: string; mapExplored: boolean }>({
+    question,
+    initial: { selectedLocation: undefined, mapExplored: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedLocation) return { note: "Fly across the city radar and locate Casey's house" };
+      const map: Record<string, string> = {
+        "In the middle of a city": "A",
+        "On the periphery of a city": "B",
+        "In the countryside": "C",
+        "Near a campsite": "D",
+      };
+      return {
+        value: w.selectedLocation,
+        optionId: map[w.selectedLocation],
+        note:
+          w.selectedLocation === "On the periphery of a city"
+            ? "Textual fact: Paragraph 1 states Casey lived on the quiet periphery (outer suburban edge) of Baltimore."
+            : `Selected: ${w.selectedLocation}`,
+      };
+    },
+  });
+
+  const locations = [
+    "In the middle of a city",
+    "On the periphery of a city",
+    "In the countryside",
+    "Near a campsite",
+  ];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q37 · 🗺️ 3D Baltimore Map Explorer"
+      subtitle="Trace the geographical location of Casey's home on the city periphery"
+      hints={[
+        "Paragraph 1 explicitly notes that Casey lived on the 'periphery of Baltimore' where suburbs meet wooded hills.",
+      ]}
+    >
+      <Board>
+        {/* 3D City Map */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-blue-300/80 bg-gradient-to-b from-blue-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-blue-200/60 p-3.5 bg-white/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
+                <MapPin className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  Baltimore Geographical Zones
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Target: Outer Suburban Fringe (Periphery)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LanguageGlobe3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#2563EB" />
+          </World3D>
+        </div>
+
+        {/* Live Sentence Slot */}
+        <div className="bg-blue-50/90 border-2 border-blue-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            Casey&apos;s House Location ={" "}
+            <SentenceSlot value={play.world.selectedLocation} filled={!!play.world.selectedLocation} />
+          </p>
+        </div>
+
+        {/* Location Bay */}
+        <Bay label="Geographical Location Bay" tone="sky">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {locations.map((loc) => (
+              <WordPill
+                key={loc}
+                word={loc}
+                selected={play.world.selectedLocation === loc}
+                onClick={() => play.patch({ selectedLocation: loc })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q38 — 🎭 3D Neighbourhood Personality Simulation
+   Question: "Why did Casey not like her next-door neighbour?"
+   Options: A. They played difficult games., B. Margaret was too young., C. She always went away., D. They disagreed with each other. -> Key: D
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q38DualSchoolActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedReason?: string; personalitiesCompared: boolean }>({
+    question,
+    initial: { selectedReason: undefined, personalitiesCompared: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedReason) return { note: "Compare character play preferences and identify why they clashed" };
+      const map: Record<string, string> = {
+        "They played difficult games.": "A",
+        "Margaret was too young.": "B",
+        "She always went away.": "C",
+        "They disagreed with each other.": "D",
+      };
+      return {
+        value: w.selectedReason,
+        optionId: map[w.selectedReason],
+        note:
+          w.selectedReason === "They disagreed with each other."
+            ? "Textual fact: Paragraph 2 states they found it difficult to get along because they constantly disagreed on everything."
+            : `Selected: ${w.selectedReason}`,
+      };
+    },
+  });
+
+  const reasons = [
+    "They played difficult games.",
+    "Margaret was too young.",
+    "She always went away.",
+    "They disagreed with each other.",
+  ];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q38 · 🎭 3D Neighbourhood Personality Simulation"
+      subtitle="Observe their contrasting play styles and identify 'They disagreed with each other.'"
+      hints={[
+        "Paragraph 2 states that Casey and Margaret struggled to get along because they disagreed on every game and activity.",
+      ]}
+    >
+      <Board>
+        {/* 3D Dynamics */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-rose-300/80 bg-gradient-to-b from-rose-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-rose-200/60 p-3.5 bg-white/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs">
+                <Users2 className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  Character Preference Dynamics
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Margaret: Dolls & Tea Parties vs Casey: Tree Climbing & Bug Catching
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <SuburbanGarden3D position={[0, 0, 0]} />
+            <Avatar3D position={[-0.8, 0, 0]} pose="standing" shirtColor="#2563EB" />
+            <Avatar3D position={[0.8, 0, 0]} pose="standing" shirtColor="#EC4899" />
+          </World3D>
+        </div>
+
+        {/* Live Sentence Slot */}
+        <div className="bg-rose-50/90 border-2 border-rose-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            Reason for Friction ={" "}
+            <SentenceSlot value={play.world.selectedReason} filled={!!play.world.selectedReason} />
+          </p>
+        </div>
+
+        {/* Reason Bay */}
+        <Bay label="Friction Reason Bay" tone="rose">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {reasons.map((r) => (
+              <WordPill
+                key={r}
+                word={r}
+                selected={play.world.selectedReason === r}
+                onClick={() => play.patch({ selectedReason: r })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q39 — 🌎 3D Adventure Planning Game
+   Question: "Casey's mother would be difficult to ______."
+   Options: A. ask for the money to travel, B. force to South America, C. convince about the holiday, D. go abroad with -> Key: D (go abroad with)
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q39PartyPlanningActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedPhrase?: string; itineraryDrawn: boolean }>({
+    question,
+    initial: { selectedPhrase: undefined, itineraryDrawn: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedPhrase) return { note: "Review Casey's travel itinerary and complete the Mother travel phrase" };
+      const map: Record<string, string> = {
+        "ask for the money to travel": "A",
+        "force to South America": "B",
+        "convince about the holiday": "C",
+        "go abroad with": "D",
+      };
+      return {
+        value: w.selectedPhrase,
+        optionId: map[w.selectedPhrase],
+        note:
+          w.selectedPhrase === "go abroad with"
+            ? "Passage detail: Convincing her mother to actually travel and go abroad with her was notoriously difficult."
+            : `Selected: ${w.selectedPhrase}`,
+      };
+    },
+  });
+
+  const phrases = [
+    "ask for the money to travel",
+    "force to South America",
+    "convince about the holiday",
+    "go abroad with",
+  ];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q39 · 🌎 3D Adventure Planning Game"
+      subtitle="Prepare the foreign travel passport and complete the difficulty regarding Mother"
+      hints={[
+        "Paragraph 3 describes how difficult it was to persuade her mother to leave Baltimore and 'go abroad with' her.",
+      ]}
+    >
+      <Board>
+        {/* 3D Travel Planning */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-300/80 bg-gradient-to-b from-emerald-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-emerald-200/60 p-3.5 bg-white/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                <Plane className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  South America Expedition Desk
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Passport, Flight Itinerary & Mother&apos;s Reluctance
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LanguageGlobe3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#059669" />
+          </World3D>
+        </div>
+
+        {/* Live Sentence Slot */}
+        <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            Casey&apos;s mother would be difficult to{" "}
+            <SentenceSlot value={play.world.selectedPhrase} filled={!!play.world.selectedPhrase} />.
+          </p>
+        </div>
+
+        {/* Phrase Bay */}
+        <Bay label="Travel Plan Phrase Bay" tone="emerald">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {phrases.map((p) => (
+              <WordPill
+                key={p}
+                word={p}
+                selected={play.world.selectedPhrase === p}
+                onClick={() => play.patch({ selectedPhrase: p })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q40 — ⚠️ 3D Vocabulary Hazard Map (Meaning of Notoriously)
+   Question: "What is the meaning of the word ‘notoriously’ in the third paragraph?"
+   Options: A. Especially, B. Quickly, C. Reservedly, D. Dangerously -> Key: D (Dangerously)
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q40FoodPrepActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedMeaning?: string; radarActive: boolean }>({
+    question,
+    initial: { selectedMeaning: undefined, radarActive: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedMeaning) return { note: "Inspect the hazardous mountain travel context and define 'notoriously'" };
+      const map: Record<string, string> = {
+        Especially: "A",
+        Quickly: "B",
+        Reservedly: "C",
+        Dangerously: "D",
+      };
+      return {
+        value: w.selectedMeaning,
+        optionId: map[w.selectedMeaning],
+        note:
+          w.selectedMeaning === "Dangerously"
+            ? "Contextual meaning: In the context of unpredictable foreign mountain travel, 'notoriously' points toward 'Dangerously'."
+            : `Selected: ${w.selectedMeaning}`,
+      };
+    },
+  });
+
+  const meanings = ["Especially", "Quickly", "Reservedly", "Dangerously"];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q40 · ⚠️ 3D Vocabulary Hazard Map"
+      subtitle="Analyze the contextual perception of unpredictable travel and define 'notoriously'"
+      hints={[
+        "The passage contrasts safe home life with foreign travel perceived as notoriously/dangerously unpredictable.",
+      ]}
+    >
+      <Board>
+        {/* 3D Hazard Radar */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-red-300/80 bg-gradient-to-b from-red-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-red-800/60 p-3.5 bg-slate-900/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-600 text-white shadow-xs">
+                <AlertTriangle className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-red-200 uppercase tracking-wider block">
+                  Foreign Travel Hazard Radar
+                </span>
+                <span className="text-[11px] font-medium text-red-400">
+                  Perception: High Risk / Notoriously Unsafe
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LanguageGlobe3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#DC2626" />
+          </World3D>
+        </div>
+
+        {/* Live Sentence Slot */}
+        <div className="bg-red-950/80 border-2 border-red-700 text-red-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Meaning of <span className="text-red-400 font-mono underline">&lsquo;notoriously&rsquo;</span> ={" "}
+            <SentenceSlot value={play.world.selectedMeaning} filled={!!play.world.selectedMeaning} />
+          </p>
+        </div>
+
+        {/* Meaning Bay */}
+        <Bay label="Contextual Definition Bay" tone="rose">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {meanings.map((m) => (
+              <WordPill
+                key={m}
+                word={m}
+                selected={play.world.selectedMeaning === m}
+                onClick={() => play.patch({ selectedMeaning: m })}
               />
             ))}
           </div>

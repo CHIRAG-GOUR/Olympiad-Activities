@@ -1,98 +1,127 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ActivityComponentProps } from "../kit/types";
 import { usePlay } from "../imo6a-play/engine";
 import { Shell, Board, WordPill, SentenceSlot, Bay, World3D } from "./kit";
-import { History, Waves, Sprout, Clock, Gift, Sun, Sparkles } from "lucide-react";
 import {
-  PlaygroundPark3D,
-  BeachSeaside3D,
-  Herbarium3D,
-  ParkBenchClock3D,
+  Lightbulb,
+  Zap,
+  Target,
+  BookOpen,
+  Landmark,
+  Cpu,
+  CheckCircle2,
+  Sparkles,
+  RotateCcw,
+} from "lucide-react";
+import {
+  LibraryDesk3D,
+  LexicalVault3D,
   GiftUnboxing3D,
+  Avatar3D,
 } from "./components3D";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q16 — 3D Playground Historical Landscape (Used to)
-   Sentence: "That area of the playground ______ be covered in grass. Now it is bare soil."
-   Options: A. isn't, B. was once, C. is to, D. used to -> Key: D (used to)
+   Q16 — 💡 3D Power-Cut Scene
+   Sentence: "Before the electricity went out, she ______ me a lamp with my homework."
+   Options: A. gives, B. has given, C. was giving, D. is giving -> Key: C (was giving)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q16OldPlaygroundActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ phrase?: string }>({
+export function Q16OldPlaygroundActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const [lightsFlickered, setLightsFlickered] = useState(true);
+
+  const play = usePlay<{ selectedAspect?: string; powerState: string }>({
     question,
-    initial: { phrase: undefined },
+    initial: { selectedAspect: undefined, powerState: "storm_cut" },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.phrase) return { note: "Select the past habitual/state construction" };
-      const map: Record<string, string> = { "isn't": "A", "was once": "B", "is to": "C", "used to": "D" };
+      if (!w.selectedAspect) return { note: "Witness the interrupted past action and choose the past continuous form" };
+      const map: Record<string, string> = {
+        gives: "A",
+        "has given": "B",
+        "was giving": "C",
+        "is giving": "D",
+      };
       return {
-        value: w.phrase,
-        optionId: map[w.phrase],
-        note: `Selected: ${w.phrase}`,
+        value: w.selectedAspect,
+        optionId: map[w.selectedAspect],
+        note:
+          w.selectedAspect === "was giving"
+            ? "Past Continuous for interrupted action: 'was giving me a lamp' was in progress when the electricity went out."
+            : `Selected: ${w.selectedAspect}`,
       };
     },
   });
 
-  const phrases = ["isn't", "was once", "is to", "used to"];
+  const aspects = ["gives", "has given", "was giving", "is giving"];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q16 · Playground Landscape 3D Studio"
-      subtitle="Contrast the former green playground with current soil and select the past state phrase"
-      hints={["'Now it is bare soil' tells you the grass is gone — it was true in the past, not now.", "Which phrase describes a past state that is no longer true?"]}
+      title="Q16 · 💡 3D Power-Cut Scene"
+      subtitle="Examine the action in progress before the electrical power failure"
+      hints={[
+        "An action in progress in the past before another completed event ('went out') requires Past Continuous ('was giving').",
+      ]}
     >
       <Board>
-        {/* 3D Playground Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-emerald-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Stormy Study Room */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-300/80 bg-gradient-to-b from-amber-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-amber-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
-                <History className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-xs">
+                <Lightbulb className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-amber-950 uppercase tracking-wider block">School Playground · Landscape Log</span>
-                <span className="text-[11px] font-medium text-slate-500">Past Greenery vs Present Soil</span>
+                <span className="text-xs font-bold text-amber-200 uppercase tracking-wider block">
+                  Study Desk · Stormy Evening
+                </span>
+                <span className="text-[11px] font-medium text-amber-400">
+                  Status: Handing Over Desk Lamp during Outage
+                </span>
               </div>
             </div>
 
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
-              Pattern: used to + be
-            </span>
+            <div className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-900/80 border border-amber-700 text-amber-200 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-400" /> Power Cut Event
+            </div>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
-            <PlaygroundPark3D position={[0, 0, 0]} />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LibraryDesk3D position={[0, 0, 0]} />
+            <Avatar3D position={[-0.8, 0, 0]} pose="gesturing" shirtColor="#F59E0B" />
           </World3D>
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            That area of the playground{" "}
-            <SentenceSlot value={play.world.phrase} filled={!!play.world.phrase} />{" "}
-            be covered in grass. Now it is bare soil.
+        {/* Live Sentence Slot */}
+        <div className="bg-amber-950/80 border-2 border-amber-700 text-amber-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Before the electricity went out, she{" "}
+            <SentenceSlot value={play.world.selectedAspect} filled={!!play.world.selectedAspect} />{" "}
+            me a lamp with my homework.
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Past State Verb Phrase" tone="amber">
+        {/* Aspect Bay */}
+        <Bay label="Past Continuous Aspect Bay" tone="amber">
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {phrases.map((p) => (
+            {aspects.map((a) => (
               <WordPill
-                key={p}
-                text={p}
-                size="lg"
-                tone="amber"
-                selected={play.world.phrase === p}
-                onClick={() => play.set({ phrase: p })}
-                disabled={play.locked}
+                key={a}
+                word={a}
+                selected={play.world.selectedAspect === a}
+                onClick={() => play.patch({ selectedAspect: a })}
               />
             ))}
           </div>
@@ -103,174 +132,192 @@ export function Q16OldPlaygroundActivity({ question, value, activityState, onCha
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q17 — 3D Seaside Beach Vacation (Past Habitual 'Would')
-   Sentence: "When I was younger, we used to go on holiday to the beach and I ______ eat lots of ice cream."
-   Options: A. shall, B. will, C. am going to, D. would -> Key: D (would)
+   Q17 — 🧗 3D Challenge Board
+   Sentence: "I always jump ______ with both feet on tasks that I enjoy."
+   Options: A. on, B. in, C. up, D. at -> Key: B (in)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q17BeachMemoryActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ modal?: string }>({
+export function Q17BeachMemoryActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedPreposition?: string; taskJumped: boolean }>({
     question,
-    initial: { modal: undefined },
+    initial: { selectedPreposition: undefined, taskJumped: false },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.modal) return { note: "Select the modal verb expressing past repeated habit" };
-      const map: Record<string, string> = { shall: "A", will: "B", "am going to": "C", would: "D" };
+      if (!w.selectedPreposition) return { note: "Accept the enjoyable project and complete the enthusiastic idiom" };
+      const map: Record<string, string> = { on: "A", in: "B", up: "C", at: "D" };
       return {
-        value: w.modal,
-        optionId: map[w.modal],
-        note: `Selected: ${w.modal}`,
+        value: w.selectedPreposition,
+        optionId: map[w.selectedPreposition],
+        note:
+          w.selectedPreposition === "in"
+            ? "Idiomatic expression: 'jump in with both feet' means to engage enthusiastically and wholeheartedly."
+            : `Selected: ${w.selectedPreposition}`,
       };
     },
   });
 
-  const modals = ["shall", "will", "am going to", "would"];
+  const prepositions = ["on", "in", "up", "at"];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q17 · Seaside Beach 3D Studio"
-      subtitle="Complete the nostalgic recollection of childhood summer habits by the seaside"
-      hints={["The sentence describes something that happened again and again on past holidays.", "Look for a modal that can describe repeated past actions, like 'used to'."]}
+      title="Q17 · 🧗 3D Challenge Board"
+      subtitle="Jump enthusiastically into an enjoyable challenge and complete the idiom"
+      hints={[
+        "The complete English idiom for enthusiastically starting an activity is 'jump IN with both feet'.",
+      ]}
     >
       <Board>
-        {/* 3D Beach Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-sky-200/80 bg-gradient-to-b from-sky-50/80 via-amber-50/40 to-blue-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-500 text-white shadow-xs">
-                <Waves className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-sky-950 uppercase tracking-wider block">Childhood Seaside Vacation</span>
-                <span className="text-[11px] font-medium text-slate-500">Sunny Holiday Memory Album</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5">
-              <Sun className="w-3.5 h-3.5 text-amber-600" /> Summer Beach
-            </span>
-          </div>
-
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
-            <BeachSeaside3D position={[0, 0, 0]} />
-          </World3D>
-        </div>
-
-        {/* Sentence Prompt */}
-        <div className="bg-sky-50/80 border-2 border-sky-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            When I was younger, we used to go on holiday to the beach and I{" "}
-            <SentenceSlot value={play.world.modal} filled={!!play.world.modal} />{" "}
-            eat lots of ice cream.
-          </p>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Past Modal Verb" tone="sky">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {modals.map((m) => (
-              <WordPill
-                key={m}
-                text={m}
-                size="lg"
-                tone="sky"
-                selected={play.world.modal === m}
-                onClick={() => play.set({ modal: m })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q18 — 3D Botanical Herbarium Collocation (Familiar 'With')
-   Sentence: "I am not familiar ______ the botanical names of these herbs."
-   Options: A. to, B. with, C. by, D. of -> Key: B (with)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q18BotanicalHerbariumActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ prep?: string }>({
-    question,
-    initial: { prep: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.prep) return { note: "Select the preposition that collocates with 'familiar'" };
-      const map: Record<string, string> = { to: "A", with: "B", by: "C", of: "D" };
-      return {
-        value: w.prep,
-        optionId: map[w.prep],
-        note: `Selected: ${w.prep}`,
-      };
-    },
-  });
-
-  const preps = ["to", "with", "by", "of"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q18 · Botanical Herbarium 3D"
-      subtitle="Complete the statement regarding familiarity with plant scientific names in the greenhouse"
-      hints={["Which preposition usually follows 'familiar'?", "Try each option in: 'I am familiar ___ this song.'"]}
-    >
-      <Board>
-        {/* 3D Botanical Herbarium */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-200/80 bg-gradient-to-b from-emerald-50/80 via-teal-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Adventure Challenge */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-300/80 bg-gradient-to-b from-emerald-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-emerald-200/60 p-3.5 bg-white/80">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-                <Sprout className="h-4 w-4" />
+                <Target className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider block">Greenhouse Herbarium Table</span>
-                <span className="text-[11px] font-medium text-slate-500">Basil, Rosemary & Mint Specimens</span>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  Adventure Challenge Arena
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Target Task: Build Robotics Model · Commitment: Full & Enthusiastic
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300">
-              🌿 Collocation: Familiar + with
-            </span>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
-            <Herbarium3D position={[0, 0, 0]} />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <GiftUnboxing3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#059669" hairStyle="cap" />
           </World3D>
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-emerald-50/80 border-2 border-emerald-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+        {/* Live Sentence Slot */}
+        <div className="bg-emerald-50/90 border-2 border-emerald-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
           <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            I am not familiar{" "}
-            <SentenceSlot value={play.world.prep} filled={!!play.world.prep} />{" "}
-            the botanical names of these herbs.
+            I always jump{" "}
+            <SentenceSlot value={play.world.selectedPreposition} filled={!!play.world.selectedPreposition} />{" "}
+            with both feet on tasks that I enjoy.
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Dependent Preposition" tone="emerald">
+        {/* Preposition Bay */}
+        <Bay label="Idiomatic Phrasal Preposition Bay" tone="emerald">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {prepositions.map((p) => (
+              <WordPill
+                key={p}
+                word={p}
+                selected={play.world.selectedPreposition === p}
+                onClick={() => play.patch({ selectedPreposition: p })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q18 — 📚 3D Study Recovery Game
+   Sentence: "I have to study all weekend, so I can catch up ______ the work I missed last week."
+   Options: A. to, B. on, C. at, D. around -> Key: B (on)
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q18BotanicalHerbariumActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedPreposition?: string; workSorted: boolean }>({
+    question,
+    initial: { selectedPreposition: undefined, workSorted: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedPreposition) return { note: "Organize the missed assignments and complete the phrasal verb" };
+      const map: Record<string, string> = { to: "A", on: "B", at: "C", around: "D" };
+      return {
+        value: w.selectedPreposition,
+        optionId: map[w.selectedPreposition],
+        note:
+          w.selectedPreposition === "on"
+            ? "Phrasal verb: 'catch up on [something]' means to do tasks that should have been done earlier."
+            : `Selected: ${w.selectedPreposition}`,
+      };
+    },
+  });
+
+  const preps = ["to", "on", "at", "around"];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q18 · 📚 3D Study Recovery Game"
+      subtitle="Organize missed school assignments and complete the phrasal verb 'catch up on'"
+      hints={[
+        "The standard phrasal verb for recovering missed work or tasks is 'catch up ON'.",
+      ]}
+    >
+      <Board>
+        {/* 3D Library Desk */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-blue-200/80 bg-gradient-to-b from-blue-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-blue-200/60 p-3.5 bg-white/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
+                <BookOpen className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  School Library Study Station
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Missed Modules: History Ch 4, Math Set B, Science Lab Notes
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LibraryDesk3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="sitting_studying" shirtColor="#2563EB" />
+          </World3D>
+        </div>
+
+        {/* Live Sentence Slot */}
+        <div className="bg-blue-50/90 border-2 border-blue-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            I have to study all weekend, so I can catch up{" "}
+            <SentenceSlot value={play.world.selectedPreposition} filled={!!play.world.selectedPreposition} />{" "}
+            the work I missed last week.
+          </p>
+        </div>
+
+        {/* Preposition Bay */}
+        <Bay label="Phrasal Particle Bay" tone="sky">
           <div className="flex flex-wrap items-center justify-center gap-3">
             {preps.map((p) => (
               <WordPill
                 key={p}
-                text={p}
-                size="lg"
-                tone="emerald"
-                selected={play.world.prep === p}
-                onClick={() => play.set({ prep: p })}
-                disabled={play.locked}
+                word={p}
+                selected={play.world.selectedPreposition === p}
+                onClick={() => play.patch({ selectedPreposition: p })}
               />
             ))}
           </div>
@@ -281,174 +328,192 @@ export function Q18BotanicalHerbariumActivity({ question, value, activityState, 
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q19 — 3D Park Bench Clock Duration (Future Perfect Continuous)
-   Sentence: "By 4 pm, this lady ______ been sitting on that bench for five hours."
-   Options: A. has, B. will have, C. have, D. must have -> Key: B (will have)
+   Q19 — 🏛️ 3D Tradition Museum
+   Sentence: "I agree that the ______ of some old traditions makes sense today."
+   Options: A. hanging, B. brink, C. abolition, D. shower -> Key: C (abolition)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q19BenchDurationActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ verb?: string }>({
+export function Q19BenchDurationActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedNoun?: string; traditionDiscontinued: boolean }>({
     question,
-    initial: { verb: undefined },
+    initial: { selectedNoun: undefined, traditionDiscontinued: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.verb) return { note: "Select the future perfect auxiliary" };
-      const map: Record<string, string> = { has: "A", "will have": "B", have: "C", "must have": "D" };
+      if (!w.selectedNoun) return { note: "Examine historical customs and select the formal noun for ending a practice" };
+      const map: Record<string, string> = { hanging: "A", brink: "B", abolition: "C", shower: "D" };
       return {
-        value: w.verb,
-        optionId: map[w.verb],
-        note: `Selected: ${w.verb}`,
+        value: w.selectedNoun,
+        optionId: map[w.selectedNoun],
+        note:
+          w.selectedNoun === "abolition"
+            ? "Formal vocabulary: 'abolition' means the formal ending or cancellation of a system, practice, or outdated tradition."
+            : `Selected: ${w.selectedNoun}`,
       };
     },
   });
 
-  const verbs = ["has", "will have", "have", "must have"];
+  const nouns = ["hanging", "brink", "abolition", "shower"];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q19 · Park Bench Clock 3D Studio"
-      subtitle="Complete the future perfect continuous calculation for the lady resting on the bench"
-      hints={["'By 4 pm' points to a moment in the future, and the sitting will have lasted up to then.", "'___ been sitting' — which helper verb looks forward to a future moment?"]}
+      title="Q19 · 🏛️ 3D Tradition Museum"
+      subtitle="Explore historical customs and install the formal noun meaning the ending of outdated traditions"
+      hints={[
+        "The formal noun for formally ending, repealing, or doing away with an old tradition or law is 'abolition'.",
+      ]}
     >
       <Board>
-        {/* 3D Park Bench & Grand Clock */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-indigo-200/80 bg-gradient-to-b from-indigo-50/80 via-purple-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Museum Hall */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-stone-300/80 bg-gradient-to-b from-stone-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-stone-200/60 p-3.5 bg-white/80">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
-                <Clock className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-stone-700 text-white shadow-xs">
+                <Landmark className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-indigo-950 uppercase tracking-wider block">Central Park · Clock Tower</span>
-                <span className="text-[11px] font-medium text-slate-500">Time Horizon: 4:00 PM (5 Hours Duration)</span>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  Historical Customs Museum
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Topic: Discontinuation & Reform of Obsolete Customs
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-indigo-100 text-indigo-900 border border-indigo-300">
-              ⏱ By 4:00 PM
-            </span>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
-            <ParkBenchClock3D position={[0, 0, 0]} />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#57534E" />
           </World3D>
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+        {/* Live Sentence Slot */}
+        <div className="bg-stone-50/90 border-2 border-stone-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
           <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            By 4 pm, this lady{" "}
-            <SentenceSlot value={play.world.verb} filled={!!play.world.verb} />{" "}
-            been sitting on that bench for five hours.
+            I agree that the{" "}
+            <SentenceSlot value={play.world.selectedNoun} filled={!!play.world.selectedNoun} />{" "}
+            of some old traditions makes sense today.
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Auxiliary Verb" tone="indigo">
+        {/* Noun Bay */}
+        <Bay label="Historical Noun Bay" tone="slate">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {nouns.map((n) => (
+              <WordPill
+                key={n}
+                word={n}
+                selected={play.world.selectedNoun === n}
+                onClick={() => play.patch({ selectedNoun: n })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q20 — 🤖 3D Invention Workshop
+   Sentence: "It is really difficult to ______ and create something new."
+   Options: A. innovate, B. nudge, C. simple, D. unable -> Key: A (innovate)
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q20LuckyGiftActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedVerb?: string; machineUpgraded: boolean }>({
+    question,
+    initial: { selectedVerb: undefined, machineUpgraded: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedVerb) return { note: "Synthesize the engineering breakthrough and choose the creative verb" };
+      const map: Record<string, string> = { innovate: "A", nudge: "B", simple: "C", unable: "D" };
+      return {
+        value: w.selectedVerb,
+        optionId: map[w.selectedVerb],
+        note:
+          w.selectedVerb === "innovate"
+            ? "Vocabulary meaning: 'innovate' means to introduce new methods, ideas, or products."
+            : `Selected: ${w.selectedVerb}`,
+      };
+    },
+  });
+
+  const verbs = ["innovate", "nudge", "simple", "unable"];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q20 · 🤖 3D Invention Workshop"
+      subtitle="Modify components in the inventor's lab and install the verb 'innovate'"
+      hints={[
+        "The infinitive verb paired with 'create something new' is 'innovate' (meaning to introduce novel ideas/methods).",
+      ]}
+    >
+      <Board>
+        {/* 3D Invention Workshop */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-teal-300/80 bg-gradient-to-b from-teal-50 to-slate-900/10 shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-teal-200/60 p-3.5 bg-white/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-600 text-white shadow-xs">
+                <Cpu className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                  Inventor&apos;s Prototype Bench
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Gears, Quantum Core & Microcontrollers Assembled
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <GiftUnboxing3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#0D9488" hairStyle="cap" />
+          </World3D>
+        </div>
+
+        {/* Live Sentence Slot */}
+        <div className="bg-teal-50/90 border-2 border-teal-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
+            It is really difficult to{" "}
+            <SentenceSlot value={play.world.selectedVerb} filled={!!play.world.selectedVerb} />{" "}
+            and create something new.
+          </p>
+        </div>
+
+        {/* Verb Bay */}
+        <Bay label="Infinitive Creative Verb Bay" tone="teal">
           <div className="flex flex-wrap items-center justify-center gap-3">
             {verbs.map((v) => (
               <WordPill
                 key={v}
-                text={v}
-                size="lg"
-                tone="indigo"
-                selected={play.world.verb === v}
-                onClick={() => play.set({ verb: v })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q20 — 3D Antique Gift Unboxing (Subject 'Who')
-   Sentence: "The child ______ receives this gift is very lucky."
-   Options: A. who, B. whose, C. which, D. whom -> Key: A (who)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q20LuckyGiftActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ pronoun?: string }>({
-    question,
-    initial: { pronoun: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.pronoun) return { note: "Select the relative pronoun referring to the child" };
-      const map: Record<string, string> = { who: "A", whose: "B", which: "C", whom: "D" };
-      return {
-        value: w.pronoun,
-        optionId: map[w.pronoun],
-        note: `Selected: ${w.pronoun}`,
-      };
-    },
-  });
-
-  const pronouns = ["who", "whose", "which", "whom"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q20 · Antique Gift Unboxing 3D"
-      subtitle="Complete the relative clause identifying the fortunate child who receives the special present"
-      hints={["The blank starts a phrase describing the child, and that phrase needs a subject for 'receives'.", "Which option refers to a person and can act as the subject of a verb?"]}
-    >
-      <Board>
-        {/* 3D Gift Table Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-violet-200/80 bg-gradient-to-b from-violet-50/80 via-purple-50/40 to-pink-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white shadow-xs">
-                <Gift className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-violet-950 uppercase tracking-wider block">Birthday Gift Unboxing Table</span>
-                <span className="text-[11px] font-medium text-slate-500">Lucky Recipient Announcement</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-pink-100 text-pink-900 border border-pink-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-pink-600" /> Antique Watch
-            </span>
-          </div>
-
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.0], fov: 45 }}>
-            <GiftUnboxing3D position={[0, 0, 0]} />
-          </World3D>
-        </div>
-
-        {/* Sentence Prompt */}
-        <div className="bg-violet-50/80 border-2 border-violet-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            The child{" "}
-            <SentenceSlot value={play.world.pronoun} filled={!!play.world.pronoun} />{" "}
-            receives this gift is very lucky.
-          </p>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Relative Pronoun" tone="violet">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {pronouns.map((p) => (
-              <WordPill
-                key={p}
-                text={p}
-                size="lg"
-                tone="violet"
-                selected={play.world.pronoun === p}
-                onClick={() => play.set({ pronoun: p })}
-                disabled={play.locked}
+                word={v}
+                selected={play.world.selectedVerb === v}
+                onClick={() => play.patch({ selectedVerb: v })}
               />
             ))}
           </div>

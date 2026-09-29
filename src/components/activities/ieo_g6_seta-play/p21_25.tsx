@@ -1,99 +1,118 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ActivityComponentProps } from "../kit/types";
 import { usePlay } from "../imo6a-play/engine";
 import { Shell, Board, WordPill, SentenceSlot, Bay, World3D } from "./kit";
-import { Palette, Utensils, Volume2, ShieldAlert, Fish } from "lucide-react";
 import {
-  ArtStudio3D,
-  GrandBanquetHall3D,
-  AcousticSoundLab3D,
-  ClassroomAuditorium3D,
-  MarineReef3D,
+  AlertTriangle,
+  Globe2,
+  SearchCheck,
+  FileSearch,
+  HeartCrack,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
+import {
+  LanguageGlobe3D,
+  LexicalVault3D,
   Avatar3D,
 } from "./components3D";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q21 — 3D Masterpiece Art Studio (Precision Vocabulary)
-   Sentence: "That is such a pretty picture. I would like to try and ______ it."
-   Options: A. repeal, B. revitalise, C. replicate, D. reimburse -> Key: C (replicate)
+   Q21 — 🚙 3D Mountain Road Reconnaissance
+   Sentence: "The road up that mountain is ______ because of the dangerous holes in it."
+   Options: A. innocuous, B. intrepid, C. brave, D. notorious -> Key: D (notorious)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q21ArtStudioActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ verb?: string }>({
+export function Q21ArtStudioActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedWord?: string; hazardInspected: boolean }>({
     question,
-    initial: { verb: undefined },
+    initial: { selectedWord: undefined, hazardInspected: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.verb) return { note: "Select the vocabulary term meaning to make an exact copy" };
-      const map: Record<string, string> = { repeal: "A", revitalise: "B", replicate: "C", reimburse: "D" };
+      if (!w.selectedWord) return { note: "Inspect the mountain road hazard markers and select the descriptive adjective" };
+      const map: Record<string, string> = {
+        innocuous: "A",
+        intrepid: "B",
+        brave: "C",
+        notorious: "D",
+      };
       return {
-        value: w.verb,
-        optionId: map[w.verb],
-        note: `Selected: ${w.verb}`,
+        value: w.selectedWord,
+        optionId: map[w.selectedWord],
+        note:
+          w.selectedWord === "notorious"
+            ? "Vocabulary meaning: 'notorious' means famous or well known for something bad or dangerous."
+            : `Selected: ${w.selectedWord}`,
       };
     },
   });
 
-  const verbs = ["repeal", "revitalise", "replicate", "reimburse"];
+  const words = ["innocuous", "intrepid", "brave", "notorious"];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q21 · Masterpiece Art Studio 3D"
-      subtitle="Select the precise verb describing reproducing the master oil painting on easel"
-      hints={["The speaker wants to make their own copy of the picture.", "Which word means to copy something exactly?"]}
+      title="Q21 · 🚙 3D Mountain Road Reconnaissance"
+      subtitle="Examine the dangerous road conditions and install the adjective 'notorious'"
+      hints={[
+        "'Notorious' means widely known for negative qualities or dangers (such as hazardous potholes).",
+      ]}
     >
       <Board>
-        {/* 3D Art Studio Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-purple-200/80 bg-gradient-to-b from-purple-50/80 via-pink-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Mountain Reconnaissance */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-red-300/80 bg-gradient-to-b from-red-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-red-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-white shadow-xs">
-                <Palette className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-600 text-white shadow-xs">
+                <AlertTriangle className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-purple-950 uppercase tracking-wider block">Fine Arts Studio · Easel Station</span>
-                <span className="text-[11px] font-medium text-slate-500">Master Canvas Reproduction</span>
+                <span className="text-xs font-bold text-red-200 uppercase tracking-wider block">
+                  Mountain Pass Reconnaissance
+                </span>
+                <span className="text-[11px] font-medium text-red-400">
+                  Hazards: Deep Potholes, Landslides · Reputation: Infamous
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-purple-100 text-purple-900 border border-purple-300">
-              🎨 Target: Replicate
-            </span>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.0], fov: 45 }}>
-            <ArtStudio3D position={[0, 0, 0]} />
-            <Avatar3D position={[0.9, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#7C3AED" hairStyle="beret" pose="gesturing" />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#DC2626" />
           </World3D>
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-purple-50/80 border-2 border-purple-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            That is such a pretty picture. I would like to try and{" "}
-            <SentenceSlot value={play.world.verb} filled={!!play.world.verb} />{" "}
-            it.
+        {/* Live Sentence Slot */}
+        <div className="bg-red-950/80 border-2 border-red-700 text-red-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            The road up that mountain is{" "}
+            <SentenceSlot value={play.world.selectedWord} filled={!!play.world.selectedWord} />{" "}
+            because of the dangerous holes in it.
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Precise Verb" tone="purple">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {verbs.map((v) => (
+        {/* Word Bay */}
+        <Bay label="Evaluative Adjective Bay" tone="rose">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {words.map((w) => (
               <WordPill
-                key={v}
-                text={v}
-                tone="purple"
-                selected={play.world.verb === v}
-                onClick={() => play.set({ verb: v })}
-                disabled={play.locked}
+                key={w}
+                word={w}
+                selected={play.world.selectedWord === w}
+                onClick={() => play.patch({ selectedWord: w })}
               />
             ))}
           </div>
@@ -104,84 +123,98 @@ export function Q21ArtStudioActivity({ question, value, activityState, onChange,
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q22 — 3D Grand Banquet Feast (Regret 'If only')
-   Sentence: "If ______ I had not eaten that last piece of cake. I feel so full."
-   Options: A. barely, B. never, C. ever, D. only -> Key: D (only)
+   Q22 — 🌍 3D Family Journey Map
+   Sentence: "I am not from here originally; my family are ______."
+   Options: A. absurd, B. immigrants, C. forfeit, D. bribed -> Key: B (immigrants)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q22CakeRegretActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ adverb?: string }>({
+export function Q22CakeRegretActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedNoun?: string; globeRotated: boolean }>({
     question,
-    initial: { adverb: undefined },
+    initial: { selectedNoun: undefined, globeRotated: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.adverb) return { note: "Select the word completing the idiom of regret" };
-      const map: Record<string, string> = { barely: "A", never: "B", ever: "C", only: "D" };
+      if (!w.selectedNoun) return { note: "Trace the cross-border relocation journey and install the collective noun" };
+      const map: Record<string, string> = {
+        absurd: "A",
+        immigrants: "B",
+        forfeit: "C",
+        bribed: "D",
+      };
       return {
-        value: w.adverb,
-        optionId: map[w.adverb],
-        note: `Selected: ${w.adverb}`,
+        value: w.selectedNoun,
+        optionId: map[w.selectedNoun],
+        note:
+          w.selectedNoun === "immigrants"
+            ? "Demographic noun: 'immigrants' refers to people who come to live permanently in a foreign country."
+            : `Selected: ${w.selectedNoun}`,
       };
     },
   });
 
-  const adverbs = ["barely", "never", "ever", "only"];
+  const nouns = ["absurd", "immigrants", "forfeit", "bribed"];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q22 · Grand Banquet Feast 3D"
-      subtitle="Complete the idiom of regret describing overeating at the grand banquet table"
-      hints={["'If ___ I had not eaten...' expresses a regret about the past.", "Try each word in the blank and read the sentence aloud."]}
+      title="Q22 · 🌍 3D Family Journey Map"
+      subtitle="Trace the family migration trajectory across the 3D globe and choose 'immigrants'"
+      hints={[
+        "People who move from their original country to settle permanently in another are called 'immigrants'.",
+      ]}
     >
       <Board>
-        {/* 3D Banquet Hall Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Migration Globe */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-blue-300/80 bg-gradient-to-b from-blue-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-blue-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
-                <Utensils className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500 text-white shadow-xs">
+                <Globe2 className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-amber-950 uppercase tracking-wider block">Grand Banquet Dining Table</span>
-                <span className="text-[11px] font-medium text-slate-500">Overeating Regret Expression</span>
+                <span className="text-xs font-bold text-blue-200 uppercase tracking-wider block">
+                  Global Migration Trajectory
+                </span>
+                <span className="text-[11px] font-medium text-blue-400">
+                  Origin Country → Relocation Route → New Permanent Home
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
-              🍰 Idiom: If only...
-            </span>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
-            <GrandBanquetHall3D position={[0, 0, 0]} />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LanguageGlobe3D position={[0, 0, 0]} />
+            <Avatar3D position={[0.9, 0, 0.2]} pose="standing" shirtColor="#0284C7" />
           </World3D>
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            If{" "}
-            <SentenceSlot value={play.world.adverb} filled={!!play.world.adverb} />{" "}
-            I had not eaten that last piece of cake. I feel so full.
+        {/* Live Sentence Slot */}
+        <div className="bg-blue-950/80 border-2 border-blue-700 text-blue-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            I am not from here originally; my family are{" "}
+            <SentenceSlot value={play.world.selectedNoun} filled={!!play.world.selectedNoun} />.
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Regret Particle" tone="amber">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {adverbs.map((a) => (
+        {/* Noun Bay */}
+        <Bay label="Demographic Collective Noun Bay" tone="sky">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {nouns.map((n) => (
               <WordPill
-                key={a}
-                text={a}
-                tone="amber"
-                selected={play.world.adverb === a}
-                onClick={() => play.set({ adverb: a })}
-                disabled={play.locked}
+                key={n}
+                word={n}
+                selected={play.world.selectedNoun === n}
+                onClick={() => play.patch({ selectedNoun: n })}
               />
             ))}
           </div>
@@ -192,85 +225,112 @@ export function Q22CakeRegretActivity({ question, value, activityState, onChange
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q23 — 3D Acoustic Sound Chamber (Audible)
-   Sentence: "The music was so quiet, it was barely ______."
-   Options: A. amicable, B. audible, C. atrocious, D. averse -> Key: B (audible)
+   Q23 — 🕵️ 3D Grammar Crime Scene
+   Sentence: "The shops doors closed, and the owner left through the small back door. Choose the part containing the error."
+   Options: A. The shops doors, B. closed, and the owner, C. left through the small, D. back door. -> Key: A
    ══════════════════════════════════════════════════════════════════════ */
-export function Q23QuietSoundActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ adj?: string }>({
+export function Q23QuietSoundActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedSegment?: string; proofreadDone: boolean }>({
     question,
-    initial: { adj: undefined },
+    initial: { selectedSegment: undefined, proofreadDone: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.adj) return { note: "Select the sensory adjective related to hearing sounds" };
-      const map: Record<string, string> = { amicable: "A", audible: "B", atrocious: "C", averse: "D" };
+      if (!w.selectedSegment) return { note: "Scan the storefront sentence segments to isolate the grammatical error" };
+      const map: Record<string, string> = {
+        "The shops doors": "A",
+        "closed, and the owner": "B",
+        "left through the small": "C",
+        "back door.": "D",
+      };
       return {
-        value: w.adj,
-        optionId: map[w.adj],
-        note: `Selected: ${w.adj}`,
+        value: w.selectedSegment,
+        optionId: map[w.selectedSegment],
+        note:
+          w.selectedSegment === "The shops doors"
+            ? "Error identified: Missing possessive apostrophe. Correct form is 'The shop's doors' (or 'shop doors')."
+            : `Selected segment: ${w.selectedSegment}`,
       };
     },
   });
 
-  const adjs = ["amicable", "audible", "atrocious", "averse"];
+  const segments = [
+    "The shops doors",
+    "closed, and the owner",
+    "left through the small",
+    "back door.",
+  ];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q23 · Acoustic Testing Chamber 3D"
-      subtitle="Identify the hearing-related adjective describing faint or barely perceptible music"
-      hints={["The music was so quiet it could hardly be heard.", "Look for the word linked with hearing (think 'audio')."]}
+      title="Q23 · 🕵️ 3D Grammar Crime Scene"
+      subtitle="Inspect the shop sign and isolate the erroneous segment missing the possessive form"
+      hints={[
+        "The plural 'shops doors' without an apostrophe is an error; it should be possessive singular 'shop's doors'.",
+      ]}
     >
       <Board>
-        {/* 3D Sound Chamber */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-sky-200/80 bg-gradient-to-b from-sky-50/80 via-indigo-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Store Scene */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-300/80 bg-gradient-to-b from-amber-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-amber-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-xs">
-                <Volume2 className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-xs">
+                <SearchCheck className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-sky-950 uppercase tracking-wider block">Acoustic Testing Chamber</span>
-                <span className="text-[11px] font-medium text-slate-500">Decibel Level: 5 dB · Faint Whisper Range</span>
+                <span className="text-xs font-bold text-amber-200 uppercase tracking-wider block">
+                  Proofreading Scanner · Crime Scene
+                </span>
+                <span className="text-[11px] font-medium text-amber-400">
+                  Target: Segment Containing Grammatical Error
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-sky-100 text-sky-900 border border-sky-300">
-              🔊 Volume: Barely Audible
-            </span>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
-            <AcousticSoundLab3D position={[0, 0, 0]} />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#D97706" />
           </World3D>
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-sky-50/80 border-2 border-sky-200 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            The music was so quiet, it was barely{" "}
-            <SentenceSlot value={play.world.adj} filled={!!play.world.adj} />.
+        {/* Live Segment Highlighter */}
+        <div className="bg-slate-900 border-2 border-slate-700 text-white rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            <span className="text-slate-400 text-xs block mb-1">Selected Error Segment:</span>
+            <span className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-mono text-base font-bold shadow-xs inline-block">
+              {play.world.selectedSegment || "No segment highlighted yet"}
+            </span>
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Sensory Adjective" tone="sky">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {adjs.map((a) => (
-              <WordPill
-                key={a}
-                text={a}
-                size="lg"
-                tone="sky"
-                selected={play.world.adj === a}
-                onClick={() => play.set({ adj: a })}
-                disabled={play.locked}
-              />
+        {/* Segment Bay */}
+        <Bay label="Isolate Error Segment" tone="amber">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {segments.map((seg, i) => (
+              <button
+                key={seg}
+                onClick={() => play.patch({ selectedSegment: seg })}
+                className={`p-3 rounded-xl border text-left font-bold text-sm transition-all ${
+                  play.world.selectedSegment === seg
+                    ? "bg-amber-500 text-slate-950 border-amber-400 shadow-md ring-2 ring-amber-300"
+                    : "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-750"
+                }`}
+              >
+                <span className="text-xs font-mono text-amber-300 mr-2">[{String.fromCharCode(65 + i)}]</span>
+                {seg}
+              </button>
             ))}
           </div>
         </Bay>
@@ -280,173 +340,208 @@ export function Q23QuietSoundActivity({ question, value, activityState, onChange
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q24 — 3D School Classroom Discipline (Modal 'Should')
-   Sentence: "He ______ get a detention for being so badly behaved."
-   Options: A. should, B. won't, C. shan't, D. ought -> Key: A (should)
+   Q24 — 🏠 3D Address Investigation
+   Sentence: "It's taken me a long time to find out for definite exact whose house this is. Choose the part containing the error."
+   Options: A. It's taken me a long time, B. to find out, C. for definite exact, D. whose house this is. -> Key: C
    ══════════════════════════════════════════════════════════════════════ */
-export function Q24SchoolDisciplineActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ modal?: string }>({
+export function Q24SchoolDisciplineActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedSegment?: string; addressChecked: boolean }>({
     question,
-    initial: { modal: undefined },
+    initial: { selectedSegment: undefined, addressChecked: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.modal) return { note: "Select the modal verb expressing expected consequence" };
-      const map: Record<string, string> = { should: "A", "won't": "B", "shan't": "C", ought: "D" };
+      if (!w.selectedSegment) return { note: "Inspect the address records and highlight the redundant segment" };
+      const map: Record<string, string> = {
+        "It's taken me a long time": "A",
+        "to find out": "B",
+        "for definite exact": "C",
+        "whose house this is.": "D",
+      };
       return {
-        value: w.modal,
-        optionId: map[w.modal],
-        note: `Selected: ${w.modal}`,
+        value: w.selectedSegment,
+        optionId: map[w.selectedSegment],
+        note:
+          w.selectedSegment === "for definite exact"
+            ? "Error identified: Redundant double modifier. Correct phrasing is 'for definite' or 'for exact'."
+            : `Selected segment: ${w.selectedSegment}`,
       };
     },
   });
 
-  const modals = ["should", "won't", "shan't", "ought"];
+  const segments = [
+    "It's taken me a long time",
+    "to find out",
+    "for definite exact",
+    "whose house this is.",
+  ];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q24 · School Conduct 3D Auditorium"
-      subtitle="Identify the modal verb expressing a justified disciplinary consequence"
-      hints={["The speaker thinks a detention is what he deserves.", "Pick the modal that fits straight before 'get'. Check whether 'ought' would need 'to'."]}
+      title="Q24 · 🏠 3D Address Investigation"
+      subtitle="Isolate the redundant adverbial phrase segment 'for definite exact'"
+      hints={[
+        "The phrase 'for definite exact' combines two synonymous terms incorrectly; only one modifier should be used.",
+      ]}
     >
       <Board>
-        {/* 3D Classroom Auditorium */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-rose-200/80 bg-gradient-to-b from-rose-50/80 via-orange-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rose-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Neighborhood Scene */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-purple-300/80 bg-gradient-to-b from-purple-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-purple-800/60 p-3.5 bg-slate-900/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500 text-white shadow-xs">
+                <FileSearch className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-purple-200 uppercase tracking-wider block">
+                  Detective Address Ledger
+                </span>
+                <span className="text-[11px] font-medium text-purple-400">
+                  Target: Redundant Clashing Modifiers
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#9333EA" />
+          </World3D>
+        </div>
+
+        {/* Live Sentence Segment Slot */}
+        <div className="bg-slate-900 border-2 border-slate-700 text-white rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            <span className="text-slate-400 text-xs block mb-1">Selected Error Segment:</span>
+            <span className="px-3 py-1 rounded-lg bg-purple-500 text-white font-mono text-base font-bold shadow-xs inline-block">
+              {play.world.selectedSegment || "No segment highlighted yet"}
+            </span>
+          </p>
+        </div>
+
+        {/* Segment Bay */}
+        <Bay label="Select Redundant Segment" tone="purple">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {segments.map((seg, i) => (
+              <button
+                key={seg}
+                onClick={() => play.patch({ selectedSegment: seg })}
+                className={`p-3 rounded-xl border text-left font-bold text-sm transition-all ${
+                  play.world.selectedSegment === seg
+                    ? "bg-purple-600 text-white border-purple-400 shadow-md ring-2 ring-purple-300"
+                    : "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-750"
+                }`}
+              >
+                <span className="text-xs font-mono text-purple-300 mr-2">[{String.fromCharCode(65 + i)}]</span>
+                {seg}
+              </button>
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q25 — ❤️🔥 3D Emotion Laboratory (Synonym of Despise)
+   Question: "Choose the correct synonym of Despise."
+   Options: A. Hate, B. Like, C. Crave, D. Devour -> Key: A (Hate)
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q25MarineCreaturesActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedSynonym?: string; emotionAnalyzed: boolean }>({
+    question,
+    initial: { selectedSynonym: undefined, emotionAnalyzed: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedSynonym) return { note: "Scan the affective reaction chamber and select the synonym of 'Despise'" };
+      const map: Record<string, string> = { Hate: "A", Like: "B", Crave: "C", Devour: "D" };
+      return {
+        value: w.selectedSynonym,
+        optionId: map[w.selectedSynonym],
+        note:
+          w.selectedSynonym === "Hate"
+            ? "Synonym match: 'Despise' means to feel intense contempt, hatred, or deep dislike for someone/something."
+            : `Selected synonym: ${w.selectedSynonym}`,
+      };
+    },
+  });
+
+  const synonyms = ["Hate", "Like", "Crave", "Devour"];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q25 · ❤️🔥 3D Emotion Laboratory"
+      subtitle="Examine emotional biometric response states and identify the synonym of 'Despise'"
+      hints={[
+        "'Despise' is a strong verb meaning to feel intense dislike or contempt for something ('Hate').",
+      ]}
+    >
+      <Board>
+        {/* 3D Emotion Chamber */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-rose-300/80 bg-gradient-to-b from-rose-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-rose-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs">
-                <ShieldAlert className="h-4 w-4" />
+                <HeartCrack className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-rose-950 uppercase tracking-wider block">Classroom Hall · Code of Conduct</span>
-                <span className="text-[11px] font-medium text-slate-500">Evaluation of Disruptive Behavior</span>
+                <span className="text-xs font-bold text-rose-200 uppercase tracking-wider block">
+                  Affective Biometric Scanner
+                </span>
+                <span className="text-[11px] font-medium text-rose-400">
+                  Target Word: DESPISE (Strong Contempt & Aversion)
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-rose-100 text-rose-900 border border-rose-300">
-              📋 Modal: Should (Deserved Consequence)
-            </span>
           </div>
 
-          <World3D cue={play.world} height="280px" camera={{ position: [0, 3.2, 5.8], fov: 45 }}>
-            <ClassroomAuditorium3D position={[0, 0, 0]} />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#E11D48" expression="worried" />
           </World3D>
         </div>
 
-        {/* Sentence Prompt */}
-        <div className="bg-rose-50/80 border-2 border-rose-300/80 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            He{" "}
-            <SentenceSlot value={play.world.modal} filled={!!play.world.modal} />{" "}
-            get a detention for being so badly behaved.
+        {/* Live Synonym Slot */}
+        <div className="bg-rose-950/80 border-2 border-rose-700 text-rose-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Synonym of <span className="text-rose-400 font-mono underline">Despise</span> ={" "}
+            <SentenceSlot value={play.world.selectedSynonym} filled={!!play.world.selectedSynonym} />
           </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Modal Verb" tone="rose">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {modals.map((m) => (
+        {/* Synonym Bay */}
+        <Bay label="Synonym Selection Bay" tone="rose">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {synonyms.map((s) => (
               <WordPill
-                key={m}
-                text={m}
-                tone="rose"
-                selected={play.world.modal === m}
-                onClick={() => play.set({ modal: m })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q25 — 3D Deep Ocean Marine Creatures (Marine)
-   Sentence: "There is a lot of ______ life in the sea. Some of the creatures are strange."
-   Options: A. wharf, B. marina, C. quay, D. marine -> Key: D (marine)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q25MarineCreaturesActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ adj?: string }>({
-    question,
-    initial: { adj: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.adj) return { note: "Select the adjective relating to the sea and ocean life" };
-      const map: Record<string, string> = { wharf: "A", marina: "B", quay: "C", marine: "D" };
-      return {
-        value: w.adj,
-        optionId: map[w.adj],
-        note: `Selected: ${w.adj}`,
-      };
-    },
-  });
-
-  const adjs = ["wharf", "marina", "quay", "marine"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q25 · Deep Ocean Marine 3D World"
-      subtitle="Select the correct adjective modifying ocean life and deep-sea creatures"
-      hints={["The blank describes the kind of life found in the sea.", "Three options are places where boats stop. Which word is an adjective meaning 'of the sea'?"]}
-    >
-      <Board>
-        {/* 3D Deep Ocean Reef */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-cyan-200/80 bg-gradient-to-b from-cyan-50/80 via-blue-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-600 text-white shadow-xs">
-                <Fish className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-cyan-950 uppercase tracking-wider block">Deep Sea Ocean Reef</span>
-                <span className="text-[11px] font-medium text-slate-500">Exploring Marine Biodiversity</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-cyan-100 text-cyan-900 border border-cyan-300">
-              🌊 Collocation: Marine Life
-            </span>
-          </div>
-
-          <World3D cue={play.world} sky="#C9ECFF" ground="#F0DCA0" height="280px" camera={{ position: [0, 3.0, 5.5], fov: 45 }}>
-            <MarineReef3D position={[0, 0, 0]} />
-          </World3D>
-        </div>
-
-        {/* Sentence Prompt */}
-        <div className="bg-cyan-50/80 border-2 border-cyan-300/80 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            There is a lot of{" "}
-            <SentenceSlot value={play.world.adj} filled={!!play.world.adj} />{" "}
-            life in the sea. Some of the creatures are strange.
-          </p>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Oceanic Adjective" tone="sky">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {adjs.map((a) => (
-              <WordPill
-                key={a}
-                text={a}
-                size="lg"
-                tone="sky"
-                selected={play.world.adj === a}
-                onClick={() => play.set({ adj: a })}
-                disabled={play.locked}
+                key={s}
+                word={s}
+                selected={play.world.selectedSynonym === s}
+                onClick={() => play.patch({ selectedSynonym: s })}
               />
             ))}
           </div>

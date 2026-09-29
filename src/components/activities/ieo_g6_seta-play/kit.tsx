@@ -241,19 +241,22 @@ export function Shell<W>({
  */
 export function WordPill({
   text,
+  word,
   selected = false,
   onClick,
   disabled = false,
   tone = "purple",
   size = "md",
 }: {
-  text: string;
+  text?: string;
+  word?: string;
   selected?: boolean;
   onClick?: () => void;
   disabled?: boolean;
   tone?: ColorTone;
   size?: "sm" | "md" | "lg";
 }) {
+  const display = text ?? word ?? "";
   const toneClasses: Record<ColorTone, string> = {
     purple: selected
       ? "bg-purple-600 text-white border-purple-700 shadow-md ring-2 ring-purple-300"
@@ -308,7 +311,7 @@ export function WordPill({
       onClick={onClick}
       className={`border transition-all cursor-pointer select-none active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${sizeClasses} ${selectedTone}`}
     >
-      {text}
+      {display}
     </button>
   );
 }
