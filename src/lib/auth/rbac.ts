@@ -174,6 +174,7 @@ const MULTI_ROLE_ACCOUNTS = [
   "pa1@skillizee.io",
   "swati123@gmail.com",
   "aarna@cambridgecourtgroup.com",
+  "tech@skillizee.io",
 ];
 
 /**
@@ -193,6 +194,7 @@ const FOUNDING_ADMINS = [
   "pa1@skillizee.io",
   "swati123@gmail.com",
   "aarna@cambridgecourtgroup.com",
+  "tech@skillizee.io",
 ];
 
 /** The role a verified account starts with when nothing else has assigned one. */

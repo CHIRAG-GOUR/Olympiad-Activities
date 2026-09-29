@@ -23,7 +23,10 @@ import {
   CheckCircle2,
   ArrowRight,
   GraduationCap,
+  Lock,
+  Unlock,
 } from "lucide-react";
+import { ExamLockService } from "@/services/exam/ExamLockService";
 
 type SubjectTabKey = "math" | "english" | "all";
 
@@ -50,6 +53,25 @@ export default function ExamsScreen() {
     }
     load();
   }, []);
+
+  const [lockVersion, setLockVersion] = useState(0);
+
+  useEffect(() => {
+    const unsub = ExamLockService.subscribe(() => {
+      setLockVersion((v) => v + 1);
+    });
+    return unsub;
+  }, []);
+
+  const handleToggleLock = async (examId: string) => {
+    await ExamLockService.toggleExamLocked(examId);
+    setLockVersion((v) => v + 1);
+  };
+
+  const unlockedCount = useMemo(() => {
+    return exams.filter((e) => !ExamLockService.isExamLocked(e.id)).length;
+  }, [exams, lockVersion]);
+  const lockedCount = Math.max(0, exams.length - unlockedCount);
 
   // Split exams by subject
   const mathExams = useMemo(() => {
@@ -137,6 +159,33 @@ export default function ExamsScreen() {
             <Plus className="w-4 h-4" />
             <span>Create Examination</span>
           </Link>
+        </div>
+      </div>
+
+      {/* Access Control Notice for Teachers & Super Admins */}
+      <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-white border border-blue-200/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-[#2468B2] text-white flex items-center justify-center shrink-0 shadow-2xs">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-bold text-[#182338]">
+                Student Access & Lock Management
+              </h3>
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <Unlock className="w-3 h-3 text-emerald-600" />
+                {unlockedCount} Unlocked for Students
+              </span>
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1">
+                <Lock className="w-3 h-3 text-rose-600" />
+                {lockedCount} Locked
+              </span>
+            </div>
+            <p className="text-xs text-[#667085] mt-1 font-medium leading-relaxed">
+              As Teacher or Super Admin, you control which examination students can see and sit. By default, the <strong>2022-23 Mathematics Olympiad (Rotating 3D Dice Lab)</strong> is unlocked for test candidates. Use the Lock / Unlock button on any card below to control candidate access.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -357,172 +406,248 @@ export default function ExamsScreen() {
       ) : layoutMode === "list" ? (
         /* ── 1-BY-1 SPREAD LIST (Default Requested Layout) ── */
         <div className="space-y-4">
-          {filtered.map((exam, idx) => (
-            <div
-              key={exam.id}
-              className="bg-white border border-[#E1E7EF] hover:border-[#2468B2] rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5"
-            >
-              {/* Left Column: Numbering + Main Info */}
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                {/* Paper Number Badge */}
-                <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-indigo-50 to-sky-100 border border-indigo-200 text-[#2468B2] flex flex-col items-center justify-center font-mono shadow-2xs">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase leading-none">Paper</span>
-                  <span className="text-base font-black leading-tight">{(idx + 1).toString().padStart(2, "0")}</span>
-                </div>
-
-                {/* Details */}
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2.5 py-0.5 rounded-md border border-indigo-100">
-                      {exam.code}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      {exam.status || "Published"}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold font-mono">
-                      Class {exam.grade || 6}
-                    </span>
+          {filtered.map((exam, idx) => {
+            const isLocked = ExamLockService.isExamLocked(exam.id);
+            return (
+              <div
+                key={exam.id}
+                className={`bg-white border rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5 ${
+                  isLocked ? "border-slate-300/80 bg-slate-50/30" : "border-[#E1E7EF] hover:border-[#2468B2]"
+                }`}
+              >
+                {/* Left Column: Numbering + Main Info */}
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  {/* Paper Number Badge */}
+                  <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-indigo-50 to-sky-100 border border-indigo-200 text-[#2468B2] flex flex-col items-center justify-center font-mono shadow-2xs">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase leading-none">Paper</span>
+                    <span className="text-base font-black leading-tight">{(idx + 1).toString().padStart(2, "0")}</span>
                   </div>
 
-                  <div>
-                    <h3 className="text-base sm:text-lg font-bold text-[#182338] leading-snug">
-                      {exam.title}
-                    </h3>
-                    {exam.subtitle && (
-                      <p className="text-xs font-bold text-[#2468B2] mt-0.5">{exam.subtitle}</p>
+                  {/* Details */}
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2.5 py-0.5 rounded-md border border-indigo-100">
+                        {exam.code}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold font-mono">
+                        Class {exam.grade || 6}
+                      </span>
+                      {isLocked ? (
+                        <span className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                          <Lock className="w-3 h-3 text-rose-500" />
+                          Locked for Students
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                          <Unlock className="w-3 h-3 text-emerald-600" />
+                          Unlocked & Visible
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase">
+                        {exam.status || "Published"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-[#182338] leading-snug">
+                        {exam.title}
+                      </h3>
+                      {exam.subtitle && (
+                        <p className="text-xs font-bold text-[#2468B2] mt-0.5">{exam.subtitle}</p>
+                      )}
+                    </div>
+
+                    {exam.description && (
+                      <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium max-w-3xl">
+                        {exam.description}
+                      </p>
+                    )}
+
+                    {/* Section Breakdown Pills */}
+                    {exam.sections && exam.sections.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {exam.sections.map((sec) => (
+                          <span
+                            key={sec.id}
+                            className="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-slate-50 border border-slate-200 text-slate-600"
+                          >
+                            {sec.title} ({sec.questionIds.length}Q)
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
+                </div>
 
-                  {exam.description && (
-                    <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium max-w-3xl">
-                      {exam.description}
-                    </p>
-                  )}
-
-                  {/* Section Breakdown Pills */}
-                  {exam.sections && exam.sections.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {exam.sections.map((sec) => (
-                        <span
-                          key={sec.id}
-                          className="px-2 py-0.5 rounded text-[10.5px] font-semibold bg-slate-50 border border-slate-200 text-slate-600"
-                        >
-                          {sec.title} ({sec.questionIds.length}Q)
-                        </span>
-                      ))}
+                {/* Right Column: Metrics & Action Buttons */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between lg:justify-end gap-4 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-[#E1E7EF]">
+                  {/* Metrics */}
+                  <div className="flex items-center gap-4 text-xs text-[#667085] pr-2">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Clock className="w-4 h-4 text-[#2468B2]" />
+                      <span>{exam.durationMinutes}m</span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Award className="w-4 h-4 text-amber-500" />
+                      <span>{exam.totalMarks || 60}M</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <FileText className="w-4 h-4 text-indigo-600" />
+                      <span>{exam.questionIds.length || exam.totalQuestions || 50}Q</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    {/* Lock / Unlock Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleLock(exam.id)}
+                      className={`h-10 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border shadow-2xs ${
+                        isLocked
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                          : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                      }`}
+                      title={isLocked ? "Unlock this paper for students" : "Lock this paper from students"}
+                    >
+                      {isLocked ? (
+                        <>
+                          <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Unlock Paper</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Lock Paper</span>
+                        </>
+                      )}
+                    </button>
+
+                    <Link
+                      href={`/exam/${exam.id}`}
+                      className="h-10 px-3.5 text-xs font-bold text-[#1C5190] bg-[#EAF2FC] hover:bg-[#D4E5F9] rounded-xl flex items-center gap-1.5 transition-all border border-indigo-100"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-[#1C5190] text-[#1C5190]" />
+                      <span>Launch</span>
+                    </Link>
+
+                    <Link
+                      href={`${roleBase}/exams/${exam.id}`}
+                      className="h-10 px-3.5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
+                    >
+                      Manage
+                    </Link>
+                  </div>
                 </div>
               </div>
-
-              {/* Right Column: Metrics & Action Buttons */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between lg:justify-end gap-4 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-[#E1E7EF]">
-                {/* Metrics */}
-                <div className="flex items-center gap-4 text-xs text-[#667085] pr-2">
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <Clock className="w-4 h-4 text-[#2468B2]" />
-                    <span>{exam.durationMinutes}m</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <Award className="w-4 h-4 text-amber-500" />
-                    <span>{exam.totalMarks || 60}M</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <FileText className="w-4 h-4 text-indigo-600" />
-                    <span>{exam.questionIds.length || exam.totalQuestions || 50}Q</span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/exam/${exam.id}`}
-                    className="h-10 px-4 text-xs font-bold text-[#1C5190] bg-[#EAF2FC] hover:bg-[#D4E5F9] rounded-xl flex items-center gap-1.5 transition-all border border-indigo-100"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-[#1C5190] text-[#1C5190]" />
-                    <span>Launch Exam</span>
-                  </Link>
-
-                  <Link
-                    href={`${roleBase}/exams/${exam.id}`}
-                    className="h-10 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
-                  >
-                    Manage
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         /* ── GRID VIEW (Optional fallback) ── */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map((exam, idx) => (
-            <div
-              key={exam.id}
-              className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-[#2468B2] transition-all space-y-4"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] font-black bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">
-                      #{(idx + 1).toString().padStart(2, "0")}
-                    </span>
-                    <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF]">
-                      {exam.code}
-                    </span>
+          {filtered.map((exam, idx) => {
+            const isLocked = ExamLockService.isExamLocked(exam.id);
+            return (
+              <div
+                key={exam.id}
+                className={`bg-[#FFFFFF] border rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-[#2468B2] transition-all space-y-4 ${
+                  isLocked ? "border-slate-300/80 bg-slate-50/30" : "border-[#E1E7EF]"
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] font-black bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">
+                        #{(idx + 1).toString().padStart(2, "0")}
+                      </span>
+                      <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF]">
+                        {exam.code}
+                      </span>
+                    </div>
+                    {isLocked ? (
+                      <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-rose-500" />
+                        Locked
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                        <Unlock className="w-3 h-3 text-emerald-600" />
+                        Unlocked
+                      </span>
+                    )}
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-[#F4F7FB] text-[#1C5190] border border-[#E1E7EF] text-[10px] font-bold uppercase">
-                    ● {exam.status || "Active"}
-                  </span>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-[#182338] leading-snug">{exam.title}</h3>
+                    {exam.subtitle && (
+                      <p className="text-[11px] text-[#2468B2] mt-0.5 font-bold">{exam.subtitle}</p>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium">
+                    {exam.description || "Official Olympiad digital examination."}
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#E1E7EF] text-xs text-[#667085]">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Clock className="w-3.5 h-3.5 text-[#2468B2]" />
+                      <span>{exam.durationMinutes} mins</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Award className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{exam.totalMarks || 60} Marks</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <FileText className="w-3.5 h-3.5 text-[#182338]" />
+                      <span>{exam.questionIds.length || 50} Qs</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-bold text-[#182338] leading-snug">{exam.title}</h3>
-                  {exam.subtitle && (
-                    <p className="text-[11px] text-[#2468B2] mt-0.5 font-bold">{exam.subtitle}</p>
-                  )}
-                </div>
+                <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleLock(exam.id)}
+                    className={`h-9 px-3 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border shadow-2xs ${
+                      isLocked
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                        : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                    }`}
+                  >
+                    {isLocked ? (
+                      <>
+                        <Unlock className="w-3 h-3 text-emerald-600" />
+                        <span>Unlock</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3 h-3 text-rose-600" />
+                        <span>Lock</span>
+                      </>
+                    )}
+                  </button>
 
-                <p className="text-xs text-[#667085] leading-relaxed line-clamp-2 font-medium">
-                  {exam.description || "Official Olympiad digital examination."}
-                </p>
+                  <div className="flex items-center gap-1.5">
+                    <Link
+                      href={`/exam/${exam.id}`}
+                      className="h-9 px-3 text-xs font-bold text-[#1C5190] bg-[#EAF2FC] hover:bg-[#E1E7EF] rounded-xl flex items-center gap-1.5 transition-all"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-[#1C5190] text-[#1C5190]" />
+                      <span>Launch</span>
+                    </Link>
 
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#E1E7EF] text-xs text-[#667085]">
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <Clock className="w-3.5 h-3.5 text-[#2468B2]" />
-                    <span>{exam.durationMinutes} mins</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <Award className="w-3.5 h-3.5 text-amber-500" />
-                    <span>{exam.totalMarks || 60} Marks</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <FileText className="w-3.5 h-3.5 text-[#182338]" />
-                    <span>{exam.questionIds.length || 50} Qs</span>
+                    <Link
+                      href={`${roleBase}/exams/${exam.id}`}
+                      className="h-9 px-3.5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
+                    >
+                      Manage
+                    </Link>
                   </div>
                 </div>
               </div>
-
-              <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-between gap-2">
-                <Link
-                  href={`/exam/${exam.id}`}
-                  className="h-9 px-3 text-xs font-bold text-[#1C5190] bg-[#EAF2FC] hover:bg-[#E1E7EF] rounded-xl flex items-center gap-1.5 transition-all"
-                >
-                  <Play className="w-3.5 h-3.5 fill-[#1C5190] text-[#1C5190]" />
-                  <span>Launch Exam</span>
-                </Link>
-
-                <Link
-                  href={`${roleBase}/exams/${exam.id}`}
-                  className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-xs"
-                >
-                  Manage
-                </Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

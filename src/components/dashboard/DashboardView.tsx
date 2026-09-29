@@ -25,6 +25,7 @@ import {
   type MetricCard,
 } from "@/components/dashboard/DashboardSections";
 import { ActivityMiniPreview } from "@/components/dashboard/ActivityMiniPreview";
+import { ExamLockService } from "@/services/exam/ExamLockService";
 import {
   buildSectionInsights,
   buildActivityPreviews,
@@ -214,7 +215,11 @@ export default function DashboardView() {
       .filter((s) => s.status === "in_progress")
       .sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime())[0];
 
-    const nextExam = exams.find((e) => e.status !== "Archived") || exams[0];
+    const nextExam =
+      exams.find((e) => e.status !== "Archived" && !ExamLockService.isExamLocked(e.id)) ||
+      exams.find((e) => !ExamLockService.isExamLocked(e.id)) ||
+      exams.find((e) => e.status !== "Archived") ||
+      exams[0];
     // `attempts` is already narrowed to this candidate by the data-access layer.
     const myAttempts = attempts;
     const myAvg = myAttempts.length

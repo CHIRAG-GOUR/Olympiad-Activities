@@ -31,11 +31,16 @@ import {
   AlertTriangle,
   History,
   Check,
+  Lock,
+  Sparkles,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { ExamLockService } from "@/services/exam/ExamLockService";
 
 export default function ExamSessionClient({ params }: { params: Promise<{ examId: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { activeRole } = useAuth();
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -638,6 +643,57 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
           >
             Return to Examination Portal
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Candidate Lock Enforcement: Students cannot sit locked papers
+  const isLocked = ExamLockService.isExamLocked(resolvedParams.examId);
+  if (activeRole === "STUDENT" && isLocked) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans text-slate-800">
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 max-w-lg text-center space-y-5 shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-100 shadow-2xs">
+            <Lock className="w-7 h-7" />
+          </div>
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
+              Access Restricted
+            </span>
+            <h2 className="text-xl font-bold text-slate-900">
+              Examination Paper Locked by Teacher
+            </h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              This examination (<strong className="text-slate-800">{exam.title}</strong>) is currently locked by your educator.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-left text-xs text-slate-700 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-[#2468B2]">
+              <Sparkles className="w-4 h-4" />
+              <span>Available for Candidate Testing Today:</span>
+            </div>
+            <p className="text-[12px] text-slate-600">
+              Your teacher has unlocked the <strong>2022-23 Mathematics Olympiad (featuring the Rotating 3D Dice Laboratory)</strong>. Please sit that paper for today&apos;s testing session.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <Link
+              href="/student/exams"
+              className="flex-1 py-3 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+            >
+              <span>Go to Mathematics Exam</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/student/dashboard"
+              className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all"
+            >
+              Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     );

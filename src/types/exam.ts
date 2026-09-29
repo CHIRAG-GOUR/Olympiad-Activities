@@ -38,6 +38,7 @@ export interface Exam {
   sections?: ExamSection[];
   rules: ExamRules;
   status: ExamStatus;
+  isLocked?: boolean;
   scheduledStartTime?: string;
   scheduledEndTime?: string;
   createdAt: string;

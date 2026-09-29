@@ -11,7 +11,22 @@ import { visibleAttempts } from "@/lib/auth/dataAccess";
 import { Card, SectionHeading, ActionLink } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/dashboard/DashboardSections";
 import { formatClock, remainingSecondsFor, type LiveSession } from "@/lib/dashboard/insights";
-import { Play, RotateCcw, CheckCircle2, Clock, FileText, Calculator, BookOpen, Layers, Search, GraduationCap } from "lucide-react";
+import {
+  Play,
+  RotateCcw,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Calculator,
+  BookOpen,
+  Layers,
+  Search,
+  GraduationCap,
+  Lock,
+  Unlock,
+  Sparkles,
+} from "lucide-react";
+import { ExamLockService } from "@/services/exam/ExamLockService";
 
 type SubjectTabKey = "math" | "english" | "all";
 
@@ -31,6 +46,15 @@ export default function StudentExamsScreen() {
   const [activeTab, setActiveTab] = useState<SubjectTabKey>("math");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [lockVersion, setLockVersion] = useState(0);
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "available">("all");
+
+  useEffect(() => {
+    const unsub = ExamLockService.subscribe(() => {
+      setLockVersion((v) => v + 1);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,16 +145,21 @@ export default function StudentExamsScreen() {
     return available;
   }, [activeTab, mathExams, englishExams, available]);
 
-  // Search filter
+  // Search and Lock filter
   const filtered = useMemo(() => {
-    return currentTabExams.filter(
-      (e) =>
+    return currentTabExams.filter((e) => {
+      const isLocked = ExamLockService.isExamLocked(e.id);
+      if (visibilityFilter === "available" && isLocked) {
+        return false;
+      }
+      return (
         e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.subtitle && e.subtitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (e.description && e.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [currentTabExams, searchTerm]);
+      );
+    });
+  }, [currentTabExams, searchTerm, visibilityFilter, lockVersion]);
 
   if (loading) {
     return (
@@ -155,6 +184,55 @@ export default function StudentExamsScreen() {
         <p className="mt-1 text-[13.5px] text-[#667085] font-medium">
           Select a subject tab to explore examination papers available for your grade and track your progress.
         </p>
+      </div>
+
+      {/* Active Testing Session Alert */}
+      <div className="bg-gradient-to-r from-blue-50/90 via-sky-50/40 to-white border border-blue-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#2468B2] text-white flex items-center justify-center shrink-0 shadow-2xs">
+            <Sparkles className="w-5 h-5 text-amber-300" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900">
+                Candidate Testing Session Active
+              </h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <Unlock className="w-3 h-3 text-emerald-600" />
+                Maths Paper 01 Unlocked
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 mt-1 font-medium leading-relaxed">
+              Welcome, <strong className="text-slate-800">{user?.name || "Tester"}</strong>! Your teacher has prepared the <strong>2022-23 Mathematics Olympiad (featuring the Rotating 3D Dice Laboratory)</strong>. Click &quot;Begin Exam&quot; to test your skills. All other papers remain locked by your teacher.
+            </p>
+          </div>
+        </div>
+
+        {/* Filter Pills: Available vs All */}
+        <div className="flex items-center gap-1 bg-white/90 p-1 rounded-xl border border-slate-200 shrink-0 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setVisibilityFilter("available")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              visibilityFilter === "available"
+                ? "bg-[#2468B2] text-white shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            Available Only
+          </button>
+          <button
+            type="button"
+            onClick={() => setVisibilityFilter("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              visibilityFilter === "all"
+                ? "bg-[#2468B2] text-white shadow-2xs"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            All Papers
+          </button>
+        </div>
       </div>
 
       {/* 2. Subject Tabs Navigation */}
@@ -317,8 +395,16 @@ export default function StudentExamsScreen() {
               const resume = myResumable.get(exam.id);
               const done = myAttempts.find((a) => a.examId === exam.id);
               const count = exam.questionIds.length || exam.totalQuestions || questions.length;
+              const isLocked = ExamLockService.isExamLocked(exam.id);
+
               return (
-                <Card key={exam.id} interactive className="p-5 sm:p-6 hover:border-[#2468B2] transition-all">
+                <Card
+                  key={exam.id}
+                  interactive={!isLocked}
+                  className={`p-5 sm:p-6 transition-all ${
+                    isLocked ? "bg-slate-50/40 border-slate-200/90" : "hover:border-[#2468B2]"
+                  }`}
+                >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                     {/* Left: Paper number + details */}
                     <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -336,6 +422,17 @@ export default function StudentExamsScreen() {
                           <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold font-mono">
                             Class {exam.grade || 6}
                           </span>
+                          {isLocked ? (
+                            <span className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                              <Lock className="w-3 h-3 text-rose-500" />
+                              Locked by Evaluator
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                              <Unlock className="w-3 h-3 text-emerald-600" />
+                              Open for Testing
+                            </span>
+                          )}
                           <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold">
                             {exam.totalMarks || 60} Marks
                           </span>
@@ -365,7 +462,7 @@ export default function StudentExamsScreen() {
                           </span>
                         </div>
 
-                        {resume && (
+                        {resume && !isLocked && (
                           <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#B4701F] bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
                             <Clock className="w-3.5 h-3.5" />
                             Paused at question {resume.currentQuestionIndex + 1} ·{" "}
@@ -393,14 +490,26 @@ export default function StudentExamsScreen() {
                           View Report
                         </ActionLink>
                       )}
-                      <ActionLink
-                        href={`/exam/${exam.id}`}
-                        tone="primary"
-                        icon={resume ? RotateCcw : Play}
-                        className="h-11 sm:h-10"
-                      >
-                        {resume ? "Resume Exam" : done ? "Sit Again" : "Begin Exam"}
-                      </ActionLink>
+                      {isLocked ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="h-11 sm:h-10 px-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-bold text-xs flex items-center gap-1.5 cursor-not-allowed select-none shadow-2xs"
+                          title="This exam paper is locked by your teacher. Please sit the unlocked Mathematics paper."
+                        >
+                          <Lock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Locked by Teacher</span>
+                        </button>
+                      ) : (
+                        <ActionLink
+                          href={`/exam/${exam.id}`}
+                          tone="primary"
+                          icon={resume ? RotateCcw : Play}
+                          className="h-11 sm:h-10"
+                        >
+                          {resume ? "Resume Exam" : done ? "Sit Again" : "Begin Exam"}
+                        </ActionLink>
+                      )}
                     </div>
                   </div>
                 </Card>

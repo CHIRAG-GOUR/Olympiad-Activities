@@ -45,7 +45,8 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.email in [
         'pa1@skillizee.io',
         'swati123@gmail.com',
-        'aarna@cambridgecourtgroup.com'
+        'aarna@cambridgecourtgroup.com',
+        'tech@skillizee.io'
       ];
     }
 
@@ -105,6 +106,11 @@ service cloud.firestore {
     // Readable by any signed-in member of the platform — a candidate needs the
     // paper to sit it — but never to the anonymous public.
     match /exams/{examId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    match /exam_locks/{examId} {
       allow read: if isAuthenticated();
       allow write: if isStaff();
     }

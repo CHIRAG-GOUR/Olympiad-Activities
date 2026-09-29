@@ -97,6 +97,27 @@ export function LoginExperience() {
     [busy, email, password, role, signIn, router]
   );
 
+  // Quick 1-Click Login for Demo Students & Testers
+  const handleQuickLogin = useCallback(
+    async (targetEmail: string, targetPass: string, targetRole: UserRole) => {
+      if (busy) return;
+      setBusy(true);
+      setError(null);
+      setEmail(targetEmail);
+      setPassword(targetPass);
+      setRole(targetRole);
+
+      const outcome = await signIn(targetEmail, targetPass, targetRole);
+      if (outcome.ok) {
+        router.replace(homeFor(targetRole));
+        return;
+      }
+      setError(outcome.message);
+      setBusy(false);
+    },
+    [busy, signIn, router]
+  );
+
   // Handle Sign Up Submit
   const handleSignUpSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -412,7 +433,127 @@ export function LoginExperience() {
                   </button>
                 </form>
 
-                <div className="mt-4 pt-3 border-t border-slate-200/80 text-center text-xs font-semibold text-slate-600">
+                {/* ── Candidate Tester Quick 1-Click Logins ── */}
+                <div className="mt-4 pt-3.5 border-t border-slate-200/90">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Tester Demo Accounts (1-Click Login)</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-full">
+                      Maths Exam Ready
+                    </span>
+                  </div>
+
+                  {/* 3 Student Demo Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleQuickLogin("demostudent1@olympiad.org", "student123", "STUDENT")}
+                      className="p-2.5 rounded-xl border border-blue-200/80 bg-gradient-to-b from-blue-50/60 to-white hover:from-blue-100/70 hover:to-blue-50/50 hover:border-blue-300 text-left transition-all cursor-pointer group shadow-2xs hover:shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="w-6 h-6 rounded-lg bg-[#2468B2] text-white font-bold text-[10px] grid place-items-center shadow-2xs">
+                          S1
+                        </span>
+                        <span className="text-[10px] font-bold text-[#2468B2] group-hover:underline">
+                          Log in &rarr;
+                        </span>
+                      </div>
+                      <div className="mt-1.5">
+                        <span className="block text-xs font-black text-slate-900 group-hover:text-[#2468B2]">
+                          DemoStudent1
+                        </span>
+                        <span className="block text-[10px] text-slate-500 truncate">
+                          Cambridge Court High
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleQuickLogin("demostudent2@olympiad.org", "student123", "STUDENT")}
+                      className="p-2.5 rounded-xl border border-indigo-200/80 bg-gradient-to-b from-indigo-50/60 to-white hover:from-indigo-100/70 hover:to-indigo-50/50 hover:border-indigo-300 text-left transition-all cursor-pointer group shadow-2xs hover:shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold text-[10px] grid place-items-center shadow-2xs">
+                          S2
+                        </span>
+                        <span className="text-[10px] font-bold text-indigo-700 group-hover:underline">
+                          Log in &rarr;
+                        </span>
+                      </div>
+                      <div className="mt-1.5">
+                        <span className="block text-xs font-black text-slate-900 group-hover:text-indigo-700">
+                          DemoStudent2
+                        </span>
+                        <span className="block text-[10px] text-slate-500 truncate">
+                          Delhi Public School
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleQuickLogin("demostudent3@olympiad.org", "student123", "STUDENT")}
+                      className="p-2.5 rounded-xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/60 to-white hover:from-emerald-100/70 hover:to-emerald-50/50 hover:border-emerald-300 text-left transition-all cursor-pointer group shadow-2xs hover:shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-[10px] grid place-items-center shadow-2xs">
+                          S3
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 group-hover:underline">
+                          Log in &rarr;
+                        </span>
+                      </div>
+                      <div className="mt-1.5">
+                        <span className="block text-xs font-black text-slate-900 group-hover:text-emerald-700">
+                          DemoStudent3
+                        </span>
+                        <span className="block text-[10px] text-slate-500 truncate">
+                          St. Xavier&apos;s School
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Super Admin Quick Access */}
+                  <div className="mt-2.5">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleQuickLogin("tech@skillizee.io", "787700", "SUPER_ADMIN")}
+                      className="w-full px-3 py-2 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40 hover:from-amber-100/90 hover:to-amber-50/80 hover:border-amber-300 flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-amber-500 text-white grid place-items-center shrink-0 shadow-2xs">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-slate-900 group-hover:text-amber-900">
+                              tech@skillizee.io
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100/80 px-1.5 py-0.2 rounded">
+                              Super Admin
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            Password: 787700
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-amber-800 bg-amber-100/90 group-hover:bg-amber-200/90 px-2.5 py-1 rounded-lg transition-colors">
+                        1-Click Login &rarr;
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3.5 pt-3 border-t border-slate-200/80 text-center text-xs font-semibold text-slate-600">
                   New to the Olympiad platform?{" "}
                   <button
                     type="button"
