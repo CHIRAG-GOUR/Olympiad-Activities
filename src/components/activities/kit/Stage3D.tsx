@@ -78,6 +78,8 @@ class SceneBoundary extends React.Component<
 export interface Stage3DProps {
   children: React.ReactNode;
   camera?: { position: [number, number, number]; fov?: number };
+  /** Point the camera orbits around and looks at (default: the origin). */
+  target?: [number, number, number];
   /** Any CSS length. Left responsive by the caller's wrapper when omitted. */
   height?: string;
   controls?: boolean;
@@ -93,6 +95,7 @@ export interface Stage3DProps {
 export function Stage3D({
   children,
   camera = { position: [0, 5, 8], fov: 45 },
+  target,
   height,
   controls = true,
   autoRotate = false,
@@ -155,6 +158,7 @@ export function Stage3D({
             {controls && (
               <OrbitControls
                 makeDefault
+                target={target}
                 enableDamping
                 dampingFactor={0.05}
                 enablePan={false}

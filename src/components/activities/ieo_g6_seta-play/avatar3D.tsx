@@ -23,7 +23,8 @@ export interface Avatar3DProps {
   pantsColor?: string;
   hairColor?: string;
   hairStyle?: "short" | "ponytail" | "cap" | "beret" | "hat" | "bun" | "swimcap";
-  pose?: "standing" | "sitting" | "sitting_eating" | "sitting_studying" | "walking" | "gesturing" | "holding_cup" | "holding_cone" | "swimming" | "biking" | "kneeling";
+  pose?: "standing" | "sitting" | "sitting_eating" | "sitting_studying" | "walking" | "gesturing" | "holding_cup" | "holding_cone" | "swimming" | "biking" | "kneeling"
+    | "jumping" | "lying" | "reading" | "carrying" | "shrugging" | "phone" | "tired" | "pointing" | "shaking_head" | "thinking";
   expression?: "happy" | "neutral" | "surprised" | "worried";
   hasBackpack?: boolean;
   backpackColor?: string;
@@ -51,6 +52,16 @@ const POSES: Record<NonNullable<Avatar3DProps["pose"]>, PoseDef> = {
   kneeling: { hipY: 0.5, L: { sx: -0.85, sz: -0.1, ex: -0.5 }, R: { sx: -0.85, sz: 0.1, ex: -0.5 }, legL: { hip: 0, knee: Math.PI / 2 }, legR: { hip: 0, knee: Math.PI / 2 } },
   biking: { hipY: 0.8, L: { sx: -1.15, sz: -0.05, ex: -0.25 }, R: { sx: -1.15, sz: 0.05, ex: -0.25 }, legL: { hip: -1.2, knee: 1.2 }, legR: { hip: -1.2, knee: 1.2 } },
   swimming: { hipY: 0.28, L: REST_L, R: REST_R, legL: STRAIGHT, legR: STRAIGHT, pitch: Math.PI / 2 },
+  jumping: { hipY: 0.86, L: { sx: -0.4, sz: -0.5, ex: -0.3 }, R: { sx: -0.4, sz: 0.5, ex: -0.3 }, legL: STRAIGHT, legR: STRAIGHT },
+  lying: { hipY: 0.2, L: { sx: 0, sz: -0.5, ex: 0 }, R: { sx: -2.6, sz: 0.4, ex: -1.6 }, legL: STRAIGHT, legR: { hip: -0.3, knee: 0.6 }, pitch: -Math.PI / 2 },
+  reading: { hipY: 0.86, L: { sx: -0.95, sz: -0.05, ex: -0.95 }, R: { sx: -0.95, sz: 0.05, ex: -0.95 }, legL: STRAIGHT, legR: STRAIGHT },
+  carrying: { hipY: 0.86, L: { sx: -1.1, sz: -0.05, ex: -0.5 }, R: { sx: -1.1, sz: 0.05, ex: -0.5 }, legL: STRAIGHT, legR: STRAIGHT },
+  shrugging: { hipY: 0.86, L: { sx: -0.3, sz: -0.9, ex: -1.4 }, R: { sx: -0.3, sz: 0.9, ex: -1.4 }, legL: STRAIGHT, legR: STRAIGHT },
+  phone: { hipY: 0.86, L: REST_L, R: { sx: -0.5, sz: 0.55, ex: -2.4 }, legL: STRAIGHT, legR: STRAIGHT },
+  tired: { hipY: 0.84, L: { sx: 0.1, sz: -0.05, ex: -0.05 }, R: { sx: 0.1, sz: 0.05, ex: -0.05 }, legL: { hip: 0, knee: 0.1 }, legR: { hip: 0, knee: 0.1 } },
+  pointing: { hipY: 0.86, L: REST_L, R: { sx: -1.55, sz: 0.25, ex: -0.05 }, legL: STRAIGHT, legR: STRAIGHT },
+  shaking_head: { hipY: 0.86, L: { sx: -0.2, sz: -0.3, ex: -1.6 }, R: { sx: -0.2, sz: 0.3, ex: -1.6 }, legL: STRAIGHT, legR: STRAIGHT },
+  thinking: { hipY: 0.86, L: { sx: -0.5, sz: -0.1, ex: -1.4 }, R: { sx: -0.35, sz: 0.25, ex: -2.35 }, legL: STRAIGHT, legR: STRAIGHT },
 };
 
 const THIGH = 0.42;
@@ -148,10 +159,31 @@ export function Avatar3D({
     } else if (pose === "kneeling") {
       L.sx = -0.85 + 0.15 * Math.sin(t * 2);
       R.sx = -0.85 - 0.15 * Math.sin(t * 2);
+    } else if (pose === "jumping") {
+      const s = Math.abs(Math.sin(t * 3.2));
+      lift = 0.35 * s;
+      lL.knee = lR.knee = 0.6 * (1 - s);
+      lL.hip = lR.hip = -0.3 * (1 - s);
+      L.sz = -0.5 - 0.9 * s;
+      R.sz = 0.5 + 0.9 * s;
+    } else if (pose === "shrugging") {
+      const s = (Math.sin(t * 2) + 1) / 2;
+      L.sz = -0.9 - 0.25 * s;
+      R.sz = 0.9 + 0.25 * s;
+      lift = 0.02 * s;
+    } else if (pose === "tired") {
+      L.sx = 0.1 + 0.08 * Math.sin(t * 1.2);
+      R.sx = 0.1 - 0.08 * Math.sin(t * 1.2);
+    } else if (pose === "pointing") {
+      R.sx = -1.55 + 0.08 * Math.sin(t * 2.5);
+    } else if (pose === "carrying") {
+      lift = 0.015 * Math.sin(t * 4);
+    } else if (pose === "phone") {
+      L.sx = 0.1 * Math.sin(t * 1.5);
     }
 
     // The same reaction for every choice: a small hop, arms lifting, a nod.
-    const standingish = def.hipY > 0.7 && pose !== "biking";
+    const standingish = def.hipY > 0.7 && pose !== "biking" && pose !== "jumping";
     if (bump) {
       L.sx -= 0.55 * bump;
       R.sx -= 0.55 * bump;
@@ -167,8 +199,12 @@ export function Avatar3D({
     if (body.current) body.current.position.y = def.hipY + lift;
     if (torso.current) torso.current.scale.set(1, 1 + 0.018 * Math.sin(t * 2.2), 1);
     if (head.current) {
-      head.current.rotation.y = 0.22 * Math.sin(t * 0.45) + 0.08 * Math.sin(t * 1.3);
-      head.current.rotation.x = 0.05 * Math.sin(t * 0.7) + (cue === null ? 0 : 0.28 * Math.sin(cue * Math.PI * 3));
+      head.current.rotation.y =
+        pose === "shaking_head" ? 0.45 * Math.sin(t * 7) : pose === "reading" ? 0.1 * Math.sin(t * 0.8) : 0.22 * Math.sin(t * 0.45) + 0.08 * Math.sin(t * 1.3);
+      head.current.rotation.x =
+        (pose === "tired" ? 0.45 + 0.1 * Math.sin(t * 0.9) : pose === "reading" ? 0.35 : 0.05 * Math.sin(t * 0.7)) +
+        (cue === null ? 0 : 0.28 * Math.sin(cue * Math.PI * 3));
+      head.current.rotation.z = pose === "thinking" || pose === "phone" ? 0.18 : 0;
     }
     if (eyes.current) eyes.current.scale.y = t % 3.7 < 0.12 ? 0.12 : 1;
 
@@ -189,7 +225,7 @@ export function Avatar3D({
   return (
     <group position={position} rotation={rotation} scale={[scale, scale, scale]}>
       {/* soft contact shadow so the character sits on the floor */}
-      {pose !== "swimming" && (
+      {pose !== "swimming" && pose !== "lying" && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
           <circleGeometry args={[0.32, 24]} />
           <meshBasicMaterial color="#0f172a" transparent opacity={0.12} depthWrite={false} />
@@ -365,6 +401,15 @@ export function Avatar3D({
   );
 }
 
+function Box3({ s, c, p = [0, 0, 0], r = [0, 0, 0] }: { s: [number, number, number]; c: string; p?: [number, number, number]; r?: [number, number, number] }) {
+  return (
+    <mesh position={p} rotation={r} castShadow>
+      <boxGeometry args={s} />
+      <meshStandardMaterial color={c} roughness={0.6} />
+    </mesh>
+  );
+}
+
 function HandProp({ pose, side }: { pose: Avatar3DProps["pose"]; side: -1 | 1 }) {
   const at = -FOREARM - 0.05;
   if (pose === "sitting_eating" && side === -1)
@@ -390,6 +435,23 @@ function HandProp({ pose, side }: { pose: Avatar3DProps["pose"]; side: -1 | 1 })
         </mesh>
       </group>
     );
+  if (pose === "reading" && side === 1)
+    return (
+      <group position={[-0.12, at + 0.02, 0.06]} rotation={[1.1, 0, 0]}>
+        <Box3 s={[0.2, 0.26, 0.03]} c="#2563EB" p={[-0.1, 0, 0]} r={[0, 0.3, 0]} />
+        <Box3 s={[0.2, 0.26, 0.03]} c="#F43F5E" p={[0.1, 0, 0]} r={[0, -0.3, 0]} />
+      </group>
+    );
+  if (pose === "carrying" && side === 1)
+    return (
+      <group position={[-0.25, at - 0.02, 0.12]}>
+        <Box3 s={[0.6, 0.03, 0.34]} c="#C58B4E" />
+        <Box3 s={[0.14, 0.1, 0.14]} p={[-0.12, 0.07, 0]} c="#FFFFFF" />
+        <Box3 s={[0.12, 0.14, 0.12]} p={[0.14, 0.09, 0]} c="#F59E0B" />
+      </group>
+    );
+  if (pose === "phone" && side === 1)
+    return <Box3 s={[0.05, 0.14, 0.02]} p={[0, at, 0.04]} c="#1F2937" />;
   if (pose === "holding_cone" && side === 1)
     return (
       <group position={[0, at, 0.05]} rotation={[Math.PI / 2 + 0.4, 0, 0]}>

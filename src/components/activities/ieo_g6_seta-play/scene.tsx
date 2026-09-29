@@ -180,3 +180,13 @@ export function Drift({ children, from, to, speed = 0.2, loop = false, position 
     </group>
   );
 }
+
+/** Eases 0 → 1 while `on` is true (and back when it turns false); read `.current` in useFrame. */
+export function useEase(on: boolean, speed = 1.6) {
+  const v = useRef(on ? 1 : 0);
+  useFrame((_, dt) => {
+    const target = on ? 1 : 0;
+    v.current += Math.sign(target - v.current) * Math.min(Math.abs(target - v.current), dt * speed);
+  });
+  return v;
+}

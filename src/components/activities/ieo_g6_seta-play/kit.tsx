@@ -76,6 +76,7 @@ export function World3D({
   controls = true,
   autoRotate = false,
   cue,
+  target,
   sky = "#EAF3FF",
   ground = "#E7ECF3",
 }: {
@@ -86,6 +87,7 @@ export function World3D({
   autoRotate?: boolean;
   /** The student's current choice. Each change plays the scene's (answer-neutral) reaction. */
   cue?: unknown;
+  target?: [number, number, number];
   sky?: string;
   ground?: string;
 }) {
@@ -101,10 +103,10 @@ export function World3D({
     const t = setTimeout(() => setBurst(false), 1600);
     return () => clearTimeout(t);
   }, [key]);
-  const camDistance = Math.hypot(...camera.position);
+  const camDistance = Math.hypot(camera.position[0] - (target?.[0] ?? 0), camera.position[1] - (target?.[1] ?? 0), camera.position[2] - (target?.[2] ?? 0));
 
   return (
-    <Stage3D camera={camera} height={height} controls={controls} autoRotate={autoRotate} background={sky}>
+    <Stage3D camera={camera} target={target} height={height} controls={controls} autoRotate={autoRotate} background={sky}>
       <StageFX n={n} burst={burst} sky={sky} ground={ground} camDistance={camDistance}>
         {children}
       </StageFX>

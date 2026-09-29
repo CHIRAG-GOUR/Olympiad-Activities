@@ -15,33 +15,35 @@ import { Exam } from "@/types/exam";
  * Total: 60 Marks
  */
 
-// Verified correct answer key for all 50 questions (including deliberate corrections Q2=B, Q7=C, Q10=B, Q17=B)
+// Answer key. It follows "Answer key VI IEO - 2" except where that key is not good English or does
+// not fit the paper's passage: Q2=B ("due to not having"), Q7=C, Q10=B, Q17=B ("jump in"),
+// Q31=B ("Ideal Home"), Q43=D ("I must finish"). Q12, Q36, Q39, Q40 and Q41 follow the official key.
 export const IEO_G6_SETA_KEY = [
   "A", "B", "D", "B", "A", "D", "C", "B", "C", "B", // Q01–Q10
-  "A", "B", "C", "C", "A", "C", "B", "B", "C", "A", // Q11–Q20
+  "A", "A", "C", "C", "A", "C", "B", "B", "C", "A", // Q11–Q20
   "D", "B", "A", "C", "A", "C", "B", "D", "A", "D", // Q21–Q30
-  "B", "A", "D", "C", "A", "C", "B", "D", "D", "D", // Q31–Q40
-  "A", "C", "D", "B", "A", "A", "B", "D", "A", "B", // Q41–Q50
+  "B", "A", "D", "C", "A", "A", "B", "D", "C", "A", // Q31–Q40
+  "C", "C", "D", "B", "A", "A", "B", "D", "A", "B", // Q41–Q50
 ];
 
 export const IEO_READING_PASSAGE_DREAM_HOUSE = `
 My Dream House
 
-If I had the chance to build my ideal home, I would construct a modern castle situated in a warm, sunny climate right on the coast. Many people dream of living next to the sea, though the astronomical purchase cost of coastal real estate is always the greatest hurdle.
+I often think about what my dream house might be like and where it would be. Sometimes I think I want to live somewhere warm, where the sun shines most of the time. Other times I like the seasonal variation that is currently around me. Perhaps, I would be bored if the weather was constantly nice. In whatever climate the house may be in, it should be near the sea as I'd prefer a sea view. Unfortunately, with a sea view comes a sea view price tag, and this is currently well beyond my reach.
 
-My castle would blend ancient stone walls with state-of-the-art green technology. To protect nature and minimize our carbon footprint, large wind turbines and rooftop solar arrays would generate all the electricity needed.
+If money were no object, I think I would like to live in a castle. However, if you have ever been in a castle, you would know that they are often drafty, with small windows, bad insulation, and a musty smell. I don't like any of these things. So, I would like my castle to be modernised. To take full advantage of the sea view it will need some large, single-pane glass windows. I am quite keen on saving the planet, so they would need to be well fitted and employ some sort of light harvesting technology so that I could use the sun's energy to give power to the building. The castle would need wind turbines, geothermal energy pipes, and/or solar panels.
 
-Inside, the heart of the residence would feature an indoor-outdoor botanical garden centered around an expansive, cascading water body with natural stone streams and koi ponds. Above this central courtyard, a massive motorized glass roof would be fully retractable—meaning it can move and slide completely open on mild summer evenings to let in the fresh sea breeze and starlight.
+I love the outdoors and would like to bring an element of that inside. I envisage creating an indoor-outdoor garden within the house with a retractable roof. This means I could enjoy the sun when it's there and close it to keep bad weather away, if I wanted to. Within this garden would be a pond feature that I could swim in. It would not be a conventional pool but perhaps a series of streams and pools as you can see in nature. There would be areas where the current increased in strength, so I could practice swimming against it, or simply be taken along by it, floating through the waves and through my garden. I am not entirely sure of the practicalities of creating such an idyll, but if I could, I would.
 `.trim();
 
 export const IEO_READING_PASSAGE_CASEY = `
 Casey and Margaret
 
-Casey lived on the quiet periphery of Baltimore, right where the outer suburban streets met open wooded hills. Her summer holidays felt unusually slow until her neighbour Margaret returned from family camp. 
+Casey lived in Baltimore, a big city in the USA. Apparently, the city is very dangerous, but Casey was only young and quite carefree and had not noticed any danger around her. She was fifteen years old and had long, platinum blonde hair. She had once dyed it black for a dare, but it looked very strange and did not suit her, so it did not last long. She had a very comfortable life in a large house in one of the suburbs on the outskirts of the city. It was a large building with a good-sized garden. The outside of the house was covered in ivy and had a swinging bench on the veranda that Casey liked to sit on during hot summer days.
 
-Despite living next door, Casey often found it difficult to get along with Margaret because they constantly disagreed with each other on everything. Margaret preferred quiet dress-up games and dolls on the front veranda, whereas Casey loved climbing oaks, exploring creek banks, and catching beetles.
+Although Casey enjoyed her life in the city, she did find the summer quite tedious. Many of her friends went off to summer camp so she did not have anyone to hang around with. There was always Margaret next door, she never went anywhere, but Casey and Margaret did not always see eye-to-eye. They just had very different interests, aims and ideas. When they were young, their parents often left them to play together in the back garden and Casey hated this. Margaret was older and bossy, and always wanted to play games that Casey considered boring, like pretending to be doctors and nurses. Casey preferred going on adventures or climbing trees or collecting strange insects that could be found under old dead pieces of wood.
 
-Later that summer, inspired by photographs of her mother's past journeys, Casey began drafting ambitious travel itineraries to South America. However, convincing her mother to actually go abroad with her was notoriously difficult—Baltimore was familiar and safe, while traveling across foreign mountain ranges was viewed as dangerously unpredictable.
+So, when Casey thought about her summer ahead, she decided to plan an adventure. The first step to the success of this would be to get her mother on board. Mothers can be notoriously difficult to sway when it comes to their daughters going on adventures especially if the adventure involved going abroad. Casey really wanted to explore another country, and this was a big part of her planned adventure. She knew her mother had visited many countries, particularly in South America, so Casey decided to plan a trip there and perhaps her mother would find it hard to say no.
 `.trim();
 
 type Section =
@@ -314,7 +316,7 @@ export const IEO_G6_SETA_QUESTIONS: Question[] = [
     30,
     "Spelling",
     "What is the spelling of the word that means ‘to make things worse’?",
-    ["Exsasarbate", "Execerbate", "Exacerbate", "Exacerbate"],
+    ["Exsasarbate", "Exceserbate", "Excaserbate", "Exacerbate"],
     { answerWord: "Exacerbate", category: "Spelling" }
   ),
 
