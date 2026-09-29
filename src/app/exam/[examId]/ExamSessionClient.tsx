@@ -104,8 +104,12 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
           setCandidateId(`STU-${Math.floor(10000 + Math.random() * 90000)}`);
 
           if (recoverySession && recoverySession.status === "in_progress") {
-            setIncompleteSession(recoverySession);
-            setShowRecoveryModal(true);
+            if (recoverySession.examId === resolvedParams.examId) {
+              setIncompleteSession(recoverySession);
+              setShowRecoveryModal(true);
+            } else {
+              ExamPersistenceService.clearSession(recoverySession.sessionId);
+            }
           }
         }
       } catch (err) {
@@ -265,22 +269,104 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
     return () => clearInterval(timer);
   }, [hasStarted, isSubmitting, currentIndex, questions]);
 
-  // Sections setup
+  // Dynamic Sections setup — automatically adapts to English, Mathematics or any custom paper
   const sections = useMemo(() => {
-    return [
-      { id: "sec_logical", title: "Logical Reasoning", startIdx: 0, endIdx: 14, count: 15 },
-      { id: "sec_math", title: "Mathematical Reasoning", startIdx: 15, endIdx: 34, count: 20 },
-      { id: "sec_everyday", title: "Everyday Mathematics", startIdx: 35, endIdx: 44, count: 10 },
-      { id: "sec_achievers", title: "Achievers Section", startIdx: 45, endIdx: 49, count: 5 },
-    ];
-  }, []);
+    if (!exam || questions.length === 0) {
+      return [
+        { id: "sec_default", title: "General Questions", startIdx: 0, endIdx: Math.max(0, questions.length - 1), count: questions.length },
+      ];
+    }
+
+    if (exam.sections && exam.sections.length > 0) {
+      const mapped: { id: string; title: string; startIdx: number; endIdx: number; count: number }[] = [];
+      let runningIdx = 0;
+
+      for (let sIdx = 0; sIdx < exam.sections.length; sIdx++) {
+        const sec = exam.sections[sIdx];
+        const secQIds = new Set(sec.questionIds || []);
+
+        const matchedIndices: number[] = [];
+        questions.forEach((q, qIdx) => {
+          if (secQIds.has(q.id) || secQIds.has(q.questionId) || q.section === sec.title) {
+            matchedIndices.push(qIdx);
+          }
+        });
+
+        if (matchedIndices.length > 0) {
+          const sStart = Math.min(...matchedIndices);
+          const sEnd = Math.max(...matchedIndices);
+          mapped.push({
+            id: sec.id || `sec_${sIdx}`,
+            title: sec.title,
+            startIdx: sStart,
+            endIdx: sEnd,
+            count: matchedIndices.length,
+          });
+        } else if (sec.questionIds && sec.questionIds.length > 0) {
+          const count = sec.questionIds.length;
+          mapped.push({
+            id: sec.id || `sec_${sIdx}`,
+            title: sec.title,
+            startIdx: runningIdx,
+            endIdx: runningIdx + count - 1,
+            count,
+          });
+          runningIdx += count;
+        }
+      }
+
+      if (mapped.length > 0) return mapped;
+    }
+
+    // Derive contiguous sections directly from questions' section attribute
+    const derived: { id: string; title: string; startIdx: number; endIdx: number; count: number }[] = [];
+    let curTitle = "";
+    let curStart = 0;
+
+    questions.forEach((q, idx) => {
+      const secTitle = q.section || "Questions";
+      if (secTitle !== curTitle) {
+        if (curTitle) {
+          derived.push({
+            id: `sec_${derived.length}`,
+            title: curTitle,
+            startIdx: curStart,
+            endIdx: idx - 1,
+            count: idx - curStart,
+          });
+        }
+        curTitle = secTitle;
+        curStart = idx;
+      }
+    });
+
+    if (curTitle) {
+      derived.push({
+        id: `sec_${derived.length}`,
+        title: curTitle,
+        startIdx: curStart,
+        endIdx: questions.length - 1,
+        count: questions.length - curStart,
+      });
+    }
+
+    return derived.length > 0
+      ? derived
+      : [{ id: "sec_all", title: "All Questions", startIdx: 0, endIdx: questions.length - 1, count: questions.length }];
+  }, [exam, questions]);
 
   const currentSection = useMemo(() => {
     return (
       sections.find((sec) => currentIndex >= sec.startIdx && currentIndex <= sec.endIdx) ||
-      sections[0]
+      sections[0] || {
+        id: "sec_default",
+        title: exam?.subjectName ? `${exam.subjectName} Examination` : "Examination Section",
+        startIdx: 0,
+        endIdx: Math.max(0, questions.length - 1),
+        count: questions.length,
+      }
     );
-  }, [currentIndex, sections]);
+  }, [currentIndex, sections, exam, questions.length]);
 
   useEffect(() => {
     setQuestionView("activity");
@@ -290,11 +376,11 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
   const handleResumeSession = () => {
     if (!incompleteSession || !exam) return;
 
-    setCandidateName(incompleteSession.studentName);
-    setCandidateId(incompleteSession.studentId);
+    setCandidateName(incompleteSession.studentName || "Candidate");
+    setCandidateId(incompleteSession.studentId || `STU-${Math.floor(10000 + Math.random() * 90000)}`);
     setSchoolName(incompleteSession.schoolName || "");
     setSessionId(incompleteSession.sessionId);
-    setStartTime(incompleteSession.startedAt);
+    setStartTime(incompleteSession.startedAt || new Date().toISOString());
 
     // Reconstruct answers map
     const restoredAnswers: Record<string, any> = {};
@@ -306,10 +392,11 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
     // Reconstruct activity microworld states
     setActivityStates(incompleteSession.activityStates || {});
 
-    // Reconstruct question index
+    // Reconstruct question index safely within bounds
+    const maxIdx = Math.max(0, questions.length - 1);
     const resumeIdx = Math.min(
       Math.max(0, incompleteSession.currentQuestionIndex || 0),
-      questions.length - 1
+      maxIdx
     );
     setCurrentIndex(resumeIdx);
 
@@ -334,18 +421,25 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
 
     // Recalculate true remaining time
     const remaining = ExamPersistenceService.calculateTrueRemainingTime(incompleteSession);
-    setTimeRemainingSeconds(remaining);
+    setTimeRemainingSeconds(remaining > 0 ? remaining : (exam.durationMinutes || 60) * 60);
 
+    sessionRef.current = incompleteSession;
     setShowRecoveryModal(false);
     setHasStarted(true);
   };
 
-  // Start Fresh Attempt Action (Clears Incomplete Session)
+  // Start Fresh Attempt Action (Clears Incomplete Session for this specific exam)
   const handleStartAgain = async () => {
     if (incompleteSession) {
       await ExamPersistenceService.clearSession(incompleteSession.sessionId);
-      setIncompleteSession(null);
     }
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(`active_exam_session_${exam?.id || resolvedParams.examId}`);
+        localStorage.removeItem("active_exam_session");
+      } catch {}
+    }
+    setIncompleteSession(null);
     setShowRecoveryModal(false);
   };
 
@@ -549,72 +643,132 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
     );
   }
 
-  // CRASH RECOVERY MODAL
+  // CRASH RECOVERY MODAL (Isolated strictly to this exam)
   if (showRecoveryModal && incompleteSession) {
-    const formattedSavedTime = new Date(incompleteSession.lastSavedAt).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    let formattedSavedTime = "Recently";
+    try {
+      if (incompleteSession.lastSavedAt) {
+        const d = new Date(incompleteSession.lastSavedAt);
+        if (!isNaN(d.getTime())) {
+          formattedSavedTime = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+      }
+    } catch {
+      formattedSavedTime = "Recently";
+    }
+
     const trueRemaining = ExamPersistenceService.calculateTrueRemainingTime(incompleteSession);
-    const mins = Math.floor(trueRemaining / 60);
-    const secs = trueRemaining % 60;
+    const mins = Math.max(0, Math.floor(trueRemaining / 60));
+    const secs = Math.max(0, trueRemaining % 60);
     const formattedRemaining = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    const totalQCount = questions.length || exam.totalQuestions || 50;
+    const resumeQuestionNumber = Math.min((incompleteSession.currentQuestionIndex ?? 0) + 1, totalQCount);
+    const answeredCount = Object.keys(incompleteSession.answers || {}).length;
+    const progressPercent = Math.min(100, Math.max(4, Math.round((resumeQuestionNumber / totalQCount) * 100)));
+
+    const isEnglish =
+      (exam.subjectId || "").includes("eng") ||
+      (exam.subjectName || "").toLowerCase().includes("english") ||
+      (exam.code || "").toLowerCase().includes("ieo") ||
+      exam.title.toLowerCase().includes("english") ||
+      exam.title.toLowerCase().includes("ieo");
+
+    const themeColor = isEnglish ? "#9333EA" : "#2468B2";
+    const themeBg = isEnglish ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-blue-50 text-[#2468B2] border-blue-200";
+    const themeButton = isEnglish
+      ? "bg-[#9333EA] hover:bg-[#7E22CE] text-white shadow-md shadow-purple-200"
+      : "bg-[#2468B2] hover:bg-[#1C5190] text-white shadow-md shadow-blue-200";
 
     return (
       <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center p-4 font-sans select-none">
-        <div className="bg-white rounded-2xl border-2 border-[#2468B2] max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
-          <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 border-2 border-[#2468B2] text-[#2468B2] flex items-center justify-center shrink-0">
-              <History className="w-6 h-6" />
+        <div className="bg-white rounded-3xl border-2 border-slate-300 max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
+          {/* Header */}
+          <div className="flex items-start gap-4 border-b border-slate-200 pb-5">
+            <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center shrink-0 shadow-xs ${themeBg}`}>
+              {isEnglish ? <BookOpen className="w-7 h-7" /> : <History className="w-7 h-7" />}
             </div>
-            <div>
-              <h2 className="text-xl font-black text-slate-900">Resume Examination</h2>
-              <p className="text-xs text-slate-600 font-medium">
-                We found an unfinished examination session.
+            <div className="min-w-0 flex-1">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider border ${themeBg}`}>
+                {isEnglish ? "English Olympiad (IEO)" : "Mathematics Olympiad (IMO)"} · Grade {exam.grade || 6}
+              </span>
+              <h2 className="text-xl font-black text-slate-900 mt-1 leading-snug">
+                Resume Examination Session
+              </h2>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                Saved attempt detected for this specific examination paper.
               </p>
             </div>
           </div>
 
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs text-slate-800">
-            <div className="flex justify-between py-1 border-b border-slate-200/60">
-              <span className="font-bold text-slate-500 uppercase tracking-wider">Candidate:</span>
-              <span className="font-extrabold text-slate-900">{incompleteSession.studentName}</span>
+          {/* Exam Session Metadata Card */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs text-slate-800">
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Examination Paper</span>
+              <span className="font-extrabold text-slate-900 text-right truncate max-w-[240px]">{exam.title}</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-slate-200/60">
-              <span className="font-bold text-slate-500 uppercase tracking-wider">Exam:</span>
-              <span className="font-bold text-[#2468B2]">{incompleteSession.examTitle}</span>
+
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Candidate Name</span>
+              <span className="font-extrabold text-slate-900">{incompleteSession.studentName || "Registered Candidate"}</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-slate-200/60">
-              <span className="font-bold text-slate-500 uppercase tracking-wider">Last Saved:</span>
-              <span className="font-mono font-bold text-slate-900">{formattedSavedTime}</span>
+
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Last Saved At</span>
+              <span className="font-mono font-bold text-slate-700">{formattedSavedTime}</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-slate-200/60">
-              <span className="font-bold text-slate-500 uppercase tracking-wider">Question:</span>
-              <span className="font-bold text-slate-900">
-                {incompleteSession.currentQuestionIndex + 1} of {questions.length}
+
+            {/* Question Progress Bar */}
+            <div className="py-1 border-b border-slate-200/80 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Current Position</span>
+                <span className="font-bold text-slate-900">
+                  Question <strong className="text-slate-900 font-black">{resumeQuestionNumber}</strong> of {totalQCount}
+                  <span className="text-slate-500 font-normal ml-1.5 font-mono">({answeredCount} answered)</span>
+                </span>
+              </div>
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%`, backgroundColor: themeColor }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-0.5">
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Timer Remaining</span>
+              <span className="font-mono font-black text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 text-sm">
+                {formattedRemaining}
               </span>
-            </div>
-            <div className="flex justify-between py-1">
-              <span className="font-bold text-slate-500 uppercase tracking-wider">Time Remaining:</span>
-              <span className="font-mono font-black text-amber-700">{formattedRemaining}</span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleStartAgain}
-              className="flex-1 h-11 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <RotateCcw className="w-4 h-4" /> Start Again
-            </button>
+          {/* Action Buttons */}
+          <div className="space-y-2.5 pt-1">
             <button
               type="button"
               onClick={handleResumeSession}
-              className="flex-1 h-11 px-6 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider"
+              className={`w-full h-11 px-6 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider ${themeButton}`}
             >
-              <Check className="w-4 h-4 stroke-[3]" /> Resume Examination
+              <Check className="w-4 h-4 stroke-[3]" />
+              <span>Resume This Examination</span>
             </button>
+
+            <button
+              type="button"
+              onClick={handleStartAgain}
+              className="w-full h-11 px-4 bg-white hover:bg-slate-100 border-2 border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Start Fresh Attempt (Reset This Paper)</span>
+            </button>
+
+            <Link
+              href="/student/exams"
+              className="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Return to Examinations Portal</span>
+            </Link>
           </div>
         </div>
       </div>

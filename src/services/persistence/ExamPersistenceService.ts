@@ -140,18 +140,17 @@ class ExamPersistenceServiceClass {
     this.inMemoryCache.set(sessionId, sessionState);
     await idbClient.put("sessions", sessionState);
 
-    // Save active session pointer in local storage for instant reboot detection
+    // Save active session pointer in local storage per examId for clean isolation
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(
-          "active_exam_session",
-          JSON.stringify({
-            sessionId,
-            examId: params.examId,
-            studentId: params.studentId,
-            lastSavedAt: now,
-          })
-        );
+        const payload = JSON.stringify({
+          sessionId,
+          examId: params.examId,
+          studentId: params.studentId,
+          lastSavedAt: now,
+        });
+        localStorage.setItem(`active_exam_session_${params.examId}`, payload);
+        localStorage.removeItem("active_exam_session");
       } catch {
         // quota ignore
       }
@@ -184,16 +183,15 @@ class ExamPersistenceServiceClass {
 
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(
-          "active_exam_session",
-          JSON.stringify({
-            sessionId: cleanUpdated.sessionId,
-            examId: cleanUpdated.examId,
-            studentId: cleanUpdated.studentId,
-            lastSavedAt: cleanUpdated.lastSavedAt,
-            currentQuestionIndex: cleanUpdated.currentQuestionIndex,
-          })
-        );
+        const payload = JSON.stringify({
+          sessionId: cleanUpdated.sessionId,
+          examId: cleanUpdated.examId,
+          studentId: cleanUpdated.studentId,
+          lastSavedAt: cleanUpdated.lastSavedAt,
+          currentQuestionIndex: cleanUpdated.currentQuestionIndex,
+        });
+        localStorage.setItem(`active_exam_session_${cleanUpdated.examId}`, payload);
+        localStorage.removeItem("active_exam_session");
       } catch {
         // ignore
       }
@@ -258,44 +256,74 @@ class ExamPersistenceServiceClass {
   }
 
   /**
-   * Checks for an existing incomplete/active session for crash recovery
+   * Checks for an existing incomplete/active session strictly isolated for the specific exam
    */
   async getIncompleteSession(examId: string, studentId?: string): Promise<ExamSessionState | null> {
-    // 1. Check local storage hint
+    if (!examId) return null;
+
+    // 1. Check exam-specific local storage hint (strictly isolated by examId)
     if (typeof window !== "undefined") {
       try {
-        const hintRaw = localStorage.getItem("active_exam_session");
+        const hintRaw = localStorage.getItem(`active_exam_session_${examId}`);
         if (hintRaw) {
           const hint = JSON.parse(hintRaw);
           if (hint.sessionId && hint.examId === examId) {
             if (!studentId || hint.studentId === studentId) {
               const session = await this.loadProgress(hint.sessionId);
-              if (session && session.status === "in_progress") {
-                return session;
+              if (session && session.status === "in_progress" && session.examId === examId) {
+                // Check if session has expired
+                const remaining = this.calculateTrueRemainingTime(session);
+                if (remaining > 0) {
+                  return session;
+                } else {
+                  // Mark as completed/expired so it stops popping up
+                  session.status = "submitted";
+                  await idbClient.put("sessions", session);
+                  localStorage.removeItem(`active_exam_session_${examId}`);
+                }
               }
             }
           }
         }
+        // Always clean legacy un-namespaced key if present
+        localStorage.removeItem("active_exam_session");
       } catch {
         // ignore
       }
     }
 
-    // 2. Scan IndexedDB sessions
-    const all = await idbClient.getAll<ExamSessionState>("sessions");
-    const activeMatches = all.filter(
-      (s) =>
-        s.examId === examId &&
-        s.status === "in_progress" &&
-        (!studentId || s.studentId === studentId)
-    );
-
-    if (activeMatches.length > 0) {
-      // Return the most recently saved session
-      activeMatches.sort(
-        (a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime()
+    // 2. Scan IndexedDB sessions strictly matching this examId
+    try {
+      const all = await idbClient.getAll<ExamSessionState>("sessions");
+      const activeMatches = all.filter(
+        (s) =>
+          s.examId === examId &&
+          s.status === "in_progress" &&
+          (!studentId || s.studentId === studentId)
       );
-      return activeMatches[0];
+
+      if (activeMatches.length > 0) {
+        // Filter out expired sessions
+        const nonExpired = activeMatches.filter((s) => {
+          const remaining = this.calculateTrueRemainingTime(s);
+          if (remaining <= 0) {
+            s.status = "submitted";
+            idbClient.put("sessions", s).catch(() => {});
+            return false;
+          }
+          return true;
+        });
+
+        if (nonExpired.length > 0) {
+          nonExpired.sort(
+            (a, b) =>
+              new Date(b.lastSavedAt || 0).getTime() - new Date(a.lastSavedAt || 0).getTime()
+          );
+          return nonExpired[0];
+        }
+      }
+    } catch (e) {
+      console.warn("[ExamPersistence] Failed scanning sessions:", e);
     }
 
     return null;
@@ -390,6 +418,7 @@ class ExamPersistenceServiceClass {
 
     if (typeof window !== "undefined") {
       try {
+        localStorage.removeItem(`active_exam_session_${session.examId}`);
         localStorage.removeItem("active_exam_session");
       } catch {
         // ignore
@@ -411,16 +440,26 @@ class ExamPersistenceServiceClass {
       clearTimeout(this.activeDebounceTimers.get(sessionId));
       this.activeDebounceTimers.delete(sessionId);
     }
+    const cached = await this.loadProgress(sessionId);
     this.inMemoryCache.delete(sessionId);
     await idbClient.delete("sessions", sessionId);
 
     if (typeof window !== "undefined") {
       try {
-        const hintRaw = localStorage.getItem("active_exam_session");
-        if (hintRaw) {
-          const hint = JSON.parse(hintRaw);
-          if (hint.sessionId === sessionId) {
-            localStorage.removeItem("active_exam_session");
+        if (cached?.examId) {
+          localStorage.removeItem(`active_exam_session_${cached.examId}`);
+        }
+        localStorage.removeItem("active_exam_session");
+        // Also clear any key that references this session
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("active_exam_session")) {
+            try {
+              const val = JSON.parse(localStorage.getItem(key) || "{}");
+              if (val.sessionId === sessionId) {
+                localStorage.removeItem(key);
+              }
+            } catch {}
           }
         }
       } catch {

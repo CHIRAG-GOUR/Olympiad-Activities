@@ -499,5 +499,12 @@ export const IEO_G6_SETA_EXAM: Exam = {
   status: "Published",
   createdAt: "2026-09-28T00:00:00Z",
   updatedAt: "2026-09-29T12:00:00Z",
+  sections: [
+    { id: "sec_ieo_word", title: "Word and Structure Knowledge", description: "24 Questions (1 Mark each)", questionIds: IEO_G6_SETA_QUESTIONS.slice(0, 24).map((q) => q.id) },
+    { id: "sec_ieo_vocab", title: "Vocabulary", description: "6 Questions (1 Mark each)", questionIds: IEO_G6_SETA_QUESTIONS.slice(24, 30).map((q) => q.id) },
+    { id: "sec_ieo_reading", title: "Reading", description: "10 Questions (1 Mark each)", questionIds: IEO_G6_SETA_QUESTIONS.slice(30, 40).map((q) => q.id) },
+    { id: "sec_ieo_spoken", title: "Spoken and Written Expression", description: "5 Questions (1 Mark each)", questionIds: IEO_G6_SETA_QUESTIONS.slice(40, 45).map((q) => q.id) },
+    { id: "sec_ieo_achievers", title: "Achievers Section", description: "5 Questions (3 Marks each)", questionIds: IEO_G6_SETA_QUESTIONS.slice(45, 50).map((q) => q.id) },
+  ],
   questionIds: IEO_G6_SETA_QUESTIONS.map((q) => q.id),
 };

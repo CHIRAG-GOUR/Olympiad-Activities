@@ -70,8 +70,10 @@ export default function StudentExamsScreen() {
   const myResumable = useMemo(() => {
     const mine = sessions.filter(
       (s) =>
+        s &&
         s.status === "in_progress" &&
-        s.studentName?.trim().toLowerCase() === (user?.name ?? "").trim().toLowerCase()
+        remainingSecondsFor(s) > 0 &&
+        (!user?.name || !s.studentName || s.studentName?.trim().toLowerCase() === user.name.trim().toLowerCase())
     );
     return new Map(mine.map((s) => [s.examId, s]));
   }, [sessions, user]);
