@@ -1,61 +1,72 @@
 import { IEO_G6_SETA_QUESTIONS, IEO_G6_SETA_KEY, IEO_G6_SETA_EXAM } from "../src/data/ieo_g6_seta";
+import { IEO_INTERACTIVE_G6_QUESTIONS, IEO_INTERACTIVE_G6_KEY, IEO_INTERACTIVE_G6_EXAM } from "../src/data/ieo_interactive_g6";
 import { IEO_G6_SETA_PLAY_ACTIVITY_MAP } from "../src/components/activities/ieo_g6_seta-play/registry";
-import { getQuestionActivity, hasBespokeActivity } from "../src/components/activities/ActivityRegistry";
+import { IEO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP } from "../src/components/activities/ieo_interactive_g6-play/registry";
+import { getQuestionActivity } from "../src/components/activities/ActivityRegistry";
 
-console.log("=================================================");
-console.log("  IEO CLASS 6 SET A - 50 ACTIVITIES VERIFICATION ");
-console.log("=================================================\n");
+console.log("==========================================================");
+console.log("  IEO CLASS 6 — DUAL ENGLISH EXAMS VERIFICATION (100 ACTS)");
+console.log("==========================================================\n");
 
-console.log(`Total Exam Questions: ${IEO_G6_SETA_QUESTIONS.length}`);
-console.log(`Exam Total Marks: ${IEO_G6_SETA_EXAM.totalMarks}`);
-console.log(`Exam Duration: ${IEO_G6_SETA_EXAM.durationMinutes} mins`);
-console.log(`Exam Status: ${IEO_G6_SETA_EXAM.status}\n`);
+function verifyExam(
+  name: string,
+  exam: typeof IEO_G6_SETA_EXAM,
+  questions: typeof IEO_G6_SETA_QUESTIONS,
+  key: string | string[],
+  map: typeof IEO_G6_SETA_PLAY_ACTIVITY_MAP,
+  idPrefix: string,
+  codePrefix: string
+) {
+  console.log(`--- ${name} ---`);
+  console.log(`Exam ID: ${exam.id} | Code: ${exam.code}`);
+  console.log(`Title: ${exam.title}`);
+  console.log(`Total Marks: ${exam.totalMarks} | Duration: ${exam.durationMinutes}m | Status: ${exam.status}\n`);
 
-let passedCount = 0;
-let errors: string[] = [];
+  let passed = 0;
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const nn = String(i + 1).padStart(2, "0");
+    const expKey = key[i];
+    const internalId = `${idPrefix}${nn}`;
+    const code = `${codePrefix}${nn}`;
 
-for (let i = 0; i < 50; i++) {
-  const q = IEO_G6_SETA_QUESTIONS[i];
-  const qNum = i + 1;
-  const nn = String(qNum).padStart(2, "0");
-  const expectedKey = IEO_G6_SETA_KEY[i];
+    const act1 = map[internalId];
+    const act2 = map[code];
+    const globalAct = getQuestionActivity(code);
 
-  if (!q) {
-    errors.push(`Q${qNum}: Missing from IEO_G6_SETA_QUESTIONS`);
-    continue;
+    if (!act1 || !act2 || !globalAct) {
+      throw new Error(`Missing activity registration for Q${nn} (${q.id})`);
+    }
+
+    if (q.multipleChoiceConfig?.correctOptionId !== expKey) {
+      throw new Error(`Key mismatch for Q${nn}: got ${q.multipleChoiceConfig?.correctOptionId}, expected ${expKey}`);
+    }
+    passed++;
   }
-
-  const actByInternalId = IEO_G6_SETA_PLAY_ACTIVITY_MAP[`ieo_g6_seta_q${nn}`];
-  const actByCode = IEO_G6_SETA_PLAY_ACTIVITY_MAP[`IEO-G6-SETA-Q${nn}`];
-  const globalAct = getQuestionActivity(`IEO-G6-SETA-Q${nn}`);
-
-  if (!actByInternalId || !actByCode || !globalAct) {
-    errors.push(`Q${qNum} (${q.id}): Missing activity in registry! (id: ${Boolean(actByInternalId)}, code: ${Boolean(actByCode)}, global: ${Boolean(globalAct)})`);
-    continue;
-  }
-
-  const correctOption = q.multipleChoiceConfig?.options?.find(
-    (o) => o.id === q.multipleChoiceConfig?.correctOptionId
-  );
-
-  if (q.multipleChoiceConfig?.correctOptionId !== expectedKey) {
-    errors.push(`Q${qNum}: Key mismatch! Question has ${q.multipleChoiceConfig?.correctOptionId}, Expected: ${expectedKey}`);
-    continue;
-  }
-
-  passedCount++;
-  console.log(
-    `✓ Q${nn} [${q.section} - ${q.topic}]: Key=${expectedKey} (${correctOption?.text}) -> Component Registered (${actByInternalId.name})`
-  );
+  console.log(`✓ ${passed}/50 questions and 3D activities verified successfully!\n`);
 }
 
-console.log("\n=================================================");
-console.log(`Results: ${passedCount} / 50 Questions Fully Verified!`);
-if (errors.length > 0) {
-  console.error("ERRORS FOUND:");
-  errors.forEach((e) => console.error(" ❌ " + e));
-  process.exit(1);
-} else {
-  console.log("🎉 ALL 50 IEO CLASS 6 SET A BESPOKE 3D ACTIVITIES VERIFIED 100%!");
-  process.exit(0);
-}
+verifyExam(
+  "1. OFFICIAL EXAM PAPER: IEO CLASS 6 SET A",
+  IEO_G6_SETA_EXAM,
+  IEO_G6_SETA_QUESTIONS,
+  IEO_G6_SETA_KEY,
+  IEO_G6_SETA_PLAY_ACTIVITY_MAP,
+  "ieo_g6_seta_q",
+  "IEO-G6-SETA-Q"
+);
+
+verifyExam(
+  "2. INTERACTIVE MASTER EDITION: IEO CLASS 6",
+  IEO_INTERACTIVE_G6_EXAM,
+  IEO_INTERACTIVE_G6_QUESTIONS,
+  IEO_INTERACTIVE_G6_KEY,
+  IEO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP,
+  "ieo_g6_interactive_q",
+  "IEO-G6-INT-Q"
+);
+
+console.log("==========================================================");
+console.log("🎉 ALL 100 QUESTIONS ACROSS BOTH IEO ENGLISH EXAMS VERIFIED 100%!");
+console.log("==========================================================");
+

@@ -26,9 +26,9 @@ const LOCAL_STORAGE_PREFIX = "olympiad_db_";
 function cleanOldMockData() {
   if (typeof window === "undefined") return;
   try {
-    const hasCleaned = localStorage.getItem(LOCAL_STORAGE_PREFIX + "v4_interactive_questions_all");
+    const hasCleaned = localStorage.getItem(LOCAL_STORAGE_PREFIX + "v5_two_ieo_exams_all");
     if (!hasCleaned) {
-      // Purge all old seed collections and load official IMO 2024-25 dataset with interactive configs
+      // Purge all old seed collections and load both English and IMO datasets
       const keysToRemove = [
         "questions",
         "exams",
@@ -37,7 +37,7 @@ function cleanOldMockData() {
         "attempts",
       ];
       keysToRemove.forEach((k) => localStorage.removeItem(LOCAL_STORAGE_PREFIX + k));
-      localStorage.setItem(LOCAL_STORAGE_PREFIX + "v4_interactive_questions_all", "true");
+      localStorage.setItem(LOCAL_STORAGE_PREFIX + "v5_two_ieo_exams_all", "true");
     }
   } catch (e) {
     console.error("Error cleaning old mock storage", e);
@@ -176,13 +176,13 @@ export const OlympiadStore = {
       try {
         const snap = await getDocs(collection(db, "subjects"));
         if (!snap.empty) {
-          return snap.docs.map((d) => d.data() as Subject);
+          return reconcileWithSeed(snap.docs.map((d) => d.data() as Subject), SEED_SUBJECTS);
         }
       } catch (e) {
         console.warn("Firestore subjects fallback", e);
       }
     }
-    return getLocalCollection<Subject>("subjects", SEED_SUBJECTS);
+    return reconcileWithSeed(getLocalCollection<Subject>("subjects", SEED_SUBJECTS), SEED_SUBJECTS);
   },
 
   async saveSubject(subject: Subject): Promise<void> {

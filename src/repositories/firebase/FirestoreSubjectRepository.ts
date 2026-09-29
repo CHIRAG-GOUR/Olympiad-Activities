@@ -5,6 +5,8 @@ import { collection, doc, getDocs, getDoc, setDoc, deleteDoc } from "firebase/fi
 import { LocalSubjectRepository } from "../local/LocalSubjectRepository";
 import { reviveNestedArrays } from "./decodeFirestore";
 
+import { SEED_SUBJECTS, reconcileWithSeed, preferSeed } from "@/lib/seedData";
+
 export class FirestoreSubjectRepository implements ISubjectRepository {
   private localFallback = new LocalSubjectRepository();
 
@@ -13,7 +15,7 @@ export class FirestoreSubjectRepository implements ISubjectRepository {
     try {
       const snap = await getDoc(doc(db, "subjects", id));
       if (snap.exists()) {
-        return reviveNestedArrays(snap.data()) as Subject;
+        return preferSeed(reviveNestedArrays(snap.data()) as Subject, SEED_SUBJECTS, id);
       }
       return this.localFallback.getSubject(id);
     } catch (e) {
@@ -23,16 +25,20 @@ export class FirestoreSubjectRepository implements ISubjectRepository {
   }
 
   async listSubjects(): Promise<Subject[]> {
-    if (!db) return this.localFallback.listSubjects();
+    const local = await this.localFallback.listSubjects();
+    if (!db) return local;
     try {
       const snap = await getDocs(collection(db, "subjects"));
       if (!snap.empty) {
-        return snap.docs.map((d) => reviveNestedArrays(d.data()) as Subject);
+        const remote = snap.docs.map((d) => reviveNestedArrays(d.data()) as Subject);
+        const remoteIds = new Set(remote.map((s) => s.id));
+        const missingLocal = local.filter((s) => !remoteIds.has(s.id));
+        return reconcileWithSeed([...remote, ...missingLocal], SEED_SUBJECTS);
       }
-      return this.localFallback.listSubjects();
+      return local;
     } catch (e) {
       console.warn("Firestore listSubjects failed, fallback to local:", e);
-      return this.localFallback.listSubjects();
+      return local;
     }
   }
 
