@@ -2283,3 +2283,358 @@ export function CarRideDropoff3D({ position = [0, 0, 0] }: { position?: [number,
     </group>
   );
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   NEW 3D SCENES FOR IEO CLASS 6 SET A (Q1–Q50)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** Q1: 3D Pizza Town Detective */
+export function PizzaTown3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Cobblestone Street */}
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#78716C" roughness={0.9} />
+      </mesh>
+      {/* Sidewalk */}
+      <mesh position={[0, 0.05, -1.8]} receiveShadow>
+        <boxGeometry args={[8, 0.1, 2.2]} />
+        <meshStandardMaterial color="#D6D3D1" roughness={0.7} />
+      </mesh>
+      {/* Pizzeria Building */}
+      <group position={[-2.2, 1.4, -2.2]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[2.8, 2.6, 2.0]} />
+          <meshStandardMaterial color="#B45309" roughness={0.8} />
+        </mesh>
+        {/* Red & White Awning */}
+        <mesh position={[0, 0.5, 1.1]} rotation={[0.3, 0, 0]} castShadow>
+          <boxGeometry args={[2.9, 0.1, 0.8]} />
+          <meshStandardMaterial color="#DC2626" />
+        </mesh>
+        {/* Pizza Sign */}
+        <mesh position={[0, 1.1, 1.05]}>
+          <boxGeometry args={[1.6, 0.4, 0.08]} />
+          <meshStandardMaterial color="#FEF08A" />
+        </mesh>
+      </group>
+      {/* Newspaper / Editorial Desk */}
+      <group position={[1.8, 0.6, -1.4]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[2.0, 1.0, 1.2]} />
+          <meshStandardMaterial color="#475569" roughness={0.5} />
+        </mesh>
+        {/* Printing Press Roller */}
+        <mesh position={[0, 0.6, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 1.6, 16]} />
+          <meshStandardMaterial color="#94A3B8" metalness={0.8} roughness={0.2} />
+        </mesh>
+      </group>
+      {/* Vintage Street Lamp */}
+      <group position={[0.2, 1.2, -0.6]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.05, 0.08, 2.4, 12]} />
+          <meshStandardMaterial color="#1E293B" metalness={0.9} />
+        </mesh>
+        <mesh position={[0, 1.2, 0]}>
+          <sphereGeometry args={[0.18, 16, 16]} />
+          <meshStandardMaterial color="#FEF08A" emissive="#F59E0B" emissiveIntensity={0.6} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Q2: 3D Hotel Checkout Escape */
+export function HotelCheckout3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Marble Reception Floor */}
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#E2E8F0" roughness={0.2} metalness={0.1} />
+      </mesh>
+      {/* Reception Counter */}
+      <mesh position={[0, 0.6, -1.2]} castShadow receiveShadow>
+        <boxGeometry args={[4.2, 1.2, 1.0]} />
+        <meshStandardMaterial color="#854D0E" roughness={0.4} />
+      </mesh>
+      {/* Counter Top Brass Bell & Register */}
+      <mesh position={[-0.8, 1.25, -1.2]} castShadow>
+        <cylinderGeometry args={[0.12, 0.16, 0.12, 16]} />
+        <meshStandardMaterial color="#EAB308" metalness={0.9} roughness={0.2} />
+      </mesh>
+      <mesh position={[0.6, 1.25, -1.1]} castShadow>
+        <boxGeometry args={[0.6, 0.2, 0.4]} />
+        <meshStandardMaterial color="#334155" metalness={0.6} />
+      </mesh>
+      {/* Luggage Cart with Brass Frame */}
+      <group position={[-2.2, 0.7, 0.5]}>
+        <mesh castShadow>
+          <boxGeometry args={[1.4, 0.15, 0.9]} />
+          <meshStandardMaterial color="#DC2626" />
+        </mesh>
+        <mesh position={[0, 0.6, 0]} castShadow>
+          <torusGeometry args={[0.45, 0.04, 12, 24, Math.PI]} />
+          <meshStandardMaterial color="#EAB308" metalness={0.9} />
+        </mesh>
+      </group>
+      {/* Wallet on Counter */}
+      <mesh position={[-0.1, 1.23, -0.9]} rotation={[0, 0.2, 0]} castShadow>
+        <boxGeometry args={[0.3, 0.06, 0.2]} />
+        <meshStandardMaterial color="#78350F" roughness={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Q3: 3D Handball Talent Scanner */
+export function HandballCourt3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Hardwood Gymnasium Floor */}
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#D97706" roughness={0.3} />
+      </mesh>
+      {/* D-Zone 6m Arc */}
+      <mesh position={[0, 0.01, -2.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.2, 2.3, 32, 1, 0, Math.PI]} />
+        <meshStandardMaterial color="#FFFFFF" />
+      </mesh>
+      {/* Red & White Handball Goal */}
+      <group position={[0, 1.0, -3.2]}>
+        <mesh position={[-1.5, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 2.0, 12]} />
+          <meshStandardMaterial color="#DC2626" />
+        </mesh>
+        <mesh position={[1.5, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 2.0, 12]} />
+          <meshStandardMaterial color="#DC2626" />
+        </mesh>
+        <mesh position={[0, 1.0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 3.12, 12]} />
+          <meshStandardMaterial color="#DC2626" />
+        </mesh>
+      </group>
+      {/* Handball */}
+      <mesh position={[0.4, 0.25, -0.5]} castShadow>
+        <sphereGeometry args={[0.2, 20, 20]} />
+        <meshStandardMaterial color="#3B82F6" roughness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Q4: 3D First Snow Alpine Mountain */
+export function SnowMountain3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Snowy Terrain */}
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#F1F5F9" roughness={0.7} />
+      </mesh>
+      {/* Mountain Peak */}
+      <mesh position={[0, 2.0, -3.5]} castShadow>
+        <coneGeometry args={[3.2, 4.2, 8]} />
+        <meshStandardMaterial color="#CBD5E1" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, 3.4, -3.5]}>
+        <coneGeometry args={[1.4, 1.6, 8]} />
+        <meshStandardMaterial color="#FFFFFF" roughness={0.3} />
+      </mesh>
+      {/* Snow Pine Trees */}
+      {[-2.0, -0.8, 1.8].map((x, i) => (
+        <group key={i} position={[x, 0.8, -1.2 - i * 0.4]}>
+          <mesh castShadow>
+            <coneGeometry args={[0.6, 1.4, 8]} />
+            <meshStandardMaterial color="#065F46" roughness={0.8} />
+          </mesh>
+          <mesh position={[0, 0.4, 0]}>
+            <coneGeometry args={[0.45, 0.9, 8]} />
+            <meshStandardMaterial color="#FFFFFF" roughness={0.3} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** Q5: 3D Precision Flower Studio & Vase */
+export function FlowerVase3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      {/* Studio Table */}
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#FEF3C7" roughness={0.4} />
+      </mesh>
+      {/* Porcelain Vase */}
+      <group position={[0, 0.7, -0.5]}>
+        <mesh castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.45, 1.2, 24]} />
+          <meshStandardMaterial color="#0284C7" roughness={0.1} metalness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.65, 0]}>
+          <torusGeometry args={[0.32, 0.05, 16, 32]} />
+          <meshStandardMaterial color="#FBBF24" metalness={0.8} />
+        </mesh>
+      </group>
+      {/* Flowers */}
+      {[-0.2, 0, 0.2].map((x, i) => (
+        <mesh key={i} position={[x, 1.4 + i * 0.1, -0.5 + i * 0.05]} castShadow>
+          <sphereGeometry args={[0.16, 16, 16]} />
+          <meshStandardMaterial color={i === 0 ? "#F43F5E" : i === 1 ? "#F59E0B" : "#EC4899"} />
+        </mesh>
+      ))}
+      {/* Robotic Hand */}
+      <group position={[1.4, 1.2, 0.2]} rotation={[0, -0.4, 0.3]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.2, 0.8, 0.2]} />
+          <meshStandardMaterial color="#475569" metalness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.45, 0]}>
+          <sphereGeometry args={[0.12, 16, 16]} />
+          <meshStandardMaterial color="#10B981" emissive="#10B981" emissiveIntensity={0.5} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Q6: 3D High-Detail Microscopy Lab */
+export function MicroscopyLab3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#0F172A" roughness={0.3} />
+      </mesh>
+      <group position={[0, 0.8, -0.4]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[1.2, 0.25, 1.4]} />
+          <meshStandardMaterial color="#334155" metalness={0.7} roughness={0.3} />
+        </mesh>
+        <mesh position={[0, 0.7, -0.4]} castShadow>
+          <cylinderGeometry args={[0.1, 0.14, 1.2, 16]} />
+          <meshStandardMaterial color="#64748B" metalness={0.8} />
+        </mesh>
+        <mesh position={[0, 1.1, 0.1]} castShadow>
+          <cylinderGeometry args={[0.24, 0.24, 0.18, 16]} />
+          <meshStandardMaterial color="#E2E8F0" metalness={0.9} roughness={0.1} />
+        </mesh>
+        <mesh position={[0, 0.55, 0.1]} receiveShadow>
+          <boxGeometry args={[0.9, 0.08, 0.8]} />
+          <meshStandardMaterial color="#0284C7" transparent opacity={0.7} roughness={0.1} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Q7: 3D Intelligence Analysis Holographic Room */
+export function IntelligenceRoom3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#090D16" roughness={0.2} />
+      </mesh>
+      <group position={[0, 0.6, -0.6]}>
+        <mesh castShadow receiveShadow>
+          <cylinderGeometry args={[1.8, 1.4, 0.8, 32]} />
+          <meshStandardMaterial color="#1E293B" metalness={0.8} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.42, 0]}>
+          <cylinderGeometry args={[1.6, 1.6, 0.05, 32]} />
+          <meshStandardMaterial color="#06B6D4" emissive="#0891B2" emissiveIntensity={0.8} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Q8: 3D Mountain Walk Hiking Trail & Finish Gate */
+export function HikingTrail3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#3F6212" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[2.0, 10]} />
+        <meshStandardMaterial color="#A16207" roughness={0.8} />
+      </mesh>
+      <group position={[0, 1.4, -3.2]}>
+        <mesh position={[-1.2, 0, 0]} castShadow>
+          <boxGeometry args={[0.25, 2.8, 0.25]} />
+          <meshStandardMaterial color="#78350F" roughness={0.7} />
+        </mesh>
+        <mesh position={[1.2, 0, 0]} castShadow>
+          <boxGeometry args={[0.25, 2.8, 0.25]} />
+          <meshStandardMaterial color="#78350F" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 1.1, 0]} castShadow>
+          <boxGeometry args={[2.6, 0.5, 0.08]} />
+          <meshStandardMaterial color="#10B981" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Q9: 3D Italian Trattoria */
+export function ItalianFood3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#C2410C" roughness={0.6} />
+      </mesh>
+      <group position={[0, 0.6, -0.6]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[2.4, 0.9, 1.6]} />
+          <meshStandardMaterial color="#FFFFFF" roughness={0.4} />
+        </mesh>
+        <mesh position={[-0.5, 0.55, 0]} castShadow>
+          <cylinderGeometry args={[0.3, 0.18, 0.14, 16]} />
+          <meshStandardMaterial color="#FFFFFF" />
+        </mesh>
+        <mesh position={[0.5, 0.52, 0]} castShadow>
+          <cylinderGeometry args={[0.35, 0.35, 0.04, 20]} />
+          <meshStandardMaterial color="#F59E0B" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Q10: 3D Theatre Stage */
+export function DialogueTheatre3D({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#78350F" roughness={0.4} />
+      </mesh>
+      <mesh position={[-3.2, 1.8, -2.0]} castShadow>
+        <cylinderGeometry args={[0.6, 0.8, 3.8, 16]} />
+        <meshStandardMaterial color="#991B1B" roughness={0.7} />
+      </mesh>
+      <mesh position={[3.2, 1.8, -2.0]} castShadow>
+        <cylinderGeometry args={[0.6, 0.8, 3.8, 16]} />
+        <meshStandardMaterial color="#991B1B" roughness={0.7} />
+      </mesh>
+      {[-1.8, -0.9, 0, 0.9, 1.8].map((x, i) => (
+        <mesh key={i} position={[x, 0.1, 1.2]}>
+          <sphereGeometry args={[0.1, 12, 12]} />
+          <meshStandardMaterial color="#FEF08A" emissive="#F59E0B" emissiveIntensity={0.6} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+

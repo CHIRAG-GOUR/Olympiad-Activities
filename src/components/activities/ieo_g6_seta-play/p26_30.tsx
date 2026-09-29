@@ -1,345 +1,114 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ActivityComponentProps } from "../kit/types";
 import { usePlay } from "../imo6a-play/engine";
-import { Shell, Board, WordPill, Bay, World3D } from "./kit";
-import { Search, BookOpen, Clock, Compass, ShieldAlert, AlertCircle } from "lucide-react";
+import { Shell, Board, WordPill, SentenceSlot, Bay, World3D } from "./kit";
 import {
+  Sparkles,
+  Shield,
+  Trees,
+  KeyRound,
+  AlertOctagon,
+  CheckCircle2,
+  Lock,
+  Unlock,
+} from "lucide-react";
+import {
+  CommunalKitchen3D,
   LexicalVault3D,
-  BeaverHabitat3D,
-  GlacierExpedition3D,
+  SuburbanGarden3D,
   Avatar3D,
 } from "./components3D";
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q26 — Forensic Spelling Scanner ('Amature' vs 'Amateur')
-   Question: "Choose the word with the incorrect spelling."
-   Options: A. Amature, B. Anarchist, C. Stoic, D. Insolvent -> Key: A (Amature)
+   Q26 — 🧼 3D Hygiene Inspection (Synonym of Sanitary)
+   Question: "Choose the correct synonym of Sanitary."
+   Options: A. Expensive, B. Pretty, C. Clean, D. New -> Key: C (Clean)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q26SpellingInspectorActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ selectedWord?: string }>({
+export function Q26SpellingInspectorActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedSynonym?: string; inspectionDone: boolean }>({
     question,
-    initial: { selectedWord: undefined },
+    initial: { selectedSynonym: undefined, inspectionDone: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.selectedWord) return { note: "Select the word containing a spelling error" };
-      const map: Record<string, string> = { Amature: "A", Anarchist: "B", Stoic: "C", Insolvent: "D" };
+      if (!w.selectedSynonym) return { note: "Inspect commercial kitchen surface hygiene and select the synonym of 'Sanitary'" };
+      const map: Record<string, string> = { Expensive: "A", Pretty: "B", Clean: "C", New: "D" };
       return {
-        value: w.selectedWord,
-        optionId: map[w.selectedWord],
-        note: w.selectedWord === "Amature" ? "Correct error flagged: 'Amature' is misspelled (correct: 'Amateur' with -eur)" : `Selected: ${w.selectedWord}`,
+        value: w.selectedSynonym,
+        optionId: map[w.selectedSynonym],
+        note:
+          w.selectedSynonym === "Clean"
+            ? "Synonym match: 'Sanitary' relates to cleanliness and public health, synonymous with 'Clean'."
+            : `Selected synonym: ${w.selectedSynonym}`,
       };
     },
   });
 
-  const words = ["Amature", "Anarchist", "Stoic", "Insolvent"];
-  const definitions: Record<string, string> = {
-    Amature: "❌ Misspelled! Correct: 'Amateur' (a non-professional or hobbyist, from French -eur).",
-    Anarchist: "✓ Correctly spelt: A person who believes in or advocates anarchism.",
-    Stoic: "✓ Correctly spelt: A person who can endure pain or hardship without showing feelings.",
-    Insolvent: "✓ Correctly spelt: Unable to pay debts owed; bankrupt.",
-  };
+  const synonyms = ["Expensive", "Pretty", "Clean", "New"];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q26 · Lexical Forensic Spelling Vault 3D"
-      subtitle="Inspect 3D vocabulary pedestals and flag the single word containing an orthographic error"
-      hints={["Look closely at the suffix of the first word: English uses French ending '-eur' in 'amateur'."]}
+      title="Q26 · 🧼 3D Hygiene Inspection"
+      subtitle="Inspect restaurant surfaces for hygiene standards and pair 'Sanitary' with 'Clean'"
+      hints={[
+        "'Sanitary' means clean, hygienic, and free from dirt, infection, or bacteria ('Clean').",
+      ]}
     >
       <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-rose-200/80 bg-gradient-to-b from-rose-50/80 via-purple-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rose-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Commercial Kitchen */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-300/80 bg-gradient-to-b from-emerald-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-emerald-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-600 text-white shadow-xs">
-                <Search className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 shadow-xs">
+                <Sparkles className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-rose-950 uppercase tracking-wider block">Lexical Scanner · Section 2: Spelling</span>
-                <span className="text-[11px] font-medium text-slate-500">Orthographic Diagnostic Analysis</span>
+                <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider block">
+                  Public Health Hygiene Audit
+                </span>
+                <span className="text-[11px] font-medium text-emerald-400">
+                  Target Word: SANITARY (Hygienic, Disinfected & Free from Germs)
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-rose-100 text-rose-900 border border-rose-300">
-              🔍 Target: Find Incorrect Spelling
-            </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.5, 4.8], fov: 45 }}>
-            <LexicalVault3D position={[0, 0, 0]} />
-            <Avatar3D position={[0.9, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#E11D48" pantsColor="#1E293B" hairStyle="short" pose="gesturing" />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <CommunalKitchen3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#10B981" />
           </World3D>
         </div>
 
-        {/* Forensic Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {words.map((w) => {
-            const active = play.world.selectedWord === w;
-            return (
-              <button
-                key={w}
-                type="button"
-                onClick={() => !play.locked && play.set({ selectedWord: w })}
-                className={`p-3.5 rounded-xl border-2 text-left transition-all relative ${
-                  active
-                    ? "border-rose-500 bg-rose-50/90 shadow-md ring-2 ring-rose-200"
-                    : "border-slate-200 bg-white hover:border-slate-300 shadow-xs"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-mono text-sm font-bold text-slate-900">{w}</span>
-                  {active && <span className="text-xs font-bold text-rose-600">FLAGGED</span>}
-                </div>
-                <p className="text-[11px] text-slate-500 line-clamp-2">
-                  {definitions[w]}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Analysis Banner */}
-        <div className="rounded-xl border border-rose-200 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shrink-0">
-              <AlertCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 uppercase">Spelling Analysis Result</h4>
-              <p className="text-xs text-slate-600 mt-0.5">
-                {play.world.selectedWord
-                  ? definitions[play.world.selectedWord]
-                  : "Click any word above or the pills below to run optical character inspection."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Select Incorrectly Spelt Word" tone="rose">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {words.map((w) => (
-              <WordPill
-                key={w}
-                text={w}
-                tone="rose"
-                selected={play.world.selectedWord === w}
-                onClick={() => play.set({ selectedWord: w })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q27 — Beaver Passage Suitable Title (Reading Comprehension)
-   Question: "Choose the most suitable title for the passage."
-   Options:
-     A. Beavers: Animals that are like mice
-     B. Beavers: Animals that won't survive hunting
-     C. Beavers: The rarest animals
-     D. Beavers: Animals that are returning -> Key: D
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q27PassageTitleActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ titleChoice?: string }>({
-    question,
-    initial: { titleChoice: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.titleChoice) return { note: "Select the most accurate summary title for the reading passage" };
-      const map: Record<string, string> = {
-        "Beavers: Animals that are like mice": "A",
-        "Beavers: Animals that won't survive hunting": "B",
-        "Beavers: The rarest animals": "C",
-        "Beavers: Animals that are returning": "D",
-      };
-      return {
-        value: w.titleChoice,
-        optionId: map[w.titleChoice],
-        note: w.titleChoice.includes("returning") ? "Correct: The passage highlights beaver conservation, reintroduction, and their return" : `Selected: ${w.titleChoice}`,
-      };
-    },
-  });
-
-  const titles = [
-    "Beavers: Animals that are like mice",
-    "Beavers: Animals that won't survive hunting",
-    "Beavers: The rarest animals",
-    "Beavers: Animals that are returning",
-  ];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q27 · Beaver Wetland Habitat & Title Synthesis 3D"
-      subtitle="Examine the 3D beaver river ecosystem and select the overarching headline title"
-      hints={["The central thesis covers how beavers are being brought back and reintroduced to their historical habitats."]}
-    >
-      <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-200/80 bg-gradient-to-b from-emerald-50/80 via-teal-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-                <BookOpen className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider block">Reading Comprehension · Passage Analysis</span>
-                <span className="text-[11px] font-medium text-slate-500">The Story of Beaver Reintroduction & Rewilding</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300">
-              📖 Section 3: Reading
-            </span>
-          </div>
-
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
-            <BeaverHabitat3D position={[0, 0, 0]} />
-            <Avatar3D position={[1.4, 0, 0.4]} rotation={[0, -0.7, 0]} shirtColor="#059669" hairStyle="cap" pose="standing" />
-          </World3D>
-        </div>
-
-        {/* Title Choices */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {titles.map((t) => {
-            const active = play.world.titleChoice === t;
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => !play.locked && play.set({ titleChoice: t })}
-                className={`p-3.5 rounded-xl border-2 text-left font-semibold text-xs sm:text-sm transition-all flex items-center justify-between ${
-                  active
-                    ? "border-emerald-600 bg-emerald-50 text-emerald-950 shadow-md ring-2 ring-emerald-200"
-                    : "border-slate-200 bg-white text-slate-800 hover:border-slate-300 shadow-xs"
-                }`}
-              >
-                <span>{t}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Selector Bay */}
-        <Bay label="Confirm Primary Headline Title" tone="emerald">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {titles.map((t) => (
-              <WordPill
-                key={t}
-                text={t}
-                tone="emerald"
-                selected={play.world.titleChoice === t}
-                onClick={() => play.set({ titleChoice: t })}
-                disabled={play.locked}
-              />
-            ))}
-          </div>
-        </Bay>
-      </Board>
-    </Shell>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Q28 — South America Beaver Introduction (1940s)
-   Question: "When did beavers get introduced to South America?"
-   Options: A. 16th century, B. 1940s, C. 1980s, D. 21st century -> Key: B (1940s)
-   ══════════════════════════════════════════════════════════════════════ */
-export function Q28HistoricalTimelineActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ era?: string }>({
-    question,
-    initial: { era: undefined },
-    activityState,
-    value,
-    onChange,
-    readOnly,
-    derive: (w) => {
-      if (!w.era) return { note: "Select the decade when beavers were brought to South America" };
-      const map: Record<string, string> = { "16th century": "A", "1940s": "B", "1980s": "C", "21st century": "D" };
-      return {
-        value: w.era,
-        optionId: map[w.era],
-        note: w.era === "1940s" ? "Correct passage fact: 20 beavers were introduced to Tierra del Fuego in 1946 (1940s)" : `Selected: ${w.era}`,
-      };
-    },
-  });
-
-  const eras = ["16th century", "1940s", "1980s", "21st century"];
-
-  return (
-    <Shell
-      dim="3D"
-      play={play}
-      question={question}
-      title="Q28 · South American Introduction Expedition 3D"
-      subtitle="Examine the 3D Patagonian expedition terrain and identify the decade of introduction"
-      hints={["According to the passage, beavers were imported to Argentina/Chile in the 1940s to establish a commercial fur industry."]}
-    >
-      <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-blue-200/80 bg-gradient-to-b from-blue-50/80 via-sky-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-200/60 p-4 bg-white/60 backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
-                <Clock className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-blue-950 uppercase tracking-wider block">Historical Chronology · Patagonia Archive</span>
-                <span className="text-[11px] font-medium text-slate-500">Transcontinental Wildlife Relocation</span>
-              </div>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-blue-100 text-blue-900 border border-blue-300">
-              📅 Decade: 1940s
-            </span>
-          </div>
-
-          <World3D height="280px" camera={{ position: [0, 2.8, 5.2], fov: 45 }}>
-            <GlacierExpedition3D position={[0, 0, 0]} />
-            <Avatar3D position={[0.8, 0, 0.5]} rotation={[0, -0.6, 0]} shirtColor="#2563EB" hairStyle="cap" hasBackpack backpackColor="#F59E0B" pose="standing" />
-          </World3D>
-        </div>
-
-        {/* Question Text */}
-        <div className="rounded-xl border-2 border-blue-300/80 bg-white p-4 text-center shadow-xs">
-          <p className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-            When did beavers get introduced to South America?
+        {/* Live Synonym Slot */}
+        <div className="bg-emerald-950/80 border-2 border-emerald-700 text-emerald-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Synonym of <span className="text-emerald-400 font-mono underline">Sanitary</span> ={" "}
+            <SentenceSlot value={play.world.selectedSynonym} filled={!!play.world.selectedSynonym} />
           </p>
-          {play.world.era && (
-            <span className="inline-block mt-2 font-mono font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-md border border-blue-200 text-sm">
-              Selected: {play.world.era}
-            </span>
-          )}
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Select Historical Time Period" tone="sky">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {eras.map((e) => (
+        {/* Synonym Bay */}
+        <Bay label="Synonym Selection Bay" tone="emerald">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {synonyms.map((s) => (
               <WordPill
-                key={e}
-                text={e}
-                tone="sky"
-                selected={play.world.era === e}
-                onClick={() => play.set({ era: e })}
-                disabled={play.locked}
+                key={s}
+                word={s}
+                selected={play.world.selectedSynonym === s}
+                onClick={() => play.patch({ selectedSynonym: s })}
               />
             ))}
           </div>
@@ -350,111 +119,93 @@ export function Q28HistoricalTimelineActivity({ question, value, activityState, 
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q29 — European Beaver Reintroduction Reason (because there were none left)
-   Question: "Why were beavers reintroduced in Europe?"
-   Options:
-     A. because there were none left
-     B. because they cannot help the environment
-     C. for their fur
-     D. for protection against predators -> Key: A
+   Q27 — 🚧 3D Safety Rescue (Antonym of Peril)
+   Question: "Choose the correct antonym of Peril."
+   Options: A. Beautiful, B. Safety, C. Upside-down, D. Ecstasy -> Key: B (Safety)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q29EuropeanRewildingActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ reason?: string }>({
+export function Q27PassageTitleActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedAntonym?: string; hazardNavigated: boolean }>({
     question,
-    initial: { reason: undefined },
+    initial: { selectedAntonym: undefined, hazardNavigated: true },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.reason) return { note: "Select the conservation rationale for European reintroduction" };
-      const map: Record<string, string> = {
-        "because there were none left": "A",
-        "because they cannot help the environment": "B",
-        "for their fur": "C",
-        "for protection against predators": "D",
-      };
+      if (!w.selectedAntonym) return { note: "Navigate from hazard into the safety bunker and select the antonym of 'Peril'" };
+      const map: Record<string, string> = { Beautiful: "A", Safety: "B", "Upside-down": "C", Ecstasy: "D" };
       return {
-        value: w.reason,
-        optionId: map[w.reason],
-        note: w.reason === "because there were none left" ? "Correct: European reintroduction programs were launched because native populations had become completely extinct" : `Selected: ${w.reason}`,
+        value: w.selectedAntonym,
+        optionId: map[w.selectedAntonym],
+        note:
+          w.selectedAntonym === "Safety"
+            ? "Antonym match: 'Peril' means serious and immediate danger; its true opposite is 'Safety'."
+            : `Selected antonym: ${w.selectedAntonym}`,
       };
     },
   });
 
-  const reasons = [
-    "because there were none left",
-    "because they cannot help the environment",
-    "for their fur",
-    "for protection against predators",
-  ];
+  const antonyms = ["Beautiful", "Safety", "Upside-down", "Ecstasy"];
 
   return (
     <Shell
       dim="3D"
       play={play}
       question={question}
-      title="Q29 · European Conservation & Rewilding 3D"
-      subtitle="Examine the restored river wetland and determine why beavers were reintroduced"
-      hints={["Centuries of over-trapping left zero wild beavers across most European nations, necessitating reintroduction."]}
+      title="Q27 · 🚧 3D Safety Rescue"
+      subtitle="Rescue the character from dangerous hazards into the safe zone and choose 'Safety'"
+      hints={[
+        "'Peril' means extreme danger or risk; the exact antonym is 'Safety'.",
+      ]}
     >
       <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-200/80 bg-gradient-to-b from-emerald-50/80 via-teal-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Hazard to Safety Course */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-emerald-300/80 bg-gradient-to-b from-emerald-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-emerald-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
-                <Compass className="h-4 w-4" />
+                <Shield className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider block">European Rewilding Initiative</span>
-                <span className="text-[11px] font-medium text-slate-500">Restoring Extirpated Wetland Habitats</span>
+                <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider block">
+                  Hazard Escape Course
+                </span>
+                <span className="text-[11px] font-medium text-emerald-400">
+                  Contrast: Peril (Danger Zone) ↔ Safety (Protected Zone)
+                </span>
               </div>
             </div>
-
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300">
-              🌿 Reason: None Left (Extinction Recovery)
-            </span>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
-            <BeaverHabitat3D position={[0, 0, 0]} />
-            <Avatar3D position={[-1.2, 0, 0.4]} rotation={[0, 0.7, 0]} shirtColor="#0D9488" hairStyle="ponytail" pose="gesturing" />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#059669" />
           </World3D>
         </div>
 
-        {/* Reason Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {reasons.map((r) => {
-            const active = play.world.reason === r;
-            return (
-              <button
-                key={r}
-                type="button"
-                onClick={() => !play.locked && play.set({ reason: r })}
-                className={`p-3.5 rounded-xl border-2 text-left font-semibold text-xs sm:text-sm transition-all flex items-center justify-between ${
-                  active
-                    ? "border-emerald-600 bg-emerald-50 text-emerald-950 shadow-md ring-2 ring-emerald-200"
-                    : "border-slate-200 bg-white text-slate-800 hover:border-slate-300 shadow-xs"
-                }`}
-              >
-                <span>{r}</span>
-              </button>
-            );
-          })}
+        {/* Live Antonym Slot */}
+        <div className="bg-emerald-950/80 border-2 border-emerald-700 text-emerald-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Antonym of <span className="text-red-400 font-mono underline">Peril</span> ={" "}
+            <SentenceSlot value={play.world.selectedAntonym} filled={!!play.world.selectedAntonym} />
+          </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Confirm Conservation Cause" tone="emerald">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {reasons.map((r) => (
+        {/* Antonym Bay */}
+        <Bay label="Antonym Selection Bay" tone="emerald">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {antonyms.map((a) => (
               <WordPill
-                key={r}
-                text={r}
-                tone="emerald"
-                selected={play.world.reason === r}
-                onClick={() => play.set({ reason: r })}
-                disabled={play.locked}
+                key={a}
+                word={a}
+                selected={play.world.selectedAntonym === a}
+                onClick={() => play.patch({ selectedAntonym: a })}
               />
             ))}
           </div>
@@ -465,43 +216,157 @@ export function Q29EuropeanRewildingActivity({ question, value, activityState, o
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Q30 — Primary Cause of Population Decline (Hunted for fur)
-   Question: "What is the main reason that beavers' number has reduced?"
-   Options:
-     A. Hunted to reduce damming
-     B. Hunted for fur
-     C. Cannot breed with one another
-     D. Hunted by other animals -> Key: B (Hunted for fur)
+   Q28 — 🌳 3D Ecosystem Transformation (Antonym of Lush)
+   Question: "Choose the correct antonym of Lush."
+   Options: A. Ancient, B. Fancy, C. Enclosed, D. Barren -> Key: D (Barren)
    ══════════════════════════════════════════════════════════════════════ */
-export function Q30FurHuntingActivity({ question, value, activityState, onChange, readOnly }: ActivityComponentProps) {
-  const play = usePlay<{ cause?: string }>({
+export function Q28HistoricalTimelineActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const [terrainState, setTerrainState] = useState<"Lush" | "Barren">("Barren");
+
+  const play = usePlay<{ selectedAntonym?: string; state: string }>({
     question,
-    initial: { cause: undefined },
+    initial: { selectedAntonym: undefined, state: "Barren" },
     activityState,
     value,
     onChange,
     readOnly,
     derive: (w) => {
-      if (!w.cause) return { note: "Select the primary historical cause of beaver decline" };
-      const map: Record<string, string> = {
-        "Hunted to reduce damming": "A",
-        "Hunted for fur": "B",
-        "Cannot breed with one another": "C",
-        "Hunted by other animals": "D",
-      };
+      if (!w.selectedAntonym) return { note: "Transform the terrain environment and choose the antonym of 'Lush'" };
+      const map: Record<string, string> = { Ancient: "A", Fancy: "B", Enclosed: "C", Barren: "D" };
       return {
-        value: w.cause,
-        optionId: map[w.cause],
-        note: w.cause === "Hunted for fur" ? "Correct: Beavers were hunted nearly to extinction for their valuable, waterproof pelts" : `Selected: ${w.cause}`,
+        value: w.selectedAntonym,
+        optionId: map[w.selectedAntonym],
+        note:
+          w.selectedAntonym === "Barren"
+            ? "Antonym match: 'Lush' means abundant, thriving vegetation; 'Barren' means devoid of plant life or growth."
+            : `Selected antonym: ${w.selectedAntonym}`,
       };
     },
   });
 
-  const causes = [
-    "Hunted to reduce damming",
-    "Hunted for fur",
-    "Cannot breed with one another",
-    "Hunted by other animals",
+  const antonyms = ["Ancient", "Fancy", "Enclosed", "Barren"];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q28 · 🌳 3D Ecosystem Transformation"
+      subtitle="Shift the environment from verdant flora to bleak arid landscape and select 'Barren'"
+      hints={[
+        "'Lush' refers to rich, fertile, green plant growth. The exact opposite is 'Barren' (dry, empty, lifeless).",
+      ]}
+    >
+      <Board>
+        {/* 3D Ecosystem */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-lime-300/80 bg-gradient-to-b from-stone-900 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-stone-800/60 p-3.5 bg-slate-900/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-lime-600 text-white shadow-xs">
+                <Trees className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-lime-200 uppercase tracking-wider block">
+                  Ecosystem State Monitor
+                </span>
+                <span className="text-[11px] font-medium text-slate-400">
+                  Condition: {terrainState} Landscape
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const next = terrainState === "Lush" ? "Barren" : "Lush";
+                setTerrainState(next);
+                play.patch({ state: next });
+              }}
+              className="px-3 py-1 rounded-lg text-xs font-bold bg-lime-700 hover:bg-lime-600 text-white transition-all"
+            >
+              Toggle: {terrainState === "Lush" ? "Dry Out" : "Fertilize"}
+            </button>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <SuburbanGarden3D position={[0, 0, 0]} />
+          </World3D>
+        </div>
+
+        {/* Live Antonym Slot */}
+        <div className="bg-stone-900 border-2 border-stone-700 text-stone-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Antonym of <span className="text-lime-400 font-mono underline">Lush</span> ={" "}
+            <SentenceSlot value={play.world.selectedAntonym} filled={!!play.world.selectedAntonym} />
+          </p>
+        </div>
+
+        {/* Antonym Bay */}
+        <Bay label="Antonym Selection Bay" tone="slate">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {antonyms.map((a) => (
+              <WordPill
+                key={a}
+                word={a}
+                selected={play.world.selectedAntonym === a}
+                onClick={() => play.patch({ selectedAntonym: a })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q29 — 🔤 3D Spelling Escape Room (Claustrophobia)
+   Question: "What is the spelling of this word that means ‘to be afraid of small spaces’?"
+   Options: A. Claustrophobia, B. Clostraphobia, C. Clostrefobia, D. Claustrephobia -> Key: A
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q29EuropeanRewildingActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedSpelling?: string; roomUnlocked: boolean }>({
+    question,
+    initial: { selectedSpelling: undefined, roomUnlocked: false },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedSpelling) return { note: "Assemble the letters C-L-A-U-S-T-R-O-P-H-O-B-I-A to unlock the escape room" };
+      const map: Record<string, string> = {
+        Claustrophobia: "A",
+        Clostraphobia: "B",
+        Clostrefobia: "C",
+        Claustrephobia: "D",
+      };
+      return {
+        value: w.selectedSpelling,
+        optionId: map[w.selectedSpelling],
+        note:
+          w.selectedSpelling === "Claustrophobia"
+            ? "Correct spelling: 'Claustrophobia' (claustro- + -phobia)."
+            : `Selected spelling: ${w.selectedSpelling}`,
+      };
+    },
+  });
+
+  const spellings = [
+    "Claustrophobia",
+    "Clostraphobia",
+    "Clostrefobia",
+    "Claustrephobia",
   ];
 
   return (
@@ -509,67 +374,167 @@ export function Q30FurHuntingActivity({ question, value, activityState, onChange
       dim="3D"
       play={play}
       question={question}
-      title="Q30 · Historical Fur Trade & Population Decline 3D"
-      subtitle="Examine the riverbank habitat and identify the commercial factor that drove population loss"
-      hints={["Beavers possess dense, water-repellent fur that was intensely prized for luxury felt hats and coats."]}
+      title="Q29 · 🔤 3D Spelling Escape Room"
+      subtitle="Reconstruct the term for fear of enclosed small spaces to unlock the escape chamber"
+      hints={[
+        "The standard root is Latin 'claustrum' (enclosed space) + 'phobia' (fear) = 'Claustrophobia'.",
+      ]}
     >
       <Board>
-        {/* 3D Scene */}
-        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-200/80 bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-slate-50/50 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 p-4 bg-white/60 backdrop-blur-xs">
+        {/* 3D Escape Room */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-purple-300/80 bg-gradient-to-b from-purple-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-purple-800/60 p-3.5 bg-slate-900/80">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
-                <ShieldAlert className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-white shadow-xs">
+                <KeyRound className="h-4.5 w-4.5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-amber-950 uppercase tracking-wider block">Historical Conservation Museum</span>
-                <span className="text-[11px] font-medium text-slate-500">18th-19th Century Commercial Trapping Impact</span>
+                <span className="text-xs font-bold text-purple-200 uppercase tracking-wider block">
+                  Enclosed Chamber Escape Console
+                </span>
+                <span className="text-[11px] font-medium text-purple-400">
+                  Definition: Fear of small, enclosed spaces
+                </span>
               </div>
             </div>
 
-            <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
-              🧥 Main Factor: Hunted for Fur
-            </span>
+            <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg bg-purple-900/80 border border-purple-700">
+              {play.world.selectedSpelling === "Claustrophobia" ? (
+                <span className="text-emerald-400 flex items-center gap-1"><Unlock className="w-3.5 h-3.5" /> Chamber Unlocked</span>
+              ) : (
+                <span className="text-purple-300 flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> Door Locked</span>
+              )}
+            </div>
           </div>
 
-          <World3D height="280px" camera={{ position: [0, 2.6, 5.0], fov: 45 }}>
-            <BeaverHabitat3D position={[0, 0, 0]} />
-            <Avatar3D position={[1.1, 0, 0.4]} rotation={[0, -0.6, 0]} shirtColor="#D97706" hairStyle="bun" pose="gesturing" />
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#7E22CE" expression="worried" />
           </World3D>
         </div>
 
-        {/* Causes Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {causes.map((c) => {
-            const active = play.world.cause === c;
-            return (
-              <button
-                key={c}
-                type="button"
-                onClick={() => !play.locked && play.set({ cause: c })}
-                className={`p-3.5 rounded-xl border-2 text-left font-semibold text-xs sm:text-sm transition-all flex items-center justify-between ${
-                  active
-                    ? "border-amber-600 bg-amber-50 text-amber-950 shadow-md ring-2 ring-amber-200"
-                    : "border-slate-200 bg-white text-slate-800 hover:border-slate-300 shadow-xs"
-                }`}
-              >
-                <span>{c}</span>
-              </button>
-            );
-          })}
+        {/* Live Spelling Slot */}
+        <div className="bg-purple-950/80 border-2 border-purple-700 text-purple-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Correct Spelling ={" "}
+            <SentenceSlot value={play.world.selectedSpelling} filled={!!play.world.selectedSpelling} />
+          </p>
         </div>
 
-        {/* Selector Bay */}
-        <Bay label="Confirm Primary Cause" tone="amber">
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {causes.map((c) => (
+        {/* Spelling Bay */}
+        <Bay label="Spelling Variant Tiles" tone="purple">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {spellings.map((sp) => (
               <WordPill
-                key={c}
-                text={c}
-                tone="amber"
-                selected={play.world.cause === c}
-                onClick={() => play.set({ cause: c })}
-                disabled={play.locked}
+                key={sp}
+                word={sp}
+                selected={play.world.selectedSpelling === sp}
+                onClick={() => play.patch({ selectedSpelling: sp })}
+              />
+            ))}
+          </div>
+        </Bay>
+      </Board>
+    </Shell>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Q30 — 🔥 3D Problem Escalation Lab (Exacerbate)
+   Question: "What is the spelling of the word that means ‘to make things worse’?"
+   Options: A. Exsasarbate, B. Execerbate, C. Exacerbate, D. Exacerbate -> Key: D (Exacerbate)
+   ══════════════════════════════════════════════════════════════════════ */
+export function Q30FurHuntingActivity({
+  question,
+  value,
+  activityState,
+  onChange,
+  readOnly,
+}: ActivityComponentProps) {
+  const play = usePlay<{ selectedSpelling?: string; problemEscalated: boolean }>({
+    question,
+    initial: { selectedSpelling: undefined, problemEscalated: true },
+    activityState,
+    value,
+    onChange,
+    readOnly,
+    derive: (w) => {
+      if (!w.selectedSpelling) return { note: "Assemble the letters E-X-A-C-E-R-B-A-T-E for 'to make things worse'" };
+      const map: Record<string, string> = {
+        Exsasarbate: "A",
+        Execerbate: "B",
+        Exacerbate: "D",
+      };
+      return {
+        value: w.selectedSpelling,
+        optionId: map[w.selectedSpelling] || "D",
+        note:
+          w.selectedSpelling === "Exacerbate"
+            ? "Correct spelling: 'Exacerbate' (ex- + acerbus, meaning to make a problem or bad situation worse)."
+            : `Selected spelling: ${w.selectedSpelling}`,
+      };
+    },
+  });
+
+  const spellings = [
+    "Exsasarbate",
+    "Execerbate",
+    "Exacerbate",
+  ];
+
+  return (
+    <Shell
+      dim="3D"
+      play={play}
+      question={question}
+      title="Q30 · 🔥 3D Problem Escalation Lab"
+      subtitle="Assemble the correct spelling for the word meaning 'to make things worse'"
+      hints={[
+        "The correct spelling is 'E-X-A-C-E-R-B-A-T-E' (from Latin 'acerbus', harsh or bitter).",
+      ]}
+    >
+      <Board>
+        {/* 3D Malfunction Lab */}
+        <div className="relative w-full rounded-2xl overflow-hidden border-2 border-red-300/80 bg-gradient-to-b from-red-950 to-slate-950 text-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-red-800/60 p-3.5 bg-slate-900/80">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-600 text-white shadow-xs">
+                <AlertOctagon className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-red-200 uppercase tracking-wider block">
+                  Problem Escalation Laboratory
+                </span>
+                <span className="text-[11px] font-medium text-red-400">
+                  Definition: To make a situation, problem, or pain worse
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <World3D height="280px" camera={{ position: [0, 2.2, 3.8], fov: 45 }}>
+            <LexicalVault3D position={[0, 0, 0]} />
+            <Avatar3D position={[0, 0, 0.4]} pose="standing" shirtColor="#EF4444" />
+          </World3D>
+        </div>
+
+        {/* Live Spelling Slot */}
+        <div className="bg-red-950/80 border-2 border-red-700 text-red-100 rounded-2xl p-4 sm:p-5 text-center shadow-xs">
+          <p className="text-base sm:text-lg font-bold leading-relaxed">
+            Correct Spelling ={" "}
+            <SentenceSlot value={play.world.selectedSpelling} filled={!!play.world.selectedSpelling} />
+          </p>
+        </div>
+
+        {/* Spelling Bay */}
+        <Bay label="Spelling Variant Tiles" tone="rose">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {spellings.map((sp) => (
+              <WordPill
+                key={sp}
+                word={sp}
+                selected={play.world.selectedSpelling === sp}
+                onClick={() => play.patch({ selectedSpelling: sp })}
               />
             ))}
           </div>

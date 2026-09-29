@@ -4,43 +4,60 @@ import { Exam } from "@/types/exam";
 /**
  * SOF International English Olympiad (IEO) · Class 6 · Question Paper Set A
  *
- * 50 Questions across 6 Sections:
- *   - Section 1: Word & Structure Knowledge: Q1–Q25 (1 mark each)
- *   - Section 2: Spelling: Q26 (1 mark)
- *   - Section 3: Reading: Q27–Q33 (1 mark each)
- *   - Section 4: Email / Contextual Vocabulary: Q34–Q40 (1 mark each)
- *   - Section 5: Spoken & Written Expression: Q41–Q45 (1 mark each)
- *   - Section 6: Achievers Section: Q46–Q50 (3 marks each)
+ * 50 Questions across 5 Sections:
+ *   - Section 1: Word & Structure Knowledge: Q1–Q24 (1 mark each)
+ *   - Section 2: Vocabulary: Q25–Q30 (1 mark each)
+ *   - Section 3: Reading Comprehension: Q31–Q40 (1 mark each)
+ *       • Q31–Q35: Dream House Passage
+ *       • Q36–Q40: Casey & Margaret Passage
+ *   - Section 4: Spoken & Written Expression: Q41–Q45 (1 mark each)
+ *   - Section 5: Achievers Section: Q46–Q50 (3 marks each)
  * Total: 60 Marks
  */
 
-// Verified correct answer key for all 50 questions
-export const IEO_G6_SETA_KEY =
-  "CCCABBCCDACC" + // Q01–Q12
-  "DCDDDBBACC" +   // Q13–Q22
-  "BADA" +         // Q23–Q26
-  "DBABCCC" +      // Q27–Q33 (Reading: Beavers)
-  "BACDBBC" +      // Q34–Q40 (Email: Moving to Goa)
-  "ACDDC" +        // Q41–Q45 (Spoken & Written)
-  "ACABC";         // Q46–Q50 (Achievers: 3 marks each)
+// Verified correct answer key for all 50 questions (including deliberate corrections Q2=B, Q7=C, Q10=B, Q17=B)
+export const IEO_G6_SETA_KEY = [
+  "A", "B", "D", "B", "A", "D", "C", "B", "C", "B", // Q01–Q10
+  "A", "B", "C", "C", "A", "C", "B", "B", "C", "A", // Q11–Q20
+  "D", "B", "A", "C", "A", "C", "B", "D", "A", "D", // Q21–Q30
+  "B", "A", "D", "C", "A", "C", "B", "D", "D", "D", // Q31–Q40
+  "A", "C", "D", "B", "A", "A", "B", "D", "A", "B", // Q41–Q50
+];
+
+export const IEO_READING_PASSAGE_DREAM_HOUSE = `
+My Dream House
+
+If I had the chance to build my ideal home, I would construct a modern castle situated in a warm, sunny climate right on the coast. Many people dream of living next to the sea, though the astronomical purchase cost of coastal real estate is always the greatest hurdle.
+
+My castle would blend ancient stone walls with state-of-the-art green technology. To protect nature and minimize our carbon footprint, large wind turbines and rooftop solar arrays would generate all the electricity needed.
+
+Inside, the heart of the residence would feature an indoor-outdoor botanical garden centered around an expansive, cascading water body with natural stone streams and koi ponds. Above this central courtyard, a massive motorized glass roof would be fully retractable—meaning it can move and slide completely open on mild summer evenings to let in the fresh sea breeze and starlight.
+`.trim();
+
+export const IEO_READING_PASSAGE_CASEY = `
+Casey and Margaret
+
+Casey lived on the quiet periphery of Baltimore, right where the outer suburban streets met open wooded hills. Her summer holidays felt unusually slow until her neighbour Margaret returned from family camp. 
+
+Despite living next door, Casey often found it difficult to get along with Margaret because they constantly disagreed with each other on everything. Margaret preferred quiet dress-up games and dolls on the front veranda, whereas Casey loved climbing oaks, exploring creek banks, and catching beetles.
+
+Later that summer, inspired by photographs of her mother's past journeys, Casey began drafting ambitious travel itineraries to South America. However, convincing her mother to actually go abroad with her was notoriously difficult—Baltimore was familiar and safe, while traveling across foreign mountain ranges was viewed as dangerously unpredictable.
+`.trim();
 
 type Section =
   | "Word and Structure Knowledge"
-  | "Spelling"
+  | "Vocabulary"
   | "Reading"
-  | "Email & Contextual Vocabulary"
   | "Spoken and Written Expression"
   | "Achievers Section";
 
 const sectionOf = (n: number): Section =>
-  n <= 25
+  n <= 24
     ? "Word and Structure Knowledge"
-    : n === 26
-    ? "Spelling"
-    : n <= 33
-    ? "Reading"
+    : n <= 30
+    ? "Vocabulary"
     : n <= 40
-    ? "Email & Contextual Vocabulary"
+    ? "Reading"
     : n <= 45
     ? "Spoken and Written Expression"
     : "Achievers Section";
@@ -63,15 +80,15 @@ function q(
     section: sectionOf(n),
     chapter: sectionOf(n),
     topic,
-    difficulty: n > 45 ? "ACHIEVER" : "MEDIUM",
+    difficulty: n > 45 ? "ACHIEVER" : n > 24 ? "MEDIUM" : "EASY",
     questionType: "MULTIPLE_CHOICE",
     questionText,
     marks: n > 45 ? 3 : 1,
     negativeMarks: 0,
-    version: 1,
+    version: 2,
     status: "Published",
     createdAt: "2026-09-28T00:00:00Z",
-    updatedAt: "2026-09-28T00:00:00Z",
+    updatedAt: "2026-09-29T12:00:00Z",
     multipleChoiceConfig: {
       options: (["A", "B", "C", "D"] as const).map((id, i) => ({ id, text: options[i] })),
       correctOptionId: correctOption,
@@ -87,414 +104,375 @@ function q(
 }
 
 export const IEO_G6_SETA_QUESTIONS: Question[] = [
-  // ── Q1–Q25: Word & Structure Knowledge ──
+  // ── Word & Structure Knowledge (Q1–Q24) ──
   q(
     1,
-    "Morning Routine Verbs",
-    "In the morning, before I go to work, I wake up and ______ breakfast.",
-    ["eaten", "ate", "eat", "eating"],
-    { verbBase: "eat", tense: "Present Simple Routine", answer: "eat" }
+    "Noun Predicates",
+    "It's a ______ that there aren't any good pizzerias in this town.",
+    ["shame", "shaming", "shamed", "shameful"],
+    { answerWord: "shame", category: "Grammar Construction" }
   ),
   q(
     2,
-    "Modal Obligations",
-    "I am going on holiday today, but I still ______ pack my bags.",
-    ["have", "hasn't", "have to", "haven't"],
-    { target: "have to", category: "Semi-modal of obligation" }
+    "Prepositional Phrase & Negation",
+    "I couldn't stay any longer due ______ having enough money to pay for the hotel.",
+    ["to", "to not", "not to", "not"],
+    { answerWord: "to not", category: "Prepositions" }
   ),
   q(
     3,
-    "Past Habit & Memory",
-    "When I was a child, I ______ my mother cook dinner.",
-    ["was helping", "helps", "helped", "help"],
-    { tense: "Past Simple", answer: "helped" }
+    "Subject-Verb Agreement",
+    "Either Frank or Jane ______ handball really well, but I can never remember who though.",
+    ["was played", "play", "playing", "plays"],
+    { answerWord: "plays", category: "Subject Verb Agreement" }
   ),
   q(
     4,
-    "Articles with Languages & Adjectives",
-    "______ German is ______ easy language to learn.",
-    ["No article, an", "A, an", "The, an", "The, the"],
-    { article1: "none", article2: "an", nounPhrase: "German / easy language" }
+    "Present Perfect Experience",
+    "Being from a warm southern climate, I ______ snow before, so it is quite a shock.",
+    ["was seen", "haven't seen", "saw", "was seeing"],
+    { answerWord: "haven't seen", category: "Verb Tenses" }
   ),
   q(
     5,
-    "Stative Verbs / Present Simple",
-    "I ______ waiting for the bus. It is always late and I get bored.",
-    ["hated", "hate", "hates", "hating"],
-    { verb: "hate", tense: "Present Simple Emotion", answer: "hate" }
+    "Adverbs of Manner",
+    "He ______ put the flowers back in the vase after knocking them over.",
+    ["delicately", "delicate", "more delicate", "delicates"],
+    { answerWord: "delicately", category: "Adverbs" }
   ),
   q(
     6,
-    "Time Conjunctions / Present Perfect",
-    "I have not visited this restaurant ______ it opened, five years ago.",
-    ["everyday", "since", "when", "now"],
-    { target: "since", context: "Starting point in the past" }
+    "Size Descriptors",
+    "The ______ size of the insect makes it very difficult to see without a magnifying glass.",
+    ["nanometre", "deliberating", "platitude", "minuscule"],
+    { answerWord: "minuscule", category: "Vocabulary in Context" }
   ),
   q(
     7,
-    "Sensory Perception Verbs",
-    "Can I help you with your bags? They ______ heavy.",
-    ["looked", "seeming", "look", "seemed"],
-    { verb: "look", aspect: "Present observation", answer: "look" }
+    "Prepositional Collocations",
+    "It will be very difficult to persuade them to do anything ______ the information in this report.",
+    ["across", "in", "with", "on"],
+    { answerWord: "with", category: "Collocations" }
   ),
   q(
     8,
-    "Experience / Present Perfect",
-    "I don't know if I like mangosteen, I ______ never had one.",
-    ["ain't", "was", "haven't", "have"],
-    { target: "haven't", note: "Standard question text variant targeting haven't" }
+    "Time Conjunctions",
+    "I will be glad ______ this walk is finally over.",
+    ["so", "when", "and", "but"],
+    { answerWord: "when", category: "Conjunctions" }
   ),
   q(
     9,
-    "Logical Connectors / Cause and Effect",
-    "Washing your hands thoroughly with soap prevents germs from spreading. ______ always wash them before eating food.",
-    ["Nevertheless", "In case", "Because of", "Therefore"],
-    { connector: "Therefore", type: "Result / Consequence" }
+    "Present Perfect Aspect",
+    "Edward ______ a lot of Italian food, hasn't he?",
+    ["will have eaten", "eats", "has eaten", "will eat"],
+    { answerWord: "has eaten", category: "Question Tags & Tenses" }
   ),
   q(
     10,
-    "Predicate Adjectives",
-    "My favourite period at school is geography. It ______ to learn about the world.",
-    ["is interesting", "interests", "interested", "interesting"],
-    { construction: "is interesting", pattern: "It + linking verb + adjective" }
+    "Direct Speech Punctuation",
+    "“I want to go swimming ______ said Jenny.",
+    ["“", ",”", ".”", ":”"],
+    { answerWord: ",”", category: "Punctuation" }
   ),
   q(
     11,
-    "Polite Invitations / Modal Suggestions",
-    "Shall ______ to the shop and buy ice cream? I think we deserve a treat today.",
-    ["you going", "you gone", "we go", "we going"],
-    { phrase: "we go", structure: "Shall we + base verb" }
+    "Degree Adverbs",
+    "I don't think that the water is ______ hot for you to swim in today.",
+    ["too", "much", "such", "just"],
+    { answerWord: "too", category: "Degree Modifiers" }
   ),
   q(
     12,
-    "Past Be-Verb Negation",
-    "He ______ at cricket practice yesterday. I don't know where he was.",
-    ["wasn't", "was", "hasn't", "had"],
-    { answer: "wasn't", timeMarker: "yesterday" }
+    "Conditional Clauses",
+    "If the bus fare costs more than I thought, I ______ have to walk to the shops.",
+    ["will", "would", "will be", "won't"],
+    { answerWord: "would", category: "Conditionals" }
   ),
   q(
     13,
-    "Future Perfect",
-    "I will call you later. Hopefully, you ______ made it home through the storm.",
-    ["do have", "do", "will", "will have"],
-    { tense: "Future Perfect", construction: "will have + past participle" }
+    "Relative Pronouns",
+    "She's the lady I met yesterday and ______ number I was trying to call just now.",
+    ["whom", "who", "whose", "who is"],
+    { answerWord: "whose", category: "Pronouns" }
   ),
   q(
     14,
-    "Prepositions of Direction",
-    "I don't like it here, it is so busy. Let's go ______ another park where there are fewer people.",
-    ["on", "at", "to", "in"],
-    { preposition: "to", motion: "Direction towards destination" }
+    "Definite Articles",
+    "Every time I go to the sales, I forget to take ______ money.",
+    ["a", "an", "the", "no article"],
+    { answerWord: "the", category: "Articles" }
   ),
   q(
     15,
-    "Gerunds after Prepositions",
-    "They were late as usual. So, instead of ______ around, Reena decided to go on ahead without them.",
-    ["wait", "waited", "waiting", "waits"],
-    { target: "waiting", rule: "Preposition + -ing gerund" }
+    "Participles & Aspect",
+    "As the wind blew, the clouds started ______, making the sky turn grey.",
+    ["gathering", "gathered", "to be gathered", "were gathering"],
+    { answerWord: "gathering", category: "Participles" }
   ),
   q(
     16,
-    "Used to (Past State)",
-    "That area of the playground ______ be covered in grass. Now it is bare soil.",
-    ["isn't", "was once", "is to", "used to"],
-    { construction: "used to", meaning: "Past state no longer true" }
+    "Past Continuous in Progress",
+    "Before the electricity went out, she ______ me a lamp with my homework.",
+    ["gives", "has given", "was giving", "is giving"],
+    { answerWord: "was giving", category: "Past Continuous" }
   ),
   q(
     17,
-    "Past Habitual 'Would'",
-    "When I was younger, we used to go on holiday to the beach and I ______ eat lots of ice cream.",
-    ["shall", "will", "am going to", "would"],
-    { modal: "would", usage: "Repeated past habitual action" }
+    "Idiomatic Phrasal Verbs",
+    "I always jump ______ with both feet on tasks that I enjoy.",
+    ["on", "in", "up", "at"],
+    { answerWord: "in", category: "Idioms & Phrasal Verbs" }
   ),
   q(
     18,
-    "Dependent Prepositions",
-    "I am not familiar ______ the botanical names of these herbs.",
-    ["to", "with", "by", "of"],
-    { collocation: "familiar with" }
+    "Phrasal Prepositions",
+    "I have to study all weekend, so I can catch up ______ the work I missed last week.",
+    ["to", "on", "at", "around"],
+    { answerWord: "on", category: "Phrasal Verbs" }
   ),
   q(
     19,
-    "Future Perfect Continuous",
-    "By 4 pm, this lady ______ been sitting on that bench for five hours.",
-    ["has", "will have", "have", "must have"],
-    { construction: "will have", tense: "Future Perfect Continuous" }
+    "Historical Nouns",
+    "I agree that the ______ of some old traditions makes sense today.",
+    ["hanging", "brink", "abolition", "shower"],
+    { answerWord: "abolition", category: "Vocabulary" }
   ),
   q(
     20,
-    "Relative Pronouns",
-    "The child ______ receives this gift is very lucky.",
-    ["who", "whose", "which", "whom"],
-    { pronoun: "who", referent: "Subject person (child)" }
+    "Verb Collocations",
+    "It is really difficult to ______ and create something new.",
+    ["innovate", "nudge", "simple", "unable"],
+    { answerWord: "innovate", category: "Vocabulary" }
   ),
   q(
     21,
-    "Precision Vocabulary",
-    "That is such a pretty picture. I would like to try and ______ it.",
-    ["repeal", "revitalise", "replicate", "reimburse"],
-    { word: "replicate", meaning: "To make an exact copy" }
+    "Evaluative Adjectives",
+    "The road up that mountain is ______ because of the dangerous holes in it.",
+    ["innocuous", "intrepid", "brave", "notorious"],
+    { answerWord: "notorious", category: "Adjectives" }
   ),
   q(
     22,
-    "Hypothetical Regret",
-    "If ______ I had not eaten that last piece of cake. I feel so full.",
-    ["barely", "never", "ever", "only"],
-    { idiom: "If only", express: "Wish / Regret" }
+    "Demographic Nouns",
+    "I am not from here originally; my family are ______.",
+    ["absurd", "immigrants", "forfeit", "bribed"],
+    { answerWord: "immigrants", category: "Nouns" }
   ),
   q(
     23,
-    "Sound Perception Adjectives",
-    "The music was so quiet, it was barely ______.",
-    ["amicable", "audible", "atrocious", "averse"],
-    { word: "audible", definition: "Able to be heard" }
+    "Error Detection: Possessive",
+    "The shops doors closed, and the owner left through the small back door. Choose the part containing the error.",
+    ["The shops doors", "closed, and the owner", "left through the small", "back door."],
+    { answerWord: "The shops doors", errorPart: "A", category: "Proofreading" }
   ),
   q(
     24,
-    "Modals of Expectation",
-    "He ______ get a detention for being so badly behaved.",
-    ["should", "won't", "shan't", "ought"],
-    { modal: "should", meaning: "Expected / Deserved consequence" }
+    "Error Detection: Redundancy",
+    "It's taken me a long time to find out for definite exact whose house this is. Choose the part containing the error.",
+    ["It's taken me a long time", "to find out", "for definite exact", "whose house this is."],
+    { answerWord: "for definite exact", errorPart: "C", category: "Proofreading" }
   ),
+
+  // ── Vocabulary (Q25–Q30) ──
   q(
     25,
-    "Oceanic Adjectives",
-    "There is a lot of ______ life in the sea. Some of the creatures are strange.",
-    ["wharf", "marina", "quay", "marine"],
-    { collocation: "marine life", word: "marine" }
+    "Synonyms",
+    "Choose the correct synonym of Despise.",
+    ["Hate", "Like", "Crave", "Devour"],
+    { answerWord: "Hate", category: "Synonyms" }
   ),
-
-  // ── Q26: Section 2: Spelling ──
   q(
     26,
-    "Spelling Identification",
-    "Choose the word with the incorrect spelling.",
-    ["Amature", "Anarchist", "Stoic", "Insolvent"],
-    { incorrect: "Amature", correctForm: "Amateur" }
+    "Synonyms",
+    "Choose the correct synonym of Sanitary.",
+    ["Expensive", "Pretty", "Clean", "New"],
+    { answerWord: "Clean", category: "Synonyms" }
   ),
-
-  // ── Q27–Q33: Section 3: Reading Comprehension (Beavers) ──
   q(
     27,
-    "Reading: Passage Title",
-    "Read the passage about beavers and answer the question:\n\nChoose the most suitable title for the passage.",
-    [
-      "Beavers: Animals that are like mice",
-      "Beavers: Animals that won't survive hunting",
-      "Beavers: The rarest animals",
-      "Beavers: Animals that are returning",
-    ],
-    { passage: "Beaver Conservation", theme: "Return and reintroduction", answer: "Beavers: Animals that are returning" }
+    "Antonyms",
+    "Choose the correct antonym of Peril.",
+    ["Beautiful", "Safety", "Upside-down", "Ecstasy"],
+    { answerWord: "Safety", category: "Antonyms" }
   ),
   q(
     28,
-    "Reading: Historical Timeline",
-    "When did beavers get introduced to South America?",
-    ["16th century", "1940s", "1980s", "21st century"],
-    { passageFact: "Introduced in the 1940s", answer: "1940s" }
+    "Antonyms",
+    "Choose the correct antonym of Lush.",
+    ["Ancient", "Fancy", "Enclosed", "Barren"],
+    { answerWord: "Barren", category: "Antonyms" }
   ),
   q(
     29,
-    "Reading: European Conservation",
-    "Why were beavers reintroduced in Europe?",
-    [
-      "because there were none left",
-      "because they cannot help the environment",
-      "for their fur",
-      "for protection against predators",
-    ],
-    { passageFact: "Extinct in many European countries", answer: "because there were none left" }
+    "Spelling",
+    "What is the spelling of this word that means ‘to be afraid of small spaces’?",
+    ["Claustrophobia", "Clostraphobia", "Clostrefobia", "Claustrephobia"],
+    { answerWord: "Claustrophobia", category: "Spelling" }
   ),
   q(
     30,
-    "Reading: Cause of Population Decline",
-    "What is the main reason that beavers' number has reduced?",
-    ["Hunted to reduce damming", "Hunted for fur", "Cannot breed with one another", "Hunted by other animals"],
-    { passageFact: "Hunted extensively for their thick fur coats and hats", answer: "Hunted for fur" }
+    "Spelling",
+    "What is the spelling of the word that means ‘to make things worse’?",
+    ["Exsasarbate", "Execerbate", "Exacerbate", "Exacerbate"],
+    { answerWord: "Exacerbate", category: "Spelling" }
   ),
+
+  // ── Reading Comprehension: Dream House (Q31–Q35) ──
   q(
     31,
-    "Reading: Physical Anatomy",
-    "What is interesting about a beaver's appearance?",
-    [
-      "They are very small.",
-      "They are the biggest animal in South America.",
-      "They have huge front teeth.",
-      "They have thin tails.",
-    ],
-    { passageFact: "Large continuously growing orange incisor teeth", answer: "They have huge front teeth." }
+    "Passage Title",
+    "Choose the best title or heading for the passage.\n\n" + IEO_READING_PASSAGE_DREAM_HOUSE,
+    ["The House I Live In", "Ideal Home", "A Castle for a King", "Watery Living"],
+    { answerWord: "Ideal Home", passageKey: "DREAM_HOUSE" }
   ),
   q(
     32,
-    "Reading: Ecological Impact",
-    "What was the outcome of transporting beavers to South America?",
-    [
-      "They were hunted by wild animals.",
-      "The business was successful.",
-      "They adversely affected the environment.",
-      "All of these",
-    ],
-    { passageFact: "No natural predators; flooded native forests", answer: "They adversely affected the environment." }
+    "Passage Detail: Sea View",
+    "What is the problem of buying a house with a sea view?\n\n" + IEO_READING_PASSAGE_DREAM_HOUSE,
+    ["The cost", "The wind", "The smell", "The windows"],
+    { answerWord: "The cost", passageKey: "DREAM_HOUSE" }
   ),
   q(
     33,
-    "Reading: Dam Function",
-    "Why do beavers make dams?",
-    [
-      "To make their teeth more strong",
-      "They are too big to swim in rivers without dams.",
-      "For protection and food",
-      "To live in the wild",
-    ],
-    { passageFact: "Deep water ponds offer safety from predators and winter food storage", answer: "For protection and food" }
+    "Passage Detail: Turbines",
+    "The writer wants wind turbines for the house to ______.\n\n" + IEO_READING_PASSAGE_DREAM_HOUSE,
+    ["save the wind", "make a nice noise", "look like Holland", "protect nature"],
+    { answerWord: "protect nature", passageKey: "DREAM_HOUSE" }
   ),
-
-  // ── Q34–Q40: Section 4: Email / Contextual Vocabulary (Moving to Goa) ──
   q(
     34,
-    "Contextual Email: Relocation",
-    "How are you? I have ______ to a new house and I now live in Goa.",
-    ["change", "moved", "calculated", "paused"],
-    { verb: "moved", context: "Relocation to Goa" }
+    "Passage Detail: Garden",
+    "What will the special feature of the garden be?\n\n" + IEO_READING_PASSAGE_DREAM_HOUSE,
+    ["The flowers", "The rocks", "The water body", "The trees"],
+    { answerWord: "The water body", passageKey: "DREAM_HOUSE" }
   ),
   q(
     35,
-    "Contextual Email: Hospitality",
-    "This means I live much closer to you and I hope that you can ______ more often.",
-    ["visit", "travel", "accommodate", "borrow"],
-    { collocation: "visit more often", verb: "visit" }
+    "Vocabulary in Context: Retractable",
+    "What does the word ‘retractable’ mean in the third paragraph?\n\n" + IEO_READING_PASSAGE_DREAM_HOUSE,
+    ["Something that moves", "Something that is beautiful", "Something that is very expensive", "Something that shines"],
+    { answerWord: "Something that moves", passageKey: "DREAM_HOUSE" }
   ),
+
+  // ── Reading Comprehension: Casey & Margaret (Q36–Q40) ──
   q(
     36,
-    "Contextual Email: Architecture Adjectives",
-    "It is a/an ______ new house with a balcony and air conditioning.",
-    ["pugnacious", "hideous", "exquisite", "drab"],
-    { adjective: "exquisite", meaning: "Extremely beautiful and delicate" }
+    "Passage Title",
+    "Choose the best title or heading for the passage.\n\n" + IEO_READING_PASSAGE_CASEY,
+    ["Summer Holidays", "The Biggest House", "My Friend Next Door", "Camping on Holiday"],
+    { answerWord: "My Friend Next Door", passageKey: "CASEY" }
   ),
   q(
     37,
-    "Contextual Email: Transportation Mode",
-    "It is also quite near my school so my brother and I can ______ there in the mornings.",
-    ["draw", "tumble", "lay", "walk"],
-    { verb: "walk", context: "Pedestrian commute to school" }
+    "Passage Detail: Location",
+    "Where was Casey's house?\n\n" + IEO_READING_PASSAGE_CASEY,
+    ["In the middle of a city", "On the periphery of a city", "In the countryside", "Near a campsite"],
+    { answerWord: "On the periphery of a city", passageKey: "CASEY" }
   ),
   q(
     38,
-    "Contextual Email: Quantifiers / Dual Subjects",
-    "As we have moved house, we are ______ going to a new school.",
-    ["two", "both", "together", "couple"],
-    { quantifier: "both", usage: "Referring to two siblings" }
+    "Passage Inference: Relationship",
+    "Why did Casey not like her next-door neighbour?\n\n" + IEO_READING_PASSAGE_CASEY,
+    ["They played difficult games.", "Margaret was too young.", "She always went away.", "They disagreed with each other."],
+    { answerWord: "They disagreed with each other.", passageKey: "CASEY" }
   ),
   q(
     39,
-    "Contextual Email: Event Organizing",
-    "I am ______ a moving in party and wondered if you would like to come.",
-    ["creating", "planning", "making", "doing"],
-    { collocation: "planning a party", verb: "planning" }
+    "Passage Detail: Mother",
+    "Casey's mother would be difficult to ______.\n\n" + IEO_READING_PASSAGE_CASEY,
+    ["ask for the money to travel", "force to South America", "convince about the holiday", "go abroad with"],
+    { answerWord: "go abroad with", passageKey: "CASEY" }
   ),
   q(
     40,
-    "Contextual Email: Culinary Verbs",
-    "My mother and I will ______ lots of nice things to eat...",
-    ["measure", "making", "prepare", "transform"],
-    { baseVerb: "prepare", structure: "will + base verb" }
+    "Vocabulary in Context: Notoriously",
+    "What is the meaning of the word ‘notoriously’ in the third paragraph?\n\n" + IEO_READING_PASSAGE_CASEY,
+    ["Especially", "Quickly", "Reservedly", "Dangerously"],
+    { answerWord: "Dangerously", passageKey: "CASEY" }
   ),
 
-  // ── Q41–Q45: Section 5: Spoken & Written Expression ──
+  // ── Spoken & Written Expression (Q41–Q45) ──
   q(
     41,
-    "Spoken Dialogue: Past Inquiry",
-    "Mother: Oh, dear! ______ you fall over? You have bruised your knee!\nSon: Yes!",
-    ["Did", "Do", "Don't", "How"],
-    { auxiliary: "Did", inquiry: "Past occurrence" }
+    "Idiomatic Dialogue",
+    "Henry: Can I go to the match with the guys?\nMother: No chance, not a ______ of Sundays.",
+    ["week", "year", "month", "millennium"],
+    { answerWord: "week", category: "Conversational Idioms" }
   ),
   q(
     42,
-    "Spoken Dialogue: Character Traits",
-    "Rob: How do you like Mr Williams?\nChristy: Oh! That old man is always asking questions. He is so ______.",
-    ["spatial", "repentant", "nosey", "punctual"],
-    { adjective: "nosey", meaning: "Overly inquisitive" }
+    "Expressing Regret",
+    "Dimitri: I wish I ______ home earlier last night, I'm so tired today.",
+    ["was going", "had been going", "had gone", "have gone"],
+    { answerWord: "had gone", category: "Past Regret" }
   ),
   q(
     43,
-    "Spoken Dialogue: Dinner Response",
-    "Jenna: Are you free for dinner in the evening?\nShetty: ______",
-    [
-      "No problem.",
-      "Yes, I can.",
-      "Why?",
-      "Certainly. What time in the evening?",
-    ],
-    { response: "Certainly. What time in the evening?", register: "Polite acceptance with detail inquiry" }
+    "Modal Obligation",
+    "Aunty: Can you take this through to the living room?\nNephew: Can I do it in a second? I ______ finish this page first.",
+    ["could", "will to", "may be", "must"],
+    { answerWord: "must", category: "Modal Verbs" }
   ),
   q(
     44,
-    "Proverbs & Idioms",
-    "Mary: Fix your bike right away. Don't leave it for the weekend.\nTim: Yes, a stitch in time ______.",
-    ["make nine", "saves time", "makes time", "saves nine"],
-    { proverb: "A stitch in time saves nine" }
+    "Conversational Responses",
+    "Amanda: How is this possible?\nJune: ______ ask me, I've no idea what you are talking about.",
+    ["Please", "Don't", "Can't", "Won't"],
+    { answerWord: "Don't", category: "Idiomatic Discourse" }
   ),
   q(
     45,
-    "Spoken Dialogue: Negative Agreement",
-    "Alan: I am so tired. I don't feel like walking any more.\nSherry: ______",
-    ["as well as", "also", "neither", "no"],
-    { particle: "neither", pattern: "Me neither (concurring with negative statement)" }
+    "Third Conditional",
+    "Eugene: Don't worry about those guys. If they wanted our help they ______ asked.",
+    ["would've", "might", "may have", "must"],
+    { answerWord: "would've", category: "Counterfactuals" }
   ),
 
-  // ── Q46–Q50: Section 6: Achievers Section (3 Marks Each) ──
+  // ── Achievers Section (Q46–Q50) — 3 Marks Each ──
   q(
     46,
-    "Achievers: Advanced Vocabulary",
-    "Riding my bike with the dog on my lap. What a ______ idea!",
-    ["preposterous", "durable", "laborious", "imbrue"],
-    { word: "preposterous", meaning: "Utterly absurd or ridiculous", marks: 3 }
+    "Social Discourse Markers",
+    "No offence meant to you ______ I don't think you've quite understood what I want.",
+    ["but", "so", "when", "because"],
+    { answerWord: "but", category: "Achievers Discourse" }
   ),
   q(
     47,
-    "Achievers: Social Vocabulary",
-    "I went to a hostel when I was in Europe and there was a ______ kitchen. It was strange to have to share it with other people we did not know.",
-    ["corporal", "considerate", "communal", "contentious"],
-    { word: "communal", meaning: "Shared by all members of a community", marks: 3 }
+    "Future Continuous Action",
+    "This time next week I won't be in class, ______ on a beach relaxing.",
+    ["I'd lie", "I'll be lying", "I'll lie", "I'm lying"],
+    { answerWord: "I'll be lying", category: "Achievers Future Continuous" }
   ),
   q(
     48,
-    "Achievers: Kinematic Verbs",
-    "When you swim, you can use your arms to ______ you forward.",
-    ["propel", "pith", "purport", "pester"],
-    { word: "propel", meaning: "Drive, push, or cause to move in a particular direction", marks: 3 }
+    "Advanced Antonyms",
+    "Choose the correct antonym of the given word: Sinister",
+    ["Threatening", "Evil", "Ominous", "Auspicious"],
+    { answerWord: "Auspicious", category: "Achievers Vocabulary" }
   ),
   q(
     49,
-    "Achievers: Forensic Spelling",
-    "Choose the word with the incorrect spelling.",
-    ["Credulous", "Convalesence", "Contagious", "Contemporary"],
-    { incorrect: "Convalesence", correctForm: "Convalescence", marks: 3 }
+    "Advanced Synonyms",
+    "Choose the correct synonym of the given word: Unilateral",
+    ["One-sided", "Open-ended", "Quick-witted", "Down-trodden"],
+    { answerWord: "One-sided", category: "Achievers Vocabulary" }
   ),
   q(
     50,
-    "Achievers: Pragmatic Dialogue",
-    "Joy: How can I ever repay you?\nMohit: ______",
-    [
-      "Oh well, better luck next time.",
-      "Well, I am not sure, but let me ask somebody.",
-      "Don't be silly, it was nothing.",
-      "What do you need?",
-    ],
-    { response: "Don't be silly, it was nothing.", context: "Polite, humble dismissal of a favour", marks: 3 }
+    "Contextual Phrasal Verbs",
+    "Felix: I've lost my shoe, so I am having to ______ with bare feet.",
+    ["push over", "get by", "have it", "show around"],
+    { answerWord: "get by", category: "Achievers Phrasal Verbs" }
   ),
 ];
 
-const ids = (from: number, to: number) =>
-  IEO_G6_SETA_QUESTIONS.slice(from, to).map((q) => q.id);
-
 export const IEO_G6_SETA_EXAM: Exam = {
   id: "ieo-2024-25-class-6-set-a",
-  code: "IEO-2024-25-G6-SETA",
-  title: "SOF International English Olympiad 2024–25 (Class 6 - Set A)",
-  subtitle: "Class 6 • Set A • Level 1 • 50 Bespoke Interactive English Missions",
+  code: "IEO-G6-2024-SETA",
+  title: "SOF IEO Class 6 Set A (2024-25)",
   description:
-    "Official SOF International English Olympiad (IEO) Class 6 Set A examination paper. Fully equipped with 50 bespoke interactive simulations, grammar engines, 3D spatial environments, text forensics, timeline portals, reading documentary interactives, and real-time deterministic scoring.",
+    "Official International English Olympiad for Class 6 (Set A). 50 immersive interactive 3D activities spanning Word & Structure Knowledge, Vocabulary, Reading Comprehension, Spoken Expression, and the high-yield Achievers Section.",
   subjectId: "sub_english",
   subjectName: "English",
   grade: 6,
@@ -511,27 +489,15 @@ export const IEO_G6_SETA_EXAM: Exam = {
     passPercentage: 40,
     negativeMarkingEnabled: false,
     instructions: [
-      "This examination contains 50 questions across 6 sections.",
-      "Section 1: Word & Structure Knowledge (Q1–Q25, 1 mark each).",
-      "Section 2: Spelling (Q26, 1 mark).",
-      "Section 3: Reading Comprehension (Q27–Q33, 1 mark each).",
-      "Section 4: Email / Contextual Vocabulary (Q34–Q40, 1 mark each).",
-      "Section 5: Spoken & Written Expression (Q41–Q45, 1 mark each).",
-      "Section 6: Achievers Section (Q46–Q50, 3 marks each).",
-      "Total time allowed is 60 minutes. There is no negative marking.",
-      "Solve each English puzzle by engaging directly with the bespoke interactive activity. Completing the activity automatically derives and records your answer.",
+      "This examination contains 50 questions across 5 sections totaling 60 marks.",
+      "Section 1–4 questions carry 1 mark each; Achievers Section (Q46–Q50) questions carry 3 marks each.",
+      "Every question is solved through interactive 3D manipulation, puzzle assembly, or contextual deduction.",
+      "Your interactions directly derive your answer and map it automatically to the official options.",
+      "You may review and change your responses anytime before final submission.",
     ],
   },
   status: "Published",
   createdAt: "2026-09-28T00:00:00Z",
-  updatedAt: "2026-09-28T00:00:00Z",
-  sections: [
-    { id: "sec_ieo_word", title: "Word and Structure Knowledge", description: "25 Questions (1 Mark each)", questionIds: ids(0, 25) },
-    { id: "sec_ieo_spelling", title: "Spelling", description: "1 Question (1 Mark)", questionIds: ids(25, 26) },
-    { id: "sec_ieo_reading", title: "Reading", description: "7 Questions (1 Mark each)", questionIds: ids(26, 33) },
-    { id: "sec_ieo_email", title: "Email & Contextual Vocabulary", description: "7 Questions (1 Mark each)", questionIds: ids(33, 40) },
-    { id: "sec_ieo_spoken", title: "Spoken and Written Expression", description: "5 Questions (1 Mark each)", questionIds: ids(40, 45) },
-    { id: "sec_ieo_achievers", title: "Achievers Section", description: "5 Questions (3 Marks each)", questionIds: ids(45, 50) },
-  ],
+  updatedAt: "2026-09-29T12:00:00Z",
   questionIds: IEO_G6_SETA_QUESTIONS.map((q) => q.id),
 };
