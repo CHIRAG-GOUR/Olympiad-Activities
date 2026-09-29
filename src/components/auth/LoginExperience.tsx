@@ -466,7 +466,7 @@ export function LoginExperience() {
                           DemoStudent1
                         </span>
                         <span className="block text-[10px] text-slate-500 truncate">
-                          Cambridge Court High
+                          Cambridge Court (CCIS)
                         </span>
                       </div>
                     </button>
@@ -490,7 +490,7 @@ export function LoginExperience() {
                           DemoStudent2
                         </span>
                         <span className="block text-[10px] text-slate-500 truncate">
-                          Delhi Public School
+                          Cambridge Court (CCIS)
                         </span>
                       </div>
                     </button>
@@ -514,7 +514,7 @@ export function LoginExperience() {
                           DemoStudent3
                         </span>
                         <span className="block text-[10px] text-slate-500 truncate">
-                          St. Xavier&apos;s School
+                          Cambridge Court (CCIS)
                         </span>
                       </div>
                     </button>

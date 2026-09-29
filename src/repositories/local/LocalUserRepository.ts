@@ -34,7 +34,7 @@ const INITIAL_USERS: UserProfile[] = [
     name: "Prof. Ananya Sen",
     email: "ananya.sen@olympiad.org",
     role: "TEACHER",
-    schoolName: "Delhi Public School, R.K. Puram",
+    schoolName: "Cambridge Court International School (CCIS)",
     createdAt: "2024-02-15T00:00:00Z",
   },
   {
