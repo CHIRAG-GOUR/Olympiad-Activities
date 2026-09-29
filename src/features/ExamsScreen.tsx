@@ -138,20 +138,29 @@ export default function ExamsScreen() {
           <button
             type="button"
             onClick={() => setActiveTab("math")}
-            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+            style={
               activeTab === "math"
-                ? "bg-[#2468B2] text-white shadow-sm"
-                : "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                ? { backgroundColor: "#2468B2", color: "#FFFFFF", borderColor: "#2468B2" }
+                : { backgroundColor: "#FFFFFF", color: "#475569", borderColor: "#E1E7EF" }
+            }
+            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer border ${
+              activeTab === "math"
+                ? "shadow-sm ring-2 ring-[#2468B2]/20"
+                : "hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            <Calculator className={`w-4 h-4 ${activeTab === "math" ? "text-white" : "text-[#2468B2]"}`} />
-            <span>Mathematics</span>
+            <Calculator
+              className="w-4 h-4"
+              style={{ color: activeTab === "math" ? "#FFFFFF" : "#2468B2" }}
+            />
+            <span style={{ color: activeTab === "math" ? "#FFFFFF" : "#1E293B" }}>Mathematics</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black ${
+              className="px-2 py-0.5 rounded-full text-[11px] font-mono font-black"
+              style={
                 activeTab === "math"
-                  ? "bg-white/20 text-white"
-                  : "bg-indigo-50 text-[#2468B2] border border-indigo-100"
-              }`}
+                  ? { backgroundColor: "rgba(255, 255, 255, 0.22)", color: "#FFFFFF" }
+                  : { backgroundColor: "#EEF4FF", color: "#2468B2", border: "1px solid #D0E1FD" }
+              }
             >
               {mathExams.length}
             </span>
@@ -161,20 +170,29 @@ export default function ExamsScreen() {
           <button
             type="button"
             onClick={() => setActiveTab("english")}
-            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+            style={
               activeTab === "english"
-                ? "bg-[#9333EA] text-white shadow-sm"
-                : "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                ? { backgroundColor: "#9333EA", color: "#FFFFFF", borderColor: "#9333EA" }
+                : { backgroundColor: "#FFFFFF", color: "#475569", borderColor: "#E1E7EF" }
+            }
+            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer border ${
+              activeTab === "english"
+                ? "shadow-sm ring-2 ring-[#9333EA]/20"
+                : "hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            <BookOpen className={`w-4 h-4 ${activeTab === "english" ? "text-white" : "text-[#9333EA]"}`} />
-            <span>English</span>
+            <BookOpen
+              className="w-4 h-4"
+              style={{ color: activeTab === "english" ? "#FFFFFF" : "#9333EA" }}
+            />
+            <span style={{ color: activeTab === "english" ? "#FFFFFF" : "#1E293B" }}>English</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black ${
+              className="px-2 py-0.5 rounded-full text-[11px] font-mono font-black"
+              style={
                 activeTab === "english"
-                  ? "bg-white/20 text-white"
-                  : "bg-purple-50 text-[#9333EA] border border-purple-100"
-              }`}
+                  ? { backgroundColor: "rgba(255, 255, 255, 0.22)", color: "#FFFFFF" }
+                  : { backgroundColor: "#FAF5FF", color: "#9333EA", border: "1px solid #F3E8FF" }
+              }
             >
               {englishExams.length}
             </span>
@@ -184,20 +202,29 @@ export default function ExamsScreen() {
           <button
             type="button"
             onClick={() => setActiveTab("all")}
-            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer ${
+            style={
               activeTab === "all"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                ? { backgroundColor: "#0F172A", color: "#FFFFFF", borderColor: "#0F172A" }
+                : { backgroundColor: "#FFFFFF", color: "#475569", borderColor: "#E1E7EF" }
+            }
+            className={`h-11 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer border ${
+              activeTab === "all"
+                ? "shadow-sm ring-2 ring-slate-900/20"
+                : "hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>All Subjects</span>
+            <Layers
+              className="w-4 h-4"
+              style={{ color: activeTab === "all" ? "#FFFFFF" : "#64748B" }}
+            />
+            <span style={{ color: activeTab === "all" ? "#FFFFFF" : "#1E293B" }}>All Subjects</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black ${
+              className="px-2 py-0.5 rounded-full text-[11px] font-mono font-black"
+              style={
                 activeTab === "all"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-100 text-slate-700 border border-slate-200"
-              }`}
+                  ? { backgroundColor: "rgba(255, 255, 255, 0.22)", color: "#FFFFFF" }
+                  : { backgroundColor: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0" }
+              }
             >
               {exams.length}
             </span>
@@ -239,9 +266,10 @@ export default function ExamsScreen() {
       {/* 3. Search Bar within active tab */}
       <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative flex-1 w-full min-w-[260px]">
-          <Search className="w-4 h-4 text-[#667085] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#667085] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
+            style={{ paddingLeft: "2.5rem" }}
             placeholder={
               activeTab === "math"
                 ? "Search Mathematics papers by title, code, or set..."
@@ -251,7 +279,7 @@ export default function ExamsScreen() {
             }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 pl-10 pr-3 text-xs sm:text-[13px] bg-[#F4F7FB]/70 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white transition-all"
+            className="w-full h-10 pr-3 text-xs sm:text-[13px] bg-[#F4F7FB]/70 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white transition-all"
           />
         </div>
 
