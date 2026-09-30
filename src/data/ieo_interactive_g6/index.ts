@@ -14,15 +14,31 @@ import { Exam } from "@/types/exam";
  * Total: 60 Marks
  */
 
-// Verified correct answer key for all 50 questions
+// Answer key. It follows "Answer key VI IEO - 1" except where that key is not good English:
+// Q4=A ("German is an easy language"), Q8=D ("I have never had one"), Q25=D ("marine life").
 export const IEO_INTERACTIVE_G6_KEY =
-  "CCCABBCCDACC" + // Q01–Q12
-  "DCDDDBBACC" +   // Q13–Q22
+  "CCCABBCDDACA" + // Q01–Q12
+  "DCCDDBBACD" +   // Q13–Q22
   "BADA" +         // Q23–Q26
   "DBABCCC" +      // Q27–Q33 (Reading: Beavers)
   "BACDBBC" +      // Q34–Q40 (Email: Moving to Goa)
   "ACDDC" +        // Q41–Q45 (Spoken & Written)
   "ACABC";         // Q46–Q50 (Achievers: 3 marks each)
+
+/** The reading passage for Q27–Q33, as printed in "Question Paper VI IEO - 1". */
+export const IEO_INTERACTIVE_BEAVER_PASSAGE = `
+Beavers
+
+Beavers are animals found naturally in North America and Europe. They are a type of rodent, like mice and squirrels, but are famous as they can fell trees and dam rivers. Reaching adult weights of 25 kg, beavers are the second largest rodents in the world, the largest being the capybaras of South America. They have four large teeth at the front of their mouths which never stop growing as they are needed to chew through wood. Beavers also have a tail that is broad and looks like a paddle, and webbed feet.
+
+Beavers create dams that interrupt a river's water flow. They may create a series of dams along a river to protect against predators and help them to find food in winter. Beavers also build lodges that they live in. Their houses' underwater entrances prevent other animals from getting in. However, the beavers' defensive structures have not stopped humans from hunting them.
+
+There are two species of beavers, the North American and the Eurasian. Although they look similar, they cannot cross-breed. Both species have been hunted and numbers in North America reduced from approximately 60 million to 6 - 12 million in the 1980s. They were hunted for their fur, which was used to make clothes and top hats, and their glands were used to make medicine and perfumes. The quest for beaver fur drove the early exploration of North America.
+
+Beavers were transported from North America to Tierra del Fuego, in South America, for fur production in the 1940s. However, the business was unsuccessful and the animals were released into the wild. With no natural predators, their numbers increased to over 100,000 individuals. They devastated the island, by felling trees and creating ponds. Efforts are now underway to reduce their numbers.
+
+In Europe, the situation is quite the opposite to that of South America. Hunting wiped out the Eurasian beaver, but successful projects have reintroduced them in many regions. In Great Britain, beavers were hunted to extinction in the 16th century, but in the 21st century, they are back. These beavers play an important role in improving ecosystems.
+`;
 
 type Section =
   | "Word and Structure Knowledge"
@@ -269,15 +285,15 @@ export const IEO_INTERACTIVE_G6_QUESTIONS: Question[] = [
     26,
     "Spelling Identification",
     "Choose the word with the incorrect spelling.",
-    ["Amature", "Anarchist", "Stoic", "Insolvent"],
-    { incorrect: "Amature", correctForm: "Amateur" }
+    ["Amateure", "Anarchist", "Stoic", "Insolvent"],
+    { incorrect: "Amateure", correctForm: "Amateur" }
   ),
 
   // ── Q27–Q33: Section 3: Reading Comprehension (Beavers) ──
   q(
     27,
     "Reading: Passage Title",
-    "Read the passage about beavers and answer the question:\n\nChoose the most suitable title for the passage.",
+    "Choose the most suitable title for the passage.\n\n" + IEO_INTERACTIVE_BEAVER_PASSAGE,
     [
       "Beavers: Animals that are like mice",
       "Beavers: Animals that won't survive hunting",
@@ -289,14 +305,14 @@ export const IEO_INTERACTIVE_G6_QUESTIONS: Question[] = [
   q(
     28,
     "Reading: Historical Timeline",
-    "When did beavers get introduced to South America?",
+    "When did beavers get introduced to South America?\n\n" + IEO_INTERACTIVE_BEAVER_PASSAGE,
     ["16th century", "1940s", "1980s", "21st century"],
     { passageFact: "Introduced in the 1940s", answer: "1940s" }
   ),
   q(
     29,
     "Reading: European Conservation",
-    "Why were beavers reintroduced in Europe?",
+    "Why were beavers reintroduced in Europe?\n\n" + IEO_INTERACTIVE_BEAVER_PASSAGE,
     [
       "because there were none left",
       "because they cannot help the environment",
@@ -308,14 +324,14 @@ export const IEO_INTERACTIVE_G6_QUESTIONS: Question[] = [
   q(
     30,
     "Reading: Cause of Population Decline",
-    "What is the main reason that beavers' number has reduced?",
+    "What is the main reason that beavers' number has reduced?\n\n" + IEO_INTERACTIVE_BEAVER_PASSAGE,
     ["Hunted to reduce damming", "Hunted for fur", "Cannot breed with one another", "Hunted by other animals"],
     { passageFact: "Hunted extensively for their thick fur coats and hats", answer: "Hunted for fur" }
   ),
   q(
     31,
     "Reading: Physical Anatomy",
-    "What is interesting about a beaver's appearance?",
+    "What is interesting about a beaver's appearance?\n\n" + IEO_INTERACTIVE_BEAVER_PASSAGE,
     [
       "They are very small.",
       "They are the biggest animal in South America.",
@@ -327,7 +343,7 @@ export const IEO_INTERACTIVE_G6_QUESTIONS: Question[] = [
   q(
     32,
     "Reading: Ecological Impact",
-    "What was the outcome of transporting beavers to South America?",
+    "What was the outcome of transporting beavers to South America?\n\n" + IEO_INTERACTIVE_BEAVER_PASSAGE,
     [
       "They were hunted by wild animals.",
       "The business was successful.",
@@ -339,7 +355,7 @@ export const IEO_INTERACTIVE_G6_QUESTIONS: Question[] = [
   q(
     33,
     "Reading: Dam Function",
-    "Why do beavers make dams?",
+    "Why do beavers make dams?\n\n" + IEO_INTERACTIVE_BEAVER_PASSAGE,
     [
       "To make their teeth more strong",
       "They are too big to swim in rivers without dams.",

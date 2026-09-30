@@ -156,6 +156,27 @@ function splitTemplate(t: string): [string, string] {
   return i < 0 ? [t + " ", ""] : [t.slice(0, i), t.slice(i + 3)];
 }
 
+/** What goes in each gap. A two-gap sentence takes a pair tile such as "No article, an". */
+function gapWords(template: string, word: string | null): (string | null)[] {
+  const gaps = template.split("___").length - 1;
+  if (gaps <= 1) return [word];
+  const parts = word ? word.split(/,\s*/) : [];
+  return Array.from({ length: gaps }, (_, i) => (parts[i] === undefined ? null : /^no article$/i.test(parts[i]) ? "Ø" : parts[i]));
+}
+
+/** The sentence with its gaps filled (or shown as blanks). */
+function fillTemplate(template: string, word: string | null) {
+  const parts = template.split("___");
+  const words = gapWords(template, word);
+  return parts.map((p, i) => (i < words.length ? p + (words[i] ?? "______") : p)).join("").replace(/\s+/g, " ").trim();
+}
+
+/** "auto" templates come from the question itself: its blank becomes the gap. */
+function resolveTemplate(template: string, questionText?: string) {
+  if (template !== "auto") return template;
+  return (questionText ?? "___").split(/\n+/).map((l) => l.trim()).filter(Boolean).join(" ").replace(/_{3,}/g, "___");
+}
+
 /** Keeps a DOM element pinned above a point in the 3D world. */
 function Anchor({ at, target }: { at: V3; target: React.RefObject<HTMLDivElement | null> }) {
   const { camera, size } = useThree();
@@ -222,11 +243,9 @@ export function StoryActivity({ spec, question, value, activityState, onChange, 
   const placed = byId(w.placed);
   const word = m.kind === "spell" ? (w.typed || null) : placed?.text ?? null;
 
+  const template = m.kind === "fill" ? resolveTemplate(m.template, question?.questionText) : m.kind === "reading" ? m.template : undefined;
   const bubbleText = (() => {
-    if (m.kind === "fill" || (m.kind === "reading" && m.template)) {
-      const [a, b] = splitTemplate(m.kind === "fill" ? m.template : m.template!);
-      return `${a}${word ?? "______"}${b}`.replace(/\s+/g, " ").trim();
-    }
+    if (template) return fillTemplate(template, word);
     if (m.kind === "error") return options.map((o) => o.text).join(" ");
     if (m.kind === "spell") return word ? `${word}!` : "…";
     return null;
@@ -249,7 +268,7 @@ export function StoryActivity({ spec, question, value, activityState, onChange, 
             {bubbleText && spec.bubbleAt && <Bubble innerRef={bubbleRef} text={bubbleText} who={m.kind === "fill" ? m.speaker : undefined} />}
           </div>
 
-          {m.kind === "fill" && <FillPanel template={m.template} speaker={m.speaker} word={word} options={options} />}
+          {m.kind === "fill" && <FillPanel template={template!} speaker={m.speaker} word={word} options={options} />}
           {m.kind === "error" && <ErrorPanel before={m.before} options={options} flagged={w.placed} />}
           {m.kind === "spell" && (
             <SpellPanel
@@ -288,17 +307,23 @@ export function StoryActivity({ spec, question, value, activityState, onChange, 
 type Opt = { id: string; text: string };
 
 function FillPanel({ template, speaker, word, options }: { template: string; speaker?: string; word: string | null; options: Opt[] }) {
-  const [a, b] = splitTemplate(template);
+  const parts = template.split("___");
+  const words = gapWords(template, word);
   return (
     <div className="space-y-3">
       <div className="rounded-2xl border-2 border-violet-100 bg-gradient-to-br from-violet-50 to-sky-50 p-4 text-center">
         {speaker && <div className="mb-1 text-[11px] font-black uppercase tracking-wide text-violet-500">{speaker}</div>}
         <p className="text-base font-bold leading-relaxed text-slate-800 sm:text-lg">
-          {a}
-          <Gap slot="gap" filled={!!word}>
-            {word ?? "drop here"}
-          </Gap>
-          {b}
+          {parts.map((p, i) => (
+            <React.Fragment key={i}>
+              {p}
+              {i < words.length && (
+                <Gap slot="gap" filled={!!word} label={i === 0 ? "sentence gap" : `sentence gap ${i + 1}`}>
+                  {words[i] ?? "drop here"}
+                </Gap>
+              )}
+            </React.Fragment>
+          ))}
         </p>
       </div>
       <TileTray options={options} />
