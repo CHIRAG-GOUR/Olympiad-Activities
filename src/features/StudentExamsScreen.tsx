@@ -21,7 +21,6 @@ import {
   FileText,
   Calculator,
   GraduationCap,
-  Sparkles,
   Award,
   Layers,
   Check,
@@ -190,8 +189,7 @@ export default function StudentExamsScreen() {
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 text-xs font-bold text-[#2468B2] shadow-2xs font-mono">
-              <GraduationCap className="w-4 h-4 text-[#2468B2]" />
+            <span className="text-xs font-bold text-[#2468B2] font-mono">
               Class 6 Mathematics
             </span>
           </div>
@@ -199,32 +197,19 @@ export default function StudentExamsScreen() {
       </div>
 
       {/* 2. Active Paper Highlight Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-blue-200/90 bg-gradient-to-br from-[#F8FAFC] via-white to-blue-50/40 p-6 sm:p-8 shadow-[0_4px_24px_-4px_rgba(36,104,178,0.12)]">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-blue-400/10 via-indigo-400/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           {/* Left Details */}
-          <div className="flex-1 min-w-0 space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-[#2468B2] text-white font-mono font-black text-xs shadow-2xs tracking-wider">
-                PAPER 01
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                Active Examination
-              </span>
-              <span className="font-mono font-bold text-xs text-[#2468B2] bg-blue-50 border border-blue-200/70 px-2.5 py-0.5 rounded-full">
-                {exam.code}
-              </span>
-            </div>
-
+          <div className="flex-1 min-w-0 space-y-3">
             <div>
+              <div className="text-xs font-mono font-bold text-[#2468B2] mb-1">
+                {exam.code}
+              </div>
               <h2 className="text-[22px] sm:text-[26px] font-black tracking-[-0.01em] text-slate-900 leading-snug">
                 {exam.title}
               </h2>
               <p className="text-sm font-bold text-[#2468B2] mt-1">
-                {exam.subtitle || "Official SOF Mathematics & Logical Reasoning Olympiad"}
+                {exam.subtitle || "Official Science Olympiad Foundation Examination"}
               </p>
               <p className="text-xs sm:text-[13px] text-slate-600 font-medium mt-2 leading-relaxed max-w-3xl">
                 {exam.description ||
@@ -297,7 +282,7 @@ export default function StudentExamsScreen() {
               ) : (
                 <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 text-blue-900 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-black text-[#2468B2]">
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#2468B2]" />
                     <span>Ready to Sit</span>
                   </div>
                   <p className="text-[11px] text-slate-600">

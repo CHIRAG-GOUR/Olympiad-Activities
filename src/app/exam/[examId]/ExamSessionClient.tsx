@@ -32,7 +32,6 @@ import {
   History,
   Check,
   Lock,
-  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ExamLockService } from "@/services/exam/ExamLockService";
@@ -670,12 +669,11 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
           </div>
 
           <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-left text-xs text-slate-700 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-bold text-[#2468B2]">
-              <Sparkles className="w-4 h-4" />
+            <div className="font-bold text-[#2468B2]">
               <span>Available for Candidate Testing Today:</span>
             </div>
             <p className="text-[12px] text-slate-600">
-              Your teacher has unlocked the <strong>2022-23 Mathematics Olympiad (featuring the Rotating 3D Dice Laboratory)</strong>. Please sit that paper for today&apos;s testing session.
+              Your teacher has unlocked the active examination paper. Please return to your exam portal to proceed.
             </p>
           </div>
 

@@ -21,7 +21,6 @@ import {
   CheckCircle2,
   KeyRound,
   ArrowLeft,
-  Sparkles,
   School,
   BookOpen,
 } from "lucide-react";
@@ -220,19 +219,18 @@ export function LoginExperience() {
               />
 
               <div className="mt-5 sm:mt-7 max-w-[320px]">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 border border-white/90 shadow-2xs text-[11px] font-bold uppercase tracking-wider text-[#2468B2] mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#2468B2] mb-1">
                   Grade 6 Digital Olympiad
-                </div>
+                </p>
                 <p
                   className={`text-[12px] font-bold uppercase tracking-[0.14em] transition-colors duration-500 ${
                     engaged ? "text-[#B4791C]" : "text-[#77839A]"
                   }`}
                 >
-                  {engaged ? "Interactive & Live Evaluated" : "Official Examination Hall"}
+                  {engaged ? "Official Examination Portal" : "Official Examination Hall"}
                 </p>
                 <p className="mt-2 text-[13px] text-[#667085] leading-relaxed">
-                  Interactive problem environments, 3D simulations, and instant classwise diagnostic score reports.
+                  Direct digital problem environments and instant diagnostic score reports.
                 </p>
               </div>
             </div>
@@ -436,13 +434,9 @@ export function LoginExperience() {
                 {/* ── Candidate Tester Quick 1-Click Logins ── */}
                 <div className="mt-4 pt-3.5 border-t border-slate-200/90">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <div className="text-xs font-bold text-slate-800">
                       <span>Tester Demo Accounts (1-Click Login)</span>
                     </div>
-                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-full">
-                      Maths Exam Ready
-                    </span>
                   </div>
 
                   {/* 3 Student Demo Cards */}

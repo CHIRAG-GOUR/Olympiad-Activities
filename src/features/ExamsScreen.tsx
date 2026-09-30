@@ -16,7 +16,6 @@ import {
   FileText,
   Play,
   Plus,
-  Sparkles,
   LayoutList,
   LayoutGrid,
   CheckCircle2,
