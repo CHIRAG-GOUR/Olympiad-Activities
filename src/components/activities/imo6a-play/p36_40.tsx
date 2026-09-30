@@ -794,7 +794,7 @@ export function Q40BedSheetDesigner({ question, value, activityState, onChange, 
       <div className="grid md:grid-cols-[1.3fr_1fr] gap-3">
         <div className="rounded-2xl bg-slate-50 border-2 border-slate-200 p-2">
           <svg viewBox="0 0 200 200" className="w-full max-h-[340px]">
-            <motion.rect x={15} y={15} animate={{ width: Lm * scale, height: Math.max(2, Bm * scale) }} fill="url(#imo6a-quilt)" stroke="#7c3aed" strokeWidth={1.4} rx={3} />
+            <motion.rect x={15} y={15} width={Lm * scale} height={Math.max(2, Bm * scale)} initial={false} animate={{ width: Lm * scale, height: Math.max(2, Bm * scale) }} fill="url(#imo6a-quilt)" stroke="#7c3aed" strokeWidth={1.4} rx={3} />
             <defs>
               <pattern id="imo6a-quilt" width="12" height="12" patternUnits="userSpaceOnUse">
                 <rect width="12" height="12" fill="#ede9fe" />

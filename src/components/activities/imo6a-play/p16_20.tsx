@@ -564,7 +564,7 @@ export function Q19PropertyLab({ question, value, activityState, onChange, readO
         <Bay label="Area model">
           <svg viewBox="0 0 220 210" className="w-full max-h-72">
             <motion.g animate={{ x: 20, y: 10 }}>
-              <motion.rect width={W} height={H} rx={4} fill="#ddd6fe" stroke="#6d28d9" strokeWidth={2} animate={{ width: W, height: H }} />
+              <motion.rect width={W} height={H} rx={4} fill="#ddd6fe" stroke="#6d28d9" strokeWidth={2} initial={false} animate={{ width: W, height: H }} />
               {w.sliced && (
                 <motion.line
                   initial={{ opacity: 0 }}

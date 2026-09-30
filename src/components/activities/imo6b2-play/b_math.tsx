@@ -475,7 +475,7 @@ export function B26PercentBeaker({ question, value, activityState, onChange, rea
           <div className="flex gap-3 items-end">
             <svg viewBox="0 0 60 110" className="h-56">
               <rect x={10} y={5} width={40} height={100} rx={3} fill="#f8fafc" stroke="#334155" strokeWidth={1.2} />
-              <motion.rect x={11} width={38} initial={false} animate={{ y: 104 - level, height: level }} transition={{ duration: 0.9 }} fill="#38bdf8" opacity={0.8} />
+              <motion.rect x={11} width={38} y={104 - level} height={level} initial={false} animate={{ y: 104 - level, height: level }} transition={{ duration: 0.9 }} fill="#38bdf8" opacity={0.8} />
               {Array.from(new Set([20, 40, 60, 80, 100, target])).map((m) => (
                 <g key={m}>
                   <line x1={10} x2={m === target ? 56 : 18} y1={105 - m} y2={105 - m} stroke={m === target ? "#dc2626" : "#475569"} strokeWidth={m === target ? 1 : 0.6} />

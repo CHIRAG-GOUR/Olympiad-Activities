@@ -789,7 +789,7 @@ export function Q25DecimalTank({ question, value, activityState, onChange, readO
       <div className="grid sm:grid-cols-[auto_1fr] gap-4 items-start">
         <svg ref={svg} viewBox="0 0 60 120" className="w-40" style={{ touchAction: "none" }} onPointerDown={(e) => fill.start(e, undefined)}>
           <rect x={10} y={10} width={40} height={H} rx={3} fill="#f8fafc" stroke="#1e1b4b" strokeWidth={1} />
-          <motion.rect x={11} width={38} animate={{ y: 110 - (w.num / w.den) * H, height: (w.num / w.den) * H }} fill="#38bdf8" opacity={0.75} />
+          <motion.rect x={11} width={38} y={110 - (w.num / w.den) * H} height={(w.num / w.den) * H} initial={false} animate={{ y: 110 - (w.num / w.den) * H, height: (w.num / w.den) * H }} fill="#38bdf8" opacity={0.75} />
           {Array.from({ length: w.den - 1 }).map((_, i) => (
             <line key={i} x1={10} x2={w.den > 30 ? 18 : 50} y1={110 - (i + 1) * cellH} y2={110 - (i + 1) * cellH} stroke="#1e1b4b" strokeWidth={w.den > 30 ? 0.25 : 0.4} />
           ))}

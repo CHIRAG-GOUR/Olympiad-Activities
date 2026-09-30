@@ -223,7 +223,7 @@ export function Q47PerimeterSurveyorActivity({ question, value, activityState, o
                 const [a, b] = k.split("|").map((s) => s.split(",").map(Number));
                 return <line key={k} x1={a[0] * S} y1={a[1] * S} x2={b[0] * S} y2={b[1] * S} stroke="#f59e0b" strokeWidth={1.6} />;
               })}
-              <motion.circle animate={{ cx: at[0] * S, cy: at[1] * S }} r={2.4} fill="#0f172a" />
+              <motion.circle cx={at[0] * S} cy={at[1] * S} initial={false} animate={{ cx: at[0] * S, cy: at[1] * S }} r={2.4} fill="#0f172a" />
             </svg>
             <p className="text-[11px] font-bold text-slate-500">Each small square here is {f.unit} cm × {f.unit} cm.</p>
           </Board>

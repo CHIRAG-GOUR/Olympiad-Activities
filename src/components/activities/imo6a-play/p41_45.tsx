@@ -106,7 +106,7 @@ export function Q41HillThermometer({ question, value, activityState, onChange, r
         <svg ref={svg} viewBox="0 0 70 150" className="w-36" style={{ touchAction: "none" }} onPointerDown={(e) => start(e, undefined)}>
           <rect x={28} y={10} width={14} height={128} rx={7} fill="#f8fafc" stroke="#94a3b8" />
           <circle cx={35} cy={140} r={9} fill="#ef4444" />
-          <motion.rect x={31} width={8} fill="#ef4444" animate={{ y: Y(w.level), height: 140 - Y(w.level) }} />
+          <motion.rect x={31} width={8} y={Y(w.level)} height={140 - Y(w.level)} initial={false} fill="#ef4444" animate={{ y: Y(w.level), height: 140 - Y(w.level) }} />
           {Array.from({ length: scale.max - scale.min + 1 }).map((_, i) => {
             const t = scale.max - i;
             return (

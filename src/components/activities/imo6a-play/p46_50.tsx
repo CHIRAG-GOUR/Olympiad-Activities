@@ -187,7 +187,7 @@ export function Q46TruthLaboratory({ question, value, activityState, onChange, r
               {Array.from({ length: 73 }).map((_, i) => (
                 <line key={i} x1={4 + i * (192 / 72)} x2={4 + i * (192 / 72)} y1={i === 36 ? 5 : 8} y2={i === 36 ? 15 : 12} stroke="#1e1b4b" strokeWidth={0.3} />
               ))}
-              <motion.circle animate={{ cx: 4 + (product + 36) * (192 / 72) }} cy={10} r={3} fill={product > 0 ? "#10b981" : product < 0 ? "#e11d48" : "#64748b"} />
+              <motion.circle cx={4 + (product + 36) * (192 / 72)} initial={false} animate={{ cx: 4 + (product + 36) * (192 / 72) }} cy={10} r={3} fill={product > 0 ? "#10b981" : product < 0 ? "#e11d48" : "#64748b"} />
             </svg>
             <Btn tone="emerald" active disabled={play.readOnly || !(w.a < 0 && w.b < 0)} onClick={() => record("R", product > 0 ? "positive" : "negative")}>
               Record the sign of (negative) × (negative)
