@@ -33,10 +33,15 @@ const plans = exam.questionIds.map((id, i) => {
     return n.length ? show(n[0]).replace(/,/g, "") : "";
   };
   switch (lab?.mode) {
-    case "count": for (let k = 0; k < Number(num(text)); k++) steps.push(["text", "+ add a counter (keyboard)"]); break;
+    case "count": {
+      // a "None of these" answer is reached by a count that is not printed
+      const n = /none of these/i.test(text) ? Math.max(...opts.map((o) => Number(num(o.text)) || 0)) + 1 : Number(num(text));
+      for (let k = 0; k < n; k++) steps.push(["text", "+ add a counter (keyboard)"]);
+      break;
+    }
     case "dial": {
       let v = text.includes(":") ? text.replace(/\s/g, "") : /^\d{5,}$/.test(text.replace(/\s/g, "")) ? text.replace(/\s/g, "") : num(text);
-      if (/none of these/i.test(text)) v = String(lab.noneValue ?? "");
+      if (/none of these/i.test(text)) v = String(Math.max(...opts.map((o) => Number(num(o.text)) || 0)) + 7);
       if (!v) { bad++; console.log("no dial value", i + 1); }
       keyIn(v);
       break;

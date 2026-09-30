@@ -101,7 +101,7 @@ export function MathLabActivity({ question, value, activityState, onChange, read
         const id = options.find((o) => {
           const x = numbersIn(o.text);
           return x.length === 1 && eq(x[0], { p: n, q: 1 });
-        })?.id;
+        })?.id ?? options.find((o) => /none of these/i.test(o.text))?.id;
         return { value: `${n}`, optionId: id, note: id ? undefined : "That count is not one of the printed answers — check again." };
       }
       case "dial": {
