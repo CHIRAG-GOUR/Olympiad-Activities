@@ -25,10 +25,10 @@ const sectionIds = (from: number, to: number) =>
 export const IMO6A_CLASSIC_EXAM: Exam = {
   id: "exam_imo_2018_g6_seta_classic",
   code: "IMO-2018-G6-SETA-CL",
-  title: "SOF International Mathematics Olympiad 2018-19 (Class 6 - Set A - Classic)",
-  subtitle: "Science Olympiad Foundation • Official Level-1 Paper (Original Interactive)",
+  title: "SOF International Mathematics Olympiad 2018-19 (Class 6 - Set A)",
+  subtitle: "Science Olympiad Foundation • Official Level-1 Examination Paper",
   description:
-    "The official SOF IMO 2018-19 Level-1 paper for Class 6, Set A with the original classic interactive activity apparatus for every question.",
+    "Official SOF International Mathematics Olympiad (IMO) 2018-19 Level-1 examination paper for Class 6, Set A covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section.",
   subjectId: "sub_mathematics",
   subjectName: "Mathematics & Logical Reasoning",
   grade: 6,
@@ -48,8 +48,6 @@ export const IMO6A_CLASSIC_EXAM: Exam = {
       "The question paper comprises four sections: Logical Reasoning (15 questions), Mathematical Reasoning (20 questions), Everyday Mathematics (10 questions) and Achievers Section (5 questions).",
       "Each question in the Achievers Section carries 3 marks, whereas all other questions carry 1 mark each.",
       "All questions are compulsory. There is no negative marking. Use of a calculator is not permitted.",
-      "Every question is an interactive activity. Work the apparatus on screen and the activity produces your answer for you.",
-      "Your work on each activity is saved as you go, so you can leave a question and come back to it exactly as you left it.",
       "You may move freely between questions using the Question Palette.",
       "The examination lasts 60 minutes and submits itself when the time expires.",
     ],

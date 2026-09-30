@@ -490,11 +490,11 @@ const ids = (from: number, to: number) =>
 
 export const IEO_INTERACTIVE_G6_EXAM: Exam = {
   id: "ieo-class6-master-interactive",
-  code: "IEO-G6-PRACTICE-2025",
-  title: "IEO Class 6 — Interactive Master Edition (50 Quests)",
-  subtitle: "Class 6 • Interactive Practice • 50 Bespoke 3D Quests & Grammar Lab",
+  code: "IEO-G6-MASTER-2025",
+  title: "SOF International English Olympiad 2024-25 (Class 6 - Master Set)",
+  subtitle: "Science Olympiad Foundation • Class 6 • Official Master Paper",
   description:
-    "Official SOF International English Olympiad (IEO) Class 6 Set A examination paper. Fully equipped with 50 bespoke interactive simulations, grammar engines, 3D spatial environments, text forensics, timeline portals, reading documentary interactives, and real-time deterministic scoring.",
+    "Official SOF International English Olympiad (IEO) Class 6 examination paper covering Word & Structure Knowledge, Reading Comprehension, Spoken & Written Expression, and the Achievers Section.",
   subjectId: "sub_english",
   subjectName: "English",
   grade: 6,
@@ -519,7 +519,7 @@ export const IEO_INTERACTIVE_G6_EXAM: Exam = {
       "Section 5: Spoken & Written Expression (Q41–Q45, 1 mark each).",
       "Section 6: Achievers Section (Q46–Q50, 3 marks each).",
       "Total time allowed is 60 minutes. There is no negative marking.",
-      "Solve each English puzzle by engaging directly with the bespoke interactive activity. Completing the activity automatically derives and records your answer.",
+      "You can navigate freely between questions using the Question Palette.",
     ],
   },
   status: "Published",

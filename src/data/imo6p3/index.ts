@@ -508,11 +508,11 @@ const ids = (from: number, to: number) => IMO6P3_QUESTIONS.slice(from, to).map((
 
 export const IMO6P3_EXAM: Exam = {
   id: "exam_imo_g6_paper3",
-  title: "SOF IMO 2019-20 Class 6 — Set A (Paper 3)",
-  subtitle: "Science Olympiad Foundation • Level-1 • 50 interactive mini-games",
+  title: "SOF International Mathematics Olympiad 2019-20 (Class 6 - Set A)",
+  subtitle: "Science Olympiad Foundation • Level-1 Examination Paper",
   description:
-    "IMO 2019-20 Class 6 Set A (Question Paper 3), scored against Answer Key 3. Every question is a mini-game: work the game, its result is mapped to the matching option, and you submit it.",
-  code: "IMO-G6-P3",
+    "Official SOF International Mathematics Olympiad (IMO) Class 6 Set A examination paper covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section.",
+  code: "IMO-2019-G6-SETA-P3",
   subjectId: "sub_mathematics",
   subjectName: "Mathematics & Logical Reasoning",
   grade: 6,
@@ -532,7 +532,6 @@ export const IMO6P3_EXAM: Exam = {
       "The question paper comprises four sections: Logical Reasoning (15 questions), Mathematical Reasoning (20 questions), Everyday Mathematics (10 questions) and Achievers Section (5 questions).",
       "Each question in the Achievers Section carries 3 marks, whereas all other questions carry 1 mark each.",
       "All questions are compulsory. There is no negative marking.",
-      "Every question is an interactive mini-game. Work the game to reach your answer, then press its submit button to record it.",
       "You may move freely between questions using the Question Palette.",
       "The examination lasts 60 minutes and submits automatically when time expires.",
     ],

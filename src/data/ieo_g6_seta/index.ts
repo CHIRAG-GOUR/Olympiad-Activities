@@ -470,9 +470,10 @@ export const IEO_G6_SETA_QUESTIONS: Question[] = [
 export const IEO_G6_SETA_EXAM: Exam = {
   id: "ieo-2024-25-class-6-set-a",
   code: "IEO-G6-2024-SETA",
-  title: "SOF IEO Class 6 Set A (2024-25)",
+  title: "SOF International English Olympiad 2024-25 (Class 6 - Set A)",
+  subtitle: "Science Olympiad Foundation • Official Level-1 Examination Paper",
   description:
-    "Official International English Olympiad for Class 6 (Set A). 50 immersive interactive 3D activities spanning Word & Structure Knowledge, Vocabulary, Reading Comprehension, Spoken Expression, and the high-yield Achievers Section.",
+    "Official SOF International English Olympiad (IEO) for Class 6 (Set A) covering Word & Structure Knowledge, Reading Comprehension, Spoken & Written Expression, and the Achievers Section.",
   subjectId: "sub_english",
   subjectName: "English",
   grade: 6,

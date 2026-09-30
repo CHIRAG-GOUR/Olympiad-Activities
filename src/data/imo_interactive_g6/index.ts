@@ -436,11 +436,11 @@ const ids = (from: number, to: number) => IMO_INTERACTIVE_G6_QUESTIONS.slice(fro
 
 export const IMO_INTERACTIVE_G6_EXAM: Exam = {
   id: "imo-class6-master-interactive",
-  code: "IMO-CLASS6-INTERACTIVE-2026",
-  title: "SOF International Mathematics Olympiad (Interactive Edition)",
-  subtitle: "Class 6 • Master Interactive Digital Examination • 50 Bespoke Simulation Missions",
+  code: "IMO-CLASS6-MASTER-2026",
+  title: "SOF International Mathematics Olympiad 2025-26 (Class 6 - Master Set)",
+  subtitle: "Science Olympiad Foundation • Class 6 • Official Master Paper",
   description:
-    "Official SOF International Mathematics Olympiad (IMO) Class 6 digital examination. Complete with 50 bespoke interactive simulations, real-time spatial manipulation, 3D physics chambers, deterministic answer derivation, and instant scoring.",
+    "Official Science Olympiad Foundation (SOF) International Mathematics Olympiad Class 6 examination covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and the Achievers Section.",
   subjectId: "sub_mathematics",
   subjectName: "Mathematics & Logical Reasoning",
   grade: 6,
@@ -457,13 +457,13 @@ export const IMO_INTERACTIVE_G6_EXAM: Exam = {
     passPercentage: 40,
     negativeMarkingEnabled: false,
     instructions: [
-      "This interactive examination contains 50 questions across 4 sections.",
+      "This examination contains 50 questions across 4 sections.",
       "Section A: Logical Reasoning (Q1–Q15, 1 mark each).",
       "Section B: Mathematical Reasoning (Q16–Q35, 1 mark each).",
       "Section C: Everyday Mathematics (Q36–Q45, 1 mark each).",
       "Section D: Achievers Section (Q46–Q50, 3 marks each).",
       "Total time allowed is 60 minutes. There is no negative marking.",
-      "Each question is paired with a bespoke interactive simulation. Operating the simulation automatically derives and records your answer.",
+      "You can navigate freely between questions using the Question Palette.",
     ],
   },
   status: "Published",

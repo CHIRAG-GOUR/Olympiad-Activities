@@ -486,11 +486,11 @@ const sectionIds = (from: number, to: number) => IMO6B2_QUESTIONS.slice(from, to
 
 export const IMO6B2_EXAM: Exam = {
   id: "exam_imo_g6_setb2",
-  code: "IMO-G6-SETB2",
-  title: "SOF 9th IMO Class 6 — Set B (Paper 2)",
-  subtitle: "Science Olympiad Foundation • Level-1 • 50 interactive mini-games",
+  code: "IMO-9TH-G6-SETB2",
+  title: "SOF 9th International Mathematics Olympiad (Class 6 - Set B)",
+  subtitle: "Science Olympiad Foundation • Level-1 Examination Paper",
   description:
-    "9th IMO Class 6 Set B (Question Paper 2), scored against Answer Key 2. Every question is a mini-game: work the game, its result is mapped to the matching option, and you submit it.",
+    "Official 9th SOF International Mathematics Olympiad Class 6 Set B examination paper covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section.",
   subjectId: "sub_mathematics",
   subjectName: "Mathematics & Logical Reasoning",
   grade: 6,
@@ -510,8 +510,7 @@ export const IMO6B2_EXAM: Exam = {
       "The question paper comprises four sections: Logical Reasoning (15 questions), Mathematical Reasoning (20 questions), Everyday Mathematics (10 questions) and Achievers Section (5 questions).",
       "Each question in the Achievers Section carries 3 marks, whereas all other questions carry 1 mark each.",
       "All questions are compulsory. There is no negative marking.",
-      "Every question is a mini-game. Work the game, then press its violet submit button to record your answer.",
-      "You may move freely between questions using the Question Palette. Open the Button guide to see what every control does.",
+      "You may move freely between questions using the Question Palette.",
       "The examination lasts 60 minutes and submits itself when the time expires.",
     ],
   },

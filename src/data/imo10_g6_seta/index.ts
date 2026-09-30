@@ -451,10 +451,10 @@ const ids = (from: number, to: number) => IMO10_G6_SETA_QUESTIONS.slice(from, to
 export const IMO10_G6_SETA_EXAM: Exam = {
   id: "imo-class6-setA-2026",
   code: "IMO-10TH-G6-SETA",
-  title: "10th SOF International Mathematics Olympiad (Set A)",
-  subtitle: "Class 6 • Set A • Level 1 • 50 Bespoke Interactive Olympiad Missions",
+  title: "10th SOF International Mathematics Olympiad (Class 6 - Set A)",
+  subtitle: "Science Olympiad Foundation • Class 6 • Set A • Level 1 Paper",
   description:
-    "Official 10th SOF International Mathematics Olympiad (IMO) Class 6 Set A Level-1 digital examination. Complete with 50 bespoke interactive activities, live calculation chambers, 3D spatial environments, deterministic answer resolvers, and full real-time scoring.",
+    "Official 10th SOF International Mathematics Olympiad (IMO) Class 6 Set A Level-1 examination paper covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section.",
   subjectId: "sub_mathematics",
   subjectName: "Mathematics & Logical Reasoning",
   grade: 6,
@@ -477,7 +477,7 @@ export const IMO10_G6_SETA_EXAM: Exam = {
       "Section 3: Everyday Mathematics (Q36–Q45, 1 mark each).",
       "Section 4: Achievers Section (Q46–Q50, 3 marks each).",
       "Total time allowed is 60 minutes. There is no negative marking.",
-      "Each question is paired with a bespoke interactive activity. Completing the activity automatically solves and records your answer.",
+      "You can navigate freely between questions using the Question Palette.",
     ],
   },
   status: "Published",

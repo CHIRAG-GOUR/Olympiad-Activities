@@ -20,17 +20,17 @@ import { IEO_INTERACTIVE_G6_QUESTIONS, IEO_INTERACTIVE_G6_EXAM } from "@/data/ie
 
 /**
  * Seeded content: SOF Olympiad papers for Class 6.
- *   • SOF IEO Class 6 Set A (ieo-2024-25-class-6-set-a) — 50 bespoke interactive English activities.
- *   • IEO Class 6 Interactive Master Edition (ieo-class6-master-interactive) — 50 bespoke 3D quests.
- *   • Master Interactive Edition Class 6 (imo-class6-master-interactive) — 50 bespoke interactive simulations.
- *   • 10th SOF IMO Class 6 Set A Level 1 (imo-class6-setA-2026) — 50 bespoke interactive activities.
- *   • IMO 2023-24 Set C (imo-2023-24-class-6-set-c) — 50 bespoke interactive activities.
- *   • IMO 2018-19 Set A (Playable Mini-Games) — 50 mini-games (10 in 3D).
- *   • IMO 2018-19 Set A (Classic Activities) — 50 classic interactive activities.
- *   • IMO 2022-23 Set B (50 Interactive 3D Mini-Games) — 50 bespoke 3D mini-games.
- *   • IMO 2024-25 Set B (Interactive Activities) — 50 interactive activities.
- *   • IMO Set B #2 (Practice Paper) — 50 mini-games (10 in 3D), keyed to Answer Key 2.
- *   • IMO Class 6 Paper 3 (Set C / Level 1) — 50 interactive mini-games.
+ *   • SOF International English Olympiad 2024-25 (Class 6 - Set A) (ieo-2024-25-class-6-set-a)
+ *   • SOF International English Olympiad 2024-25 (Class 6 - Master Set) (ieo-class6-master-interactive)
+ *   • SOF International Mathematics Olympiad 2025-26 (Class 6 - Master Set) (imo-class6-master-interactive)
+ *   • 10th SOF International Mathematics Olympiad (Class 6 - Set A) (imo-class6-setA-2026)
+ *   • SOF International Mathematics Olympiad 2023-24 (Class 6 - Set C) (imo-2023-24-class-6-set-c)
+ *   • SOF International Mathematics Olympiad 2018-19 (Class 6 - Set A) (exam_imo_2018_g6_seta)
+ *   • SOF International Mathematics Olympiad 2018-19 (Class 6 - Set A - Classic) (exam_imo_2018_g6_seta_classic)
+ *   • SOF International Mathematics Olympiad 2022-23 (Class 6 - Set B) (exam_imo_2022_g6_setb)
+ *   • SOF International Mathematics Olympiad 2024-25 (Class 6 - Set B) (exam_imo_2024_g6_setb)
+ *   • SOF 9th International Mathematics Olympiad (Class 6 - Set B) (exam_imo_g6_setb2)
+ *   • SOF International Mathematics Olympiad 2019-20 (Class 6 - Set A) (exam_imo_g6_paper3)
  */
 
 /** FNV-1a hash of a record's JSON, ignoring its own seedRev. */

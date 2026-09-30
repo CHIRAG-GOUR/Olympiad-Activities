@@ -272,7 +272,7 @@ export default function DashboardView() {
           greeting={greeting}
           name={name}
           roleLine="My Olympiad"
-          blurb="Every question here is an activity you manipulate — rotate a solid, plot a point, run a simulation — and your work produces the answer."
+          blurb="Official Olympiad examination portal. Access your assigned question paper, track your progress, and view verified score reports."
           facts={[
             { value: totalActivities, label: "Activities waiting", tone: "#2468B2" },
             { value: questions.length, label: "Questions in your paper", tone: "#8067D9" },
@@ -316,8 +316,8 @@ export default function DashboardView() {
         <section>
           <SectionHeading
             icon={Layers}
-            title="Your interactive Olympiad"
-            description="Every section of the paper is built from activities, simulations and puzzles."
+            title="Examination Syllabus & Sections"
+            description="Overview of examination sections and question distribution across the syllabus."
           />
           <SyllabusGrid sections={sectionInsights} />
         </section>

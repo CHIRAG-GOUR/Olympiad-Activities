@@ -442,10 +442,10 @@ const ids = (from: number, to: number) => IMO23_24_C_QUESTIONS.slice(from, to).m
 export const IMO23_24_C_EXAM: Exam = {
   id: "imo-2023-24-class-6-set-c",
   code: "IMO-2023-24-G6-SET-C",
-  title: "SOF International Mathematics Olympiad 2023–24",
-  subtitle: "Class 6 • Set C • 50 Bespoke Interactive Olympiad Missions",
+  title: "SOF International Mathematics Olympiad 2023-24 (Class 6 - Set C)",
+  subtitle: "Science Olympiad Foundation • Class 6 • Set C • Level 1 Paper",
   description:
-    "Official SOF IMO Class 6 Question Paper Set C (2023–24) featuring 50 bespoke, hands-on interactive activities across Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and the Achievers Section.",
+    "Official SOF International Mathematics Olympiad (IMO) Class 6 Question Paper Set C (2023-24) covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and the Achievers Section.",
   subjectId: "sub_mathematics",
   subjectName: "Mathematics & Logical Reasoning",
   grade: 6,
@@ -465,7 +465,6 @@ export const IMO23_24_C_EXAM: Exam = {
       "The question paper comprises four sections: Logical Reasoning (15 questions), Mathematical Reasoning (20 questions), Everyday Mathematics (10 questions) and Achievers Section (5 questions).",
       "Each question in the Achievers Section carries 3 marks, whereas all other questions carry 1 mark each.",
       "All questions are compulsory. There is no negative marking.",
-      "Every question is an interactive simulation/game. Work through the microworld to discover and derive your answer, then submit.",
       "You may move freely between questions using the Question Palette.",
       "The examination lasts 60 minutes and submits automatically when time expires.",
     ],

@@ -227,23 +227,9 @@ export default function StudentExamsScreen() {
                 {exam.subtitle || "Official SOF Mathematics & Logical Reasoning Olympiad"}
               </p>
               <p className="text-xs sm:text-[13px] text-slate-600 font-medium mt-2 leading-relaxed max-w-3xl">
-                Every question in this paper is an interactive manipulative or simulation. Rotate 3D solids, solve geometric puzzles, run logic circuits, and analyze pattern matrices directly on screen.
+                {exam.description ||
+                  "Official Level-1 examination paper from the Science Olympiad Foundation (SOF) covering Logical Reasoning, Mathematical Reasoning, Everyday Mathematics, and Achievers Section."}
               </p>
-            </div>
-
-            {/* 3D Dice Laboratory Callout */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50/90 via-amber-50/50 to-white border border-amber-200/80 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                <Boxes className="w-5 h-5" />
-              </div>
-              <div className="text-xs">
-                <span className="font-black text-amber-950 block">
-                  Features 3D Rotating Dice Laboratory on Q1
-                </span>
-                <span className="text-amber-800 font-medium block">
-                  Rotate the 3D dice across 3 axes to inspect hidden faces and evaluate fold net rules.
-                </span>
-              </div>
             </div>
 
             {/* Meta Tags Row */}
