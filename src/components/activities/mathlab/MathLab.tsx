@@ -59,7 +59,7 @@ const INIT: W = { marks: [], keyed: [], seq: [], truth: {}, links: {} };
 
 /* ── value helpers ──────────────────────────────────────────────────── */
 
-const clean = (s: string) => s.replace(/₹\s*/g, "").replace(/(\d),(?=\d{3}\b)/g, "$1").replace(/[−–]/g, "-");
+const clean = (s: string) => s.replace(/₹\s*/g, "").replace(/(\d),(?=\d)/g, "$1").replace(/[−–]/g, "-");
 const compact = (s: string) => clean(s).toLowerCase().replace(/\s+/g, "").replace(/×/g, "x");
 
 /** All numbers in a text, in order ("(i) 2; (ii) 6" → [2, 6]). */
@@ -101,7 +101,7 @@ export function MathLabActivity({ question, value, activityState, onChange, read
         const id = options.find((o) => {
           const x = numbersIn(o.text);
           return x.length === 1 && eq(x[0], { p: n, q: 1 });
-        })?.id ?? options.find((o) => /none of these/i.test(o.text))?.id;
+        })?.id ?? options.find((o) => { const m = o.text.match(/more than (\d+)/i); return !!m && n > Number(m[1]); })?.id ?? options.find((o) => /none of these/i.test(o.text))?.id;
         return { value: `${n}`, optionId: id, note: id ? undefined : "That count is not one of the printed answers — check again." };
       }
       case "dial": {

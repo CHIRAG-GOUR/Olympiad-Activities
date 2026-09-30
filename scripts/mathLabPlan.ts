@@ -35,7 +35,8 @@ const plans = exam.questionIds.map((id, i) => {
   switch (lab?.mode) {
     case "count": {
       // a "None of these" answer is reached by a count that is not printed
-      const n = /none of these/i.test(text) ? Math.max(...opts.map((o) => Number(num(o.text)) || 0)) + 1 : Number(num(text));
+      const more = text.match(/more than (\d+)/i);
+      const n = more ? Number(more[1]) + 1 : /none of these/i.test(text) ? Math.max(...opts.map((o) => Number(num(o.text)) || 0)) + 1 : Number(num(text));
       for (let k = 0; k < n; k++) steps.push(["text", "+ add a counter (keyboard)"]);
       break;
     }

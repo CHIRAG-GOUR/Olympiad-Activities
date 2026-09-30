@@ -12,8 +12,11 @@ import { Exam } from "@/types/exam";
  *   - Section D: Achievers Section: Q46–Q50 (3 marks each)
  */
 
+// Key checked answer by answer (this edition has no printed key). Nine stored answers were wrong
+// and are corrected: Q14 2570, Q15 rectangle, Q17 36, Q27 5,000, Q39 23°C, Q43 24, Q46 62,
+// Q47 160 cm², Q48 40 L.
 export const IMO_INTERACTIVE_G6_KEY =
-  "BBDCDBABCB" + "CABACCBCBB" + "DCBCBCBBBA" + "CBCBDCCCBC" + "BBCCCBCBAA";
+  "BBDCDBABCB" + "CABCACCCBB" + "DCBCBCCBBA" + "CBCBDCCCCC" + "BBBCCCBCAA";
 
 type Section = "Logical Reasoning" | "Mathematical Reasoning" | "Everyday Mathematics" | "Achievers Section";
 
@@ -431,6 +434,64 @@ export const IMO_INTERACTIVE_G6_QUESTIONS: Question[] = [
     { remainingArea: 250, perimeter: 68 }
   ),
 ];
+
+
+// Every question is worked on the maths lab: text answers by placing a card, values on the keypad.
+const LAB: Record<number, Record<string, unknown>> = {
+  1: { mode: "tile", template: "Second from the left is ___.", hints: ["Draw the line: P, Q, then S, then R."] },
+  2: { mode: "tile", template: "The missing letter is ___.", hints: ["The gaps grow by one each time: +2, +3, +4, +5…"] },
+  3: { mode: "tile", template: "The odd one out is ___.", hints: ["Which shape has no straight sides?"] },
+  4: { mode: "tile", template: "The drone is to the ___ of its starting point.", hints: ["The north and south flights cancel out."] },
+  5: { mode: "tile", template: "___ finishes second.", hints: ["Put the four runners in finishing order."] },
+  6: { mode: "tile", template: "In the water image, top to bottom: ___", hints: ["A water image turns the flag upside down."] },
+  7: { mode: "tile", template: "DOG is coded as ___.", hints: ["Move every letter one step forward."] },
+  8: { mode: "tile", template: "P is R's ___.", hints: ["P is the brother of R's mother."] },
+  9: { mode: "tile", template: "The 15th day is a ___.", hints: ["The 15th is exactly two weeks after the 1st."] },
+  10: { mode: "dial", hints: ["Use the both-counted-once rule: 18 + 15 − 7 like at least one."] },
+  11: { mode: "dial", hints: ["Each fold doubles the layers."] },
+  12: { mode: "tile", template: "The fourth stage is: ___", hints: ["Turn the arrow 90° clockwise and move the dot one place clockwise."] },
+  13: { mode: "dial", hints: ["The hour hand is halfway between 4 and 5 at 4:30."] },
+  14: { mode: "dial", hints: ["An even number ends in 0 or 2, and cannot start with 0."] },
+  15: { mode: "tile", template: "They can form a ___.", hints: ["Put the two long sides together."] },
+  16: { mode: "dial", hints: ["Find 1/4 of 28 first."] },
+  17: { mode: "dial", hints: ["Both are back together after the LCM of 12 and 18."] },
+  18: { mode: "dial", hints: ["List the factors, or divide by common primes."] },
+  19: { mode: "dial", hints: ["Round each number to the nearest hundred first."] },
+  20: { mode: "dial", hints: ["Work left to right."] },
+  21: { mode: "dial", hints: ["Each fold line goes through opposite corners or opposite sides."] },
+  22: { mode: "dial", hints: ["Each pair of points makes one segment."] },
+  23: { mode: "dial", hints: ["Add the three days, then the two days, and subtract."] },
+  24: { mode: "dial", hints: ["Garden area minus pond area."] },
+  25: { mode: "dial", hints: ["Perimeter = 2 × (length + breadth)."] },
+  26: { mode: "dial", hints: ["The hour hand is halfway between 4 and 5 at 4:30."] },
+  27: { mode: "dial", hints: ["The digit 5 is in the thousands place."] },
+  28: { mode: "dial", hints: ["M = 1000, CD = 400, XL = 40."] },
+  29: { mode: "tile", template: "Divisible by 9: ___", hints: ["A number is divisible by 9 when its digits add up to a multiple of 9."] },
+  31: { mode: "dial", hints: ["3 + 5 = 8 parts make 64 marbles."] },
+  32: { mode: "dial", hints: ["1 m = 100 cm."] },
+  33: { mode: "dial", hints: ["Add the numbers and divide by how many there are."] },
+  34: { mode: "dial", hints: ["Add first, then subtract."] },
+  35: { mode: "dial", hints: ["Each term is double the one before, plus 1."] },
+  36: { mode: "dial", hints: ["Add the three prices."] },
+  37: { mode: "dial", hints: ["Work backwards: double ₹120 three times."] },
+  38: { mode: "dial", hints: ["2 hours 20 minutes is 7/3 hours."] },
+  39: { mode: "dial", hints: ["Difference = 17 − (−6)."] },
+  40: { mode: "dial", hints: ["Divide the pens by the pens in each box."] },
+  41: { mode: "tile", template: "He exercises for ___.", hints: ["Count on from 17:35 to 19:10."] },
+  42: { mode: "dial", hints: ["Add 2.40 kg to Sneha\"s weight."] },
+  43: { mode: "dial", hints: ["How many tiles fit along each side?"] },
+  44: { mode: "dial", hints: ["Add all three kinds of fruit."] },
+  45: { mode: "dial", hints: ["The distance must be a multiple of all three step lengths."] },
+  46: { mode: "dial", hints: ["Do the three steps in order."] },
+  47: { mode: "dial", hints: ["Whole plate minus the piece cut away."] },
+  48: { mode: "dial", hints: ["9/10 − 3/5 of the tank is 12 litres."] },
+  49: { mode: "dial", hints: ["Divisible by 8: check the last three digits; by 3: the digit sum."] },
+  30: { mode: "compare", left: "5/8", right: "3/5", map: { ">": "A", "<": "B", "=": "C" }, hints: ["Write both over 40, or as decimals."] },
+  50: { mode: "multi", parts: [{ label: "area of the remaining shape", unit: "cm²" }, { label: "its perimeter", unit: "cm" }], hints: ["Removing a corner leaves the perimeter the same as the full rectangle."] },
+};
+IMO_INTERACTIVE_G6_QUESTIONS.forEach((q, i) => {
+  q.customConfig = { ...(q.customConfig ?? {}), questionNumber: i + 1, lab: LAB[i + 1] };
+});
 
 const ids = (from: number, to: number) => IMO_INTERACTIVE_G6_QUESTIONS.slice(from, to).map((x) => x.id);
 

@@ -1,3 +1,4 @@
+import { PAPER5_LAB } from "./imo2223_setb_lab";
 import { Question } from "@/types/question";
 import { Exam } from "@/types/exam";
 import { Subject } from "@/types/subject";
@@ -1592,6 +1593,15 @@ export const IMO_CLASS6_SETB_QUESTIONS: Question[] = [
     updatedAt: new Date().toISOString(),
   },
 ];
+
+// Put each question on the maths lab (paper 5). Keys and ids are unchanged.
+IMO_CLASS6_SETB_QUESTIONS.forEach((q, i) => {
+  const patch = PAPER5_LAB[i + 1];
+  if (!patch) return;
+  q.customConfig = { ...(q.customConfig ?? {}), questionNumber: i + 1, lab: patch.lab };
+  if (patch.questionText) q.questionText = patch.questionText;
+  if (patch.options && q.multipleChoiceConfig) q.multipleChoiceConfig.options = q.multipleChoiceConfig.options.map((o, k) => ({ ...o, text: patch.options![k] }));
+});
 
 export const IMO_CLASS6_SETB_2022_EXAM: Exam = {
   id: "exam_imo_2022_g6_setb",
