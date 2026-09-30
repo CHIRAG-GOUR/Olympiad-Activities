@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { phaseOf } from "./scene";
+import { planks, wallpaper } from "./textures";
 
 /* ══════════════════════════════════════════════════════════════════════
    Reusable props for the English paper's scenes. Each is a small, solid,
@@ -501,23 +502,77 @@ export function Frame({ p = [0, 1.6, -2.4], w = 0.8, h = 0.6, art = ["#F97316", 
   );
 }
 
-/** A back wall with a skirting board and optional windows, for indoor scenes. */
-export function RoomWall({ z = -2.5, c = "#FFF7ED", h = 3.2, windows = [] as number[] }: { z?: number; c?: string; h?: number; windows?: number[] }) {
+/**
+ * An indoor set: a back wall and two side walls with skirting, a wooden floor, windows
+ * with frames, sills and curtains, and a framed picture — so indoor scenes read as rooms
+ * instead of a wall standing in empty space.
+ */
+export function RoomWall({ z = -2.5, c = "#FFF7ED", h = 3.2, windows = [] as number[], floor = "#C9955E", width = 9, depth = 6.5 }: { z?: number; c?: string; h?: number; windows?: number[]; floor?: string; width?: number; depth?: number }) {
+  const wallTex = wallpaper(c);
+  const floorTex = planks(floor);
+  const half = width / 2;
+  const side = (s: -1 | 1) => (
+    <group>
+      <mesh position={[half * s, h / 2, z + depth / 2]} rotation={[0, -s * Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[depth, h]} />
+        <meshStandardMaterial color={c} map={wallTex ?? undefined} roughness={0.95} />
+      </mesh>
+      <Box p={[half * s - s * 0.02, 0.07, z + depth / 2]} s={[0.04, 0.14, depth]} c="#E7D8C3" />
+    </group>
+  );
   return (
     <group>
-      <mesh position={[0, h / 2, z]} receiveShadow>
-        <planeGeometry args={[30, h]} />
-        <Mat c={c} r={0.95} />
+      {/* floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, z + depth / 2]} receiveShadow>
+        <planeGeometry args={[width, depth]} />
+        <meshStandardMaterial color="#ffffff" map={floorTex ?? undefined} roughness={0.75} />
       </mesh>
-      <Box p={[0, 0.06, z + 0.02]} s={[30, 0.12, 0.03]} c="#E7D8C3" />
+      {/* back wall */}
+      <mesh position={[0, h / 2, z]} receiveShadow>
+        <planeGeometry args={[width, h]} />
+        <meshStandardMaterial color={c} map={wallTex ?? undefined} roughness={0.95} />
+      </mesh>
+      <Box p={[0, h + 0.05, z + 0.05]} s={[width, 0.1, 0.1]} c="#F8FAFC" />
+      <Box p={[0, 0.07, z + 0.02]} s={[width, 0.14, 0.04]} c="#E7D8C3" />
+      {side(-1)}
+      {side(1)}
       {windows.map((x) => (
-        <group key={x} position={[x, 1.7, z + 0.02]}>
-          <Box s={[0.9, 0.9, 0.04]} c="#FFFFFF" />
-          <Box p={[0, 0, 0.02]} s={[0.8, 0.8, 0.02]} c="#BFE3F7" />
-          <Box p={[0, 0, 0.035]} s={[0.04, 0.8, 0.01]} c="#FFFFFF" />
-          <Box p={[0, 0, 0.035]} s={[0.8, 0.04, 0.01]} c="#FFFFFF" />
+        <group key={x} position={[x, 1.75, z + 0.03]}>
+          <Box s={[1.1, 1.1, 0.06]} c="#FFFFFF" />
+          <mesh position={[0, 0, 0.035]}>
+            <planeGeometry args={[0.96, 0.96]} />
+            <meshStandardMaterial color="#BFE3F7" emissive="#E0F2FE" emissiveIntensity={0.55} />
+          </mesh>
+          <Box p={[0, 0, 0.05]} s={[0.05, 0.96, 0.02]} c="#FFFFFF" />
+          <Box p={[0, 0, 0.05]} s={[0.96, 0.05, 0.02]} c="#FFFFFF" />
+          <Box p={[0, -0.6, 0.08]} s={[1.25, 0.06, 0.16]} c="#F1F5F9" />
+          {[-1, 1].map((s) => (
+            <mesh key={s} position={[0.66 * s, 0.02, 0.1]} castShadow>
+              <boxGeometry args={[0.22, 1.25, 0.05]} />
+              <meshStandardMaterial color="#FCA5A5" roughness={0.9} />
+            </mesh>
+          ))}
+          <Cyl p={[0, 0.66, 0.12]} r1={0.02} h={1.7} c="#A16207" rot={[0, 0, Math.PI / 2]} />
         </group>
       ))}
+      {/* a framed picture where there is room for one */}
+      {!windows.some((x) => Math.abs(x) < 1.2) && (
+        <group position={[windows.length ? (windows[0] > 0 ? -2.4 : 2.4) : -2.4, 1.9, z + 0.03]}>
+          <Box s={[0.7, 0.5, 0.04]} c="#92400E" />
+          <mesh position={[0, 0, 0.025]}>
+            <planeGeometry args={[0.6, 0.4]} />
+            <meshStandardMaterial color="#A7F3D0" />
+          </mesh>
+          <mesh position={[0.05, -0.05, 0.03]}>
+            <circleGeometry args={[0.12, 3]} />
+            <meshStandardMaterial color="#16A34A" />
+          </mesh>
+          <mesh position={[-0.18, 0.1, 0.03]}>
+            <circleGeometry args={[0.05, 16]} />
+            <meshStandardMaterial color="#FBBF24" />
+          </mesh>
+        </group>
+      )}
     </group>
   );
 }

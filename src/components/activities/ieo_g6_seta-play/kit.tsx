@@ -77,8 +77,8 @@ export function World3D({
   autoRotate = false,
   cue,
   target,
-  sky = "#EAF3FF",
-  ground = "#E7ECF3",
+  sky = "#DCEBFA",
+  ground = "#D9E7CF",
 }: {
   children: ReactNode;
   camera?: { position: [number, number, number]; fov?: number };

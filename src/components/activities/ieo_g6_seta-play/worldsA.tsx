@@ -110,9 +110,17 @@ export function HandballWorld({ filled }: WorldProps) {
   const ball = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (!ball.current) return;
-    const t = clock.getElapsedTime() * (filled ? 0.9 : 0.6);
-    const k = (Math.sin(t * Math.PI) + 1) / 2;
-    ball.current.position.set(-1.3 + k * 2.6, 1.2 + Math.sin(k * Math.PI) * 0.9, 0);
+    // one throw every period: the ball rests in the catcher's hands, then flies across
+    const period = filled ? 1.6 : 2.2;
+    const t = clock.getElapsedTime() / period;
+    const leg = Math.floor(t) % 2;
+    const u = t % 1;
+    const fly = Math.min(1, Math.max(0, (u - 0.3) / 0.7));
+    const e = fly * fly * (3 - 2 * fly);
+    const from = leg ? 0.98 : -0.98;
+    const to = -from;
+    ball.current.position.set(from + (to - from) * e, 1.2 + Math.sin(e * Math.PI) * 0.75, 0.02);
+    ball.current.rotation.z += 0.08;
   });
   return (
     <group>
@@ -121,25 +129,42 @@ export function HandballWorld({ filled }: WorldProps) {
         <planeGeometry args={[6.4, 3.4]} />
         <Mat c="#F59E0B" r={0.9} />
       </mesh>
+      {/* court lines and a soft border */}
       <Box p={[0, 0.015, 0]} s={[0.04, 0.01, 3.4]} c="#FFFFFF" />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.2, 0.016, 0]}>
-        <ringGeometry args={[1.2, 1.25, 32, 1, -Math.PI / 2, Math.PI]} />
-        <meshBasicMaterial color="#FFFFFF" />
+      <Box p={[0, 0.013, 1.72]} s={[6.5, 0.01, 0.04]} c="#FFFFFF" />
+      <Box p={[0, 0.013, -1.72]} s={[6.5, 0.01, 0.04]} c="#FFFFFF" />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} receiveShadow>
+        <planeGeometry args={[7.4, 4.4]} />
+        <Mat c="#0EA5E9" r={0.9} />
       </mesh>
       {[-3.2, 3.2].map((x) => (
-        <group key={x} position={[x, 0, 0]}>
-          <Box p={[0, 1.0, -0.8]} s={[0.08, 2, 0.08]} c="#FFFFFF" />
-          <Box p={[0, 1.0, 0.8]} s={[0.08, 2, 0.08]} c="#FFFFFF" />
-          <Box p={[0, 2.0, 0]} s={[0.08, 0.08, 1.7]} c="#FFFFFF" />
+        <group key={x}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.016, 0]}>
+            <ringGeometry args={[1.2, 1.25, 32, 1, x < 0 ? -Math.PI / 2 : Math.PI / 2, Math.PI]} />
+            <meshBasicMaterial color="#FFFFFF" />
+          </mesh>
+          <group position={[x, 0, 0]}>
+            <Box p={[0, 1.0, -0.8]} s={[0.08, 2, 0.08]} c="#EF4444" />
+            <Box p={[0, 1.0, 0.8]} s={[0.08, 2, 0.08]} c="#EF4444" />
+            <Box p={[0, 2.0, 0]} s={[0.08, 0.08, 1.7]} c="#EF4444" />
+            {/* the net */}
+            <mesh position={[x < 0 ? -0.25 : 0.25, 1, 0]} rotation={[0, Math.PI / 2, 0]}>
+              <planeGeometry args={[1.6, 1.95, 8, 10]} />
+              <meshStandardMaterial color="#FFFFFF" wireframe transparent opacity={0.55} />
+            </mesh>
+          </group>
         </group>
       ))}
+      {/* a bench of team-mates at the side */}
+      <Box p={[-1.8, 0.25, -2.3]} s={[2.2, 0.08, 0.4]} c="#B45309" />
+      <Box p={[-1.8, 0.12, -2.3]} s={[2.1, 0.22, 0.3]} c="#78350F" />
       <mesh ref={ball} castShadow>
-        <sphereGeometry args={[0.1, 18, 18]} />
+        <sphereGeometry args={[0.1, 20, 20]} />
         <Mat c="#2563EB" />
       </mesh>
-      <Avatar3D position={[-1.5, 0, 0]} rotation={[0, Math.PI / 2, 0]} pose="jumping" shirtColor="#22C55E" hairStyle="short" />
-      <Avatar3D position={[1.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]} pose="gesturing" shirtColor="#EC4899" hairStyle="ponytail" />
-      <Avatar3D position={[2.3, 0, 1.3]} rotation={[0, -0.9, 0]} scale={0.9} pose="thinking" shirtColor="#64748B" hairStyle="cap" />
+      <Avatar3D position={[-1.5, 0, 0]} rotation={[0, Math.PI / 2, 0]} pose="catching" shirtColor="#22C55E" hairStyle="short" />
+      <Avatar3D position={[1.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]} pose="catching" shirtColor="#EC4899" hairStyle="ponytail" />
+      <Avatar3D position={[2.3, 0, 1.3]} rotation={[0, -0.9, 0]} scale={0.9} pose={filled ? "gesturing" : "thinking"} shirtColor="#64748B" hairStyle="cap" />
     </group>
   );
 }

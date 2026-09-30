@@ -7,6 +7,7 @@ import { Delete, Flag, GripVertical, Highlighter, LucideIcon, Type } from "lucid
 import type { ActivityComponentProps } from "../kit/types";
 import { usePlay } from "../imo6a-play/engine";
 import { Shell, World3D } from "./kit";
+import { FlatScene, type FlatKind } from "./flat";
 
 /* ══════════════════════════════════════════════════════════════════════
    Story engine for the English paper.
@@ -251,6 +252,17 @@ export function StoryActivity({ spec, question, value, activityState, onChange, 
     return null;
   })();
 
+  // Reading, spelling, spot-the-error and word-meaning questions are worked on the page itself,
+  // so they get an illustrated 2D header instead of a 3D world.
+  const flat = ((): { kind: FlatKind; caption?: string; word?: string } | null => {
+    if (m.kind === "reading") return { kind: "reading", caption: "Read the passage and collect your evidence" };
+    if (m.kind === "spell") return { kind: "spell", caption: `The word that means ‘${m.meaning}’`, word: "ABCDE" };
+    if (m.kind === "error") return { kind: "error", caption: "Find the part of the sentence with the mistake" };
+    const mm = template?.match(/^(\S+) (means the same as|is the opposite of)/);
+    if (mm) return { kind: "meaning", caption: mm[2] === "means the same as" ? "Find the word with the same meaning" : "Find the word with the opposite meaning", word: mm[1] };
+    return null;
+  })();
+
   const onDrop = (tile: string, slot: string) => {
     if (m.kind === "error") play.set((p) => ({ ...p, placed: slot }));
     else play.set((p) => ({ ...p, placed: tile }));
@@ -260,6 +272,9 @@ export function StoryActivity({ spec, question, value, activityState, onChange, 
     <Shell dim="3D" play={play} question={question} title={spec.title} subtitle={spec.mission} icon={spec.icon} hints={spec.hints}>
       <DragProvider onDrop={onDrop} locked={play.locked}>
         <div className="space-y-3">
+          {flat ? (
+            <FlatScene kind={flat.kind} title={spec.title} caption={flat.caption} word={flat.word} />
+          ) : (
           <div className="relative overflow-hidden rounded-2xl border-2 border-violet-100">
             <World3D cue={w.placed ?? w.typed ?? null} camera={spec.camera ?? { position: [0, 2.0, 4.6], fov: 45 }} target={spec.camera?.target ?? [0, 0.95, 0]} height="320px" sky={spec.sky} ground={spec.ground}>
               <spec.World word={word} filled={!!word} />
@@ -267,6 +282,7 @@ export function StoryActivity({ spec, question, value, activityState, onChange, 
             </World3D>
             {bubbleText && spec.bubbleAt && <Bubble innerRef={bubbleRef} text={bubbleText} who={m.kind === "fill" ? m.speaker : undefined} />}
           </div>
+          )}
 
           {m.kind === "fill" && <FillPanel template={template!} speaker={m.speaker} word={word} options={options} />}
           {m.kind === "error" && <ErrorPanel before={m.before} options={options} flagged={w.placed} />}

@@ -205,36 +205,65 @@ export function Gear({ p = [0, 0, 0], r = 0.5, teeth = 12, c = "#94A3B8", speed 
   );
 }
 
-/** A slowly turning globe with rough continents. */
+/** An equirectangular map drawn on a canvas: ocean, continents, ice caps. */
+let globeTex: THREE.CanvasTexture | null = null;
+function globeTexture() {
+  if (globeTex || typeof document === "undefined") return globeTex;
+  const c = document.createElement("canvas");
+  c.width = 1024;
+  c.height = 512;
+  const x = c.getContext("2d")!;
+  const g = x.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0, "#1D6FB8");
+  g.addColorStop(0.5, "#2B8FD9");
+  g.addColorStop(1, "#1D6FB8");
+  x.fillStyle = g;
+  x.fillRect(0, 0, 1024, 512);
+  // lon/lat → pixels
+  const P = (lon: number, lat: number): [number, number] => [((lon + 180) / 360) * 1024, ((90 - lat) / 180) * 512];
+  const land = (pts: [number, number][], col = "#6FB257") => {
+    x.fillStyle = col;
+    x.beginPath();
+    pts.forEach(([lo, la], i) => {
+      const [px, py] = P(lo, la);
+      if (i) x.lineTo(px, py);
+      else x.moveTo(px, py);
+    });
+    x.closePath();
+    x.fill();
+  };
+  // rough continents
+  land([[-10, 36], [0, 43], [-5, 48], [5, 52], [10, 55], [20, 58], [30, 60], [40, 62], [30, 45], [25, 38], [15, 38], [5, 40]]); // Europe
+  land([[-17, 21], [-10, 33], [10, 37], [32, 31], [43, 12], [51, 11], [40, -5], [40, -16], [33, -28], [20, -35], [12, -18], [9, 4], [-8, 4], [-17, 14]], "#8DB255"); // Africa
+  land([[40, 62], [60, 70], [100, 75], [140, 70], [160, 60], [140, 45], [122, 30], [108, 20], [100, 8], [80, 8], [72, 20], [58, 25], [48, 30], [40, 40]]); // Asia
+  land([[-165, 65], [-140, 70], [-95, 72], [-65, 60], [-55, 50], [-80, 30], [-97, 18], [-88, 15], [-105, 25], [-118, 32], [-125, 48], [-150, 58]]); // N America
+  land([[-80, 10], [-60, 8], [-35, -8], [-40, -22], [-55, -35], [-70, -52], [-75, -40], [-72, -18], [-80, -5]], "#7FB85A"); // S America
+  land([[114, -22], [130, -12], [145, -15], [153, -28], [145, -38], [130, -32], [115, -34]], "#C9A35B"); // Australia
+  land([[-50, 60], [-30, 70], [-20, 80], [-60, 82], [-70, 75]], "#E8F1F8"); // Greenland
+  x.fillStyle = "#F1F5F9";
+  x.fillRect(0, 490, 1024, 22);
+  x.fillRect(0, 0, 1024, 10);
+  globeTex = new THREE.CanvasTexture(c);
+  globeTex.colorSpace = THREE.SRGBColorSpace;
+  globeTex.anisotropy = 8;
+  return globeTex;
+}
+
+/** A slowly turning globe. */
 export function Globe({ p = [0, 1.2, 0], r = 1, spin = 0.15, children }: { p?: V3; r?: number; spin?: number; children?: React.ReactNode }) {
   const g = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     if (g.current) g.current.rotation.y += dt * spin;
   });
-  const land = "#65A30D";
-  // [lat, lon, size] blobs — Europe, Africa, Asia, the Americas, Australia
-  const blobs: [number, number, number][] = [
-    [50, 10, 0.22], [45, 25, 0.18], [8, 20, 0.3], [-10, 25, 0.28], [-25, 25, 0.2], [45, 80, 0.35], [30, 100, 0.3], [55, 110, 0.3],
-    [45, -100, 0.33], [35, -90, 0.25], [-10, -60, 0.3], [-30, -65, 0.2], [-25, 135, 0.22], [65, -40, 0.15],
-  ];
-  const at = (lat: number, lon: number, rr: number): V3 => {
-    const la = (lat * Math.PI) / 180;
-    const lo = (lon * Math.PI) / 180;
-    return [rr * Math.cos(la) * Math.sin(lo), rr * Math.sin(la), rr * Math.cos(la) * Math.cos(lo)];
-  };
+  const tex = globeTexture();
   return (
     <group position={p}>
       <group ref={g}>
-        <mesh castShadow>
-          <sphereGeometry args={[r, 40, 30]} />
-          <meshStandardMaterial color="#38BDF8" roughness={0.5} />
+        {/* texture u=0 at lon −180; three's sphere puts u=0.75 at +z, so turn it to match onSphere() */}
+        <mesh castShadow rotation={[0, -Math.PI / 2, 0]}>
+          <sphereGeometry args={[r, 64, 40]} />
+          <meshStandardMaterial map={tex ?? undefined} roughness={0.6} />
         </mesh>
-        {blobs.map(([la, lo, s], i) => (
-          <mesh key={i} position={at(la, lo, r * 0.93)} scale={[s * r * 1.4, s * r * 1.1, s * r * 1.4]}>
-            <sphereGeometry args={[1, 14, 10]} />
-            <Mat c={land} r={0.9} />
-          </mesh>
-        ))}
         {children}
       </group>
     </group>

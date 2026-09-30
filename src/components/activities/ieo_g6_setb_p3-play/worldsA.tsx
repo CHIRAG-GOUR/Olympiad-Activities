@@ -514,20 +514,9 @@ function W16({ filled }: LabWorldProps) {
 
 /* Q17 — working round the clock */
 function W17({ filled }: LabWorldProps) {
-  const sky = useRef<THREE.Mesh>(null);
-  const day = useRef(0);
-  useFrame((_, dt) => {
-    day.current += dt * (filled ? 0.25 : 0.03);
-    const m = sky.current?.material as THREE.MeshBasicMaterial | undefined;
-    if (m) m.color.setHSL(0.6, 0.6, 0.35 + 0.4 * (0.5 + 0.5 * Math.cos(day.current * Math.PI * 2)));
-  });
   return (
     <group>
       <Ground c="#E0E7FF" />
-      <mesh ref={sky} position={[0, 3, -4]}>
-        <planeGeometry args={[14, 8]} />
-        <meshBasicMaterial color="#93C5FD" />
-      </mesh>
       {/* clock tower */}
       <group position={[-1.4, 0, -1.8]}>
         <Box p={[0, 1.4, 0]} s={[1, 2.8, 1]} c="#E7E5E4" />

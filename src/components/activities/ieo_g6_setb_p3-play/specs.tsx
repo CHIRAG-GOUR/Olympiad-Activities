@@ -251,6 +251,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "assemble", blocks: ["secur", "+e", "+ely", "+ity", "+ed"], tray: "Word-part blocks — a root and its endings" },
   },
   23: {
+    flat: "error",
     engine: "ErrorRepairEngine",
     title: "Tiny Mouse Audio Lab",
     mission: "Listen for the mice, then inspect the sentence under the lens. Flag the faulty part and repair it on the bench.",
@@ -260,6 +261,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "repair", inspectHint: "Check plurals and apostrophes especially." },
   },
   24: {
+    flat: "error",
     engine: "ErrorRepairEngine",
     title: "Twin Identification Lab",
     mission: "Two identical twins on the scanner. Inspect the sentence, flag the faulty part and rewrite it.",
@@ -269,6 +271,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "repair", inspectHint: "Look closely at who owns what." },
   },
   25: {
+    flat: "meaning",
     engine: "VocabularyEngine",
     title: "Apprentice Workshop",
     mission: "A fledgling hops in its nest; a beginner learns from the master. Pin the role that means the same as “fledgling”.",
@@ -278,6 +281,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "badge", target: "beginner at the bench", verb: "Pin the role on" },
   },
   26: {
+    flat: "meaning",
     engine: "VocabularyEngine",
     title: "Growth Machine",
     mission: "Each turn the machine adds one more coin to the stack. Pin the plaque that means the same as “increment”.",
@@ -287,6 +291,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "badge", target: "coin stack" },
   },
   27: {
+    flat: "meaning",
     engine: "VocabularyEngine",
     title: "World-View Observatory",
     mission: "The walled village sees only itself; the globe shows the whole world. Pin the opposite of “parochial”.",
@@ -296,6 +301,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "badge", target: "open globe" },
   },
   28: {
+    flat: "meaning",
     engine: "VocabularyEngine",
     title: "Meshing Gears",
     mission: "Gears that mesh fit together smoothly — like friends who get on. Pin the plaque that means the opposite.",
@@ -350,6 +356,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "evidence", ask: worryAsk },
   },
   34: {
+    flat: "reading",
     engine: "TimelineEngine",
     title: "Look-Ahead Calendar",
     mission: "Read the rules for the list, then slide the marker along the time scale to how far ahead to look.",
@@ -401,6 +408,7 @@ export const SPECS: Record<number, LabSpec> = {
     mech: { kind: "evidence", ask: sugarAsk, pedestal: "Benefit board" },
   },
   38: {
+    flat: "reading",
     engine: "TimelineEngine",
     title: "Detox Meal Planner",
     mission: "Find how long the detox runs, then slide the planner's end marker to it.",

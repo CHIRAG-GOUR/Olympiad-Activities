@@ -8,6 +8,7 @@ import type { ActivityComponentProps } from "../kit/types";
 import { usePlay, type Derived } from "../imo6a-play/engine";
 import { Shell, World3D } from "../ieo_g6_seta-play/kit";
 import { Anchor, Bubble } from "../ieo_g6_seta-play/story";
+import { FlatScene, type FlatKind } from "../ieo_g6_seta-play/flat";
 
 /* ══════════════════════════════════════════════════════════════════════
    Language lab engine — IEO Class 6 Set B, Paper 3.
@@ -83,6 +84,8 @@ export interface LabSpec {
   template?: string;
   mech: Mech;
   gate?: Gate;
+  /** Show an illustrated 2D header instead of the 3D world. */
+  flat?: FlatKind;
 }
 
 type LabState = { seq: string[]; pick?: string; marks: number[]; flag?: string; fix?: string; extra: Record<string, unknown> };
@@ -203,6 +206,7 @@ export function LabActivity({ spec, question, value, activityState, onChange, re
   const bubbleText = gapLine && m.kind !== "punctuate" ? fillLine(gapLine.line, word) : null;
 
   const bubbleRef = useRef<HTMLDivElement>(null);
+  const flatKind: FlatKind | undefined = spec.flat ?? (m.kind === "evidence" ? "reading" : m.kind === "build" ? "spell" : undefined);
   const poke = (key: string, v: unknown) => !play.locked && play.set((p) => ({ ...p, extra: { ...(p.extra ?? {}), [key]: v } }));
   const left = gateLeft({ ...w, extra });
   const blocked = d.value && !d.optionId && (m.kind === "assemble" || m.kind === "build" || m.kind === "punctuate") ? "Only a phrase the paper prints can be recorded." : left.length && d.value ? `Finish the task first: ${left[0].label.toLowerCase()}.` : undefined;
@@ -210,14 +214,17 @@ export function LabActivity({ spec, question, value, activityState, onChange, re
   return (
     <Shell dim="3D" play={play} question={question} title={spec.title} subtitle={spec.mission} icon={spec.icon} hints={spec.hints} submitBlocked={blocked}>
       <div className="space-y-3">
+        {flatKind ? (
+          <FlatScene kind={flatKind} title={spec.title} caption={spec.mission} word={(question?.customConfig?.givenWord as string | undefined) ?? (m.kind === "build" ? "ABCDE" : undefined)} />
+        ) : (
         <div className="relative overflow-hidden rounded-2xl border-2 border-violet-100">
           <World3D cue={word ?? null} camera={spec.camera ?? { position: [0, 2.1, 4.8], fov: 45 }} target={spec.camera?.target ?? [0, 0.95, 0]} height="320px" sky={spec.sky} ground={spec.ground}>
             <spec.World word={word} filled={filled} locked={play.locked} extra={extra} poke={poke} />
             {bubbleText && spec.bubbleAt && <Anchor at={spec.bubbleAt} target={bubbleRef} />}
           </World3D>
           {bubbleText && spec.bubbleAt && <Bubble innerRef={bubbleRef} text={bubbleText} />}
-          <div className="pointer-events-none absolute left-2 top-2 rounded-lg bg-white/85 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-violet-600 shadow-sm">{spec.engine}</div>
         </div>
+        )}
 
         {spec.gate && <GatePanel gate={spec.gate} extra={extra} locked={play.locked} onDo={(id) => poke(id, true)} />}
 

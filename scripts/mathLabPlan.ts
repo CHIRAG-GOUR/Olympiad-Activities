@@ -51,12 +51,12 @@ const plans = exam.questionIds.map((id, i) => {
     case "order": text.split(/,\s*/).forEach((t) => steps.push(["label", `item ${t}`])); break;
     case "match": {
       const v = Object.entries(lab.map as Record<string, string>).find(([, o]) => o === key)![0];
-      v.split("").forEach((t, k) => steps.push(["label", `row ${k + 1}`], ["label", `column two ${t}`]));
+      v.split(",").forEach((t, k) => steps.push(["label", `row ${k + 1}`], ["label", `column two ${t}`]));
       break;
     }
     case "multi": numbersIn(text).forEach((n, k) => { if (k) steps.push(["label", "next field"]); show(n).replace(/,/g, "").split("").forEach((c) => steps.push(["label", `key ${c}`])); }); break;
     case "compare": {
-      const side = (s: string) => s.split("+").map((x) => romanNum(x.trim())).reduce((a, b) => a + b, 0);
+      const side = (s: string) => (/^[IVXLCDM +]+$/.test(s) ? s.split("+").map((x) => romanNum(x.trim())).reduce((a, b) => a + b, 0) : evalExpr(s));
       String(side(lab.left)).split("").forEach((c) => steps.push(["label", `key ${c}`]));
       steps.push(["label", "next field"]);
       String(side(lab.right)).split("").forEach((c) => steps.push(["label", `key ${c}`]));

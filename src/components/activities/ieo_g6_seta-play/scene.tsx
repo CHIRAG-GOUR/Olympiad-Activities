@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Sparkles } from "@react-three/drei";
 import * as THREE from "three";
+import { skyGradient, speckle } from "./textures";
 
 /* ══════════════════════════════════════════════════════════════════════
    Scene cue — lets every model in a World3D react when the student changes
@@ -75,10 +76,15 @@ export function StageFX({
   return (
     <CueContext.Provider value={clock}>
       <CueStamp n={n} clock={clock} />
-      <fog attach="fog" args={[sky, camDistance * 1.15, camDistance * 2.9]} />
+      <fog attach="fog" args={[sky, camDistance * 1.6, camDistance * 4.2]} />
+      {/* sky dome: a soft gradient instead of a flat colour */}
+      <mesh scale={45} rotation={[0, 0, 0]}>
+        <sphereGeometry args={[1, 32, 16]} />
+        <meshBasicMaterial map={skyGradient(sky) ?? undefined} side={THREE.BackSide} fog={false} depthWrite={false} />
+      </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 0]} receiveShadow>
-        <circleGeometry args={[60, 48]} />
-        <meshStandardMaterial color={ground} roughness={1} />
+        <circleGeometry args={[60, 64]} />
+        <meshStandardMaterial color="#ffffff" map={speckle(ground) ?? undefined} roughness={1} />
       </mesh>
       <CuePop>{children}</CuePop>
       {burst && <Sparkles key={n} count={42} scale={[3.2, 2.2, 3.2]} size={5} speed={0.9} color="#FBBF24" position={[0, 1.3, 0.3]} />}

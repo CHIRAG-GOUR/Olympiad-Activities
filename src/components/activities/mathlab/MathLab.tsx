@@ -39,7 +39,7 @@ export type LabCfg = { fig?: Img; figs?: Img[]; title?: string; mission?: string
   | { mode: "tile"; template: string }
   | { mode: "truth"; statements: string[]; map: Record<string, string> }
   | { mode: "order"; items: string[]; sep?: string; ask: string }
-  | { mode: "match"; left: string[]; right: { key: string; text: string }[]; map: Record<string, string> }
+  | { mode: "match"; left: string[]; leftImg?: string[]; right: { key: string; text: string; img?: string }[]; map: Record<string, string> }
   | { mode: "multi"; parts: { label: string; unit?: string }[] }
   | { mode: "compare"; left: string; right: string; map: Record<string, string> }
   | { mode: "max"; pick?: "largest" | "smallest" }
@@ -132,9 +132,9 @@ export function MathLabActivity({ question, value, activityState, onChange, read
       }
       case "match": {
         if (Object.keys(w.links).length < c.left.length) return { note: "Link every row of Column I." };
-        const key = c.left.map((_, i) => w.links[i]).join("");
+        const key = c.left.map((_, i) => w.links[i]).join(",");
         const id = c.map[key];
-        return { value: c.left.map((_, i) => `${roman(i)}→(${w.links[i]})`).join(" "), optionId: id, note: id ? undefined : "That set of links is not one of the printed options." };
+        return { value: c.left.map((_, i) => `${c.leftImg ? `(${c.left[i]})` : roman(i)}→(${w.links[i]})`).join(" "), optionId: id, note: id ? undefined : "That set of links is not one of the printed options." };
       }
       case "multi": {
         const parts = partsOf(w.keyed, c.parts.length);
@@ -209,7 +209,7 @@ export function MathLabActivity({ question, value, activityState, onChange, read
         {c.mode === "tile" && <TilePanel template={c.template} options={options} pick={w.pick} locked={locked} onPick={(pick) => set({ pick })} />}
         {c.mode === "truth" && <TruthPanel statements={c.statements} truth={w.truth} locked={locked} onTruth={(truth) => set({ truth })} />}
         {c.mode === "order" && <OrderPanel items={c.items} ask={c.ask} seq={w.seq} locked={locked} onSeq={(seq) => set({ seq })} />}
-        {c.mode === "match" && <MatchPanel left={c.left} right={c.right} links={w.links} locked={locked} onLinks={(links) => set({ links })} />}
+        {c.mode === "match" && <MatchPanel left={c.left} leftImg={c.leftImg} right={c.right} links={w.links} locked={locked} onLinks={(links) => set({ links })} />}
         {c.mode === "multi" && <MultiPanel labels={c.parts.map((p, i) => `${roman(i)} ${p.label}`)} units={c.parts.map((p) => p.unit)} keyed={w.keyed} locked={locked} onKeyed={(keyed) => set({ keyed })} />}
         {c.mode === "compare" && <MultiPanel labels={[c.left, c.right]} keyed={w.keyed} locked={locked} onKeyed={(keyed) => set({ keyed })} balance />}
         {c.mode === "max" && <MultiPanel labels={options.map((o) => o.text)} keyed={w.keyed} locked={locked} onKeyed={(keyed) => set({ keyed })} mono />}
@@ -468,7 +468,7 @@ function OrderPanel({ items, ask, seq, onSeq, locked }: { items: string[]; ask: 
   );
 }
 
-function MatchPanel({ left, right, links, onLinks, locked }: { left: string[]; right: { key: string; text: string }[]; links: Record<number, string>; onLinks: (l: Record<number, string>) => void; locked: boolean }) {
+function MatchPanel({ left, leftImg, right, links, onLinks, locked }: { left: string[]; leftImg?: string[]; right: { key: string; text: string; img?: string }[]; links: Record<number, string>; onLinks: (l: Record<number, string>) => void; locked: boolean }) {
   const [from, setFrom] = useState<number | null>(null);
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -476,8 +476,10 @@ function MatchPanel({ left, right, links, onLinks, locked }: { left: string[]; r
         <div className="text-[10px] font-black uppercase tracking-wider text-slate-500">Column I — tap a row</div>
         {left.map((l, i) => (
           <button key={i} type="button" disabled={locked} aria-label={`row ${i + 1}`} onClick={() => setFrom(i)} className={`flex w-full items-start gap-2 rounded-xl border-2 p-2.5 text-left text-[13px] font-semibold transition-all ${from === i ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-white"}`}>
-            <span className="font-black text-indigo-600">{roman(i)}</span>
-            <span className="flex-1 text-slate-800">{l}</span>
+            <span className="font-black text-indigo-600">{leftImg ? `(${l})` : roman(i)}</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {leftImg ? <img src={leftImg[i]} alt={`figure ${l}`} className="max-h-[70px] w-auto" /> : <span className="flex-1 text-slate-800">{l}</span>}
+            <span className="flex-1" />
             <span className={`rounded-md px-1.5 py-0.5 text-xs font-black ${links[i] ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-400"}`}>{links[i] ? `(${links[i]})` : "—"}</span>
           </button>
         ))}
@@ -498,6 +500,8 @@ function MatchPanel({ left, right, links, onLinks, locked }: { left: string[]; r
             className={`${chip} w-full justify-start gap-2 border-slate-200 bg-white text-slate-800 ${from !== null ? "animate-pulse border-amber-300" : ""}`}
           >
             <span className="font-black text-indigo-600">({r.key})</span> {r.text}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {r.img && <img src={r.img} alt={`figure ${r.key}`} className="max-h-[48px] w-auto" />}
           </button>
         ))}
       </div>
