@@ -3,15 +3,13 @@
 import { db, isRealFirebaseConfigured } from "@/services/firebase/config";
 import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
 
-const STORAGE_KEY = "olympiad_exam_locks_v2";
+const STORAGE_LOCKS_KEY = "olympiad_exam_locks_v3";
+const STORAGE_CLASSES_KEY = "olympiad_exam_classes_v3";
 
 /**
  * Default unlocked exams:
- * The very first maths exam with the 3D rotating dice question (Q1 DiceLabActivity):
- * - "exam_imo_class6_setb_2022" (IMO 2022-23 Class 6 Set B)
- * - "exam_imo_2024_g6_setb" (IMO 2024-25 Class 6 Set B)
- *
- * All other exams remain strictly locked for candidate testers until a Teacher or Super Admin unlocks them.
+ * The primary mathematics examination featuring the 3D rotating dice manipulative (Q1 DiceLabActivity):
+ * - "exam_imo_2022_g6_setb" / "exam_imo_class6_setb_2022" (IMO 2022-23 Class 6 Set B)
  */
 const DEFAULT_UNLOCKED_EXAMS = new Set([
   "exam_imo_2022_g6_setb",
@@ -20,9 +18,17 @@ const DEFAULT_UNLOCKED_EXAMS = new Set([
   "exam_imo_2024_g6_setb",
 ]);
 
+export interface ExamAccessConfig {
+  examId: string;
+  isLocked: boolean;
+  visibleClasses: number[];
+  updatedAt?: string;
+}
+
 class ExamLockServiceClass {
   private listeners: Set<() => void> = new Set();
   private lockState: Record<string, boolean> = {};
+  private classState: Record<string, number[]> = {};
   private initialized = false;
 
   constructor() {
@@ -36,13 +42,14 @@ class ExamLockServiceClass {
     this.initialized = true;
 
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        this.lockState = JSON.parse(raw);
-      }
+      const rawLocks = localStorage.getItem(STORAGE_LOCKS_KEY);
+      if (rawLocks) this.lockState = JSON.parse(rawLocks);
+
+      const rawClasses = localStorage.getItem(STORAGE_CLASSES_KEY);
+      if (rawClasses) this.classState = JSON.parse(rawClasses);
     } catch {}
 
-    // Listen to Firestore if configured
+    // Listen to Firestore real-time updates if configured
     if (isRealFirebaseConfigured && db) {
       try {
         onSnapshot(
@@ -52,6 +59,9 @@ class ExamLockServiceClass {
               const data = d.data();
               if (typeof data?.isLocked === "boolean") {
                 this.lockState[d.id] = data.isLocked;
+              }
+              if (Array.isArray(data?.visibleClasses)) {
+                this.classState[d.id] = data.visibleClasses.map(Number).filter(Boolean);
               }
             });
             this.saveLocal();
@@ -68,7 +78,8 @@ class ExamLockServiceClass {
   private saveLocal() {
     if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.lockState));
+      localStorage.setItem(STORAGE_LOCKS_KEY, JSON.stringify(this.lockState));
+      localStorage.setItem(STORAGE_CLASSES_KEY, JSON.stringify(this.classState));
     } catch {}
   }
 
@@ -84,22 +95,44 @@ class ExamLockServiceClass {
 
   /**
    * Determine if an exam is currently locked.
-   * Default rule: The first maths dice exam is unlocked; all other exams are locked by default.
+   * Default: Paper 01 is unlocked; all other papers are locked by default until a teacher/admin toggles them.
    */
   isExamLocked(examId: string): boolean {
     if (!examId) return true;
 
-    // 1. Explicit override in lockState takes top priority
+    // 1. Explicit override in lockState
     if (examId in this.lockState) {
       return this.lockState[examId];
     }
 
-    // 2. Default: unlocked if it's the dice exam, locked otherwise
+    // 2. Default: unlocked for primary dice paper, locked otherwise
     if (DEFAULT_UNLOCKED_EXAMS.has(examId)) {
       return false;
     }
 
-    return true; // All others locked by default
+    return true;
+  }
+
+  /**
+   * Get the assigned classes/grades where this paper is visible (e.g. [6], [7], [8], [6, 7, 8]).
+   */
+  getVisibleClasses(examId: string, defaultGrade: number = 6): number[] {
+    if (!examId) return [defaultGrade || 6];
+
+    if (this.classState[examId] && Array.isArray(this.classState[examId]) && this.classState[examId].length > 0) {
+      return this.classState[examId];
+    }
+
+    return [defaultGrade || 6];
+  }
+
+  /**
+   * Check if an exam is visible to a specific class/grade (e.g. Class 6, 7, or 8).
+   */
+  isExamVisibleToClass(examId: string, classNum: number | string, defaultGrade: number = 6): boolean {
+    const num = Number(classNum) || 6;
+    const classes = this.getVisibleClasses(examId, defaultGrade);
+    return classes.includes(num);
   }
 
   /**
@@ -112,11 +145,16 @@ class ExamLockServiceClass {
 
     if (isRealFirebaseConfigured && db) {
       try {
-        await setDoc(doc(db, "exam_locks", examId), {
-          examId,
-          isLocked: locked,
-          updatedAt: new Date().toISOString(),
-        });
+        await setDoc(
+          doc(db, "exam_locks", examId),
+          {
+            examId,
+            isLocked: locked,
+            visibleClasses: this.getVisibleClasses(examId),
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
       } catch (err) {
         console.warn("[ExamLockService] Firestore write failed:", err);
       }
@@ -133,6 +171,52 @@ class ExamLockServiceClass {
     return next;
   }
 
+  /**
+   * Set visible classes for an exam (e.g. [6], [7], [8]).
+   */
+  async setVisibleClasses(examId: string, classes: number[]): Promise<void> {
+    const sanitized = Array.from(new Set(classes.map(Number).filter((n) => n >= 1 && n <= 12)));
+    const finalClasses = sanitized.length > 0 ? sanitized : [6];
+
+    this.classState[examId] = finalClasses;
+    this.saveLocal();
+    this.notify();
+
+    if (isRealFirebaseConfigured && db) {
+      try {
+        await setDoc(
+          doc(db, "exam_locks", examId),
+          {
+            examId,
+            isLocked: this.isExamLocked(examId),
+            visibleClasses: finalClasses,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        console.warn("[ExamLockService] Firestore write failed:", err);
+      }
+    }
+  }
+
+  /**
+   * Toggle a specific class visibility for an exam.
+   */
+  async toggleExamClass(examId: string, classNum: number, defaultGrade: number = 6): Promise<number[]> {
+    const current = this.getVisibleClasses(examId, defaultGrade);
+    let next: number[];
+    if (current.includes(classNum)) {
+      // Don't remove if it's the only one
+      if (current.length === 1) return current;
+      next = current.filter((c) => c !== classNum);
+    } else {
+      next = [...current, classNum].sort((a, b) => a - b);
+    }
+    await this.setVisibleClasses(examId, next);
+    return next;
+  }
+
   subscribe(callback: () => void): () => void {
     this.listeners.add(callback);
     return () => {
@@ -142,6 +226,10 @@ class ExamLockServiceClass {
 
   getAllLocks(): Record<string, boolean> {
     return { ...this.lockState };
+  }
+
+  getAllClasses(): Record<string, number[]> {
+    return { ...this.classState };
   }
 }
 

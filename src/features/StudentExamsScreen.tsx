@@ -12,6 +12,7 @@ import { Card, SectionHeading, ActionLink } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/dashboard/DashboardSections";
 import { ActivityMiniPreview } from "@/components/dashboard/ActivityMiniPreview";
 import { formatClock, remainingSecondsFor, type LiveSession, interactionKindFor } from "@/lib/dashboard/insights";
+import { ExamLockService } from "@/services/exam/ExamLockService";
 import {
   Play,
   RotateCcw,
@@ -79,18 +80,44 @@ export default function StudentExamsScreen() {
     };
   }, []);
 
+  const [lockVersion, setLockVersion] = useState(0);
+
+  useEffect(() => {
+    const unsub = ExamLockService.subscribe(() => {
+      setLockVersion((v) => v + 1);
+    });
+    return unsub;
+  }, []);
+
   /** Only this candidate's records ever reach the view. */
   const myAttempts = useMemo(() => visibleAttempts(scope, attempts), [scope, attempts]);
 
-  // Primary active exam paper for candidates
+  const studentGrade = Number(user?.grade) || 6;
+
+  // Primary active exam paper for candidates based on their grade and teacher's class settings
   const exam = useMemo(() => {
+    // 1. First find an unlocked exam assigned to this student's class (6, 7, 8)
+    const classUnlocked = exams.find(
+      (e) =>
+        !ExamLockService.isExamLocked(e.id) &&
+        ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)
+    );
+    if (classUnlocked) return classUnlocked;
+
+    // 2. Fallback to assigned exam for this class
+    const classAssigned = exams.find((e) =>
+      ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)
+    );
+    if (classAssigned) return classAssigned;
+
+    // 3. Global fallback
     return (
       exams.find((e) => e.id === PRIMARY_EXAM_ID) ||
       exams.find((e) => e.code?.includes("2022-23") && e.code?.includes("SETB")) ||
       exams[0] ||
       null
     );
-  }, [exams]);
+  }, [exams, studentGrade, lockVersion]);
 
   // Questions in this specific paper
   const examQuestions = useMemo(() => {
