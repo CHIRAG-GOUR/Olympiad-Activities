@@ -38,7 +38,7 @@ export type LabCfg = { fig?: Img; figs?: Img[]; title?: string; mission?: string
   | { mode: "figure"; opts: Record<string, Img>; slot?: string }
   | { mode: "tile"; template: string }
   | { mode: "truth"; statements: string[]; map: Record<string, string> }
-  | { mode: "order"; items: string[]; sep?: string; ask: string }
+  | { mode: "order"; items: string[]; sep?: string; ask: string; labels?: Record<string, string> }
   | { mode: "match"; left: string[]; leftImg?: string[]; right: { key: string; text: string; img?: string }[]; map: Record<string, string> }
   | { mode: "multi"; parts: { label: string; unit?: string }[] }
   | { mode: "compare"; left: string; right: string; map: Record<string, string> }
@@ -208,7 +208,7 @@ export function MathLabActivity({ question, value, activityState, onChange, read
         {c.mode === "figure" && <FigurePanel opts={c.opts} options={options} pick={w.pick} slot={c.slot} locked={locked} onPick={(pick) => set({ pick })} />}
         {c.mode === "tile" && <TilePanel template={c.template} options={options} pick={w.pick} locked={locked} onPick={(pick) => set({ pick })} />}
         {c.mode === "truth" && <TruthPanel statements={c.statements} truth={w.truth} locked={locked} onTruth={(truth) => set({ truth })} />}
-        {c.mode === "order" && <OrderPanel items={c.items} ask={c.ask} seq={w.seq} locked={locked} onSeq={(seq) => set({ seq })} />}
+        {c.mode === "order" && <OrderPanel items={c.items} labels={c.labels} ask={c.ask} seq={w.seq} locked={locked} onSeq={(seq) => set({ seq })} />}
         {c.mode === "match" && <MatchPanel left={c.left} leftImg={c.leftImg} right={c.right} links={w.links} locked={locked} onLinks={(links) => set({ links })} />}
         {c.mode === "multi" && <MultiPanel labels={c.parts.map((p, i) => `${roman(i)} ${p.label}`)} units={c.parts.map((p) => p.unit)} keyed={w.keyed} locked={locked} onKeyed={(keyed) => set({ keyed })} />}
         {c.mode === "compare" && <MultiPanel labels={[c.left, c.right]} keyed={w.keyed} locked={locked} onKeyed={(keyed) => set({ keyed })} balance />}
@@ -371,8 +371,12 @@ function FigurePanel({ opts, options, pick, onPick, slot, locked }: { opts: Reco
         <div className="grid grid-cols-2 gap-2">
           {options.map((o) => (
             <button key={o.id} type="button" disabled={locked} aria-pressed={held === o.id} aria-label={`figure card ${o.id}`} onClick={() => setHeld((h) => (h === o.id ? null : o.id))} className={`flex min-h-[90px] items-center justify-center rounded-xl border-2 bg-white p-2 transition-all ${held === o.id ? "-translate-y-1 border-amber-400 ring-4 ring-amber-200" : pick === o.id ? "border-indigo-300 opacity-40" : "border-slate-200 hover:-translate-y-0.5"}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={opts[o.id]?.src} alt={`option figure ${o.id}`} draggable={false} className="max-h-[110px] w-auto" />
+              {opts[o.id] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={opts[o.id].src} alt={`option figure ${o.id}`} draggable={false} className="max-h-[110px] w-auto" />
+              ) : (
+                <span className="text-sm font-black text-slate-700">{o.text}</span>
+              )}
             </button>
           ))}
         </div>
@@ -389,7 +393,9 @@ function FigurePanel({ opts, options, pick, onPick, slot, locked }: { opts: Reco
       >
         <div className="text-[10px] font-black uppercase tracking-wider text-indigo-500">{slot ?? "Answer slot"}</div>
         <div className="mt-2 flex min-h-[110px] min-w-[120px] items-center justify-center rounded-xl border-2 border-dashed border-indigo-300 bg-white p-2">
-          {pick ? (
+          {pick && !opts[pick] ? (
+            <span className="text-sm font-black text-indigo-900">{options.find((o) => o.id === pick)?.text}</span>
+          ) : pick ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={opts[pick]?.src} alt="placed figure" draggable={false} className="max-h-[120px] w-auto" />
           ) : (
@@ -444,7 +450,7 @@ function TruthPanel({ statements, truth, onTruth, locked }: { statements: string
   );
 }
 
-function OrderPanel({ items, ask, seq, onSeq, locked }: { items: string[]; ask: string; seq: string[]; onSeq: (s: string[]) => void; locked: boolean }) {
+function OrderPanel({ items, labels, ask, seq, onSeq, locked }: { items: string[]; labels?: Record<string, string>; ask: string; seq: string[]; onSeq: (s: string[]) => void; locked: boolean }) {
   return (
     <div className="space-y-3 rounded-2xl border-2 border-sky-100 bg-sky-50/50 p-3">
       <div className="text-[10px] font-black uppercase tracking-wider text-sky-700">{ask}</div>
@@ -453,6 +459,7 @@ function OrderPanel({ items, ask, seq, onSeq, locked }: { items: string[]; ask: 
           <button key={s} type="button" disabled={locked} aria-label={`take back ${s}`} onClick={() => onSeq(seq.filter((x) => x !== s))} className={`${chip} border-sky-500 bg-sky-600 text-white`}>
             <span className="mr-1.5 text-[10px] opacity-70">{i + 1}</span>
             {s}
+            {labels?.[s] && <span className="ml-1.5 text-xs font-bold opacity-80">{labels[s]}</span>}
           </button>
         ))}
         {!seq.length && <span className="text-xs font-semibold text-slate-400">first → last</span>}
@@ -461,6 +468,7 @@ function OrderPanel({ items, ask, seq, onSeq, locked }: { items: string[]; ask: 
         {items.map((it) => (
           <button key={it} type="button" disabled={locked || seq.includes(it)} aria-label={`item ${it}`} onClick={() => onSeq([...seq, it])} className={`${chip} border-sky-300 bg-white font-mono text-lg text-sky-900 shadow-[0_3px_0_#7dd3fc]`}>
             {it}
+            {labels?.[it] && <span className="ml-1.5 font-sans text-xs font-bold text-sky-700">{labels[it]}</span>}
           </button>
         ))}
       </div>

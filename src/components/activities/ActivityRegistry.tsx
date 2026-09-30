@@ -12,6 +12,9 @@ import { IMO10_G6_SETA_PLAY_ACTIVITY_MAP } from "./imo10_g6_seta-play/registry";
 import { IMO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP } from "./imo_interactive_g6-play/registry";
 import { IEO_G6_SETA_PLAY_ACTIVITY_MAP } from "./ieo_g6_seta-play/registry";
 import { IEO_G6_SETB_P3_PLAY_ACTIVITY_MAP } from "./ieo_g6_setb_p3-play/registry";
+import { mathLabMap } from "./mathlab/registry";
+
+const IMO2425_SETB_MAP = mathLabMap("imo2425_b_q", "IMO2425_B-Q");
 import { IEO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP } from "./ieo_interactive_g6-play/registry";
 
 // 50 Bespoke Interactive Olympiad Activities
@@ -203,6 +206,7 @@ export function getQuestionActivity(
   // All Olympiad sets mapped: Master Interactive Edition, 10th IMO Set A, 2023-24 Set C, Classic Set A, 3D Set A, 3D Set B #2, Paper 3 (Set C), and Set B
   return (
     IEO_G6_SETB_P3_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
+    IMO2425_SETB_MAP[questionIdOrCode] ??
     IEO_G6_SETA_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
     IEO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
     IMO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP[questionIdOrCode] ??

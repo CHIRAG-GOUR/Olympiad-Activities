@@ -6,7 +6,6 @@ import {
   IMO_SUBJECT,
   IMO_CLASS6_SETB_QUESTIONS,
   IMO_CLASS6_SETB_2022_EXAM,
-  IMO_CLASS6_SETB_2024_EXAM,
 } from "@/data/sofImoClass6SetB";
 import { IMO6A_QUESTIONS, IMO6A_EXAM } from "@/data/imo6a";
 import { IMO6A_CLASSIC_QUESTIONS, IMO6A_CLASSIC_EXAM } from "@/data/imo6aClassic";
@@ -18,6 +17,7 @@ import { IMO_INTERACTIVE_G6_QUESTIONS, IMO_INTERACTIVE_G6_EXAM } from "@/data/im
 import { IEO_G6_SETA_QUESTIONS, IEO_G6_SETA_EXAM } from "@/data/ieo_g6_seta";
 import { IEO_INTERACTIVE_G6_QUESTIONS, IEO_INTERACTIVE_G6_EXAM } from "@/data/ieo_interactive_g6";
 import { IEO_G6_SETB_P3_QUESTIONS, IEO_G6_SETB_P3_EXAM } from "@/data/ieo_g6_setb_p3";
+import { IMO2425_SETB_QUESTIONS, IMO2425_SETB_EXAM } from "@/data/imo2425_setb";
 
 /**
  * Seeded content: SOF Olympiad papers for Class 6.
@@ -86,6 +86,7 @@ export const SEED_QUESTIONS: Question[] = stamp([
   ...IMO_CLASS6_SETB_QUESTIONS,
   ...IMO6B2_QUESTIONS,
   ...IMO6P3_QUESTIONS,
+  ...IMO2425_SETB_QUESTIONS,
 ]);
 export const SEED_EXAMS: Exam[] = stamp([
   IEO_G6_SETB_P3_EXAM,
@@ -97,7 +98,7 @@ export const SEED_EXAMS: Exam[] = stamp([
   IMO6A_EXAM,
   IMO6A_CLASSIC_EXAM,
   IMO_CLASS6_SETB_2022_EXAM,
-  IMO_CLASS6_SETB_2024_EXAM,
+  IMO2425_SETB_EXAM,
   IMO6B2_EXAM,
   IMO6P3_EXAM,
 ]);

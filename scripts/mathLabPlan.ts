@@ -62,12 +62,21 @@ const plans = exam.questionIds.map((id, i) => {
     case "multi": numbersIn(text).forEach((n, k) => { if (k) steps.push(["label", "next field"]); show(n).replace(/,/g, "").split("").forEach((c) => steps.push(["label", `key ${c}`])); }); break;
     case "compare": {
       const side = (s: string) => (/^[IVXLCDM +]+$/.test(s) ? s.split("+").map((x) => romanNum(x.trim())).reduce((a, b) => a + b, 0) : evalExpr(s));
-      String(side(lab.left)).split("").forEach((c) => steps.push(["label", `key ${c}`]));
+      // values read off a figure are given in the question's lab config as `check`
+      const [l, r] = lab.check ?? [String(side(lab.left)), String(side(lab.right))];
+      String(l).split("").forEach((c) => steps.push(["label", `key ${c}`]));
       steps.push(["label", "next field"]);
-      String(side(lab.right)).split("").forEach((c) => steps.push(["label", `key ${c}`]));
+      String(r).split("").forEach((c) => steps.push(["label", `key ${c}`]));
       break;
     }
-    case "max": opts.forEach((o, k) => { if (k) steps.push(["label", "next field"]); String(evalExpr(o.text)).split("").forEach((c) => steps.push(["label", `key ${c}`])); }); break;
+    case "max": {
+      const value = (t: string) =>
+        /^[IVXLCDM −+-]+$/.test(t)
+          ? t.split(/\s*([−+-])\s*/).reduce((acc, tok, i, arr) => (i === 0 ? romanNum(tok) : i % 2 ? acc : arr[i - 1] === "+" ? acc + romanNum(tok) : acc - romanNum(tok)), 0)
+          : evalExpr(t);
+      opts.forEach((o, k) => { if (k) steps.push(["label", "next field"]); String(value(o.text)).split("").forEach((c) => steps.push(["label", `key ${c}`])); });
+      break;
+    }
     case "build": {
       const toks: string[] = lab.tokens;
       const find = (cur: string[]): string[] | null => {
