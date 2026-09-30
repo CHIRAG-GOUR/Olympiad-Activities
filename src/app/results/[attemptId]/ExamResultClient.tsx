@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Printer,
   CheckCircle2,
+  Check,
   XCircle,
   MinusCircle,
   Award,
@@ -323,7 +324,7 @@ export default function ExamResultClient({ params }: { params: Promise<{ attempt
                       <div className="flex items-center gap-2">
                         {isCorrect ? (
                           <span className="inline-flex items-center gap-1 text-emerald-800 font-extrabold bg-emerald-100 px-2 py-0.5 rounded-md text-[11px]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Correct (+{q.marksAwarded})
+                            <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[3]" /> Correct (+{q.marksAwarded})
                           </span>
                         ) : isUnanswered ? (
                           <span className="inline-flex items-center gap-1 text-[#667085] font-bold bg-[#EAF2FC] px-2 py-0.5 rounded-md text-[11px]">

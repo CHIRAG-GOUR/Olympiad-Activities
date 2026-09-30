@@ -61,18 +61,21 @@ export function RedPenScoreCircle({ scoreObtained, maxScore, scale = 1 }: RedPen
         />
       </svg>
 
-      {/* Numerical score centered inside */}
+      {/* Numerical score centered inside with authentic teacher handwritten feel */}
       <motion.div
-        className="absolute inset-0 flex flex-col items-center justify-center font-serif text-olympiad-redMark"
+        className="absolute inset-0 flex flex-col items-center justify-center text-[#B42318] select-none -rotate-2"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}
       >
-        <div className="flex items-baseline tracking-tight font-bold">
-          <span className="text-6xl md:text-7xl font-mono text-olympiad-redMark">{scoreObtained}</span>
-          <span className="text-3xl md:text-4xl text-olympiad-redMark/80 mx-1">/</span>
-          <span className="text-3xl md:text-4xl font-mono text-olympiad-redMark/90">{maxScore}</span>
+        <div className="flex items-baseline tracking-tight font-black font-mono">
+          <span className="text-5xl sm:text-6xl text-[#B42318]">{scoreObtained}</span>
+          <span className="text-2xl sm:text-3xl text-[#B42318]/80 mx-1">/</span>
+          <span className="text-2xl sm:text-3xl text-[#B42318]/90">{maxScore}</span>
         </div>
+        <span className="text-xs font-bold text-[#B42318] mt-0.5 tracking-wide">
+          Verified ✓
+        </span>
       </motion.div>
     </div>
   );

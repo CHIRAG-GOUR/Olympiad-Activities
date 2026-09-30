@@ -1,0 +1,757 @@
+const fs = require('fs');
+const path = require('path');
+
+const reportHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Student Performance Report (SPR) - SOF IMO Class 6</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&family=Kalam:wght@700&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #F3F5F9;
+      color: #182338;
+      padding: 36px 16px;
+      line-height: 1.5;
+    }
+
+    .report-container {
+      max-width: 880px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #E1E7EF;
+      border-radius: 24px;
+      padding: 44px;
+      box-shadow: 0 4px 24px -2px rgba(24, 35, 56, 0.08);
+      position: relative;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #E1E7EF;
+      padding-bottom: 24px;
+    }
+
+    .org-badge {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-box {
+      width: 48px;
+      height: 48px;
+      background: #2468B2;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .org-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 800;
+      color: #2468B2;
+    }
+
+    .report-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      background: #EAF2FC;
+      color: #2468B2;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid #D0E2F7;
+    }
+
+    .exam-title-block {
+      text-align: center;
+      margin-top: 28px;
+    }
+
+    .exam-title-block h1 {
+      font-size: 24px;
+      font-weight: 900;
+      color: #182338;
+      letter-spacing: -0.02em;
+    }
+
+    .exam-title-block p {
+      font-size: 13px;
+      color: #667085;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: #F8FAFC;
+      border: 1px solid #E1E7EF;
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 24px;
+    }
+
+    .meta-item label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #667085;
+      letter-spacing: 0.05em;
+    }
+
+    .meta-item span {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: #182338;
+      margin-top: 2px;
+    }
+
+    /* ── Realistic Teacher Hand-Drawn Red Pen Evaluation Score Banner ── */
+    .score-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 30px 20px;
+      margin-top: 28px;
+      background: #FCFDFE;
+      border: 1px solid #E1E7EF;
+      border-radius: 20px;
+      position: relative;
+    }
+
+    .handdrawn-score-box {
+      position: relative;
+      width: 210px;
+      height: 190px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .handdrawn-score-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .handdrawn-score-inner {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      color: #B42318;
+      font-family: 'Caveat', cursive;
+      transform: rotate(-3deg);
+      user-select: none;
+    }
+
+    .handdrawn-score-inner .score-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      line-height: 0.9;
+    }
+
+    .handdrawn-score-inner .val-obtained {
+      font-size: 64px;
+      font-weight: 700;
+      color: #B42318;
+      text-shadow: 0.5px 0.5px 0px rgba(180, 35, 24, 0.4);
+    }
+
+    .handdrawn-score-inner .val-slash {
+      font-size: 42px;
+      margin: 0 3px;
+      color: #B42318;
+      opacity: 0.85;
+    }
+
+    .handdrawn-score-inner .val-max {
+      font-size: 40px;
+      font-weight: 700;
+      color: #B42318;
+    }
+
+    .handwritten-remark {
+      font-family: 'Caveat', cursive;
+      font-size: 21px;
+      font-weight: 700;
+      color: #B42318;
+      transform: rotate(-4deg);
+      margin-top: -6px;
+      letter-spacing: 0.02em;
+    }
+
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      width: 58%;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid #E1E7EF;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-card .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 900;
+      color: #182338;
+    }
+
+    .stat-card .lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: #667085;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #182338;
+      margin: 32px 0 14px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topic-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #E1E7EF;
+      border-radius: 12px;
+      overflow: hidden;
+      font-size: 12px;
+    }
+
+    .topic-table th {
+      background: #F8FAFC;
+      color: #667085;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #E1E7EF;
+    }
+
+    .topic-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #E1E7EF;
+      color: #182338;
+      font-weight: 600;
+    }
+
+    .topic-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Teacher Pen Tick Mark Component */
+    .teacher-tick {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #B42318;
+      font-weight: 800;
+    }
+
+    .tick-svg {
+      width: 18px;
+      height: 18px;
+      stroke: #B42318;
+      stroke-width: 2.8;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .cross-svg {
+      width: 16px;
+      height: 16px;
+      stroke: #DC2626;
+      stroke-width: 2.5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .progress-bar {
+      width: 80px;
+      height: 7px;
+      background: #EAF2FC;
+      border-radius: 10px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #2468B2;
+      border-radius: 10px;
+    }
+
+    /* Question-by-question Teacher Grid */
+    .q-matrix {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .q-box {
+      border: 1px solid #E1E7EF;
+      border-radius: 10px;
+      padding: 8px 4px;
+      text-align: center;
+      background: #ffffff;
+      position: relative;
+    }
+
+    .q-box.correct {
+      background: #FEF9F8;
+      border-color: #F8D7DA;
+    }
+
+    .q-box.wrong {
+      background: #FFF5F5;
+      border-color: #FED7D7;
+    }
+
+    .q-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: #667085;
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .q-mark {
+      font-family: 'Caveat', cursive;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .q-mark.tick {
+      color: #B42318;
+    }
+
+    .q-mark.cross {
+      color: #DC2626;
+    }
+
+    .print-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #2468B2;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #1C5190;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .report-container {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+      .print-actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="report-container">
+    <div class="print-actions">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    </div>
+
+    <!-- Header Top -->
+    <div class="header-top">
+      <div class="org-badge">
+        <div class="logo-box">SOF</div>
+        <div>
+          <div class="org-title">Science Olympiad Foundation</div>
+          <div style="font-size: 12px; color: #667085; font-weight: 600;">Official Assessment Directorate</div>
+        </div>
+      </div>
+      <div class="report-badge">REPORT # IMO-2022-G6-0984</div>
+    </div>
+
+    <!-- Exam Title Block -->
+    <div class="exam-title-block">
+      <h1>Student Performance & Diagnostic Scorecard</h1>
+      <p>SOF International Mathematics Olympiad 2022-23 (Class 6 - Set B)</p>
+    </div>
+
+    <!-- Student Metadata Grid -->
+    <div class="meta-grid">
+      <div class="meta-item">
+        <label>Student Name</label>
+        <span>Aarav Sharma</span>
+      </div>
+      <div class="meta-item">
+        <label>Roll Number</label>
+        <span style="font-family: 'JetBrains Mono', monospace; color: #2468B2;">CCIS-G6-042</span>
+      </div>
+      <div class="meta-item">
+        <label>School Institution</label>
+        <span>Cambridge Court Int'l School</span>
+      </div>
+      <div class="meta-item">
+        <label>Class / Grade</label>
+        <span>Class 6 (Section B)</span>
+      </div>
+    </div>
+
+    <!-- Score & Authentic Teacher Hand-Drawn Red Pen Stamp Banner -->
+    <div class="score-banner">
+      <div class="handdrawn-score-box">
+        <!-- Authentic Hand-Drawn Red Pen Circle SVG with Realistic Loop & Pen Tick -->
+        <svg class="handdrawn-score-svg" viewBox="0 0 230 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Subtle Pen Under-stroke -->
+          <path
+            d="M 75,35 C 130,22 195,38 200,95 C 205,150 145,185 85,180 C 25,175 10,115 28,65 C 40,30 95,20 150,26 C 180,29 205,48 208,68"
+            stroke="#B42318"
+            stroke-width="3.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-opacity="0.32"
+          />
+          <!-- Primary Red Pen Ink Stroke -->
+          <path
+            d="M 75,35 C 130,22 195,38 200,95 C 205,150 145,185 85,180 C 25,175 10,115 28,65 C 40,30 95,20 150,26 C 180,29 205,48 208,68"
+            stroke="#B42318"
+            stroke-width="2.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <!-- Teacher Pen Check Mark (Tick) at Top-Right -->
+          <path
+            d="M 183,44 L 195,58 L 220,26"
+            stroke="#B42318"
+            stroke-width="3.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+
+        <!-- Hand-Written Score Inside -->
+        <div class="handdrawn-score-inner">
+          <div class="score-line">
+            <span class="val-obtained">54</span>
+            <span class="val-slash">/</span>
+            <span class="val-max">60</span>
+          </div>
+          <div class="handwritten-remark">Excellent work! ✓</div>
+        </div>
+      </div>
+
+      <!-- Quantitative Statistical Overview -->
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="val" style="color: #2468B2;">90.0%</div>
+          <div class="lbl">Percentage</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" style="color: #B42318;">46 / 50</div>
+          <div class="lbl">Questions Correct</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" style="color: #6366F1;">92.0%</div>
+          <div class="lbl">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="val">51 min</div>
+          <div class="lbl">Time Spent</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" style="color: #10B981;">PASSED</div>
+          <div class="lbl">Result Status</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" style="color: #F59E0B;">Top 2%</div>
+          <div class="lbl">Class Percentile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sectional Scores Breakdown with Teacher Red Ticks -->
+    <div class="section-title">
+      <span>📊 Sectional Marks Distribution</span>
+      <span style="font-family: 'Caveat', cursive; font-size: 18px; color: #B42318; font-weight: 700;">
+        Checked & Verified by Evaluator ✓
+      </span>
+    </div>
+    <table class="topic-table">
+      <thead>
+        <tr>
+          <th>Section Name</th>
+          <th style="text-align: center;">Evaluation</th>
+          <th style="text-align: center;">Items</th>
+          <th style="text-align: center;">Score</th>
+          <th style="text-align: right;">Accuracy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Section 1: Logical Reasoning</strong></td>
+          <td style="text-align: center;">
+            <span class="teacher-tick">
+              <svg class="tick-svg" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"></path></svg>
+              14 Correct
+            </span>
+          </td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">15</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #2468B2; font-weight: 800;">14 / 15</td>
+          <td style="text-align: right;">
+            <div class="progress-bar"><div class="progress-fill" style="width: 93%;"></div></div>
+            <span style="font-family: 'JetBrains Mono', monospace;">93.3%</span>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Section 2: Mathematical Reasoning</strong></td>
+          <td style="text-align: center;">
+            <span class="teacher-tick">
+              <svg class="tick-svg" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"></path></svg>
+              19 Correct
+            </span>
+          </td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">20</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #2468B2; font-weight: 800;">19 / 20</td>
+          <td style="text-align: right;">
+            <div class="progress-bar"><div class="progress-fill" style="width: 95%;"></div></div>
+            <span style="font-family: 'JetBrains Mono', monospace;">95.0%</span>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Section 3: Everyday Mathematics</strong></td>
+          <td style="text-align: center;">
+            <span class="teacher-tick">
+              <svg class="tick-svg" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"></path></svg>
+              9 Correct
+            </span>
+          </td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">10</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #2468B2; font-weight: 800;">9 / 10</td>
+          <td style="text-align: right;">
+            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+            <span style="font-family: 'JetBrains Mono', monospace;">90.0%</span>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Section 4: Achievers Section (3 Marks Each)</strong></td>
+          <td style="text-align: center;">
+            <span class="teacher-tick">
+              <svg class="tick-svg" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"></path></svg>
+              4 Correct
+            </span>
+          </td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">5</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #2468B2; font-weight: 800;">12 / 15</td>
+          <td style="text-align: right;">
+            <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
+            <span style="font-family: 'JetBrains Mono', monospace;">80.0%</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Question Matrix with Teacher Ticks & Marks -->
+    <div class="section-title">
+      <span>📝 Item-by-Item Question Palette & Marks</span>
+      <span style="font-size: 11px; color: #667085; font-weight: 600;">50 Questions Evaluated</span>
+    </div>
+    <div class="q-matrix">
+      <!-- Q1 to Q50 with authentic teacher ticks and occasional cross -->
+      <div class="q-box correct"><span class="q-num">Q1</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q2</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q3</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q4</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q5</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q6</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q7</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box wrong"><span class="q-num">Q8</span><span class="q-mark cross">✗</span></div>
+      <div class="q-box correct"><span class="q-num">Q9</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q10</span><span class="q-mark tick">✓</span></div>
+
+      <div class="q-box correct"><span class="q-num">Q11</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q12</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q13</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q14</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q15</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q16</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q17</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q18</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q19</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box wrong"><span class="q-num">Q20</span><span class="q-mark cross">✗</span></div>
+
+      <div class="q-box correct"><span class="q-num">Q21</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q22</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q23</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q24</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q25</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q26</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q27</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q28</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q29</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q30</span><span class="q-mark tick">✓</span></div>
+
+      <div class="q-box correct"><span class="q-num">Q31</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q32</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q33</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q34</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q35</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q36</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q37</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q38</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q39</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q40</span><span class="q-mark tick">✓</span></div>
+
+      <div class="q-box correct"><span class="q-num">Q41</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q42</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q43</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q44</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q45</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q46</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q47</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box correct"><span class="q-num">Q48</span><span class="q-mark tick">✓</span></div>
+      <div class="q-box wrong"><span class="q-num">Q49</span><span class="q-mark cross">✗</span></div>
+      <div class="q-box correct"><span class="q-num">Q50</span><span class="q-mark tick">✓</span></div>
+    </div>
+
+    <!-- Topic-Wise Diagnostic Insights -->
+    <div class="section-title">
+      <span>🧠 Chapter & Topic Mastery Analysis</span>
+    </div>
+    <table class="topic-table">
+      <thead>
+        <tr>
+          <th>Syllabus Topic</th>
+          <th style="text-align: center;">Tested</th>
+          <th style="text-align: center;">Verified Score</th>
+          <th style="text-align: right;">Mastery Level</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>3D Spatial Solids & Dice Net Logic</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">4 Qs</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #B42318; font-weight: 800;">4 / 4 ✓</td>
+          <td style="text-align: right; color: #10B981; font-weight: 800;">100% (High Mastery)</td>
+        </tr>
+        <tr>
+          <td>Integers, Fractions & Decimal Arithmetic</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">8 Qs</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #B42318; font-weight: 800;">8 / 8 ✓</td>
+          <td style="text-align: right; color: #10B981; font-weight: 800;">100% (High Mastery)</td>
+        </tr>
+        <tr>
+          <td>Perimeter, Area & Composite Geometry</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">7 Qs</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #2468B2; font-weight: 800;">8 / 9 ✓</td>
+          <td style="text-align: right; color: #2468B2; font-weight: 800;">88.9% (Proficient)</td>
+        </tr>
+        <tr>
+          <td>Algebra, Variables & Equations</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">6 Qs</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #2468B2; font-weight: 800;">5 / 6 ✓</td>
+          <td style="text-align: right; color: #2468B2; font-weight: 800;">83.3% (Proficient)</td>
+        </tr>
+        <tr>
+          <td>Ratio, Proportion & Unitary Method</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace;">5 Qs</td>
+          <td style="text-align: center; font-family: 'JetBrains Mono', monospace; color: #B42318; font-weight: 800;">5 / 5 ✓</td>
+          <td style="text-align: right; color: #10B981; font-weight: 800;">100% (High Mastery)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 36px; padding-top: 20px; border-top: 1px solid #E1E7EF; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #667085;">
+      <div>Evaluated by: <strong>SOF Digital Assessment Engine v3.4</strong></div>
+      <div>Certified by: <strong>Academic Verification Directorate</strong></div>
+      <div style="font-family: 'Caveat', cursive; font-size: 20px; color: #B42318; font-weight: 700;">Verified: M. Sharma (Head of Mathematics) ✓</div>
+    </div>
+  </div>
+
+</body>
+</html>
+`;
+
+const reportsDir = path.join(__dirname, '..', 'reports');
+if (!fs.existsSync(reportsDir)) {
+  fs.mkdirSync(reportsDir, { recursive: true });
+}
+
+const outputPath = path.join(reportsDir, 'Olympiad_Score_Report_IMO_Class6.html');
+fs.writeFileSync(outputPath, reportHtml, 'utf8');
+console.log('Report updated at:', outputPath);
