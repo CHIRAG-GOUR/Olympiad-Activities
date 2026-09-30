@@ -591,6 +591,7 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
         exam,
         questions,
         answers,
+        activityStates,
         timeSpentMap,
         student: studentMeta,
         device: deviceInfo,

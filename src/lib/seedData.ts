@@ -17,9 +17,11 @@ import { IMO10_G6_SETA_QUESTIONS, IMO10_G6_SETA_EXAM } from "@/data/imo10_g6_set
 import { IMO_INTERACTIVE_G6_QUESTIONS, IMO_INTERACTIVE_G6_EXAM } from "@/data/imo_interactive_g6";
 import { IEO_G6_SETA_QUESTIONS, IEO_G6_SETA_EXAM } from "@/data/ieo_g6_seta";
 import { IEO_INTERACTIVE_G6_QUESTIONS, IEO_INTERACTIVE_G6_EXAM } from "@/data/ieo_interactive_g6";
+import { IEO_G6_SETB_P3_QUESTIONS, IEO_G6_SETB_P3_EXAM } from "@/data/ieo_g6_setb_p3";
 
 /**
  * Seeded content: SOF Olympiad papers for Class 6.
+ *   • SOF IEO Class 6 Set B — Paper 3 (ieo-2019-20-class-6-set-b) — 50 language-lab activities.
  *   • SOF IEO Class 6 Set A (ieo-2024-25-class-6-set-a) — 50 bespoke interactive English activities.
  *   • IEO Class 6 Interactive Master Edition (ieo-class6-master-interactive) — 50 bespoke 3D quests.
  *   • Master Interactive Edition Class 6 (imo-class6-master-interactive) — 50 bespoke interactive simulations.
@@ -73,6 +75,7 @@ export function preferSeed<T extends { id: string; seedRev?: string }>(stored: T
 }
 
 export const SEED_QUESTIONS: Question[] = stamp([
+  ...IEO_G6_SETB_P3_QUESTIONS,
   ...IEO_G6_SETA_QUESTIONS,
   ...IEO_INTERACTIVE_G6_QUESTIONS,
   ...IMO_INTERACTIVE_G6_QUESTIONS,
@@ -85,6 +88,7 @@ export const SEED_QUESTIONS: Question[] = stamp([
   ...IMO6P3_QUESTIONS,
 ]);
 export const SEED_EXAMS: Exam[] = stamp([
+  IEO_G6_SETB_P3_EXAM,
   IEO_G6_SETA_EXAM,
   IEO_INTERACTIVE_G6_EXAM,
   IMO_INTERACTIVE_G6_EXAM,

@@ -356,6 +356,31 @@ export default function ExamResultClient({ params }: { params: Promise<{ attempt
                       </div>
                     </div>
 
+                    {q.activity && (
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] bg-violet-50/60 p-2.5 rounded-xl border border-violet-100">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-violet-500 block">Activity</span>
+                          <span className="font-bold text-[#182338]">{q.activity.resultType ?? "Interactive"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-violet-500 block">Student built</span>
+                          <span className="font-bold font-mono text-[#182338]">{q.activity.derivedAnswer ?? "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-violet-500 block">Mapped to</span>
+                          <span className="font-bold text-[#182338]">
+                            {q.activity.selectedOption ? `Option ${q.activity.selectedOption}` : "—"} {q.activity.completed ? "" : "(not submitted)"}
+                          </span>
+                        </div>
+                        {(q.activity.answerAudit as { semanticValidation?: string; reason?: string } | undefined)?.semanticValidation === "REVIEW_REQUIRED" && (
+                          <div className="sm:col-span-3 text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                            <strong>Answer key under review: </strong>
+                            {(q.activity.answerAudit as { reason?: string }).reason}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {q.explanation && (
                       <div className="mt-2 text-[11px] text-[#667085] bg-[#F4F7FB] p-2.5 rounded-xl border border-[#E1E7EF]">
                         <strong className="text-[#182338] font-bold">Explanation: </strong>

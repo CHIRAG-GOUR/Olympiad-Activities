@@ -178,7 +178,7 @@ function resolveTemplate(template: string, questionText?: string) {
 }
 
 /** Keeps a DOM element pinned above a point in the 3D world. */
-function Anchor({ at, target }: { at: V3; target: React.RefObject<HTMLDivElement | null> }) {
+export function Anchor({ at, target }: { at: V3; target: React.RefObject<HTMLDivElement | null> }) {
   const { camera, size } = useThree();
   const v = useMemo(() => new THREE.Vector3(), []);
   useFrame(() => {
@@ -197,7 +197,7 @@ function Anchor({ at, target }: { at: V3; target: React.RefObject<HTMLDivElement
 }
 
 /** The sentence as a speech bubble floating in the world. */
-function Bubble({ text, who, innerRef }: { text: string; who?: string; innerRef: React.RefObject<HTMLDivElement | null> }) {
+export function Bubble({ text, who, innerRef }: { text: string; who?: string; innerRef: React.RefObject<HTMLDivElement | null> }) {
   return (
     <div ref={innerRef} className="pointer-events-none absolute left-0 top-0 z-10" style={{ transform: "translate(-9999px, 0)" }}>
       <div className="relative w-max max-w-[250px] rounded-2xl border-2 border-violet-200 bg-white/95 px-2.5 py-1.5 text-[11.5px] font-bold leading-snug text-slate-800 shadow-lg">

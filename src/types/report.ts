@@ -1,3 +1,4 @@
+import type { ActivityResult } from "@/engine/activity-result";
 import { QuestionType, QuestionDifficulty } from "./question";
 
 export interface QuestionReportItem {
@@ -17,6 +18,7 @@ export interface QuestionReportItem {
   correctAnswerFormatted: string;
   explanation?: string;
   timeSpentSeconds: number;
+  activity?: ActivityResult;
 }
 
 export interface TopicReportItem {

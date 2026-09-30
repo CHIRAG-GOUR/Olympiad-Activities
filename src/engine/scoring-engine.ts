@@ -3,6 +3,7 @@ import { Exam } from "@/types/exam";
 import { ExamAttempt, QuestionEvaluationResult, SectionScore } from "@/types/attempt";
 import { StudentMetadata, DeviceInfo } from "@/types/session";
 import { ExamReport, QuestionReportItem, TopicReportItem, DifficultyReportItem } from "@/types/report";
+import { buildActivityResult } from "./activity-result";
 import { evaluateAnswer, formatStudentAnswerSummary, getCorrectAnswerSummary } from "./answer-evaluator";
 
 export interface ScoreEngineInput {
@@ -10,6 +11,8 @@ export interface ScoreEngineInput {
   questions: Question[];
   answers: Record<string, any>;
   timeSpentMap: Record<string, number>; // questionId -> seconds
+  /** Activity worlds per question id; their derived results are stored with the attempt. */
+  activityStates?: Record<string, unknown>;
   student: StudentMetadata;
   device: DeviceInfo;
   startedAt: string;
@@ -28,7 +31,7 @@ export function computeExamAttemptScore(input: ScoreEngineInput): ExamAttempt {
 }
 
 export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEngineResult {
-  const { exam, questions, answers, timeSpentMap, student, device, startedAt, submittedAt, submissionType = "normal" } = input;
+  const { exam, questions, answers, timeSpentMap, activityStates = {}, student, device, startedAt, submittedAt, submissionType = "normal" } = input;
 
   let totalMarksAwarded = 0;
   let maximumPossibleMarks = 0;
@@ -150,6 +153,7 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
     }
 
     const studentAnswerFormatted = formatStudentAnswerSummary(q, payload?.answer);
+    const activity = buildActivityResult(q, activityStates[q.id], payload?.answer, outcome.isCorrect);
     const correctAnswerFormatted = outcome.correctAnswerSummary || getCorrectAnswerSummary(q);
 
     questionEvaluations.push({
@@ -165,6 +169,7 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
       correctAnswerSummary: correctAnswerFormatted,
       explanation: q.explanation,
       timeSpentSeconds: timeSpent,
+      ...(activity ? { activity } : {}),
     });
 
     questionReports.push({
@@ -184,6 +189,7 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
       correctAnswerFormatted,
       explanation: q.explanation,
       timeSpentSeconds: timeSpent,
+      ...(activity ? { activity } : {}),
     });
   });
 

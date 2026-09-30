@@ -1,3 +1,4 @@
+import type { ActivityResult } from "@/engine/activity-result";
 import { QuestionAnswerPayload, QuestionType } from "./question";
 import { StudentMetadata, DeviceInfo } from "./session";
 
@@ -14,6 +15,7 @@ export interface QuestionEvaluationResult {
   correctAnswerSummary: string;
   explanation?: string;
   timeSpentSeconds: number;
+  activity?: ActivityResult;
 }
 
 export interface SectionScore {
