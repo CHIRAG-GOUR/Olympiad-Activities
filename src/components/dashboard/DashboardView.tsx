@@ -216,9 +216,9 @@ export default function DashboardView() {
       .sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime())[0];
 
     const nextExam =
-      exams.find((e) => e.status !== "Archived" && !ExamLockService.isExamLocked(e.id)) ||
+      exams.find((e) => e.id === "exam_imo_2022_g6_setb") ||
+      exams.find((e) => e.code?.includes("2022-23") && e.code?.includes("SETB")) ||
       exams.find((e) => !ExamLockService.isExamLocked(e.id)) ||
-      exams.find((e) => e.status !== "Archived") ||
       exams[0];
     // `attempts` is already narrowed to this candidate by the data-access layer.
     const myAttempts = attempts;

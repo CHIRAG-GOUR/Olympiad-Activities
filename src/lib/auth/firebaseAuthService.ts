@@ -204,9 +204,15 @@ export class FirebaseAuthService implements AuthService {
 
     let user: FirebaseUser | null = null;
     let normalizedEmail = email.trim().toLowerCase();
-    if (normalizedEmail === "demostudent1" || normalizedEmail === "demostudent1@olympiad.org") normalizedEmail = "demostudent1@olympiad.org";
-    if (normalizedEmail === "demostudent2" || normalizedEmail === "demostudent2@olympiad.org") normalizedEmail = "demostudent2@olympiad.org";
-    if (normalizedEmail === "demostudent3" || normalizedEmail === "demostudent3@olympiad.org") normalizedEmail = "demostudent3@olympiad.org";
+    
+    // Normalize aliases for demo students
+    if (normalizedEmail === "demostudent1" || normalizedEmail === "demostudent1@olympiad.org" || normalizedEmail === "student1" || normalizedEmail === "student1@skillizee.io" || normalizedEmail === "student1@olympiad.org") {
+      normalizedEmail = "demostudent1@olympiad.org";
+    } else if (normalizedEmail === "demostudent2" || normalizedEmail === "demostudent2@olympiad.org" || normalizedEmail === "student2" || normalizedEmail === "student2@skillizee.io" || normalizedEmail === "student2@olympiad.org") {
+      normalizedEmail = "demostudent2@olympiad.org";
+    } else if (normalizedEmail === "demostudent3" || normalizedEmail === "demostudent3@olympiad.org" || normalizedEmail === "student3" || normalizedEmail === "student3@skillizee.io" || normalizedEmail === "student3@olympiad.org") {
+      normalizedEmail = "demostudent3@olympiad.org";
+    }
 
     const PRESET_ACCOUNTS: Record<string, { name: string; role: UserRole; grade?: number; schoolName?: string; defaultPass?: string }> = {
       "tech@skillizee.io": {
@@ -236,10 +242,27 @@ export class FirebaseAuthService implements AuthService {
         schoolName: "Cambridge Court International School (CCIS)",
         defaultPass: "student123",
       },
+      "swati123@gmail.com": {
+        name: "Swati Ma'am",
+        role: "SUPER_ADMIN",
+        schoolName: "National Olympiad Council",
+      },
+      "aarna@cambridgecourtgroup.com": {
+        name: "Aarna",
+        role: "SUPER_ADMIN",
+        schoolName: "Cambridge Court Group",
+      },
+      "pa1@skillizee.io": {
+        name: "Chirag Gour",
+        role: "SUPER_ADMIN",
+        schoolName: "National Olympiad Council",
+      },
     };
 
     const isPreset = Boolean(PRESET_ACCOUNTS[normalizedEmail]);
-    const effectivePass = (isPreset && !password) ? PRESET_ACCOUNTS[normalizedEmail].defaultPass! : password;
+    const effectivePass = (isPreset && !password && PRESET_ACCOUNTS[normalizedEmail].defaultPass)
+      ? PRESET_ACCOUNTS[normalizedEmail].defaultPass!
+      : password;
 
     try {
       // Ensure local browser persistence is active so user stays logged in
@@ -522,7 +545,12 @@ export class FirebaseAuthService implements AuthService {
 
     return onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // If user logged out in Firebase, clear cache and notify
+        const cached = this.getCachedSession();
+        // If there's an active preset mock session, preserve it on background empty Firebase state
+        if (cached && (cached.profile.id.startsWith("usr_") || cached.profile.email.includes("demostudent") || cached.profile.email === "tech@skillizee.io")) {
+          callback(cached);
+          return;
+        }
         this.clearCachedSession();
         callback(null);
         return;

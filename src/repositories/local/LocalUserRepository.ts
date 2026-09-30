@@ -6,6 +6,14 @@ const LOCAL_STORAGE_KEY = "olympiad_users_repo_v2";
 
 const INITIAL_USERS: UserProfile[] = [
   {
+    id: "usr_admin_tech",
+    name: "Tech Administrator",
+    email: "tech@skillizee.io",
+    role: "SUPER_ADMIN",
+    schoolName: "Olympiad Examination Council",
+    createdAt: "2024-01-01T00:00:00Z",
+  },
+  {
     id: "usr_admin_swati",
     name: "Swati Ma'am",
     email: "Swati123@gmail.com",
@@ -36,6 +44,33 @@ const INITIAL_USERS: UserProfile[] = [
     role: "TEACHER",
     schoolName: "Cambridge Court International School (CCIS)",
     createdAt: "2024-02-15T00:00:00Z",
+  },
+  {
+    id: "usr_demostudent1_olympiad_org",
+    name: "DemoStudent1",
+    email: "demostudent1@olympiad.org",
+    role: "STUDENT",
+    schoolName: "Cambridge Court International School (CCIS)",
+    grade: 6,
+    createdAt: "2024-03-01T00:00:00Z",
+  },
+  {
+    id: "usr_demostudent2_olympiad_org",
+    name: "DemoStudent2",
+    email: "demostudent2@olympiad.org",
+    role: "STUDENT",
+    schoolName: "Cambridge Court International School (CCIS)",
+    grade: 6,
+    createdAt: "2024-03-01T00:00:00Z",
+  },
+  {
+    id: "usr_demostudent3_olympiad_org",
+    name: "DemoStudent3",
+    email: "demostudent3@olympiad.org",
+    role: "STUDENT",
+    schoolName: "Cambridge Court International School (CCIS)",
+    grade: 6,
+    createdAt: "2024-03-01T00:00:00Z",
   },
   {
     id: "usr_student_01",
