@@ -3,10 +3,8 @@ import { Permission, UserRole, hasPermission } from "./rbac";
 /**
  * Application section registry.
  *
- * Every navigable area of the platform is declared once, with the permission required to
- * open it and the path it occupies inside each role's route group. Navigation, route
- * guards and in-page links all read from here, so a section cannot appear in a menu that
- * the guard would then refuse, and no page needs to hard-code `/admin/...`.
+ * Every navigable area of the platform is declared once, with its permission,
+ * category grouping, path resolution, and route hierarchy.
  */
 
 export type SectionId =
@@ -24,13 +22,33 @@ export type SectionId =
   | "imports"
   | "settings";
 
+export type SectionCategory =
+  | "CORE"
+  | "ACADEMIC"
+  | "MONITORING"
+  | "PEOPLE"
+  | "SYSTEM";
+
+export const CATEGORY_LABELS: Record<SectionCategory, string> = {
+  CORE: "Core",
+  ACADEMIC: "Academic Bank",
+  MONITORING: "Examination Oversight",
+  PEOPLE: "Faculty & Students",
+  SYSTEM: "System & Config",
+};
+
 export interface AppSection {
   id: SectionId;
   label: string;
+  category: SectionCategory;
   /** Permission required to open the section at all. */
   permission: Permission;
   /** Route segment inside a role's group, e.g. "exams" → /admin/exams, /teacher/exams. */
   segment: string;
+  /** Parent section for sub-routes (e.g. /imports highlights questions). */
+  parentSection?: SectionId;
+  /** Optional dynamic badge indicator (e.g. live session pulse). */
+  badgeKey?: "live" | "new";
   /** Which role groups mount this section. */
   groups: UserRole[];
   /** Show in the primary navigation (some sections are reachable but not top-level). */
@@ -45,9 +63,11 @@ export const ROLE_PREFIX: Record<UserRole, string> = {
 };
 
 export const SECTIONS: AppSection[] = [
+  // ── Core ───────────────────────────────────────────────────
   {
     id: "dashboard",
     label: "Dashboard",
+    category: "CORE",
     permission: "exam:view",
     segment: "dashboard",
     groups: ["SUPER_ADMIN", "TEACHER", "STUDENT"],
@@ -56,14 +76,18 @@ export const SECTIONS: AppSection[] = [
   {
     id: "exams",
     label: "Examinations",
+    category: "CORE",
     permission: "exam:view",
     segment: "exams",
     groups: ["SUPER_ADMIN", "TEACHER", "STUDENT"],
     inNav: true,
   },
+
+  // ── Academic Bank ──────────────────────────────────────────
   {
     id: "activities",
     label: "Activities",
+    category: "ACADEMIC",
     permission: "activity:view",
     segment: "activities",
     groups: ["SUPER_ADMIN", "TEACHER"],
@@ -72,6 +96,7 @@ export const SECTIONS: AppSection[] = [
   {
     id: "questions",
     label: "Questions",
+    category: "ACADEMIC",
     permission: "question:view",
     segment: "questions",
     groups: ["SUPER_ADMIN", "TEACHER"],
@@ -80,6 +105,7 @@ export const SECTIONS: AppSection[] = [
   {
     id: "questionBank",
     label: "Question Bank",
+    category: "ACADEMIC",
     permission: "question:view",
     segment: "question-bank",
     groups: ["SUPER_ADMIN", "TEACHER"],
@@ -88,38 +114,38 @@ export const SECTIONS: AppSection[] = [
   {
     id: "subjects",
     label: "Subjects",
+    category: "ACADEMIC",
     permission: "subject:manage",
     segment: "subjects",
     groups: ["SUPER_ADMIN", "TEACHER"],
     inNav: true,
   },
   {
-    id: "students",
-    label: "Students",
-    permission: "student:view",
-    segment: "students",
+    id: "imports",
+    label: "Import Questions",
+    category: "ACADEMIC",
+    parentSection: "questions",
+    permission: "question:import",
+    segment: "imports",
     groups: ["SUPER_ADMIN", "TEACHER"],
-    inNav: true,
+    inNav: false,
   },
-  {
-    id: "teachers",
-    label: "Teachers",
-    permission: "teacher:manage",
-    segment: "teachers",
-    groups: ["SUPER_ADMIN"],
-    inNav: true,
-  },
+
+  // ── Examination Oversight ──────────────────────────────────
   {
     id: "liveMonitor",
     label: "Live Monitor",
+    category: "MONITORING",
     permission: "monitor:view",
     segment: "live-monitor",
+    badgeKey: "live",
     groups: ["SUPER_ADMIN", "TEACHER"],
     inNav: true,
   },
   {
     id: "results",
-    label: "Results",
+    label: "Results & Ledger",
+    category: "MONITORING",
     permission: "report:view",
     segment: "results",
     groups: ["SUPER_ADMIN", "TEACHER"],
@@ -128,22 +154,38 @@ export const SECTIONS: AppSection[] = [
   {
     id: "analytics",
     label: "Analytics",
+    category: "MONITORING",
     permission: "analytics:system",
     segment: "analytics",
     groups: ["SUPER_ADMIN"],
     inNav: true,
   },
+
+  // ── Faculty & Candidates ───────────────────────────────────
   {
-    id: "imports",
-    label: "Imports",
-    permission: "question:import",
-    segment: "imports",
+    id: "students",
+    label: "Students",
+    category: "PEOPLE",
+    permission: "student:view",
+    segment: "students",
     groups: ["SUPER_ADMIN", "TEACHER"],
-    inNav: false,
+    inNav: true,
   },
+  {
+    id: "teachers",
+    label: "Teachers",
+    category: "PEOPLE",
+    permission: "teacher:manage",
+    segment: "teachers",
+    groups: ["SUPER_ADMIN"],
+    inNav: true,
+  },
+
+  // ── System & Config ────────────────────────────────────────
   {
     id: "settings",
     label: "Settings",
+    category: "SYSTEM",
     permission: "settings:manage",
     segment: "settings",
     groups: ["SUPER_ADMIN"],
@@ -151,17 +193,18 @@ export const SECTIONS: AppSection[] = [
   },
 ];
 
+/** Fast O(1) Lookups */
+const SECTION_BY_ID = new Map<SectionId, AppSection>(SECTIONS.map((s) => [s.id, s]));
+const SECTION_BY_SEGMENT = new Map<string, AppSection>(SECTIONS.map((s) => [s.segment, s]));
+
 /**
- * Student-facing sections use their own vocabulary — a candidate has "My Results", not a
- * results ledger — and rest on the `*:own` permissions.
+ * Student-facing sections use candidate-friendly vocabulary.
  */
 const STUDENT_SECTION_OVERRIDES: Partial<Record<SectionId, { label: string; permission: Permission }>> = {
   dashboard: { label: "Dashboard", permission: "exam:view" },
-  exams: { label: "Exams", permission: "exam:view" },
+  exams: { label: "My Exams", permission: "exam:view" },
   results: { label: "My Results", permission: "result:viewOwn" },
 };
-
-const SECTION_BY_ID = new Map(SECTIONS.map((s) => [s.id, s]));
 
 /** The path a section occupies for a given role. */
 export function pathFor(id: SectionId, role: UserRole): string {
@@ -192,34 +235,73 @@ export interface NavEntry {
   id: SectionId;
   label: string;
   href: string;
+  category: SectionCategory;
+  badgeKey?: "live" | "new";
+  parentSection?: SectionId;
 }
 
 /**
- * Navigation built from permissions rather than filtered after the fact — a role is only
- * ever handed the entries it can actually open.
+ * Navigation built from permissions rather than filtered after the fact.
  */
 export function navigationFor(role: UserRole): NavEntry[] {
   if (role === "STUDENT") {
     return (["dashboard", "exams", "results"] as SectionId[])
       .filter((id) => canOpenSection(id, role))
-      .map((id) => ({
-        id,
-        label: STUDENT_SECTION_OVERRIDES[id]?.label ?? SECTION_BY_ID.get(id)!.label,
-        href: pathFor(id, role),
-      }));
+      .map((id) => {
+        const section = SECTION_BY_ID.get(id)!;
+        return {
+          id,
+          label: STUDENT_SECTION_OVERRIDES[id]?.label ?? section.label,
+          href: pathFor(id, role),
+          category: "CORE",
+        };
+      });
   }
 
   return SECTIONS.filter((s) => s.inNav && canOpenSection(s.id, role)).map((s) => ({
     id: s.id,
     label: s.label,
     href: pathFor(s.id, role),
+    category: s.category,
+    badgeKey: s.badgeKey,
+    parentSection: s.parentSection,
   }));
 }
 
-/** Resolves a concrete pathname back to the section it belongs to, if any. */
+/** Resolves a concrete pathname back to the section it belongs to in O(1) time. */
 export function sectionForPath(pathname: string): AppSection | null {
   const withoutPrefix = pathname.replace(/^\/(admin|teacher|student)/, "");
   const segment = withoutPrefix.split("/").filter(Boolean)[0];
   if (!segment) return null;
-  return SECTIONS.find((s) => s.segment === segment) ?? null;
+  return SECTION_BY_SEGMENT.get(segment) ?? null;
+}
+
+export interface BreadcrumbItem {
+  label: string;
+  href: string;
+}
+
+/**
+ * Standard breadcrumb trail generator for any route.
+ */
+export function getBreadcrumbsForPath(pathname: string, role: UserRole): BreadcrumbItem[] {
+  const base = ROLE_PREFIX[role];
+  const section = sectionForPath(pathname);
+  if (!section || section.id === "dashboard") {
+    return [{ label: "Dashboard", href: `${base}/dashboard` }];
+  }
+
+  const crumbs: BreadcrumbItem[] = [
+    { label: "Dashboard", href: `${base}/dashboard` },
+  ];
+
+  if (section.parentSection) {
+    const parent = SECTION_BY_ID.get(section.parentSection);
+    if (parent) {
+      crumbs.push({ label: parent.label, href: pathFor(parent.id, role) });
+    }
+  }
+
+  crumbs.push({ label: section.label, href: pathFor(section.id, role) });
+  return crumbs;
 }
