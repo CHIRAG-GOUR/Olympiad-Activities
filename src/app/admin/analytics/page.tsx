@@ -309,7 +309,7 @@ export default function AnalyticsAdminPage() {
                         <td className="py-3 px-3">
                           <div className="font-bold text-xs text-[#182338] truncate max-w-[160px]" title={session.student.name}>{session.student.name}</div>
                           <div className="text-[10px] text-[#667085] font-mono truncate max-w-[160px]" title={session.student.studentId}>
-                            {session.student.studentId} • {session.student.schoolName || "Cambridge Court"}
+                            {session.student.studentId}{session.student.schoolName ? ` • ${session.student.schoolName}` : ""}
                           </div>
                         </td>
 

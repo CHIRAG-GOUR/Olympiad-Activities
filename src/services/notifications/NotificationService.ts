@@ -31,33 +31,7 @@ export interface AdminNotification {
 
 const STORAGE_KEY = "olympiad_admin_notifications_v1";
 
-const INITIAL_NOTIFICATIONS: AdminNotification[] = [
-  {
-    id: "notif_init_1",
-    type: "USER_REGISTERED",
-    title: "New Student Registered",
-    message: "Aarav Sharma registered as Student (Class 6 · Cambridge Court International School)",
-    userName: "Aarav Sharma",
-    userEmail: "aarav.sharma@example.com",
-    userRole: "STUDENT",
-    grade: 6,
-    schoolName: "Cambridge Court International School (CCIS)",
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-  },
-  {
-    id: "notif_init_2",
-    type: "USER_REGISTERED",
-    title: "New Teacher Registered",
-    message: "Dr. Sunita Rao registered as Teacher (Subject: English)",
-    userName: "Dr. Sunita Rao",
-    userEmail: "sunita.rao@example.com",
-    userRole: "TEACHER",
-    schoolName: "Cambridge Court International School (CCIS)",
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-  },
-];
+const INITIAL_NOTIFICATIONS: AdminNotification[] = [];
 
 class NotificationServiceClass {
   private listeners: Set<(notifications: AdminNotification[]) => void> = new Set();

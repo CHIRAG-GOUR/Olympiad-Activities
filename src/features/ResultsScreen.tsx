@@ -266,7 +266,7 @@ export default function ResultsScreen() {
                         <td className="py-3 px-3">
                           <div className="font-bold text-xs text-[#182338] truncate max-w-[160px]" title={att.student.name}>{att.student.name}</div>
                           <div className="text-[10px] font-mono text-[#667085] truncate max-w-[160px]" title={att.student.studentId}>
-                            {att.student.studentId} • {att.student.schoolName || "Cambridge Court"}
+                            {att.student.studentId}{att.student.schoolName ? ` • ${att.student.schoolName}` : ""}
                           </div>
                         </td>
 

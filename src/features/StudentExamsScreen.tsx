@@ -184,8 +184,8 @@ export default function StudentExamsScreen() {
               Your Olympiad Examination
             </h1>
             <p className="mt-1 text-[13.5px] text-[#667085] font-medium">
-              Candidate: <strong className="text-slate-900">{user?.name || "Student"}</strong> ·{" "}
-              <span>{user?.schoolName || "Cambridge Court International School (CCIS)"}</span>
+              Candidate: <strong className="text-slate-900">{user?.name || "Student"}</strong>
+              {user?.schoolName && <span> · {user.schoolName}</span>}
             </p>
           </div>
 

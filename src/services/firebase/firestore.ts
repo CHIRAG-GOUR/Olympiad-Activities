@@ -262,8 +262,8 @@ export const OlympiadStore = {
               examTitle: raw.examTitle || "Olympiad Examination",
               student: {
                 name: raw.studentName || raw.student?.name || "Candidate",
-                studentId: raw.studentId || raw.student?.studentId || "STU-00",
-                schoolName: raw.schoolName || raw.student?.schoolName || "Cambridge Court High",
+                studentId: raw.studentId || raw.student?.studentId || "",
+                schoolName: raw.schoolName || raw.student?.schoolName || "",
                 grade: raw.grade || raw.student?.grade || 6,
               },
               device: raw.device || {
