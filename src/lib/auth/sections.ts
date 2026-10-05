@@ -62,15 +62,12 @@ export const SECTIONS: AppSection[] = [
     inNav: true,
   },
   {
-    // Retired for now at the team's request. Leaving the section declared but granted to
-    // no group keeps the pages and their permission intact while closing both the menu
-    // entry and the URL — re-enable by restoring the groups and inNav.
     id: "activities",
     label: "Activities",
     permission: "activity:view",
     segment: "activities",
-    groups: [],
-    inNav: false,
+    groups: ["SUPER_ADMIN", "TEACHER"],
+    inNav: true,
   },
   {
     id: "questions",
@@ -93,8 +90,8 @@ export const SECTIONS: AppSection[] = [
     label: "Subjects",
     permission: "subject:manage",
     segment: "subjects",
-    groups: ["SUPER_ADMIN"],
-    inNav: false,
+    groups: ["SUPER_ADMIN", "TEACHER"],
+    inNav: true,
   },
   {
     id: "students",
@@ -137,12 +134,11 @@ export const SECTIONS: AppSection[] = [
     inNav: true,
   },
   {
-    // Retired for now at the team's request — see the note on "activities".
     id: "imports",
     label: "Imports",
     permission: "question:import",
     segment: "imports",
-    groups: [],
+    groups: ["SUPER_ADMIN", "TEACHER"],
     inNav: false,
   },
   {
@@ -176,6 +172,9 @@ export function pathFor(id: SectionId, role: UserRole): string {
 
 /** Whether a role may open a section, accounting for student-specific permissions. */
 export function canOpenSection(id: SectionId, role: UserRole): boolean {
+  // Super Admin has full unrestricted access to every section
+  if (role === "SUPER_ADMIN") return true;
+
   const section = SECTION_BY_ID.get(id);
   if (!section) return false;
 

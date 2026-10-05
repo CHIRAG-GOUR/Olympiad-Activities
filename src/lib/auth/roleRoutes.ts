@@ -75,6 +75,9 @@ export function evaluateRouteAccess(
   if (isPublicRoute(pathname)) return { allowed: true };
   if (!role) return { allowed: false, reason: "unauthenticated" };
 
+  // Super Admin has full, unrestricted access to every route in the platform
+  if (role === "SUPER_ADMIN") return { allowed: true };
+
   const group = groupForPath(pathname);
 
   if (group) {
@@ -82,9 +85,7 @@ export function evaluateRouteAccess(
       return { allowed: false, reason: "wrong-group" };
     }
 
-    // Within a permitted group, the section's own permission still applies. A super
-    // administrator inspecting /teacher/* is evaluated against the group's role so the
-    // experience matches what that role would actually see.
+    // Within a permitted group, the section's own permission still applies.
     const section = sectionForPath(pathname);
     if (section && !canOpenSection(section.id, group)) {
       return { allowed: false, reason: "no-permission" };

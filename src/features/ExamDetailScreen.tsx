@@ -142,9 +142,18 @@ export default function ExamDetailScreen({ params }: { params: Promise<{ id: str
                   </div>
                 </div>
 
-                <span className="font-mono font-bold text-[15px] text-navy-900 bg-navy-50 px-3 py-1 rounded-md border border-navy-200">
-                  +{q.marks}
-                </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="font-mono font-bold text-[14px] text-navy-900 bg-navy-50 px-2.5 py-1 rounded-md border border-navy-200">
+                    +{q.marks}
+                  </span>
+                  <Link
+                    href={`${roleBase}/questions/${q.id}`}
+                    className="h-8 px-3 bg-[#EAF2FC] hover:bg-[#2468B2] hover:text-white text-[#1C5190] rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1"
+                    title="Inspect & Edit Question"
+                  >
+                    <span>Inspect</span>
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

@@ -240,18 +240,18 @@ export default function QuestionsScreen() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
+              <table className="w-full min-w-[1050px] text-left text-xs font-semibold">
                 <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="p-4 w-[110px]">Code</th>
-                    <th className="p-4 min-w-[300px]">Question & Concept</th>
-                    <th className="p-4 w-[140px]">Subject</th>
-                    <th className="p-4 w-[160px]">Topic</th>
-                    <th className="p-4 w-[140px]">Interaction</th>
-                    <th className="p-4 w-[100px] text-center">Difficulty</th>
-                    <th className="p-4 w-[80px] text-center">Marks</th>
-                    <th className="p-4 w-[100px] text-center">Status</th>
-                    <th className="p-4 w-[120px] text-right">Actions</th>
+                    <th className="p-4 min-w-[280px]">Question & Concept</th>
+                    <th className="p-4 w-[130px]">Subject</th>
+                    <th className="p-4 w-[150px]">Topic</th>
+                    <th className="p-4 w-[130px]">Interaction</th>
+                    <th className="p-4 w-[90px] text-center">Difficulty</th>
+                    <th className="p-4 w-[75px] text-center">Marks</th>
+                    <th className="p-4 w-[95px] text-center">Status</th>
+                    <th className="p-4 w-[160px] min-w-[160px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
@@ -328,17 +328,20 @@ export default function QuestionsScreen() {
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
                               href={`${roleBase}/questions/${q.id}`}
-                              className="px-2.5 py-1 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-md text-[11px] font-bold transition-all"
+                              className="h-8 px-2.5 bg-[#EAF2FC] hover:bg-[#2468B2] hover:text-white text-[#1C5190] rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all"
+                              title="Inspect & Edit Question"
                             >
-                              Edit
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Edit</span>
                             </Link>
                             <button
                               type="button"
                               onClick={() => handleDelete(q.id)}
-                              className="p-1 text-[#667085] hover:text-rose-600 rounded-md hover:bg-rose-50 transition-all cursor-pointer"
+                              className="h-8 px-2.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all cursor-pointer"
                               title="Delete Question"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
                             </button>
                           </div>
                         </td>
