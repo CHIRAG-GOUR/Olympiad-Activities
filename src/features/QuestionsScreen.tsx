@@ -240,19 +240,19 @@ export default function QuestionsScreen() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1050px] text-left text-xs font-semibold">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[980px] text-left text-xs font-semibold">
                 <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-4 w-[110px]">Code</th>
-                    <th className="p-4 min-w-[280px]">Question & Concept</th>
-                    <th className="p-4 w-[130px]">Subject</th>
-                    <th className="p-4 w-[150px]">Topic</th>
-                    <th className="p-4 w-[130px]">Interaction</th>
-                    <th className="p-4 w-[90px] text-center">Difficulty</th>
-                    <th className="p-4 w-[75px] text-center">Marks</th>
-                    <th className="p-4 w-[95px] text-center">Status</th>
-                    <th className="p-4 w-[160px] min-w-[160px] text-right">Actions</th>
+                    <th className="py-3 px-3 w-[95px]">Code</th>
+                    <th className="py-3 px-3 min-w-[220px]">Question & Concept</th>
+                    <th className="py-3 px-3 w-[110px]">Subject</th>
+                    <th className="py-3 px-3 w-[125px]">Topic</th>
+                    <th className="py-3 px-2.5 w-[110px]">Interaction</th>
+                    <th className="py-3 px-2 w-[75px] text-center">Difficulty</th>
+                    <th className="py-3 px-2 w-[55px] text-center">Marks</th>
+                    <th className="py-3 px-2 w-[85px] text-center">Status</th>
+                    <th className="py-3 px-3 w-[155px] min-w-[155px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
@@ -261,87 +261,87 @@ export default function QuestionsScreen() {
                     return (
                       <tr key={q.id} className="hover:bg-white/70 transition-colors">
                         {/* Code */}
-                        <td className="p-4 align-top">
-                          <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] block text-center">
+                        <td className="py-3 px-3 align-middle">
+                          <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] block text-center truncate">
                             {q.questionId}
                           </span>
                         </td>
 
                         {/* Question Text */}
-                        <td className="p-4 align-top">
+                        <td className="py-3 px-3 align-middle">
                           <div className="font-bold text-xs text-[#182338] leading-snug line-clamp-2">
                             {q.questionText}
                           </div>
                           {q.section && (
-                            <div className="text-[10px] text-[#667085] mt-1 font-semibold">
+                            <div className="text-[10px] text-[#667085] mt-0.5 font-semibold truncate">
                               Section: {q.section}
                             </div>
                           )}
                         </td>
 
                         {/* Subject */}
-                        <td className="p-4 align-top">
-                          <div className="font-bold text-[#182338]">{q.subjectName || "Mathematics"}</div>
+                        <td className="py-3 px-3 align-middle">
+                          <div className="font-bold text-[#182338] truncate">{q.subjectName || "Mathematics"}</div>
                           <div className="text-[10px] text-[#667085]">Class {q.grade || 6}</div>
                         </td>
 
                         {/* Topic */}
-                        <td className="p-4 align-top">
-                          <span className="font-semibold text-[#182338] block truncate max-w-[150px]">
+                        <td className="py-3 px-3 align-middle">
+                          <span className="font-semibold text-[#182338] block truncate max-w-[125px]" title={q.topic}>
                             {q.topic}
                           </span>
                           {q.chapter && (
-                            <span className="text-[10px] text-[#667085] block truncate max-w-[150px]">
+                            <span className="text-[10px] text-[#667085] block truncate max-w-[125px]" title={q.chapter}>
                               {q.chapter}
                             </span>
                           )}
                         </td>
 
                         {/* Interaction Type Badge */}
-                        <td className="p-4 align-top">
-                          <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase border ${badge.bg}`}>
+                        <td className="py-3 px-2.5 align-middle">
+                          <span className={`px-2 py-0.5 rounded-md text-[9.5px] font-bold uppercase border inline-block whitespace-nowrap ${badge.bg}`}>
                             {badge.label}
                           </span>
                         </td>
 
                         {/* Difficulty */}
-                        <td className="p-4 align-top text-center">
-                          <span className="px-2 py-0.5 bg-[#F4F7FB] text-[#667085] border border-[#E1E7EF] rounded-md text-[10px] font-bold uppercase">
+                        <td className="py-3 px-2 align-middle text-center">
+                          <span className="px-1.5 py-0.5 bg-[#F4F7FB] text-[#667085] border border-[#E1E7EF] rounded-md text-[9.5px] font-bold uppercase inline-block whitespace-nowrap">
                             {q.difficulty}
                           </span>
                         </td>
 
                         {/* Marks */}
-                        <td className="p-4 align-top text-center font-mono font-bold text-[#2468B2]">
+                        <td className="py-3 px-2 align-middle text-center font-mono font-bold text-[#2468B2]">
                           +{q.marks || 1}
                         </td>
 
                         {/* Status */}
-                        <td className="p-4 align-top text-center">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1C5190]">
+                        <td className="py-3 px-2 align-middle text-center">
+                          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-[#1C5190] whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#2468B2]" />
                             {q.status || "Published"}
                           </span>
                         </td>
 
                         {/* Actions */}
-                        <td className="p-4 align-top text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="py-3 px-3 align-middle text-right whitespace-nowrap">
+                          <div className="inline-flex items-center justify-end gap-1.5">
                             <Link
                               href={questionDetailRoute(roleBase, q.id)}
-                              className="h-8 px-2.5 bg-[#EAF2FC] hover:bg-[#2468B2] hover:text-white text-[#1C5190] rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all"
+                              className="h-7 px-2.5 bg-[#EAF2FC] hover:bg-[#2468B2] hover:text-white text-[#1C5190] rounded-lg text-[11px] font-bold inline-flex items-center gap-1 transition-all shrink-0"
                               title="Inspect & Edit Question"
                             >
-                              <Edit3 className="w-3.5 h-3.5" />
+                              <Edit3 className="w-3 h-3" />
                               <span>Edit</span>
                             </Link>
                             <button
                               type="button"
                               onClick={() => handleDelete(q.id)}
-                              className="h-8 px-2.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all cursor-pointer"
+                              className="h-7 px-2.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 transition-all cursor-pointer shrink-0"
                               title="Delete Question"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3 h-3" />
                               <span>Delete</span>
                             </button>
                           </div>

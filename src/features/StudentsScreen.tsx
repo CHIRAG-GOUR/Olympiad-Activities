@@ -118,17 +118,17 @@ export default function StudentsScreen() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl">
-              <table className="w-full min-w-[1050px] text-left text-xs font-semibold">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[980px] text-left text-xs font-semibold">
                 <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-4 w-[200px]">Candidate Name</th>
-                    <th className="p-4 w-[160px]">Roll / Student ID</th>
-                    <th className="p-4 w-[85px] text-center">Class</th>
-                    <th className="p-4 min-w-[180px]">Email</th>
-                    <th className="p-4 w-[130px] text-center">Exams Completed</th>
-                    <th className="p-4 w-[95px] text-center">Status</th>
-                    <th className="p-4 w-[230px] text-right">Actions</th>
+                    <th className="py-3 px-3.5 w-[180px]">Candidate Name</th>
+                    <th className="py-3 px-3 w-[140px]">Roll / Student ID</th>
+                    <th className="py-3 px-2 w-[70px] text-center">Class</th>
+                    <th className="py-3 px-3 min-w-[160px]">Email</th>
+                    <th className="py-3 px-2 w-[110px] text-center">Exams Done</th>
+                    <th className="py-3 px-2 w-[85px] text-center">Status</th>
+                    <th className="py-3 px-3 w-[230px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
@@ -136,31 +136,31 @@ export default function StudentsScreen() {
                     const studentAttempts = attempts.filter((a) => a.student?.studentId === s.id);
                     return (
                       <tr key={s.id} className="hover:bg-white/70 transition-colors">
-                        <td className="p-4">
-                          <div className="font-bold text-sm text-[#182338]">{s.name}</div>
+                        <td className="py-3 px-3.5">
+                          <div className="font-bold text-xs text-[#182338] truncate max-w-[170px]" title={s.name}>{s.name}</div>
                           <div className="text-[10px] text-[#667085]">Olympiad Scholar</div>
                         </td>
-                        <td className="p-4">
-                          <span className="font-mono font-bold text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF]">
+                        <td className="py-3 px-3">
+                          <span className="font-mono font-bold text-xs text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] inline-block">
                             {s.id}
                           </span>
                         </td>
-                        <td className="p-4 text-center font-bold">
+                        <td className="py-3 px-2 text-center font-bold">
                           Class {s.grade || 6}
                         </td>
-                        <td className="p-4 text-[#667085]">
+                        <td className="py-3 px-3 text-[#667085] text-xs truncate max-w-[160px]" title={s.email || "student@olympiad.org"}>
                           {s.email || "student@olympiad.org"}
                         </td>
-                        <td className="p-4 text-center font-mono font-bold text-[#1C5190]">
+                        <td className="py-3 px-2 text-center font-mono font-bold text-xs text-[#1C5190]">
                           {studentAttempts.length}
                         </td>
-                        <td className="p-4 text-center">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#EAF2FC] text-[#1C5190] border border-[#E1E7EF]">
+                        <td className="py-3 px-2 text-center">
+                          <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase bg-[#EAF2FC] text-[#1C5190] border border-[#E1E7EF] whitespace-nowrap">
                             Verified
                           </span>
                         </td>
-                        <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-3 px-3 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center justify-end gap-1.5">
                             {canSwitchRole && (
                               <button
                                 type="button"
@@ -168,18 +168,18 @@ export default function StudentsScreen() {
                                   switchRole("STUDENT");
                                   router.push("/student/dashboard");
                                 }}
-                                className="px-3 py-1.5 bg-[#FFF4E5] hover:bg-[#FFE6C2] text-[#B54708] border border-[#FEDF89] rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer"
+                                className="h-7 px-2.5 bg-[#FFF4E5] hover:bg-[#FFE6C2] text-[#B54708] border border-[#FEDF89] rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer shrink-0"
                                 title="Login and view platform as Student"
                               >
-                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <ShieldCheck className="w-3 h-3" />
                                 <span>Login as Student</span>
                               </button>
                             )}
                             <Link
                               href={`${roleBase}/results`}
-                              className="px-3 py-1.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold transition-all inline-block"
+                              className="h-7 px-2.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-[11px] font-bold transition-all inline-flex items-center shrink-0"
                             >
-                              View Scores
+                              Scores
                             </Link>
                           </div>
                         </td>

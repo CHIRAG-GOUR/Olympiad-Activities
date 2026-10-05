@@ -201,19 +201,19 @@ export default function LiveMonitorScreen() {
 
         {/* Live Surveillance Table */}
         <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1300px] text-left text-[14px] border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[1100px] text-left text-[13px] border-collapse">
               <thead>
-                <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[12px] uppercase tracking-wider">
-                  <th className="py-4 px-6 w-[220px]">Student Candidate</th>
-                  <th className="py-4 px-6 w-[220px]">Session ID</th>
-                  <th className="py-4 px-6 min-w-[240px]">Examination</th>
-                  <th className="py-4 px-6 w-[180px]">Current Progress</th>
-                  <th className="py-4 px-6 w-[140px]">Timeline</th>
-                  <th className="py-4 px-6 w-[130px]">IP Address</th>
-                  <th className="py-4 px-6 w-[150px]">Device Profile</th>
-                  <th className="py-4 px-6 w-[120px] text-center">Connection</th>
-                  <th className="py-4 px-6 w-[130px] text-right">Status</th>
+                <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[11px] uppercase tracking-wider">
+                  <th className="py-3 px-3.5 w-[190px]">Student Candidate</th>
+                  <th className="py-3 px-3.5 w-[170px]">Session ID</th>
+                  <th className="py-3 px-3.5 min-w-[190px]">Examination</th>
+                  <th className="py-3 px-3.5 w-[150px]">Current Progress</th>
+                  <th className="py-3 px-3.5 w-[120px]">Timeline</th>
+                  <th className="py-3 px-3.5 w-[110px]">IP Address</th>
+                  <th className="py-3 px-3.5 w-[120px]">Device Profile</th>
+                  <th className="py-3 px-3.5 w-[110px] text-center">Connection</th>
+                  <th className="py-3 px-3.5 w-[110px] text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E1E7EF]">
@@ -225,78 +225,78 @@ export default function LiveMonitorScreen() {
                   </tr>
                 ) : (
                   filteredSessions.map((session) => (
-                    <tr key={session.id} className="hover:bg-white/70 transition-colors h-[76px]">
+                    <tr key={session.id} className="hover:bg-white/70 transition-colors h-[68px]">
                       {/* Candidate Name & School */}
-                      <td className="py-4 px-6">
-                        <div className="font-bold text-[15px] text-slate-900 truncate max-w-[200px]" title={session.student.name}>
+                      <td className="py-3 px-3.5">
+                        <div className="font-bold text-[14px] text-slate-900 truncate max-w-[180px]" title={session.student.name}>
                           {session.student.name}
                         </div>
-                        <div className="text-[12px] font-mono text-slate-500 font-bold truncate max-w-[200px]" title={session.student.studentId}>
+                        <div className="text-[11px] font-mono text-slate-500 font-bold truncate max-w-[180px]" title={session.student.studentId}>
                           ID: {session.student.studentId} • {session.student.schoolName || "Registered Candidate"}
                         </div>
                       </td>
 
                       {/* Session ID */}
-                      <td className="py-4 px-6 font-mono font-bold text-[12px] text-[#1C5190]">
-                        <span className="block truncate max-w-[200px]" title={session.sessionId}>
+                      <td className="py-3 px-3.5 font-mono font-bold text-[11px] text-[#1C5190]">
+                        <span className="block truncate max-w-[160px]" title={session.sessionId}>
                           {session.sessionId}
                         </span>
                       </td>
 
                       {/* Exam Title */}
-                      <td className="py-4 px-6 text-slate-900 font-bold">
-                        <span className="line-clamp-2" title={session.examTitle}>
+                      <td className="py-3 px-3.5 text-slate-900 font-bold">
+                        <span className="line-clamp-2 text-xs" title={session.examTitle}>
                           {session.examTitle}
                         </span>
                       </td>
 
                       {/* Current Progress & Question */}
-                      <td className="py-4 px-6">
-                        <div className="font-mono font-bold text-[13px] text-[#2468B2] mb-1">
+                      <td className="py-3 px-3.5">
+                        <div className="font-mono font-bold text-xs text-[#2468B2] mb-1">
                           Question {session.currentQuestionIndex + 1} of {session.totalQuestions}
                         </div>
-                        <div className="w-36 flex items-center gap-2">
-                          <div className="flex-1 h-2.5 bg-[#F4F7FB] rounded-full overflow-hidden border border-[#E1E7EF]">
+                        <div className="w-32 flex items-center gap-1.5">
+                          <div className="flex-1 h-2 bg-[#F4F7FB] rounded-full overflow-hidden border border-[#E1E7EF]">
                             <div
                               className="h-full bg-[#2468B2] rounded-full"
                               style={{ width: `${session.progressPercent}%` }}
                             />
                           </div>
-                          <span className="font-mono text-[11px] font-bold text-[#2468B2]">
+                          <span className="font-mono text-[10px] font-bold text-[#2468B2]">
                             {session.progressPercent}%
                           </span>
                         </div>
                       </td>
 
                       {/* Started & Last Active */}
-                      <td className="py-4 px-6 text-[13px] font-mono text-slate-500">
+                      <td className="py-3 px-3.5 text-xs font-mono text-slate-500">
                         <div>Start: {session.startedAt}</div>
                         <div className="text-slate-800 font-bold">Ping: {session.lastActiveAt}</div>
                       </td>
 
                       {/* IP Address */}
-                      <td className="py-4 px-6 font-mono font-medium text-[13px] text-slate-500">
+                      <td className="py-3 px-3.5 font-mono font-medium text-xs text-slate-500">
                         {session.device.ip}
                       </td>
 
                       {/* Device Profile */}
-                      <td className="py-4 px-6 text-[13px]">
-                        <div className="font-bold text-slate-900 truncate max-w-[140px]" title={session.device.browser}>{session.device.browser}</div>
-                        <div className="text-[12px] text-slate-500 font-mono font-bold">{session.device.os}</div>
+                      <td className="py-3 px-3.5 text-xs">
+                        <div className="font-bold text-slate-900 truncate max-w-[120px]" title={session.device.browser}>{session.device.browser}</div>
+                        <div className="text-[11px] text-slate-500 font-mono font-bold">{session.device.os}</div>
                       </td>
 
                       {/* Connection */}
-                      <td className="py-4 px-6 text-center">
-                        <span className="inline-flex items-center gap-2 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold text-[12px] whitespace-nowrap">
-                          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                      <td className="py-3 px-3.5 text-center">
+                        <span className="inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 font-bold text-[11px] whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                           Connected
                         </span>
                       </td>
 
                       {/* Status */}
-                      <td className="py-4 px-6 text-right">
+                      <td className="py-3 px-3.5 text-right">
                         <span
-                          className={`inline-block px-3 py-1 rounded-xl text-[12px] font-bold whitespace-nowrap ${
+                          className={`inline-block px-2.5 py-0.5 rounded-lg text-[11px] font-bold whitespace-nowrap ${
                             session.isSubmitted
                               ? "bg-[#F4F7FB] text-slate-600 border border-[#E1E7EF]"
                               : "bg-[#2468B2] text-white shadow-subtle"

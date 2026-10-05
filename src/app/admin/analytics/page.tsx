@@ -279,18 +279,18 @@ export default function AnalyticsAdminPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl">
-              <table className="w-full min-w-[1150px] text-left text-xs font-semibold">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[980px] text-left text-xs font-semibold">
                 <thead className="bg-[#F8FAFC] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-3 w-[200px]">Candidate</th>
-                    <th className="p-3 min-w-[200px]">Exam Paper</th>
-                    <th className="p-3 w-[90px] text-center">Class</th>
-                    <th className="p-3 w-[180px] text-center">Current Progress</th>
-                    <th className="p-3 w-[100px] text-center">Answered</th>
-                    <th className="p-3 w-[110px] text-center">Time Left</th>
-                    <th className="p-3 w-[120px] text-center">Connection</th>
-                    <th className="p-3 w-[100px] text-right">Oversight</th>
+                    <th className="py-3 px-3 w-[170px]">Candidate</th>
+                    <th className="py-3 px-3 min-w-[180px]">Exam Paper</th>
+                    <th className="py-3 px-2 w-[70px] text-center">Class</th>
+                    <th className="py-3 px-2 w-[160px] text-center">Current Progress</th>
+                    <th className="py-3 px-2 w-[85px] text-center">Answered</th>
+                    <th className="py-3 px-2 w-[95px] text-center">Time Left</th>
+                    <th className="py-3 px-2 w-[105px] text-center">Connection</th>
+                    <th className="py-3 px-3 w-[95px] text-right">Oversight</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
@@ -306,38 +306,38 @@ export default function AnalyticsAdminPage() {
 
                     return (
                       <tr key={session.sessionId} className="hover:bg-[#F8FAFC] transition-colors">
-                        <td className="p-3">
-                          <div className="font-bold text-sm text-[#182338]">{session.student.name}</div>
-                          <div className="text-[10px] text-[#667085] font-mono">
-                            {session.student.studentId} • {session.student.schoolName || "Cambridge Court High"}
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-xs text-[#182338] truncate max-w-[160px]" title={session.student.name}>{session.student.name}</div>
+                          <div className="text-[10px] text-[#667085] font-mono truncate max-w-[160px]" title={session.student.studentId}>
+                            {session.student.studentId} • {session.student.schoolName || "Cambridge Court"}
                           </div>
                         </td>
 
-                        <td className="p-3">
+                        <td className="py-3 px-3">
                           <div className="flex items-center gap-1.5">
                             <span
-                              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold ${
                                 isMath ? "bg-[#EEF4FF] text-[#2468B2]" : "bg-[#FAF5FF] text-[#9333EA]"
                               }`}
                             >
                               {isMath ? "Maths" : "English"}
                             </span>
-                            <span className="font-bold text-xs text-[#182338] truncate max-w-[200px]">
+                            <span className="font-bold text-xs text-[#182338] truncate max-w-[160px]" title={session.examTitle}>
                               {session.examTitle}
                             </span>
                           </div>
                         </td>
 
-                        <td className="p-3 text-center font-bold">
-                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
+                        <td className="py-3 px-2 text-center font-bold">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] inline-block whitespace-nowrap">
                             Class {session.student.grade || 6}
                           </span>
                         </td>
 
-                        <td className="p-3 text-center">
-                          <div className="space-y-1 inline-block min-w-[140px]">
-                            <div className="flex items-center justify-between text-[11px] font-bold text-[#2468B2]">
-                              <span>Question {currentQ} of {totalQ}</span>
+                        <td className="py-3 px-2 text-center">
+                          <div className="space-y-1 inline-block min-w-[130px]">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold text-[#2468B2]">
+                              <span>Q {currentQ}/{totalQ}</span>
                               <span className="text-[10px] text-[#667085]">{progressPercent}%</span>
                             </div>
                             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-[#E1E7EF]">
@@ -351,13 +351,13 @@ export default function AnalyticsAdminPage() {
                           </div>
                         </td>
 
-                        <td className="p-3 text-center font-mono font-bold text-slate-700">
+                        <td className="py-3 px-2 text-center font-mono font-bold text-xs text-slate-700">
                           {session.answeredCount} / {totalQ}
                         </td>
 
-                        <td className="p-3 text-center">
+                        <td className="py-3 px-2 text-center">
                           <span
-                            className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${
+                            className={`font-mono text-xs font-bold px-2 py-0.5 rounded inline-block whitespace-nowrap ${
                               session.timeRemainingSeconds < 300
                                 ? "bg-red-50 text-red-600 animate-pulse"
                                 : "bg-slate-50 text-slate-700"
@@ -367,9 +367,9 @@ export default function AnalyticsAdminPage() {
                           </span>
                         </td>
 
-                        <td className="p-3 text-center">
+                        <td className="py-3 px-2 text-center">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase whitespace-nowrap ${
                               session.isSubmitted
                                 ? "bg-blue-50 text-blue-700"
                                 : "bg-emerald-50 text-emerald-700"
@@ -380,10 +380,10 @@ export default function AnalyticsAdminPage() {
                           </span>
                         </td>
 
-                        <td className="p-3 text-right">
+                        <td className="py-3 px-3 text-right whitespace-nowrap">
                           <Link
                             href="/admin/live-monitor"
-                            className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-[#E1E7EF] text-[#2468B2] rounded-lg text-xs font-bold transition-all inline-block"
+                            className="h-7 px-2.5 bg-white hover:bg-slate-50 border border-[#E1E7EF] text-[#2468B2] rounded-lg text-[11px] font-bold transition-all inline-flex items-center shrink-0"
                           >
                             Inspect
                           </Link>

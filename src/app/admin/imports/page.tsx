@@ -346,53 +346,53 @@ export default function ImportsPage() {
               </p>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[14px] border-collapse">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[980px] text-left text-[13px] border-collapse">
                 <thead>
-                  <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[12px] uppercase tracking-wider">
-                    <th className="py-4 px-6 w-[80px]">Row</th>
-                    <th className="py-4 px-6 w-[140px]">Code</th>
-                    <th className="py-4 px-6 min-w-[340px]">Question Prompt</th>
-                    <th className="py-4 px-6 w-[160px]">Type</th>
-                    <th className="py-4 px-6 w-[160px]">Subject</th>
-                    <th className="py-4 px-6 w-[200px]">Validation Status</th>
-                    <th className="py-4 px-6 text-right w-[140px]">Preview</th>
+                  <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[11px] uppercase tracking-wider">
+                    <th className="py-3 px-4 w-[70px]">Row</th>
+                    <th className="py-3 px-4 w-[130px]">Code</th>
+                    <th className="py-3 px-4 min-w-[280px]">Question Prompt</th>
+                    <th className="py-3 px-3 w-[140px]">Type</th>
+                    <th className="py-3 px-3 w-[130px]">Subject</th>
+                    <th className="py-3 px-3 w-[160px]">Validation Status</th>
+                    <th className="py-3 px-4 text-right w-[110px]">Preview</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF]">
                   {parsedResults.map((item) => (
-                    <tr key={item.rowNumber} className="hover:bg-white/70 h-[72px]">
-                      <td className="py-4 px-6 font-mono font-bold text-slate-400">#{item.rowNumber}</td>
-                      <td className="py-4 px-6 font-mono font-bold text-[#1C5190]">
+                    <tr key={item.rowNumber} className="hover:bg-white/70 h-[64px]">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-400">#{item.rowNumber}</td>
+                      <td className="py-3 px-4 font-mono font-bold text-[#1C5190]">
                         {item.question?.questionId}
                       </td>
-                      <td className="py-4 px-6 max-w-md truncate font-bold text-slate-900">
+                      <td className="py-3 px-4 max-w-md truncate font-bold text-slate-900">
                         {item.question?.questionText}
                       </td>
-                      <td className="py-4 px-6">
-                        <span className="px-2.5 py-1 bg-[#FEF3C7] text-[#92400E] rounded-lg font-bold text-[12px] border border-[#FDE68A]">
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 bg-[#FEF3C7] text-[#92400E] rounded-md font-bold text-[11px] border border-[#FDE68A] inline-block whitespace-nowrap">
                           {item.question?.questionType}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-slate-700 font-bold">{item.question?.subjectName}</td>
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-3 text-slate-700 font-bold">{item.question?.subjectName}</td>
+                      <td className="py-3 px-3">
                         {item.isValid ? (
-                          <span className="inline-flex items-center gap-1.5 text-[#2468B2] font-bold text-[13px]">
-                            <CheckCircle2 className="w-4 h-4" /> Valid
+                          <span className="inline-flex items-center gap-1.5 text-[#2468B2] font-bold text-xs whitespace-nowrap">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Valid
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 text-[#E8786A] font-bold text-[13px]">
-                            <XCircle className="w-4 h-4" /> Invalid
+                          <span className="inline-flex items-center gap-1.5 text-[#E8786A] font-bold text-xs whitespace-nowrap">
+                            <XCircle className="w-3.5 h-3.5" /> Invalid
                           </span>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-right">
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => setSelectedPreview(item.question as Question)}
-                          className="h-[36px] px-3.5 bg-[#F4F7FB] hover:bg-[#D9E8F8] border border-[#E1E7EF] text-[#1C5190] rounded-xl text-[13px] font-bold inline-flex items-center gap-1.5 shadow-subtle cursor-pointer"
+                          className="h-7 px-2.5 bg-[#F4F7FB] hover:bg-[#D9E8F8] border border-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow-subtle cursor-pointer shrink-0"
                         >
-                          <Eye className="w-3.5 h-3.5 text-[#2468B2]" /> Preview
+                          <Eye className="w-3 h-3 text-[#2468B2]" /> Preview
                         </button>
                       </td>
                     </tr>
