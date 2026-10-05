@@ -76,6 +76,27 @@ const PRESET_ACCOUNTS: Record<
     schoolName: "St. Xavier's Senior Secondary School",
     defaultPass: "student123",
   },
+  "tech@skillizee.io": {
+    name: "Tech Administrator",
+    role: "SUPER_ADMIN",
+    schoolName: "Olympiad Examination Council",
+    defaultPass: "787700",
+  },
+  "pa1@skillizee.io": {
+    name: "Chirag Gour",
+    role: "SUPER_ADMIN",
+    schoolName: "National Olympiad Council",
+  },
+  "swati123@gmail.com": {
+    name: "Swati Ma'am",
+    role: "SUPER_ADMIN",
+    schoolName: "National Olympiad Council",
+  },
+  "aarna@cambridgecourtgroup.com": {
+    name: "Aarna",
+    role: "SUPER_ADMIN",
+    schoolName: "Cambridge Court Group",
+  },
 };
 
 export class FirebaseAuthService implements AuthService {

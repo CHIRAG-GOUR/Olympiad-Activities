@@ -94,9 +94,22 @@ export default function StudentExamsScreen() {
 
   const studentGrade = Number(user?.grade) || 6;
 
-  // Primary active exam paper for candidates based on their grade and teacher's class settings
+  // Primary active math examination paper for candidates
   const exam = useMemo(() => {
-    // 1. First find an unlocked exam assigned to this student's class (6, 7, 8)
+    // 1. First priority: Primary Math Exam (IMO 2022-23 Class 6 Set B)
+    const primary = exams.find((e) => e.id === PRIMARY_EXAM_ID || e.id === "exam_imo_class6_setb_2022");
+    if (primary && !ExamLockService.isExamLocked(primary.id)) return primary;
+
+    // 2. Any unlocked math exam assigned to this student's class (6, 7, 8)
+    const mathUnlocked = exams.find(
+      (e) =>
+        (e.subjectId === "sub_math" || e.code?.startsWith("IMO")) &&
+        !ExamLockService.isExamLocked(e.id) &&
+        ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)
+    );
+    if (mathUnlocked) return mathUnlocked;
+
+    // 3. Any unlocked exam assigned to this student's class
     const classUnlocked = exams.find(
       (e) =>
         !ExamLockService.isExamLocked(e.id) &&
@@ -104,15 +117,10 @@ export default function StudentExamsScreen() {
     );
     if (classUnlocked) return classUnlocked;
 
-    // 2. Fallback to assigned exam for this class
-    const classAssigned = exams.find((e) =>
-      ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)
-    );
-    if (classAssigned) return classAssigned;
-
-    // 3. Global fallback
+    // 4. Primary fallback
     return (
-      exams.find((e) => e.id === PRIMARY_EXAM_ID) ||
+      primary ||
+      exams.find((e) => e.subjectId === "sub_math" || e.code?.startsWith("IMO")) ||
       exams.find((e) => e.code?.includes("2022-23") && e.code?.includes("SETB")) ||
       exams[0] ||
       null
