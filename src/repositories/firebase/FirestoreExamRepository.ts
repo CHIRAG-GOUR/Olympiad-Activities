@@ -5,40 +5,53 @@ import { collection, doc, getDocs, getDoc, setDoc, deleteDoc } from "firebase/fi
 import { LocalExamRepository } from "../local/LocalExamRepository";
 import { reviveNestedArrays } from "./decodeFirestore";
 import { SEED_EXAMS, preferSeed, reconcileWithSeed } from "@/lib/seedData";
+import { cached, invalidate, CACHE_TTL } from "../cache";
+import { logError, logWarn } from "@/lib/logger";
 
 export class FirestoreExamRepository implements IExamRepository {
-  private localFallback = new LocalExamRepository();
+  private local = new LocalExamRepository();
 
   async getExam(id: string): Promise<Exam | null> {
-    if (!db) return this.localFallback.getExam(id);
-    try {
-      const snap = await getDoc(doc(db, "exams", id));
-      if (snap.exists()) {
-        return preferSeed(reviveNestedArrays(snap.data()) as Exam, SEED_EXAMS, id);
+    if (!db) return this.local.getExam(id);
+    const firestore = db;
+    return cached(`exams:one:${id}`, CACHE_TTL.content, async () => {
+      try {
+        const snap = await getDoc(doc(firestore, "exams", id));
+        if (snap.exists()) {
+          return preferSeed(reviveNestedArrays(snap.data()) as Exam, SEED_EXAMS, id);
+        }
+        return this.local.getExam(id);
+      } catch (e) {
+        // A built-in paper is still available without the network; a paper authored in
+        // the console may be cached on this device. Only when neither exists is the
+        // failure the caller's to report.
+        const fallback = await this.local.getExam(id);
+        if (fallback) {
+          logWarn("FIRESTORE_QUERY_FAILED", { operation: "getExam", examId: id }, e);
+          return fallback;
+        }
+        logError("FIRESTORE_QUERY_FAILED", { operation: "getExam", examId: id }, e);
+        throw e;
       }
-      return this.localFallback.getExam(id);
-    } catch (e) {
-      console.warn("Firestore getExam failed, fallback to local:", e);
-      return this.localFallback.getExam(id);
-    }
+    });
   }
 
   async listExams(): Promise<Exam[]> {
-    const local = await this.localFallback.listExams();
-    if (!db) return local;
-    try {
-      const snap = await getDocs(collection(db, "exams"));
-      if (!snap.empty) {
+    if (!db) return this.local.listExams();
+    const firestore = db;
+    return cached("exams:all", CACHE_TTL.content, async () => {
+      const local = await this.local.listExams();
+      try {
+        const snap = await getDocs(collection(firestore, "exams"));
+        if (snap.empty) return local;
         const remote = snap.docs.map((d) => reviveNestedArrays(d.data()) as Exam);
         const remoteIds = new Set(remote.map((e) => e.id));
-        const missingLocal = local.filter((e) => !remoteIds.has(e.id));
-        return reconcileWithSeed([...remote, ...missingLocal], SEED_EXAMS);
+        return reconcileWithSeed([...remote, ...local.filter((e) => !remoteIds.has(e.id))], SEED_EXAMS);
+      } catch (e) {
+        logWarn("FIRESTORE_QUERY_FAILED", { operation: "listExams" }, e);
+        return local;
       }
-      return local;
-    } catch (e) {
-      console.warn("Firestore listExams failed, fallback to local:", e);
-      return local;
-    }
+    });
   }
 
   async saveExam(exam: Exam): Promise<void> {
@@ -46,10 +59,12 @@ export class FirestoreExamRepository implements IExamRepository {
       try {
         await setDoc(doc(db, "exams", exam.id), exam);
       } catch (e) {
-        console.error("Firestore saveExam failed:", e);
+        logError("FIRESTORE_WRITE_FAILED", { operation: "saveExam", examId: exam.id }, e);
+        throw e;
       }
     }
-    await this.localFallback.saveExam(exam);
+    await this.local.saveExam(exam);
+    invalidate("exams:");
   }
 
   async deleteExam(id: string): Promise<void> {
@@ -57,9 +72,11 @@ export class FirestoreExamRepository implements IExamRepository {
       try {
         await deleteDoc(doc(db, "exams", id));
       } catch (e) {
-        console.error("Firestore deleteExam failed:", e);
+        logError("FIRESTORE_WRITE_FAILED", { operation: "deleteExam", examId: id }, e);
+        throw e;
       }
     }
-    await this.localFallback.deleteExam(id);
+    await this.local.deleteExam(id);
+    invalidate("exams:");
   }
 }

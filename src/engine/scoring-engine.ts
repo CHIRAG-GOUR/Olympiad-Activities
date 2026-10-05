@@ -15,6 +15,11 @@ export interface ScoreEngineInput {
   startedAt: string;
   submittedAt: string;
   submissionType?: "normal" | "auto_timeout" | "force_submit";
+  /**
+   * Deterministic id for this sitting (see ExamPersistenceService.attemptIdFor). Supplying
+   * it makes submission idempotent: a retry produces the same attempt, never a second one.
+   */
+  attemptId?: string;
 }
 
 export interface ScoreEngineResult {
@@ -227,7 +232,7 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
     };
   });
 
-  const attemptId = `att_${exam.id}_${student.studentId}_${Date.now()}`;
+  const attemptId = input.attemptId || `att_${exam.id}_${student.studentId}_${Date.now()}`;
   const reportId = `rep_${attemptId}`;
 
   const attempt: ExamAttempt = {
@@ -243,6 +248,10 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
     scoreDisplay: `${finalTotalMarks}/${maximumPossibleMarks}`,
     percentage,
     isPassed,
+    correctCount,
+    wrongCount,
+    unansweredCount,
+    accuracy,
     questionEvaluations,
     sectionScores,
     totalTimeSpentSeconds,

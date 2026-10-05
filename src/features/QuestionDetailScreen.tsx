@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -11,12 +11,13 @@ import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
 import { Question, QuestionType } from "@/types/question";
 import { evaluateAnswer } from "@/engine/answer-evaluator";
 import { Save, Eye, CheckCircle2, ArrowLeft } from "lucide-react";
+import { InlineStatus } from "@/components/feedback/StatusPanel";
+import { logError, userMessageFor } from "@/lib/logger";
 
-export default function QuestionDetailScreen({ params }: { params: Promise<{ id: string }> }) {
+export default function QuestionDetailScreen({ questionId }: { questionId: string }) {
   // Links resolve into the route group the active role actually owns.
   const { activeRole } = useAuth();
   const roleBase = ROLE_PREFIX[activeRole];
-  const resolvedParams = use(params);
   const router = useRouter();
 
   const [question, setQuestion] = useState<Question | null>(null);
@@ -24,41 +25,78 @@ export default function QuestionDetailScreen({ params }: { params: Promise<{ id:
   const [previewAnswer, setPreviewAnswer] = useState<any>(null);
   const [testEvalResult, setTestEvalResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
-      const q = await questionService.getQuestion(resolvedParams.id);
-      if (q) {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const q = questionId ? await questionService.getQuestion(questionId) : null;
+        if (cancelled) return;
         setQuestion(q);
-        setFormData(q);
+        if (q) setFormData(q);
+      } catch (err) {
+        if (cancelled) return;
+        logError("FIRESTORE_QUERY_FAILED", { operation: "questionDetail", questionId }, err);
+        setLoadError(err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     }
     load();
-  }, [resolvedParams.id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [questionId, reloadKey]);
 
   if (loading) {
     return <div className="p-8 text-center text-[14px] text-olympiad-textMuted">Loading question studio...</div>;
   }
 
-  if (!question) {
+  if (loadError) {
     return (
-      <div className="p-8 text-center space-y-3">
-        <h2 className="text-xl font-bold text-olympiad-deepBlue">Question Not Found</h2>
-        <Link href={`${roleBase}/questions`} className="text-[14px] text-olympiad-primaryBlue hover:underline">
-          Return to Question Repository
-        </Link>
-      </div>
+      <InlineStatus
+        title="Unable to load this question"
+        message={userMessageFor(loadError, "this question")}
+        actions={[
+          { label: "Back to questions", href: `${roleBase}/questions` },
+          { label: "Retry", onClick: () => setReloadKey((n) => n + 1), primary: true },
+        ]}
+      />
     );
   }
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await questionService.saveQuestion({
-      ...(formData as Question),
-      updatedAt: new Date().toISOString(),
-    });
-    router.push(`${roleBase}/questions`);
+  if (!question) {
+    return (
+      <InlineStatus
+        tone="notfound"
+        title="Question not found"
+        message="No question matches this link. It may have been deleted or the link is incomplete."
+        actions={[{ label: "Back to questions", href: `${roleBase}/questions` }]}
+      />
+    );
+  }
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await questionService.saveQuestion({
+        ...(formData as Question),
+        updatedAt: new Date().toISOString(),
+      });
+      router.push(`${roleBase}/questions`);
+    } catch (err) {
+      // Stay in the editor with every change intact so nothing typed is lost.
+      setSaveError(userMessageFor(err, "the server").replace("loaded", "saved"));
+      setSaving(false);
+    }
   };
 
   const handleTestEvaluate = () => {
@@ -92,11 +130,18 @@ export default function QuestionDetailScreen({ params }: { params: Promise<{ id:
           <button
             type="button"
             onClick={handleSave}
-            className="h-[42px] px-6 bg-olympiad-primaryBlue hover:bg-olympiad-deepBlue text-white text-[14px] font-bold rounded shadow-subtle flex items-center gap-2 transition-all"
+            disabled={saving}
+            className="h-[42px] px-6 bg-olympiad-primaryBlue hover:bg-olympiad-deepBlue disabled:opacity-60 text-white text-[14px] font-bold rounded shadow-subtle flex items-center gap-2 transition-all"
           >
-            <Save className="w-4 h-4" /> Update Question
+            <Save className="w-4 h-4" /> {saving ? "Saving…" : "Update Question"}
           </button>
         </div>
+
+        {saveError && (
+          <div role="alert" className="p-3 rounded-lg border border-rose-200 bg-rose-50 text-[13px] font-semibold text-rose-800">
+            Your changes were not saved. {saveError}
+          </div>
+        )}
 
         {/* 60 / 40 Split Container */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -125,20 +170,20 @@ export default function QuestionDetailScreen({ params }: { params: Promise<{ id:
 
               <div>
                 <label className="text-[13px] font-bold text-olympiad-deepBlue mb-1.5 block">Subject</label>
+                {/* Ids must match the subjects papers are filed under (see seedData). */}
                 <select
-                  value={formData.subjectId || "sub_math"}
+                  value={formData.subjectId || "sub_mathematics"}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
                       subjectId: e.target.value,
-                      subjectName: e.target.value === "sub_math" ? "Mathematics" : "Science",
+                      subjectName: e.target.value === "sub_english" ? "English" : "Mathematics",
                     })
                   }
                   className="w-full h-[46px] px-4 text-[14px] font-semibold bg-olympiad-bg border border-olympiad-border rounded-md text-olympiad-deepBlue focus:bg-white cursor-pointer"
                 >
-                  <option value="sub_math">Mathematics</option>
-                  <option value="sub_science">Science</option>
-                  <option value="sub_reasoning">Logical Reasoning</option>
+                  <option value="sub_mathematics">Mathematics</option>
+                  <option value="sub_english">English</option>
                 </select>
               </div>
             </div>
@@ -151,10 +196,19 @@ export default function QuestionDetailScreen({ params }: { params: Promise<{ id:
                   onChange={(e) => setFormData({ ...formData, section: e.target.value as any })}
                   className="w-full h-[46px] px-4 text-[14px] font-medium bg-olympiad-bg border border-olympiad-border rounded-md text-olympiad-text focus:bg-white cursor-pointer"
                 >
-                  <option value="Logical Reasoning">Logical Reasoning</option>
-                  <option value="Mathematical Reasoning">Mathematical Reasoning</option>
-                  <option value="Everyday Mathematics">Everyday Mathematics</option>
-                  <option value="Achievers Section">Achievers Section</option>
+                  {Array.from(
+                    new Set([
+                      ...(formData.section ? [formData.section] : []),
+                      "Logical Reasoning",
+                      "Mathematical Reasoning",
+                      "Everyday Mathematics",
+                      "Achievers Section",
+                    ])
+                  ).map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
                 </select>
               </div>
 

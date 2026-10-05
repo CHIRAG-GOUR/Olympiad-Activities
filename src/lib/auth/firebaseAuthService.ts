@@ -137,7 +137,9 @@ export class FirebaseAuthService implements AuthService {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
           const data = snap.data() as Partial<UserProfile>;
-          if (isRole(data.role)) {
+          // The verified claim wins; the document (which its owner can write) only
+          // supplies a role when no claim has been issued.
+          if (isRole(data.role) && !claimed) {
             role = data.role;
             documented = true;
           }
@@ -147,6 +149,16 @@ export class FirebaseAuthService implements AuthService {
         }
       } catch {
         // A denied or offline read must not block sign-in; the claim still governs.
+        // Without a claim, keep the role this device last verified for this same account
+        // rather than demoting a teacher or administrator to STUDENT on a network blip.
+        const cached = this.getCachedSession();
+        if (!claimed && cached?.profile.id === user.uid) {
+          role = cached.profile.role;
+          documented = true;
+          name = name || cached.profile.name;
+          schoolName = cached.profile.schoolName;
+          grade = cached.profile.grade;
+        }
       }
     }
 
@@ -202,131 +214,25 @@ export class FirebaseAuthService implements AuthService {
       return { ok: false, code: "unknown-email", message: "Authentication is not configured." };
     }
 
-    let user: FirebaseUser | null = null;
+    let user: FirebaseUser;
     let normalizedEmail = email.trim().toLowerCase();
-    
-    // Normalize aliases for demo students
-    if (normalizedEmail === "demostudent1" || normalizedEmail === "demostudent1@olympiad.org" || normalizedEmail === "student1" || normalizedEmail === "student1@skillizee.io" || normalizedEmail === "student1@olympiad.org") {
-      normalizedEmail = "demostudent1@olympiad.org";
-    } else if (normalizedEmail === "demostudent2" || normalizedEmail === "demostudent2@olympiad.org" || normalizedEmail === "student2" || normalizedEmail === "student2@skillizee.io" || normalizedEmail === "student2@olympiad.org") {
-      normalizedEmail = "demostudent2@olympiad.org";
-    } else if (normalizedEmail === "demostudent3" || normalizedEmail === "demostudent3@olympiad.org" || normalizedEmail === "student3" || normalizedEmail === "student3@skillizee.io" || normalizedEmail === "student3@olympiad.org") {
-      normalizedEmail = "demostudent3@olympiad.org";
-    }
 
-    const PRESET_ACCOUNTS: Record<string, { name: string; role: UserRole; grade?: number; schoolName?: string; defaultPass?: string }> = {
-      "tech@skillizee.io": {
-        name: "Tech Administrator",
-        role: "SUPER_ADMIN",
-        schoolName: "Olympiad Examination Council",
-        defaultPass: "787700",
-      },
-      "demostudent1@olympiad.org": {
-        name: "DemoStudent1",
-        role: "STUDENT",
-        grade: 6,
-        schoolName: "Cambridge Court International School (CCIS)",
-        defaultPass: "student123",
-      },
-      "demostudent2@olympiad.org": {
-        name: "DemoStudent2",
-        role: "STUDENT",
-        grade: 6,
-        schoolName: "Cambridge Court International School (CCIS)",
-        defaultPass: "student123",
-      },
-      "demostudent3@olympiad.org": {
-        name: "DemoStudent3",
-        role: "STUDENT",
-        grade: 6,
-        schoolName: "Cambridge Court International School (CCIS)",
-        defaultPass: "student123",
-      },
-      "swati123@gmail.com": {
-        name: "Swati Ma'am",
-        role: "SUPER_ADMIN",
-        schoolName: "National Olympiad Council",
-      },
-      "aarna@cambridgecourtgroup.com": {
-        name: "Aarna",
-        role: "SUPER_ADMIN",
-        schoolName: "Cambridge Court Group",
-      },
-      "pa1@skillizee.io": {
-        name: "Chirag Gour",
-        role: "SUPER_ADMIN",
-        schoolName: "National Olympiad Council",
-      },
-    };
+    // Short aliases for the demo candidate accounts ("demostudent1", "student1", …).
+    const demo = /^(?:demo)?student([123])(?:@(?:olympiad\.org|skillizee\.io))?$/.exec(normalizedEmail);
+    if (demo) normalizedEmail = `demostudent${demo[1]}@olympiad.org`;
 
-    const isPreset = Boolean(PRESET_ACCOUNTS[normalizedEmail]);
-    const effectivePass = (isPreset && !password && PRESET_ACCOUNTS[normalizedEmail].defaultPass)
-      ? PRESET_ACCOUNTS[normalizedEmail].defaultPass!
-      : password;
-
+    // Firebase Authentication is the only credential check. There is no built-in account,
+    // no password in this bundle, and no locally fabricated session when sign-in fails:
+    // a failed sign-in is a failed sign-in. Accounts are provisioned in the Firebase
+    // console or with `npm run firebase:staff`.
     try {
-      // Ensure local browser persistence is active so user stays logged in
       await setPersistence(auth, browserLocalPersistence);
-      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, effectivePass);
+      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       user = credential.user;
-    } catch (err: any) {
-      const errCode = err?.code || "";
-
-      // If user not found or auth fails and this is a preset account, auto-register in Firebase Auth
-      if (
-        (errCode === "auth/user-not-found" || errCode === "auth/invalid-credential" || errCode === "auth/invalid-login-credentials" || errCode === "auth/wrong-password") &&
-        isPreset
-      ) {
-        try {
-          const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, effectivePass);
-          user = credential.user;
-          const preset = PRESET_ACCOUNTS[normalizedEmail];
-          await updateProfile(user, { displayName: preset.name });
-          if (db) {
-            await setDoc(doc(db, "users", user.uid), {
-              id: user.uid,
-              email: normalizedEmail,
-              name: preset.name,
-              role: preset.role,
-              grade: preset.grade,
-              schoolName: preset.schoolName,
-              status: "active",
-              createdAt: new Date().toISOString(),
-            });
-          }
-        } catch {
-          // If creation also failed, fallback to local preset session below
-        }
-      }
-
-      if (!user) {
-        // Fallback for preset accounts if Firebase network fails or throws wrong-password
-        if (isPreset) {
-          const preset = PRESET_ACCOUNTS[normalizedEmail];
-          // For tech@skillizee.io, verify password matches 787700 if provided
-          if (normalizedEmail === "tech@skillizee.io" && password && password !== "787700") {
-            return { ok: false, code: "wrong-password", message: "Invalid password for Super Admin tech@skillizee.io. (Use 787700)" };
-          }
-
-          const mockProfile: UserProfile = {
-            id: `usr_${normalizedEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
-            email: normalizedEmail,
-            name: preset.name,
-            role: preset.role,
-            grade: preset.grade,
-            schoolName: preset.schoolName,
-            status: "active",
-            createdAt: new Date().toISOString(),
-          };
-          this.writeActiveRole(role);
-          const session: StoredSession = { profile: mockProfile, activeRole: role, issuedAt: new Date().toISOString() };
-          this.writeCachedSession(session);
-          return { ok: true, profile: mockProfile, activeRole: role };
-        }
-
-        const code = mapAuthError(errCode);
-        return { ok: false, code, message: MESSAGES[code] };
-      }
+    } catch (err: unknown) {
+      const errCode = (err as { code?: string })?.code || "";
+      const code = mapAuthError(errCode);
+      return { ok: false, code, message: MESSAGES[code] };
     }
 
     const profile = await this.profileFor(user);
@@ -499,11 +405,12 @@ export class FirebaseAuthService implements AuthService {
       });
     }
 
-    // If Firebase reports no user, check if we had a cached session
+    // Firebase restores a signed-in user from its own persistence even when offline, so
+    // "no user" here means signed out (or revoked). A cached profile must not outlive the
+    // credential it was issued for.
     if (!user) {
-      const cached = this.getCachedSession();
-      // If we are definitely offline or no Firebase session, return cached if valid
-      return cached;
+      this.clearCachedSession();
+      return null;
     }
 
     const profile = await this.profileFor(user);
@@ -545,12 +452,6 @@ export class FirebaseAuthService implements AuthService {
 
     return onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        const cached = this.getCachedSession();
-        // If there's an active preset mock session, preserve it on background empty Firebase state
-        if (cached && (cached.profile.id.startsWith("usr_") || cached.profile.email.includes("demostudent") || cached.profile.email === "tech@skillizee.io")) {
-          callback(cached);
-          return;
-        }
         this.clearCachedSession();
         callback(null);
         return;

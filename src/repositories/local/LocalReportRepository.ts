@@ -20,6 +20,8 @@ export class LocalReportRepository implements IReportRepository {
   }
 
   async getReportByAttemptId(attemptId: string): Promise<ExamReport | null> {
+    const direct = await idbClient.get<ExamReport>("reports", `rep_${attemptId}`);
+    if (direct) return direct;
     const all = await this.loadAll();
     return all.find((r) => r.attemptId === attemptId) || null;
   }
@@ -35,6 +37,11 @@ export class LocalReportRepository implements IReportRepository {
     }
     if (filters.studentId) {
       filtered = filtered.filter((r) => r.studentId === filters.studentId);
+    }
+    if (filters.ownerUid) {
+      filtered = filtered.filter(
+        (r) => (r as ExamReport & { ownerUid?: string }).ownerUid === filters.ownerUid || r.studentId === filters.ownerUid
+      );
     }
     if (filters.classLevel !== undefined) {
       filtered = filtered.filter((r) => String(r.classLevel) === String(filters.classLevel));

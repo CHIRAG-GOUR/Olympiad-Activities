@@ -4,6 +4,8 @@ export interface ReportFilters {
   examId?: string;
   studentId?: string;
   classLevel?: number | string;
+  /** Restrict to one account's reports (required for candidates — see AttemptFilters). */
+  ownerUid?: string;
 }
 
 export interface IReportRepository {

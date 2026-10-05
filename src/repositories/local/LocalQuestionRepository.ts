@@ -83,6 +83,12 @@ export class LocalQuestionRepository implements IQuestionRepository {
     return questions;
   }
 
+  async getQuestionsByIds(ids: string[]): Promise<Question[]> {
+    const questions = await this.load();
+    const byId = new Map(questions.map((q) => [q.id, q]));
+    return ids.map((id) => byId.get(id)).filter((q): q is Question => Boolean(q));
+  }
+
   async saveQuestion(question: Question): Promise<void> {
     const questions = await this.load();
     const idx = questions.findIndex((q) => q.id === question.id);

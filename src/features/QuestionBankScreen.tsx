@@ -1,5 +1,6 @@
 "use client";
 
+import { questionDetailRoute } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
 import React, { useState, useEffect, useMemo } from "react";
@@ -442,7 +443,7 @@ export default function QuestionBankScreen() {
                       </button>
 
                       <Link
-                        href={`${roleBase}/questions/${q.id}`}
+                        href={questionDetailRoute(roleBase, q.id)}
                         className="px-3 py-1.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
                       >
                         <Eye className="w-3.5 h-3.5" />

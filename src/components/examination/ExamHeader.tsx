@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Clock, ShieldCheck, User } from "lucide-react";
+import { Clock, Wifi, WifiOff, CloudUpload, AlertTriangle } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 interface ExamHeaderProps {
@@ -10,16 +10,17 @@ interface ExamHeaderProps {
   candidateName?: string;
   candidateId?: string;
   timeRemainingSeconds: number;
-  isSaving?: boolean;
+  /** Where the candidate's work is saved right now — see useExamSyncStatus. */
+  sync?: { tone: "ok" | "pending" | "offline" | "error"; label: string };
 }
 
 export function ExamHeader({
   olympiadTitle,
   examCode,
-  candidateName = "Candidate",
-  candidateId = "STU-10492",
+  candidateName,
+  candidateId,
   timeRemainingSeconds,
-  isSaving = false,
+  sync,
 }: ExamHeaderProps) {
   const isCritical = timeRemainingSeconds <= 180;
 
@@ -48,10 +49,38 @@ export function ExamHeader({
 
         {/* Center / Right: Candidate Details */}
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
-          {/* Autosave Indicator */}
-          {isSaving && (
-            <span className="text-amber-300 text-xs font-bold animate-pulse">
-              Syncing...
+          {(candidateName || candidateId) && (
+            <div className="hidden md:block text-right leading-tight">
+              {candidateName && <div className="text-xs font-bold text-white truncate max-w-[180px]">{candidateName}</div>}
+              {candidateId && <div className="text-[10px] font-mono text-white/75">{candidateId}</div>}
+            </div>
+          )}
+
+          {/* Save / connection status — the candidate always knows their work is safe. */}
+          {sync && (
+            <span
+              role="status"
+              aria-live="polite"
+              className={`flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-md ${
+                sync.tone === "offline"
+                  ? "bg-amber-400 text-amber-950"
+                  : sync.tone === "error"
+                  ? "bg-rose-100 text-rose-800"
+                  : sync.tone === "pending"
+                  ? "bg-white/15 text-white"
+                  : "bg-white/10 text-emerald-100"
+              }`}
+            >
+              {sync.tone === "offline" ? (
+                <WifiOff className="w-3.5 h-3.5" />
+              ) : sync.tone === "error" ? (
+                <AlertTriangle className="w-3.5 h-3.5" />
+              ) : sync.tone === "pending" ? (
+                <CloudUpload className="w-3.5 h-3.5" />
+              ) : (
+                <Wifi className="w-3.5 h-3.5" />
+              )}
+              <span>{sync.label}</span>
             </span>
           )}
 

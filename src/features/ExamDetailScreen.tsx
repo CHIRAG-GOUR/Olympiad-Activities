@@ -2,38 +2,51 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { examService, questionService } from "@/services";
 import { Exam } from "@/types/exam";
 import { Question } from "@/types/question";
-import { ArrowLeft, Play, Clock, Award, Users, CheckCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Play } from "lucide-react";
+import { examRoute, questionDetailRoute } from "@/lib/routes";
+import { InlineStatus } from "@/components/feedback/StatusPanel";
+import { logError, userMessageFor } from "@/lib/logger";
 
-export default function ExamDetailScreen({ params }: { params: Promise<{ id: string }> }) {
+export default function ExamDetailScreen({ examId }: { examId: string }) {
   // Links resolve into the route group the active role actually owns.
   const { activeRole } = useAuth();
   const roleBase = ROLE_PREFIX[activeRole];
-  const resolvedParams = use(params);
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
-      const [e, qList] = await Promise.all([
-        examService.getExam(resolvedParams.id),
-        questionService.listQuestions(),
-      ]);
-      setExam(e);
-      if (e) {
-        const examQuestions = qList.filter((q) => e.questionIds.includes(q.id));
-        setQuestions(examQuestions);
+      setLoading(true);
+      setError(null);
+      try {
+        const e = examId ? await examService.getExam(examId) : null;
+        const qs = e ? await questionService.getQuestionsByIds(e.questionIds) : [];
+        if (cancelled) return;
+        setExam(e);
+        setQuestions(qs);
+      } catch (err) {
+        if (cancelled) return;
+        logError("EXAM_LOAD_FAILED", { examId, operation: "examDetail" }, err);
+        setError(err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     }
     load();
-  }, [resolvedParams.id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [examId, attempt]);
 
   if (loading) {
     return (
@@ -44,14 +57,27 @@ export default function ExamDetailScreen({ params }: { params: Promise<{ id: str
     );
   }
 
+  if (error) {
+    return (
+      <InlineStatus
+        title="Unable to load this examination"
+        message={userMessageFor(error, "this examination")}
+        actions={[
+          { label: "Back to examinations", href: `${roleBase}/exams` },
+          { label: "Retry", onClick: () => setAttempt((n) => n + 1), primary: true },
+        ]}
+      />
+    );
+  }
+
   if (!exam) {
     return (
-      <div className="p-10 text-center space-y-3">
-        <h2 className="text-xl font-bold text-navy-900">Examination Not Found</h2>
-        <Link href={`${roleBase}/exams`} className="text-[14px] text-olympiad-primary font-bold hover:underline">
-          Return to Examinations
-        </Link>
-      </div>
+      <InlineStatus
+        tone="notfound"
+        title="Examination not found"
+        message="No examination matches this link. It may have been deleted or the link is incomplete."
+        actions={[{ label: "Back to examinations", href: `${roleBase}/exams` }]}
+      />
     );
   }
 
@@ -62,7 +88,7 @@ export default function ExamDetailScreen({ params }: { params: Promise<{ id: str
         subtitle={`${exam.code} • ${exam.subjectName} • Grade ${exam.grade}`}
         actionButton={{
           label: "Launch Student Exam",
-          href: `/exam/${exam.id}`,
+          href: examRoute(exam.id),
           icon: Play,
         }}
       />
@@ -77,7 +103,7 @@ export default function ExamDetailScreen({ params }: { params: Promise<{ id: str
           </Link>
 
           <Link
-            href={`/exam/${exam.id}`}
+            href={examRoute(exam.id)}
             className="h-[42px] px-5 bg-olympiad-primary hover:bg-olympiad-deep text-white text-[14px] font-bold rounded-md shadow-subtle flex items-center gap-2 transition-colors"
           >
             <Play className="w-4 h-4 fill-current" />
@@ -147,7 +173,7 @@ export default function ExamDetailScreen({ params }: { params: Promise<{ id: str
                     +{q.marks}
                   </span>
                   <Link
-                    href={`${roleBase}/questions/${q.id}`}
+                    href={questionDetailRoute(roleBase, q.id)}
                     className="h-8 px-3 bg-[#EAF2FC] hover:bg-[#2468B2] hover:text-white text-[#1C5190] rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1"
                     title="Inspect & Edit Question"
                   >

@@ -3,7 +3,7 @@ import { DeviceInfo } from "@/types/session";
 export function getClientDeviceInfo(): DeviceInfo {
   if (typeof window === "undefined") {
     return {
-      ip: "127.0.0.1",
+      ip: "—",
       device: "Desktop",
       browser: "Server / Headless",
       os: "Unknown",
@@ -26,12 +26,10 @@ export function getClientDeviceInfo(): DeviceInfo {
   if (/Mobi|Android/i.test(ua)) device = "Mobile";
   if (/iPad|Tablet/i.test(ua) || (navigator.maxTouchPoints > 1 && /Mac/i.test(ua))) device = "Tablet";
 
-  // Simulated local subnet IP for exam monitoring visibility
-  const mockSubnet = Math.floor(Math.random() * 200) + 10;
-  const ip = `192.168.1.${mockSubnet}`;
-
+  // A browser cannot see its own public IP; only a server could record it. Report it as
+  // unknown rather than inventing an address that then appears in reports as fact.
   return {
-    ip,
+    ip: "—",
     device,
     browser,
     os,

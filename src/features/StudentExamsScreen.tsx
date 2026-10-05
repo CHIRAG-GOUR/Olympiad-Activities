@@ -1,5 +1,6 @@
 "use client";
 
+import { examRoute, resultRoute } from "@/lib/routes";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { examRepository, questionRepository, attemptRepository } from "@/repositories";
@@ -294,7 +295,7 @@ export default function StudentExamsScreen() {
 
             <div className="space-y-2 pt-2">
               <Link
-                href={`/exam/${exam.id}`}
+                href={examRoute(exam.id)}
                 className="w-full h-12 rounded-xl bg-[#2468B2] hover:bg-[#1C5190] active:bg-[#153E6F] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {resumableSession ? (
@@ -312,7 +313,7 @@ export default function StudentExamsScreen() {
 
               {latestAttempt && (
                 <Link
-                  href={`/results/${latestAttempt.id}`}
+                  href={resultRoute(latestAttempt.id)}
                   className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <FileText className="w-3.5 h-3.5" />
@@ -402,7 +403,7 @@ export default function StudentExamsScreen() {
           <div className="space-y-3">
             {myAttempts.map((a) => (
               <Card key={a.id} interactive className="p-4 sm:p-5 hover:border-[#2468B2]">
-                <Link href={`/results/${a.id}`} className="flex items-center justify-between gap-4">
+                <Link href={resultRoute(a.id)} className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-5 h-5" />

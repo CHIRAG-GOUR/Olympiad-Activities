@@ -1,5 +1,6 @@
 "use client";
 
+import { questionDetailRoute } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
 import React, { useState, useEffect } from "react";
@@ -327,7 +328,7 @@ export default function QuestionsScreen() {
                         <td className="p-4 align-top text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
-                              href={`${roleBase}/questions/${q.id}`}
+                              href={questionDetailRoute(roleBase, q.id)}
                               className="h-8 px-2.5 bg-[#EAF2FC] hover:bg-[#2468B2] hover:text-white text-[#1C5190] rounded-lg text-xs font-bold inline-flex items-center gap-1 transition-all"
                               title="Inspect & Edit Question"
                             >

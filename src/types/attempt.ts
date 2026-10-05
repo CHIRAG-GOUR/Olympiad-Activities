@@ -40,6 +40,12 @@ export interface ExamAttempt {
   scoreDisplay: string; // "45/50"
   percentage: number;
   isPassed: boolean;
+  /** Counts as decided by the scoring engine at submission (absent on older attempts). */
+  correctCount?: number;
+  wrongCount?: number;
+  unansweredCount?: number;
+  /** correct ÷ attempted, in percent. */
+  accuracy?: number;
   
   // Detailed data for teacher/admin view
   questionEvaluations: QuestionEvaluationResult[];

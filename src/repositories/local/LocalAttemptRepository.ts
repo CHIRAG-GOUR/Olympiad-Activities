@@ -33,6 +33,11 @@ export class LocalAttemptRepository implements IAttemptRepository {
     if (filters.studentId) {
       filtered = filtered.filter((a) => a.student.studentId === filters.studentId);
     }
+    if (filters.ownerUid) {
+      filtered = filtered.filter(
+        (a) => (a as ExamAttempt & { ownerUid?: string }).ownerUid === filters.ownerUid || a.student?.studentId === filters.ownerUid
+      );
+    }
     if (filters.isPassed !== undefined) {
       filtered = filtered.filter((a) => a.isPassed === filters.isPassed);
     }

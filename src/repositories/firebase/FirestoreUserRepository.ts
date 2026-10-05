@@ -3,6 +3,8 @@ import { UserProfile, UserRole } from "@/lib/auth/rbac";
 import { db } from "@/services/firebase/config";
 import { collection, doc, getDocs, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { LocalUserRepository } from "../local/LocalUserRepository";
+import { cached, invalidate, CACHE_TTL } from "../cache";
+import { logError, logWarn } from "@/lib/logger";
 
 export class FirestoreUserRepository implements IUserRepository {
   private localFallback = new LocalUserRepository();
@@ -16,27 +18,28 @@ export class FirestoreUserRepository implements IUserRepository {
       }
       return this.localFallback.getUser(id);
     } catch (e) {
-      console.warn("Firestore getUser failed, fallback to local:", e);
+      logWarn("FIRESTORE_QUERY_FAILED", { operation: "getUser", id }, e);
       return this.localFallback.getUser(id);
     }
   }
 
+  /**
+   * The directory, for staff. Failures are raised rather than answered from this browser's
+   * local copy: an empty or stale list presented as "the students" is wrong data.
+   */
   async listUsers(role?: UserRole): Promise<UserProfile[]> {
     if (!db) return this.localFallback.listUsers(role);
-    try {
-      const snap = await getDocs(collection(db, "users"));
-      if (!snap.empty) {
-        let users = snap.docs.map((d) => d.data() as UserProfile);
-        if (role) {
-          users = users.filter((u) => u.role === role);
-        }
-        return users;
+    const firestore = db;
+    const users = await cached("users:all", CACHE_TTL.records, async () => {
+      try {
+        const snap = await getDocs(collection(firestore, "users"));
+        return snap.docs.map((d) => d.data() as UserProfile);
+      } catch (e) {
+        logError("FIRESTORE_QUERY_FAILED", { operation: "listUsers" }, e);
+        throw e;
       }
-      return this.localFallback.listUsers(role);
-    } catch (e) {
-      console.warn("Firestore listUsers failed, fallback to local:", e);
-      return this.localFallback.listUsers(role);
-    }
+    });
+    return role ? users.filter((u) => u.role === role) : users;
   }
 
   async saveUser(user: UserProfile): Promise<void> {
@@ -44,10 +47,12 @@ export class FirestoreUserRepository implements IUserRepository {
       try {
         await setDoc(doc(db, "users", user.id), user);
       } catch (e) {
-        console.error("Firestore saveUser failed:", e);
+        logError("FIRESTORE_WRITE_FAILED", { operation: "saveUser", id: user.id }, e);
+        throw e;
       }
     }
     await this.localFallback.saveUser(user);
+    invalidate("users:");
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -55,10 +60,12 @@ export class FirestoreUserRepository implements IUserRepository {
       try {
         await deleteDoc(doc(db, "users", id));
       } catch (e) {
-        console.error("Firestore deleteUser failed:", e);
+        logError("FIRESTORE_WRITE_FAILED", { operation: "deleteUser", id: id }, e);
+        throw e;
       }
     }
     await this.localFallback.deleteUser(id);
+    invalidate("users:");
   }
 
   async countUsers(role?: UserRole): Promise<number> {

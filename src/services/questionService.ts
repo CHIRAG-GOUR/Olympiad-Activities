@@ -10,6 +10,10 @@ export class QuestionService {
     return questionRepository.listQuestions(filters);
   }
 
+  async getQuestionsByIds(ids: string[]): Promise<Question[]> {
+    return questionRepository.getQuestionsByIds(ids);
+  }
+
   async saveQuestion(question: Question): Promise<void> {
     return questionRepository.saveQuestion(question);
   }

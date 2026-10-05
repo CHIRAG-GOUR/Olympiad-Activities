@@ -1,5 +1,6 @@
 "use client";
 
+import { examRoute, resultRoute } from "@/lib/routes";
 import React from "react";
 import Link from "next/link";
 import {
@@ -398,7 +399,7 @@ export function ExaminationList({ exams }: { exams: ExamInsight[] }) {
               ) : (
                 <span className="text-[12.5px] text-[#77839A]">No graded attempts yet</span>
               )}
-              <ActionLink href={`/exam/${e.exam.id}`} tone="secondary" className="h-11 sm:h-9 text-[12.5px]">
+              <ActionLink href={examRoute(e.exam.id)} tone="secondary" className="h-11 sm:h-9 text-[12.5px]">
                 Open examination
               </ActionLink>
             </div>
@@ -658,7 +659,7 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
               </td>
               <td className="px-5 py-3.5 text-right">
                 <Link
-                  href={`/results/${a.id}`}
+                  href={resultRoute(a.id)}
                   className="text-[12.5px] font-semibold text-[#2468B2] hover:text-[#1C5190] whitespace-nowrap transition-colors"
                 >
                   View report →
@@ -674,7 +675,7 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
         {attempts.slice(0, limit).map((a) => (
           <li key={a.id}>
             <Link
-              href={`/results/${a.id}`}
+              href={resultRoute(a.id)}
               className="flex items-center gap-4 px-4 py-4 active:bg-white/80 min-h-[72px]"
             >
               <div className="min-w-0 flex-1">
@@ -731,7 +732,7 @@ export function ContinueExamCard({
             <span className="font-mono tabular-nums">{formatClock(remaining)}</span> left
           </p>
         </div>
-        <ActionLink href={`/exam/${session.examId}`} tone="primary" icon={Play}>
+        <ActionLink href={examRoute(session.examId)} tone="primary" icon={Play}>
           Continue examination
         </ActionLink>
       </div>

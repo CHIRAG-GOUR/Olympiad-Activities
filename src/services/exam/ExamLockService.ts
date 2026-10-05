@@ -1,7 +1,9 @@
 "use client";
 
-import { db, isRealFirebaseConfigured } from "@/services/firebase/config";
-import { doc, getDoc, setDoc, onSnapshot, collection } from "firebase/firestore";
+import { db, auth, isRealFirebaseConfigured } from "@/services/firebase/config";
+import { doc, setDoc, onSnapshot, collection, type Unsubscribe } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { logError, logWarn } from "@/lib/logger";
 
 const STORAGE_LOCKS_KEY = "olympiad_exam_locks_v3";
 const STORAGE_CLASSES_KEY = "olympiad_exam_classes_v3";
@@ -30,11 +32,22 @@ class ExamLockServiceClass {
   private lockState: Record<string, boolean> = {};
   private classState: Record<string, number[]> = {};
   private initialized = false;
+  private snapshotUnsub: Unsubscribe | null = null;
+  private readyResolve: (() => void) | null = null;
+  /** Settles once the server's lock state has been received (or could not be). */
+  private readyPromise: Promise<void> = new Promise((r) => (this.readyResolve = r));
+  private ready = false;
 
   constructor() {
     if (typeof window !== "undefined") {
       this.init();
     }
+  }
+
+  private markReady() {
+    if (this.ready) return;
+    this.ready = true;
+    this.readyResolve?.();
   }
 
   private init() {
@@ -49,30 +62,57 @@ class ExamLockServiceClass {
       if (rawClasses) this.classState = JSON.parse(rawClasses);
     } catch {}
 
-    // Listen to Firestore real-time updates if configured
-    if (isRealFirebaseConfigured && db) {
-      try {
-        onSnapshot(
-          collection(db, "exam_locks"),
-          (snapshot) => {
-            snapshot.forEach((d) => {
-              const data = d.data();
-              if (typeof data?.isLocked === "boolean") {
-                this.lockState[d.id] = data.isLocked;
-              }
-              if (Array.isArray(data?.visibleClasses)) {
-                this.classState[d.id] = data.visibleClasses.map(Number).filter(Boolean);
-              }
-            });
-            this.saveLocal();
-            this.notify();
-          },
-          (err) => {
-            console.warn("[ExamLockService] Snapshot listener warning:", err);
-          }
-        );
-      } catch {}
+    if (!isRealFirebaseConfigured || !db || !auth) {
+      this.markReady();
+      return;
     }
+
+    // The lock collection is only readable when signed in. Listening before sign-in was
+    // refused by the rules and never retried, so lock changes made by a teacher did not
+    // reach candidates until a full reload. The listener now follows the auth state: one
+    // live listener per signed-in session, torn down on sign-out.
+    onAuthStateChanged(auth, (user) => {
+      this.snapshotUnsub?.();
+      this.snapshotUnsub = null;
+      if (!user || !db) {
+        this.markReady();
+        return;
+      }
+      this.snapshotUnsub = onSnapshot(
+        collection(db, "exam_locks"),
+        (snapshot) => {
+          snapshot.forEach((d) => {
+            const data = d.data();
+            if (typeof data?.isLocked === "boolean") {
+              this.lockState[d.id] = data.isLocked;
+            }
+            if (Array.isArray(data?.visibleClasses)) {
+              this.classState[d.id] = data.visibleClasses.map(Number).filter(Boolean);
+            }
+          });
+          this.saveLocal();
+          this.markReady();
+          this.notify();
+        },
+        (err) => {
+          logWarn("FIRESTORE_QUERY_FAILED", { operation: "exam_locks.listen" }, err);
+          this.markReady();
+        }
+      );
+    });
+  }
+
+  /**
+   * Resolves when the server's lock state is known, or after `timeoutMs` with whatever this
+   * device last saw — a candidate is never stuck behind a slow connection.
+   */
+  whenReady(timeoutMs = 4000): Promise<void> {
+    if (this.ready) return Promise.resolve();
+    return Promise.race([this.readyPromise, new Promise<void>((r) => setTimeout(r, timeoutMs))]);
+  }
+
+  isReady(): boolean {
+    return this.ready;
   }
 
   private saveLocal() {
@@ -88,7 +128,7 @@ class ExamLockServiceClass {
       try {
         fn();
       } catch (e) {
-        console.warn("[ExamLockService] Listener error:", e);
+        logWarn("UNHANDLED_UI_ERROR", { operation: "exam_locks.notify" }, e);
       }
     });
   }
@@ -139,6 +179,8 @@ class ExamLockServiceClass {
    * Set lock status for an exam.
    */
   async setExamLocked(examId: string, locked: boolean): Promise<void> {
+    const hadPrevious = examId in this.lockState;
+    const previous = this.lockState[examId];
     this.lockState[examId] = locked;
     this.saveLocal();
     this.notify();
@@ -156,7 +198,14 @@ class ExamLockServiceClass {
           { merge: true }
         );
       } catch (err) {
-        console.warn("[ExamLockService] Firestore write failed:", err);
+        // Candidates read the server's state, so a change that did not reach it must not
+        // be shown to staff as if it had.
+        if (hadPrevious) this.lockState[examId] = previous;
+        else delete this.lockState[examId];
+        this.saveLocal();
+        this.notify();
+        logError("FIRESTORE_WRITE_FAILED", { operation: "exam_locks.write", examId }, err);
+        throw err;
       }
     }
   }
@@ -178,6 +227,7 @@ class ExamLockServiceClass {
     const sanitized = Array.from(new Set(classes.map(Number).filter((n) => n >= 1 && n <= 12)));
     const finalClasses = sanitized.length > 0 ? sanitized : [6];
 
+    const previousClasses = this.classState[examId];
     this.classState[examId] = finalClasses;
     this.saveLocal();
     this.notify();
@@ -195,7 +245,12 @@ class ExamLockServiceClass {
           { merge: true }
         );
       } catch (err) {
-        console.warn("[ExamLockService] Firestore write failed:", err);
+        if (previousClasses) this.classState[examId] = previousClasses;
+        else delete this.classState[examId];
+        this.saveLocal();
+        this.notify();
+        logError("FIRESTORE_WRITE_FAILED", { operation: "exam_locks.write", examId }, err);
+        throw err;
       }
     }
   }

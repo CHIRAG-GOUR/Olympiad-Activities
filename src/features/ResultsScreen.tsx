@@ -1,5 +1,6 @@
 "use client";
 
+import { resultRoute } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
 import React, { useState, useEffect } from "react";
@@ -324,7 +325,7 @@ export default function ResultsScreen() {
 
                         <td className="p-4 text-right">
                           <Link
-                            href={`/results/${att.id}`}
+                            href={resultRoute(att.id)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-lg text-xs font-bold transition-all shadow-subtle"
                           >
                             <FileText className="w-3.5 h-3.5" />

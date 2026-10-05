@@ -1,5 +1,6 @@
 "use client";
 
+import { examRoute } from "@/lib/routes";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { questionRepository, examRepository } from "@/repositories";
@@ -183,7 +184,7 @@ export default function ActivitiesScreen() {
                 <span className="text-[11.5px] text-[#77839A] truncate">{q.section}</span>
                 {primaryExamId && (
                   <Link
-                    href={`/exam/${primaryExamId}`}
+                    href={examRoute(primaryExamId)}
                     className="text-[12.5px] font-semibold text-[#2468B2] hover:text-[#1C5190] whitespace-nowrap transition-colors"
                   >
                     Try it →

@@ -1,5 +1,6 @@
 "use client";
 
+import { examRoute } from "@/lib/routes";
 import React from "react";
 import Link from "next/link";
 import { Question } from "@/types/question";
@@ -97,7 +98,7 @@ export function ActivityMiniPreview({
 
         {examId && (
           <Link
-            href={`/exam/${examId}`}
+            href={examRoute(examId)}
             className="shrink-0 inline-flex items-center gap-1 h-10 sm:h-8 px-2.5 rounded-lg text-[12.5px] font-semibold text-[#2468B2] hover:bg-[#EAF2FC] transition-colors"
           >
             Try it

@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/lib/auth/rbac";
-import { homeFor } from "@/lib/auth/roleRoutes";
+import { evaluateRouteAccess, homeFor } from "@/lib/auth/roleRoutes";
+import { safeNextPath } from "@/lib/routes";
 import { AmbientField } from "@/components/ui/AmbientField";
 import { OlympiadBulb } from "@/components/auth/OlympiadBulb";
 import { VectorEnvironment } from "@/components/auth/VectorEnvironment";
@@ -26,6 +27,25 @@ import {
 } from "lucide-react";
 
 type AuthMode = "SIGN_IN" | "SIGN_UP" | "FORGOT_PASSWORD";
+
+/** Demo/staging fixture: present only when a deployment explicitly opts in. */
+const DEMO_STUDENT_PASSWORD = process.env.NEXT_PUBLIC_DEMO_STUDENT_PASSWORD || "";
+const DEMO_STUDENTS = [
+  { email: "demostudent1@olympiad.org", label: "DemoStudent1" },
+  { email: "demostudent2@olympiad.org", label: "DemoStudent2" },
+  { email: "demostudent3@olympiad.org", label: "DemoStudent3" },
+];
+
+/**
+ * Where to go after signing in: the page the person was on when their session ended
+ * (`?next=`), if this role may open it, otherwise the role's own home.
+ */
+function destinationFor(role: UserRole): string {
+  if (typeof window === "undefined") return homeFor(role);
+  const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+  if (next && evaluateRouteAccess(role, next.split("?")[0]).allowed) return next;
+  return homeFor(role);
+}
 
 const SIGN_IN_ROLES: { id: UserRole; label: string; hint: string; icon: typeof ShieldCheck }[] = [
   { id: "SUPER_ADMIN", label: "Super Admin", hint: "Admin ID or email", icon: ShieldCheck },
@@ -74,7 +94,7 @@ export function LoginExperience() {
   const engaged = hovered || focused;
 
   useEffect(() => {
-    if (isReady && isAuthenticated) router.replace(homeFor(sessionRole));
+    if (isReady && isAuthenticated) router.replace(destinationFor(sessionRole));
   }, [isReady, isAuthenticated, sessionRole, router]);
 
   // Handle Sign In Submit
@@ -85,9 +105,12 @@ export function LoginExperience() {
       setBusy(true);
       setError(null);
 
-      const outcome = await signIn(email, password, role);
+      const outcome = await signIn(email, password, role).catch(() => ({
+        ok: false as const,
+        message: "We could not reach the sign-in service. Check your connection and try again.",
+      }));
       if (outcome.ok) {
-        router.replace(homeFor(role));
+        router.replace(destinationFor(role));
         return;
       }
       setError(outcome.message);
@@ -106,9 +129,12 @@ export function LoginExperience() {
       setPassword(targetPass);
       setRole(targetRole);
 
-      const outcome = await signIn(targetEmail, targetPass, targetRole);
+      const outcome = await signIn(targetEmail, targetPass, targetRole).catch(() => ({
+        ok: false as const,
+        message: "We could not reach the sign-in service. Check your connection and try again.",
+      }));
       if (outcome.ok) {
-        router.replace(homeFor(targetRole));
+        router.replace(destinationFor(targetRole));
         return;
       }
       setError(outcome.message);
@@ -149,10 +175,13 @@ export function LoginExperience() {
         grade: signUpRole === "STUDENT" ? Number(signUpGrade) || 6 : undefined,
         subject: signUpRole === "TEACHER" ? signUpSubject : undefined,
         schoolName: signUpSchool.trim() || undefined,
-      });
+      }).catch(() => ({
+        ok: false as const,
+        message: "We could not reach the sign-up service. Check your connection and try again.",
+      }));
 
       if (outcome.ok) {
-        router.replace(homeFor(signUpRole));
+        router.replace(destinationFor(signUpRole));
         return;
       }
 
@@ -431,121 +460,29 @@ export function LoginExperience() {
                   </button>
                 </form>
 
-                {/* ── Candidate Tester Quick 1-Click Logins ── */}
-                <div className="mt-4 pt-3.5 border-t border-slate-200/90">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-bold text-slate-800">
-                      <span>Tester Demo Accounts (1-Click Login)</span>
+                {/* ── Demo candidate logins ──
+                    Development fixture only. Rendered when NEXT_PUBLIC_DEMO_STUDENT_PASSWORD is
+                    set for a demo/staging deployment; production builds carry no password and
+                    show nothing here. There is deliberately no privileged quick login. */}
+                {DEMO_STUDENT_PASSWORD && (
+                  <div className="mt-4 pt-3.5 border-t border-slate-200/90">
+                    <div className="text-xs font-bold text-slate-800 mb-2">Demo candidate accounts</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {DEMO_STUDENTS.map((d) => (
+                        <button
+                          key={d.email}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => handleQuickLogin(d.email, DEMO_STUDENT_PASSWORD, "STUDENT")}
+                          className="p-2.5 rounded-xl border border-blue-200/80 bg-gradient-to-b from-blue-50/60 to-white hover:from-blue-100/70 hover:border-blue-300 text-left transition-all cursor-pointer group"
+                        >
+                          <span className="block text-xs font-black text-slate-900 group-hover:text-[#2468B2]">{d.label}</span>
+                          <span className="block text-[10px] text-slate-500 truncate">{d.email}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
-
-                  {/* 3 Student Demo Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => handleQuickLogin("demostudent1@olympiad.org", "student123", "STUDENT")}
-                      className="p-2.5 rounded-xl border border-blue-200/80 bg-gradient-to-b from-blue-50/60 to-white hover:from-blue-100/70 hover:to-blue-50/50 hover:border-blue-300 text-left transition-all cursor-pointer group shadow-2xs hover:shadow-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="w-6 h-6 rounded-lg bg-[#2468B2] text-white font-bold text-[10px] grid place-items-center shadow-2xs">
-                          S1
-                        </span>
-                        <span className="text-[10px] font-bold text-[#2468B2] group-hover:underline">
-                          Log in &rarr;
-                        </span>
-                      </div>
-                      <div className="mt-1.5">
-                        <span className="block text-xs font-black text-slate-900 group-hover:text-[#2468B2]">
-                          DemoStudent1
-                        </span>
-                        <span className="block text-[10px] text-slate-500 truncate">
-                          Cambridge Court (CCIS)
-                        </span>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => handleQuickLogin("demostudent2@olympiad.org", "student123", "STUDENT")}
-                      className="p-2.5 rounded-xl border border-indigo-200/80 bg-gradient-to-b from-indigo-50/60 to-white hover:from-indigo-100/70 hover:to-indigo-50/50 hover:border-indigo-300 text-left transition-all cursor-pointer group shadow-2xs hover:shadow-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold text-[10px] grid place-items-center shadow-2xs">
-                          S2
-                        </span>
-                        <span className="text-[10px] font-bold text-indigo-700 group-hover:underline">
-                          Log in &rarr;
-                        </span>
-                      </div>
-                      <div className="mt-1.5">
-                        <span className="block text-xs font-black text-slate-900 group-hover:text-indigo-700">
-                          DemoStudent2
-                        </span>
-                        <span className="block text-[10px] text-slate-500 truncate">
-                          Cambridge Court (CCIS)
-                        </span>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => handleQuickLogin("demostudent3@olympiad.org", "student123", "STUDENT")}
-                      className="p-2.5 rounded-xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/60 to-white hover:from-emerald-100/70 hover:to-emerald-50/50 hover:border-emerald-300 text-left transition-all cursor-pointer group shadow-2xs hover:shadow-sm"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-[10px] grid place-items-center shadow-2xs">
-                          S3
-                        </span>
-                        <span className="text-[10px] font-bold text-emerald-700 group-hover:underline">
-                          Log in &rarr;
-                        </span>
-                      </div>
-                      <div className="mt-1.5">
-                        <span className="block text-xs font-black text-slate-900 group-hover:text-emerald-700">
-                          DemoStudent3
-                        </span>
-                        <span className="block text-[10px] text-slate-500 truncate">
-                          Cambridge Court (CCIS)
-                        </span>
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Super Admin Quick Access */}
-                  <div className="mt-2.5">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => handleQuickLogin("tech@skillizee.io", "787700", "SUPER_ADMIN")}
-                      className="w-full px-3 py-2 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40 hover:from-amber-100/90 hover:to-amber-50/80 hover:border-amber-300 flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-amber-500 text-white grid place-items-center shrink-0 shadow-2xs">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                        </div>
-                        <div className="text-left">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-black text-slate-900 group-hover:text-amber-900">
-                              tech@skillizee.io
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100/80 px-1.5 py-0.2 rounded">
-                              Super Admin
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-slate-500 font-mono">
-                            Password: 787700
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold text-amber-800 bg-amber-100/90 group-hover:bg-amber-200/90 px-2.5 py-1 rounded-lg transition-colors">
-                        1-Click Login &rarr;
-                      </span>
-                    </button>
-                  </div>
-                </div>
+                )}
 
                 <div className="mt-3.5 pt-3 border-t border-slate-200/80 text-center text-xs font-semibold text-slate-600">
                   New to the Olympiad platform?{" "}

@@ -1,96 +1,10 @@
 import { IUserRepository } from "../interfaces/IUserRepository";
 import { UserProfile, UserRole } from "@/lib/auth/rbac";
 
-// Key bumped so the renamed administrator record replaces any previously cached copy.
-const LOCAL_STORAGE_KEY = "olympiad_users_repo_v2";
-
-const INITIAL_USERS: UserProfile[] = [
-  {
-    id: "usr_admin_tech",
-    name: "Tech Administrator",
-    email: "tech@skillizee.io",
-    role: "SUPER_ADMIN",
-    schoolName: "Olympiad Examination Council",
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "usr_admin_swati",
-    name: "Swati Ma'am",
-    email: "Swati123@gmail.com",
-    role: "SUPER_ADMIN",
-    schoolName: "National Olympiad Council",
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "usr_admin_aarna",
-    name: "Aarna",
-    email: "aarna@cambridgecourtgroup.com",
-    role: "SUPER_ADMIN",
-    schoolName: "Cambridge Court Group",
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "usr_admin_01",
-    name: "Chirag Gour",
-    email: "pa1@skillizee.io",
-    role: "SUPER_ADMIN",
-    schoolName: "National Olympiad Council",
-    createdAt: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "usr_teacher_01",
-    name: "Prof. Ananya Sen",
-    email: "ananya.sen@olympiad.org",
-    role: "TEACHER",
-    schoolName: "Cambridge Court International School (CCIS)",
-    createdAt: "2024-02-15T00:00:00Z",
-  },
-  {
-    id: "usr_demostudent1_olympiad_org",
-    name: "DemoStudent1",
-    email: "demostudent1@olympiad.org",
-    role: "STUDENT",
-    schoolName: "Cambridge Court International School (CCIS)",
-    grade: 6,
-    createdAt: "2024-03-01T00:00:00Z",
-  },
-  {
-    id: "usr_demostudent2_olympiad_org",
-    name: "DemoStudent2",
-    email: "demostudent2@olympiad.org",
-    role: "STUDENT",
-    schoolName: "Cambridge Court International School (CCIS)",
-    grade: 6,
-    createdAt: "2024-03-01T00:00:00Z",
-  },
-  {
-    id: "usr_demostudent3_olympiad_org",
-    name: "DemoStudent3",
-    email: "demostudent3@olympiad.org",
-    role: "STUDENT",
-    schoolName: "Cambridge Court International School (CCIS)",
-    grade: 6,
-    createdAt: "2024-03-01T00:00:00Z",
-  },
-  {
-    id: "usr_student_01",
-    name: "Rahul Sharma",
-    email: "rahul.s@student.olympiad.org",
-    role: "STUDENT",
-    schoolName: "Kendriya Vidyalaya No. 1",
-    grade: 6,
-    createdAt: "2024-03-10T00:00:00Z",
-  },
-  {
-    id: "usr_student_02",
-    name: "Ananya Gupta",
-    email: "ananya.g@student.olympiad.org",
-    role: "STUDENT",
-    schoolName: "The Heritage School",
-    grade: 6,
-    createdAt: "2024-03-11T00:00:00Z",
-  },
-];
+// v3: earlier versions seeded fabricated teachers and students ("Rahul Sharma",
+// "Prof. Ananya Sen", …) that then appeared in staff screens as if they were real people.
+// The directory now starts empty and only ever holds accounts that actually exist.
+const LOCAL_STORAGE_KEY = "olympiad_users_repo_v3";
 
 export class LocalUserRepository implements IUserRepository {
   // Every read used to re-parse the full localStorage blob from scratch, even though
@@ -113,7 +27,7 @@ export class LocalUserRepository implements IUserRepository {
       }
     }
 
-    this.inMemory = [...INITIAL_USERS];
+    this.inMemory = [];
     this.persist(this.inMemory);
     return this.inMemory;
   }

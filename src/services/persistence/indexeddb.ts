@@ -22,6 +22,18 @@ export const STORES: DBStores = {
   meta: "exam_meta",
 };
 
+function savedAt(v: unknown): number {
+  const t = (v as { lastSavedAt?: string } | null)?.lastSavedAt;
+  const n = t ? new Date(t).getTime() : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+
+function newerOf<T>(a: T | null, b: T | null): T | null {
+  if (!a) return b;
+  if (!b) return a;
+  return savedAt(b) > savedAt(a) ? b : a;
+}
+
 class IndexedDBClient {
   private dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -83,7 +95,18 @@ class IndexedDBClient {
         const store = tx.objectStore(STORES[storeName]);
         const request = store.get(key);
 
-        request.onsuccess = () => resolve(request.result || null);
+        request.onsuccess = () => {
+          const stored = (request.result || null) as T | null;
+          // Sessions are written to both IndexedDB and a localStorage mirror. If an IDB
+          // write ever failed silently, the mirror holds the newer copy — use whichever
+          // was saved last so recovery never resumes from stale progress.
+          if (storeName === "sessions") {
+            const mirror = this.fallbackGet<T>(storeName, key);
+            resolve(newerOf(stored, mirror));
+            return;
+          }
+          resolve(stored);
+        };
         request.onerror = () => reject(request.error);
       });
     } catch (err) {
@@ -153,6 +176,8 @@ class IndexedDBClient {
   }
 
   async delete(storeName: keyof DBStores, key: IDBValidKey): Promise<void> {
+    // Remove the mirror too, or a deleted session would come back from the backup.
+    this.fallbackDelete(storeName, key);
     try {
       const db = await this.getDB();
       return new Promise((resolve, reject) => {

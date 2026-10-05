@@ -1,366 +1,638 @@
 "use client";
 
-import React, { useState, useEffect, use, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { examRepository, questionRepository, attemptRepository, reportRepository } from "@/repositories";
+import { examRepository, questionRepository } from "@/repositories";
 import { Exam } from "@/types/exam";
 import { Question } from "@/types/question";
 import { StudentMetadata } from "@/types/session";
-import { evaluateAndGenerateFullResult } from "@/engine/scoring-engine";
 import { getClientDeviceInfo } from "@/lib/deviceUtils";
 import { ExamPersistenceService, ExamSessionState } from "@/services/persistence/ExamPersistenceService";
+import { submitExam } from "@/services/exam/SubmissionService";
 import { ExamHeader } from "@/components/examination/ExamHeader";
 import { QuestionPalette } from "@/components/examination/QuestionPalette";
 import { ExamButtonGuide } from "@/components/examination/ExamButtonGuide";
 import { ExamNavigation } from "@/components/examination/ExamNavigation";
 import { QuestionRenderer } from "@/components/questions/QuestionRenderer";
 import { hasBespokeActivity } from "@/components/activities/ActivityRegistry";
-import {
-  Clock,
-  Award,
-  ShieldAlert,
-  ArrowRight,
-  CheckCircle,
-  HelpCircle,
-  Play,
-  ArrowLeft,
-  BookOpen,
-  UserCheck,
-  RotateCcw,
-  AlertTriangle,
-  History,
-  Check,
-  Lock,
-} from "lucide-react";
+import { StatusPanel } from "@/components/feedback/StatusPanel";
+import { AppLoading } from "@/components/auth/AppLoading";
+import { useExamSyncStatus } from "@/hooks/useExamSyncStatus";
+import { ShieldAlert, ArrowRight, ArrowLeft, BookOpen, RotateCcw, History, Check, Lock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ExamLockService } from "@/services/exam/ExamLockService";
+import { ROLE_PREFIX } from "@/lib/auth/sections";
+import { resultRoute } from "@/lib/routes";
+import { logError, logWarn, userMessageFor } from "@/lib/logger";
 
-export default function ExamSessionClient({ params }: { params: Promise<{ examId: string }> }) {
-  const resolvedParams = use(params);
+/**
+ * The examination paper.
+ *
+ * Reliability rules this screen follows:
+ *
+ *   • It never navigates away on its own except to the score paper after submitting.
+ *     A load failure, a missing paper or a lock all render here, with a way forward.
+ *   • A sitting belongs to the signed-in account (`studentId` = uid) and has one
+ *     deterministic session id, so it is found again after a refresh, a crash, a closed
+ *     tab or on another device — and resumed exactly where it was left.
+ *   • The clock is the session's start timestamp, not a counter: refreshes, sleeping
+ *     laptops and throttled background tabs do not change the time left. An expired
+ *     sitting is submitted with what was saved; it is never re-opened with fresh time.
+ *   • Every change is saved locally at once and mirrored to the cloud on a schedule.
+ *   • Submission happens exactly once (see SubmissionService) and survives being
+ *     interrupted.
+ */
+
+type Phase =
+  | { kind: "loading" }
+  | { kind: "error"; error: unknown }
+  | { kind: "notfound" }
+  | { kind: "empty" }
+  | { kind: "locked" }
+  | { kind: "submitted"; attemptId?: string }
+  | { kind: "recover"; session: ExamSessionState }
+  | { kind: "intro" }
+  | { kind: "running" }
+  | { kind: "finalising" };
+
+type SubmitState = { kind: "idle" } | { kind: "submitting" } | { kind: "failed"; message: string };
+
+const isAnswered = (v: unknown) => v !== undefined && v !== null && v !== "";
+
+/** Short display code for the roll number, derived from the account so it is stable. */
+const rollNumberFor = (uid: string) => `STU-${uid.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase()}`;
+
+export default function ExamSessionClient({ examId }: { examId: string }) {
   const router = useRouter();
-  const { activeRole } = useAuth();
+  const { activeRole, user } = useAuth();
+  const isStaff = activeRole !== "STUDENT";
+  const examsHome = `${ROLE_PREFIX[activeRole]}/exams`;
+  const uid = user?.id ?? "";
+  const rollNumber = uid ? rollNumberFor(uid) : "";
 
+  const [phase, setPhase] = useState<Phase>({ kind: "loading" });
+  const [reloadKey, setReloadKey] = useState(0);
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Crash Recovery State
-  const [incompleteSession, setIncompleteSession] = useState<ExamSessionState | null>(null);
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  // Candidate details (prefilled from the account)
+  const [candidateName, setCandidateName] = useState(user?.name ?? "");
+  const [schoolName, setSchoolName] = useState(user?.schoolName ?? "");
 
-  // Candidate Registration State
-  const [hasStarted, setHasStarted] = useState(false);
-  const [sessionId, setSessionId] = useState<string>("");
-  const [candidateName, setCandidateName] = useState("");
-  const [schoolName, setSchoolName] = useState("");
-  const [candidateId, setCandidateId] = useState("");
-
-  // In-Exam NTA State Machine
+  // Sitting state
+  const [sessionId, setSessionId] = useState("");
+  const [startedAt, setStartedAt] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [activityStates, setActivityStates] = useState<Record<string, any>>({});
-  const [visitedIndices, setVisitedIndices] = useState<Set<number>>(new Set([0]));
-  const [markedForReviewIndices, setMarkedForReviewIndices] = useState<Set<number>>(new Set());
-  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState(60 * 60);
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [activityStates, setActivityStates] = useState<Record<string, unknown>>({});
+  const [visitedIds, setVisitedIds] = useState<Set<string>>(new Set());
+  const [markedIds, setMarkedIds] = useState<Set<string>>(new Set());
   const [timeSpentMap, setTimeSpentMap] = useState<Record<string, number>>({});
-  const [startTime, setStartTime] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState(0);
+  const [submitState, setSubmitState] = useState<SubmitState>({ kind: "idle" });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [questionView, setQuestionView] = useState<"activity" | "standard">("activity");
-  // Small screens show the palette as a drawer; the guide explains every control.
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const questionScrollRef = useRef<HTMLDivElement>(null);
-  // Each new question starts at its top, not wherever the previous one was scrolled to.
-  useEffect(() => {
-    questionScrollRef.current?.scrollTo({ top: 0 });
-  }, [currentIndex]);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [lockVersion, setLockVersion] = useState(0);
 
+  const questionScrollRef = useRef<HTMLDivElement>(null);
   const [deviceInfo] = useState(() => getClientDeviceInfo());
+  const sync = useExamSyncStatus();
 
   const currentQuestion = questions[currentIndex];
-  const currentAnswerValue = currentQuestion ? answers[currentQuestion.id] : undefined;
+  const running = phase.kind === "running";
 
-  const sessionRef = useRef<ExamSessionState | null>(null);
-
-  // Load Exam, Questions and check for Incomplete Session
-  useEffect(() => {
-    async function load() {
-      try {
-        const [e, qList, recoverySession] = await Promise.all([
-          examRepository.getExam(resolvedParams.examId),
-          questionRepository.listQuestions(),
-          ExamPersistenceService.getIncompleteSession(resolvedParams.examId),
-        ]);
-
-        if (e) {
-          setExam(e);
-          // Order questions strictly according to exam.questionIds list
-          const compiled = e.questionIds
-            .map((id) => qList.find((q) => q.id === id))
-            .filter((q): q is Question => q !== undefined);
-
-          const finalQuestions = compiled.length > 0 ? compiled : qList.slice(0, e.totalQuestions || 50);
-          setQuestions(finalQuestions);
-          setTimeRemainingSeconds(e.durationMinutes * 60);
-          setCandidateId(`STU-${Math.floor(10000 + Math.random() * 90000)}`);
-
-          if (recoverySession && recoverySession.status === "in_progress") {
-            if (recoverySession.examId === resolvedParams.examId) {
-              setIncompleteSession(recoverySession);
-              setShowRecoveryModal(true);
-            } else {
-              ExamPersistenceService.clearSession(recoverySession.sessionId);
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load exam data:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [resolvedParams.examId]);
-
-  // Maintain active session ref for beforeunload flushes
-  useEffect(() => {
-    if (!hasStarted || !exam) return;
-
-    const currentQ = questions[currentIndex];
-    const validStartTime = startTime || sessionRef.current?.startedAt || new Date().toISOString();
-    const validDuration = exam.durationMinutes || sessionRef.current?.durationMinutes || 60;
-
-    const sessionObj: ExamSessionState = {
-      sessionId,
-      examId: exam.id,
-      examTitle: exam.title,
-      studentId: candidateId,
-      studentName: candidateName,
-      schoolName,
-      grade: exam.grade || 6,
-      device: deviceInfo,
-      startedAt: validStartTime,
-      durationMinutes: validDuration,
-      lastSavedAt: new Date().toISOString(),
-      currentQuestionIndex: currentIndex,
-      currentQuestionId: currentQ ? currentQ.id : "",
-      answers: Object.fromEntries(
-        Object.entries(answers).map(([qId, ans]) => [
-          qId,
-          {
-            questionId: qId,
-            answer: ans,
-            activityState: activityStates[qId],
-            lastModifiedAt: new Date().toISOString(),
-          },
-        ])
-      ),
-      activityStates,
-      completedQuestions: Object.keys(answers),
-      visitedQuestions: Array.from(visitedIndices).map((idx) => questions[idx]?.id).filter(Boolean),
-      markedForReview: Array.from(markedForReviewIndices).map((idx) => questions[idx]?.id).filter(Boolean),
-      timeSpentMap,
-      timeRemainingSeconds,
-      totalTimeSeconds: validDuration * 60,
-      status: "in_progress",
-      version: (sessionRef.current?.version || 0) + 1,
-    };
-
-    sessionRef.current = sessionObj;
-  }, [
-    hasStarted,
+  /* ── Latest-state mirror ──────────────────────────────────
+     Timers, unload handlers and the submit path read from here, so they always see the
+     newest answers — never the values captured when an effect last ran. (The previous
+     auto-submit read answers from a stale closure and could drop recent work.) */
+  const live = useRef({
+    exam: null as Exam | null,
+    questions: [] as Question[],
+    sessionId: "",
+    startedAt: "",
+    currentIndex: 0,
+    answers: {} as Record<string, unknown>,
+    activityStates: {} as Record<string, unknown>,
+    visitedIds: new Set<string>(),
+    markedIds: new Set<string>(),
+    timeSpentMap: {} as Record<string, number>,
+    candidateName: "",
+    schoolName: "",
+    version: 0,
+  });
+  live.current = {
+    ...live.current,
     exam,
+    questions,
     sessionId,
-    candidateId,
-    candidateName,
-    schoolName,
-    deviceInfo,
-    startTime,
+    startedAt,
     currentIndex,
     answers,
     activityStates,
-    visitedIndices,
-    markedForReviewIndices,
+    visitedIds,
+    markedIds,
     timeSpentMap,
-    timeRemainingSeconds,
-    questions,
-  ]);
+    candidateName,
+    schoolName,
+  };
 
-  // Exit listeners for best-effort final flush before window closes/refreshes
-  useEffect(() => {
-    if (!hasStarted || !sessionId) return;
-
-    const handleBeforeUnload = () => {
-      if (sessionRef.current) {
-        ExamPersistenceService.saveProgress(sessionRef.current);
-      }
+  const buildSession = useCallback((): ExamSessionState | null => {
+    const s = live.current;
+    if (!s.exam || !s.sessionId) return null;
+    const q = s.questions[s.currentIndex];
+    const now = new Date().toISOString();
+    return {
+      sessionId: s.sessionId,
+      examId: s.exam.id,
+      examTitle: s.exam.title,
+      studentId: uid,
+      studentName: s.candidateName,
+      rollNumber,
+      schoolName: s.schoolName,
+      grade: user?.grade ?? s.exam.grade ?? 6,
+      device: deviceInfo,
+      startedAt: s.startedAt,
+      durationMinutes: s.exam.durationMinutes || 60,
+      lastSavedAt: now,
+      currentQuestionIndex: s.currentIndex,
+      currentQuestionId: q?.id ?? "",
+      answers: Object.fromEntries(
+        Object.entries(s.answers).map(([qId, ans]) => [
+          qId,
+          { questionId: qId, answer: ans, activityState: s.activityStates[qId], lastModifiedAt: now },
+        ])
+      ),
+      activityStates: s.activityStates,
+      completedQuestions: Object.keys(s.answers),
+      visitedQuestions: Array.from(s.visitedIds),
+      markedForReview: Array.from(s.markedIds),
+      timeSpentMap: s.timeSpentMap,
+      timeRemainingSeconds: ExamPersistenceService.calculateTrueRemainingTime({
+        startedAt: s.startedAt,
+        durationMinutes: s.exam.durationMinutes || 60,
+      }),
+      totalTimeSeconds: (s.exam.durationMinutes || 60) * 60,
+      status: "in_progress",
+      version: s.version,
     };
+  }, [uid, rollNumber, user?.grade, deviceInfo]);
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden" && sessionRef.current) {
-        ExamPersistenceService.saveProgress(sessionRef.current);
-      }
-    };
+  const saveNow = useCallback(
+    (opts: { remoteNow?: boolean } = {}) => {
+      const session = buildSession();
+      if (!session) return;
+      live.current.version += 1;
+      void ExamPersistenceService.saveProgress(session, opts);
+    },
+    [buildSession]
+  );
 
-    const handlePageHide = () => {
-      if (sessionRef.current) {
-        ExamPersistenceService.saveProgress(sessionRef.current);
-      }
-    };
+  /* ── Submission ──────────────────────────────────────────── */
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("pagehide", handlePageHide);
+  const submittingRef = useRef(false);
 
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pagehide", handlePageHide);
-    };
-  }, [hasStarted, sessionId]);
-
-  useEffect(() => {
-    if (!hasStarted || !sessionId) return;
-
-    const heartbeat = setInterval(() => {
-      if (sessionRef.current) {
-        ExamPersistenceService.saveProgress(sessionRef.current).catch(() => {});
-      }
-    }, 4000);
-
-    return () => clearInterval(heartbeat);
-  }, [hasStarted, sessionId]);
-
-  // Mark current question as visited
-  useEffect(() => {
-    if (hasStarted) {
-      setVisitedIndices((prev) => {
-        const next = new Set(prev);
-        next.add(currentIndex);
-        return next;
+  const finalise = useCallback(
+    async (session: ExamSessionState, paper: Exam, paperQuestions: Question[], reason: "normal" | "auto_timeout") => {
+      const answerValues = Object.fromEntries(
+        Object.entries(session.answers || {}).map(([qId, a]) => [qId, a?.answer])
+      );
+      const student: StudentMetadata = {
+        name: session.studentName || user?.name || "Candidate",
+        studentId: uid,
+        rollNumber: session.rollNumber || rollNumber,
+        schoolName: session.schoolName || user?.schoolName || "",
+        grade: session.grade ?? paper.grade,
+      };
+      const outcome = await submitExam({
+        session,
+        exam: paper,
+        questions: paperQuestions,
+        answers: answerValues,
+        timeSpentMap: session.timeSpentMap || {},
+        student,
+        device: session.device || deviceInfo,
+        submissionType: reason,
       });
-    }
-  }, [currentIndex, hasStarted]);
+      // replace, not push: Back from the score paper must not reopen a submitted paper.
+      router.replace(resultRoute(outcome.attemptId));
+    },
+    [router, uid, rollNumber, user?.name, user?.schoolName, deviceInfo]
+  );
 
-  // Robust Countdown timer with timestamp-based drift recalculation
+  const handleFinalSubmit = useCallback(
+    async (reason: "normal" | "auto_timeout" = "normal") => {
+      const paper = live.current.exam;
+      if (submittingRef.current || !paper) return;
+      submittingRef.current = true;
+      setSubmitState({ kind: "submitting" });
+      try {
+        const session = buildSession();
+        if (!session) throw new Error("Session not initialised");
+        // Freeze the answers on this device before anything touches the network.
+        await ExamPersistenceService.saveLocal(session);
+        await finalise(session, paper, live.current.questions, reason);
+      } catch (err) {
+        logError("ATTEMPT_SUBMIT_FAILED", { examId: paper.id, sessionId: live.current.sessionId, reason }, err);
+        submittingRef.current = false;
+        setSubmitState({
+          kind: "failed",
+          message:
+            "Your answers are saved on this device, but the paper could not be submitted just now. Please try again.",
+        });
+      }
+    },
+    [buildSession, finalise]
+  );
+
+  /* ── Load ────────────────────────────────────────────────── */
+
   useEffect(() => {
-    if (!hasStarted || isSubmitting || !sessionRef.current) return;
+    let cancelled = false;
 
-    const timer = setInterval(() => {
-      if (sessionRef.current) {
-        const remaining = ExamPersistenceService.calculateTrueRemainingTime(sessionRef.current);
-        setTimeRemainingSeconds(remaining);
-
-        if (remaining <= 0) {
-          clearInterval(timer);
-          handleFinalSubmit("auto_timeout");
+    async function load() {
+      setPhase({ kind: "loading" });
+      if (!examId) {
+        setPhase({ kind: "notfound" });
+        return;
+      }
+      try {
+        const [paper] = await Promise.all([examRepository.getExam(examId), ExamLockService.whenReady()]);
+        if (cancelled) return;
+        if (!paper) {
+          setPhase({ kind: "notfound" });
           return;
         }
+        const paperQuestions = await questionRepository.getQuestionsByIds(paper.questionIds || []);
+        if (cancelled) return;
+        if (paperQuestions.length < (paper.questionIds || []).length) {
+          logWarn("EXAM_LOAD_FAILED", {
+            examId,
+            operation: "questions-missing",
+            expected: paper.questionIds.length,
+            found: paperQuestions.length,
+          });
+        }
+        setExam(paper);
+        setQuestions(paperQuestions);
+        if (paperQuestions.length === 0) {
+          setPhase({ kind: "empty" });
+          return;
+        }
+
+        const existing = uid ? await ExamPersistenceService.findSession(examId, uid) : null;
+        if (cancelled) return;
+
+        if (existing?.status === "submitted" || existing?.status === "completed") {
+          setPhase({ kind: "submitted", attemptId: existing.attemptId });
+          return;
+        }
+        if (existing?.status === "submitting") {
+          // Interrupted mid-submit: finish uploading the same attempt.
+          setPhase({ kind: "finalising" });
+          submittingRef.current = true;
+          await finalise(existing, paper, paperQuestions, existing.submissionType === "auto_timeout" ? "auto_timeout" : "normal");
+          return;
+        }
+        if (existing && existing.status === "in_progress") {
+          if (ExamPersistenceService.calculateTrueRemainingTime(existing) <= 0) {
+            // Time ran out while away: the saved answers are submitted as they stand.
+            setPhase({ kind: "finalising" });
+            submittingRef.current = true;
+            await finalise(existing, paper, paperQuestions, "auto_timeout");
+            return;
+          }
+          setPhase({ kind: "recover", session: existing });
+          return;
+        }
+
+        if (!isStaff && ExamLockService.isExamLocked(paper.id)) {
+          setPhase({ kind: "locked" });
+          return;
+        }
+        setPhase({ kind: "intro" });
+      } catch (err) {
+        if (cancelled) return;
+        logError("EXAM_LOAD_FAILED", { examId }, err);
+        submittingRef.current = false;
+        setPhase({ kind: "error", error: err });
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+    // `finalise` is stable for a given account; re-running the load on its identity
+    // would restart a sitting mid-way.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [examId, uid, reloadKey]);
+
+  // A teacher unlocking the paper reaches a waiting candidate without a refresh.
+  useEffect(() => ExamLockService.subscribe(() => setLockVersion((v) => v + 1)), []);
+  useEffect(() => {
+    if (phase.kind === "locked" && exam && !ExamLockService.isExamLocked(exam.id)) setPhase({ kind: "intro" });
+    if (phase.kind === "intro" && exam && !isStaff && ExamLockService.isExamLocked(exam.id)) setPhase({ kind: "locked" });
+  }, [lockVersion, phase.kind, exam, isStaff]);
+
+  /* ── Start / resume ──────────────────────────────────────── */
+
+  const enterRunning = useCallback((session: ExamSessionState, paperQuestions: Question[]) => {
+    const restoredAnswers: Record<string, unknown> = {};
+    Object.entries(session.answers || {}).forEach(([qId, a]) => {
+      if (isAnswered(a?.answer)) restoredAnswers[qId] = a.answer;
+    });
+    const maxIdx = Math.max(0, paperQuestions.length - 1);
+    // Resume by question id first (robust to a reordered paper), then by index.
+    const byId = paperQuestions.findIndex((q) => q.id === session.currentQuestionId);
+    const idx = byId >= 0 ? byId : Math.min(Math.max(0, session.currentQuestionIndex || 0), maxIdx);
+
+    setSessionId(session.sessionId);
+    setStartedAt(session.startedAt);
+    setCandidateName(session.studentName || user?.name || "");
+    setSchoolName(session.schoolName || "");
+    setAnswers(restoredAnswers);
+    setActivityStates(session.activityStates || {});
+    setCurrentIndex(idx);
+    setVisitedIds(new Set([...(session.visitedQuestions || []), paperQuestions[idx]?.id].filter(Boolean) as string[]));
+    setMarkedIds(new Set(session.markedForReview || []));
+    setTimeSpentMap(session.timeSpentMap || {});
+    setTimeRemainingSeconds(ExamPersistenceService.calculateTrueRemainingTime(session));
+    live.current.version = session.version || 0;
+    setPhase({ kind: "running" });
+  }, [user?.name]);
+
+  const handleResumeSession = () => {
+    if (phase.kind !== "recover") return;
+    enterRunning(phase.session, questions);
+  };
+
+  /** Staff only: discard a preview sitting and start again. Candidates cannot reset the clock. */
+  const handleRestartPreview = async () => {
+    if (phase.kind !== "recover" || !isStaff) return;
+    await ExamPersistenceService.clearSession(phase.session.sessionId);
+    setPhase({ kind: "intro" });
+  };
+
+  const handleStartExam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!exam || starting || !uid) return;
+    if (!candidateName.trim()) {
+      setStartError("Please enter your full name as it should appear on your score paper.");
+      return;
+    }
+    setStarting(true);
+    setStartError(null);
+    try {
+      const session = await ExamPersistenceService.createSession({
+        examId: exam.id,
+        examTitle: exam.title,
+        studentId: uid,
+        studentName: candidateName.trim(),
+        rollNumber,
+        schoolName: schoolName.trim(),
+        grade: user?.grade ?? exam.grade ?? 6,
+        durationMinutes: exam.durationMinutes || 60,
+        firstQuestionId: questions[0]?.id || "",
+        device: deviceInfo,
+      });
+      enterRunning(session, questions);
+    } catch (err) {
+      logError("EXAM_LOAD_FAILED", { examId: exam.id, operation: "createSession" }, err);
+      setStartError("The examination could not be started on this device. Please try again.");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  /* ── Autosave ────────────────────────────────────────────── */
+
+  // Any answer, navigation or flag change is written to this device within ~0.5s.
+  useEffect(() => {
+    if (!running) return;
+    const t = setTimeout(() => saveNow(), 500);
+    return () => clearTimeout(t);
+  }, [running, answers, activityStates, currentIndex, visitedIds, markedIds, saveNow]);
+
+  // Time-on-question changes every second; it is saved with the next change or every 15s.
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(() => saveNow(), 15_000);
+    return () => clearInterval(t);
+  }, [running, saveNow]);
+
+  // Leaving, hiding or losing the tab: save now and push to the cloud if possible.
+  useEffect(() => {
+    if (!running) return;
+    const flush = () => saveNow({ remoteNow: true });
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    const onOnline = () => {
+      if (live.current.sessionId) void ExamPersistenceService.flushRemote(live.current.sessionId);
+    };
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [running, saveNow]);
+
+  /* ── Clock ───────────────────────────────────────────────── */
+
+  useEffect(() => {
+    if (!running || !startedAt || !exam) return;
+    let lastTick = Date.now();
+    const tick = () => {
+      const remaining = ExamPersistenceService.calculateTrueRemainingTime({
+        startedAt,
+        durationMinutes: exam.durationMinutes || 60,
+      });
+      setTimeRemainingSeconds(remaining);
+
+      // Credit real elapsed time to the open question (capped, so a sleeping laptop
+      // does not attribute an hour to one question).
+      const now = Date.now();
+      const elapsed = Math.min(5, Math.max(0, Math.round((now - lastTick) / 1000)));
+      lastTick = now;
+      const q = live.current.questions[live.current.currentIndex];
+      if (q && elapsed > 0 && document.visibilityState === "visible") {
+        setTimeSpentMap((prev) => ({ ...prev, [q.id]: (prev[q.id] || 0) + elapsed }));
       }
 
-      if (questions[currentIndex]) {
-        const qId = questions[currentIndex].id;
-        setTimeSpentMap((prev) => ({
-          ...prev,
-          [qId]: (prev[qId] || 0) + 1,
-        }));
+      if (remaining <= 0) void handleFinalSubmit("auto_timeout");
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    // Waking from sleep / returning to the tab re-reads the clock immediately.
+    const onVisible = () => document.visibilityState === "visible" && tick();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [running, startedAt, exam, handleFinalSubmit]);
+
+  /* ── Navigation within the paper ─────────────────────────── */
+
+  const goTo = useCallback(
+    (idx: number) => {
+      const bounded = Math.min(Math.max(0, idx), Math.max(0, live.current.questions.length - 1));
+      setCurrentIndex(bounded);
+      const q = live.current.questions[bounded];
+      if (q) setVisitedIds((prev) => (prev.has(q.id) ? prev : new Set(prev).add(q.id)));
+    },
+    []
+  );
+
+  useEffect(() => {
+    questionScrollRef.current?.scrollTo({ top: 0 });
+    setQuestionView("activity");
+  }, [currentIndex]);
+
+  const setMarked = (qId: string, marked: boolean) =>
+    setMarkedIds((prev) => {
+      if (prev.has(qId) === marked) return prev;
+      const next = new Set(prev);
+      if (marked) next.add(qId);
+      else next.delete(qId);
+      return next;
+    });
+
+  const handleSaveAndNext = () => {
+    if (!currentQuestion) return;
+    setMarked(currentQuestion.id, false);
+    goTo(currentIndex + 1);
+  };
+
+  const handleSaveAndMarkForReview = () => {
+    if (!currentQuestion) return;
+    setMarked(currentQuestion.id, true);
+    goTo(currentIndex + 1);
+  };
+
+  const handleMarkForReviewAndNext = handleSaveAndMarkForReview;
+
+  const handleClearResponse = () => {
+    if (!currentQuestion) return;
+    const qId = currentQuestion.id;
+    setAnswers((prev) => {
+      if (!(qId in prev)) return prev;
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    setActivityStates((prev) => {
+      if (!(qId in prev)) return prev;
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    setMarked(qId, false);
+  };
+
+  /**
+   * Records an answer for one specific question. Bound per question (below), so an
+   * activity that reports after the candidate has moved on — an animation finishing, a
+   * die settling — still writes to its own question, never to the one now on screen.
+   */
+  const recordAnswer = useCallback((qId: string, val: unknown, actState?: unknown) => {
+    if (submittingRef.current) return;
+    const reset = val === undefined && actState === undefined;
+    setAnswers((prev) => {
+      if (!isAnswered(val)) {
+        if (!(qId in prev)) return prev;
+        const next = { ...prev };
+        delete next[qId];
+        return next;
       }
-    }, 1000);
+      return { ...prev, [qId]: val };
+    });
+    setActivityStates((prev) => {
+      if (reset) {
+        if (!(qId in prev)) return prev;
+        const next = { ...prev };
+        delete next[qId];
+        return next;
+      }
+      return actState === undefined ? prev : { ...prev, [qId]: actState };
+    });
+  }, []);
 
-    return () => clearInterval(timer);
-  }, [hasStarted, isSubmitting, currentIndex, questions]);
+  const currentQuestionId = currentQuestion?.id;
+  const handleAnswerChange = useMemo(
+    () => (val: unknown, actState?: unknown) => {
+      if (currentQuestionId) recordAnswer(currentQuestionId, val, actState);
+    },
+    [currentQuestionId, recordAnswer]
+  );
 
-  // Dynamic Sections setup — automatically adapts to English, Mathematics or any custom paper
+  /* ── Sections ────────────────────────────────────────────── */
+
   const sections = useMemo(() => {
     if (!exam || questions.length === 0) {
-      return [
-        { id: "sec_default", title: "General Questions", startIdx: 0, endIdx: Math.max(0, questions.length - 1), count: questions.length },
-      ];
+      return [{ id: "sec_default", title: "General Questions", startIdx: 0, endIdx: Math.max(0, questions.length - 1), count: questions.length }];
     }
 
     if (exam.sections && exam.sections.length > 0) {
       const mapped: { id: string; title: string; startIdx: number; endIdx: number; count: number }[] = [];
       let runningIdx = 0;
-
       for (let sIdx = 0; sIdx < exam.sections.length; sIdx++) {
         const sec = exam.sections[sIdx];
         const secQIds = new Set(sec.questionIds || []);
-
         const matchedIndices: number[] = [];
         questions.forEach((q, qIdx) => {
-          if (secQIds.has(q.id) || secQIds.has(q.questionId) || q.section === sec.title) {
-            matchedIndices.push(qIdx);
-          }
+          if (secQIds.has(q.id) || secQIds.has(q.questionId) || q.section === sec.title) matchedIndices.push(qIdx);
         });
-
         if (matchedIndices.length > 0) {
-          const sStart = Math.min(...matchedIndices);
-          const sEnd = Math.max(...matchedIndices);
           mapped.push({
             id: sec.id || `sec_${sIdx}`,
             title: sec.title,
-            startIdx: sStart,
-            endIdx: sEnd,
+            startIdx: Math.min(...matchedIndices),
+            endIdx: Math.max(...matchedIndices),
             count: matchedIndices.length,
           });
         } else if (sec.questionIds && sec.questionIds.length > 0) {
           const count = sec.questionIds.length;
-          mapped.push({
-            id: sec.id || `sec_${sIdx}`,
-            title: sec.title,
-            startIdx: runningIdx,
-            endIdx: runningIdx + count - 1,
-            count,
-          });
+          mapped.push({ id: sec.id || `sec_${sIdx}`, title: sec.title, startIdx: runningIdx, endIdx: runningIdx + count - 1, count });
           runningIdx += count;
         }
       }
-
       if (mapped.length > 0) return mapped;
     }
 
-    // Derive contiguous sections directly from questions' section attribute
     const derived: { id: string; title: string; startIdx: number; endIdx: number; count: number }[] = [];
     let curTitle = "";
     let curStart = 0;
-
     questions.forEach((q, idx) => {
       const secTitle = q.section || "Questions";
       if (secTitle !== curTitle) {
         if (curTitle) {
-          derived.push({
-            id: `sec_${derived.length}`,
-            title: curTitle,
-            startIdx: curStart,
-            endIdx: idx - 1,
-            count: idx - curStart,
-          });
+          derived.push({ id: `sec_${derived.length}`, title: curTitle, startIdx: curStart, endIdx: idx - 1, count: idx - curStart });
         }
         curTitle = secTitle;
         curStart = idx;
       }
     });
-
     if (curTitle) {
-      derived.push({
-        id: `sec_${derived.length}`,
-        title: curTitle,
-        startIdx: curStart,
-        endIdx: questions.length - 1,
-        count: questions.length - curStart,
-      });
+      derived.push({ id: `sec_${derived.length}`, title: curTitle, startIdx: curStart, endIdx: questions.length - 1, count: questions.length - curStart });
     }
-
     return derived.length > 0
       ? derived
       : [{ id: "sec_all", title: "All Questions", startIdx: 0, endIdx: questions.length - 1, count: questions.length }];
   }, [exam, questions]);
 
-  const currentSection = useMemo(() => {
-    return (
+  const currentSection = useMemo(
+    () =>
       sections.find((sec) => currentIndex >= sec.startIdx && currentIndex <= sec.endIdx) ||
       sections[0] || {
         id: "sec_default",
@@ -368,288 +640,94 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
         startIdx: 0,
         endIdx: Math.max(0, questions.length - 1),
         count: questions.length,
-      }
-    );
-  }, [currentIndex, sections, exam, questions.length]);
-
-  useEffect(() => {
-    setQuestionView("activity");
-  }, [currentIndex]);
-
-  // Resume Incomplete Session Action
-  const handleResumeSession = () => {
-    if (!incompleteSession || !exam) return;
-
-    setCandidateName(incompleteSession.studentName || "Candidate");
-    setCandidateId(incompleteSession.studentId || `STU-${Math.floor(10000 + Math.random() * 90000)}`);
-    setSchoolName(incompleteSession.schoolName || "");
-    setSessionId(incompleteSession.sessionId);
-    setStartTime(incompleteSession.startedAt || new Date().toISOString());
-
-    // Reconstruct answers map
-    const restoredAnswers: Record<string, any> = {};
-    Object.entries(incompleteSession.answers || {}).forEach(([qId, aState]) => {
-      restoredAnswers[qId] = aState.answer;
-    });
-    setAnswers(restoredAnswers);
-
-    // Reconstruct activity microworld states
-    setActivityStates(incompleteSession.activityStates || {});
-
-    // Reconstruct question index safely within bounds
-    const maxIdx = Math.max(0, questions.length - 1);
-    const resumeIdx = Math.min(
-      Math.max(0, incompleteSession.currentQuestionIndex || 0),
-      maxIdx
-    );
-    setCurrentIndex(resumeIdx);
-
-    // Reconstruct visited indices
-    const vSet = new Set<number>([resumeIdx]);
-    (incompleteSession.visitedQuestions || []).forEach((qId) => {
-      const idx = questions.findIndex((q) => q.id === qId);
-      if (idx >= 0) vSet.add(idx);
-    });
-    setVisitedIndices(vSet);
-
-    // Reconstruct marked for review
-    const mSet = new Set<number>();
-    (incompleteSession.markedForReview || []).forEach((qId) => {
-      const idx = questions.findIndex((q) => q.id === qId);
-      if (idx >= 0) mSet.add(idx);
-    });
-    setMarkedForReviewIndices(mSet);
-
-    // Restore time spent
-    setTimeSpentMap(incompleteSession.timeSpentMap || {});
-
-    // Recalculate true remaining time
-    const remaining = ExamPersistenceService.calculateTrueRemainingTime(incompleteSession);
-    setTimeRemainingSeconds(remaining > 0 ? remaining : (exam.durationMinutes || 60) * 60);
-
-    sessionRef.current = incompleteSession;
-    setShowRecoveryModal(false);
-    setHasStarted(true);
-  };
-
-  // Start Fresh Attempt Action (Clears Incomplete Session for this specific exam)
-  const handleStartAgain = async () => {
-    if (incompleteSession) {
-      await ExamPersistenceService.clearSession(incompleteSession.sessionId);
-    }
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem(`active_exam_session_${exam?.id || resolvedParams.examId}`);
-        localStorage.removeItem("active_exam_session");
-      } catch {}
-    }
-    setIncompleteSession(null);
-    setShowRecoveryModal(false);
-  };
-
-  // Candidate Registration Handler
-  const handleStartExam = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!candidateName.trim() || !exam) return;
-
-    const sTime = new Date().toISOString();
-    setStartTime(sTime);
-
-    const firstQId = questions[0]?.id || "";
-    const session = await ExamPersistenceService.createSession({
-      examId: exam.id,
-      examTitle: exam.title,
-      studentId: candidateId,
-      studentName: candidateName,
-      schoolName: schoolName || "Olympiad Academy",
-      grade: exam.grade || 6,
-      durationMinutes: exam.durationMinutes,
-      firstQuestionId: firstQId,
-    });
-
-    setSessionId(session.sessionId);
-    sessionRef.current = session;
-    setHasStarted(true);
-    setVisitedIndices(new Set([0]));
-  };
-
-  // NTA Action: Save & Next
-  const handleSaveAndNext = () => {
-    if (!currentQuestion) return;
-    setMarkedForReviewIndices((prev) => {
-      const next = new Set(prev);
-      next.delete(currentIndex);
-      return next;
-    });
-
-    if (sessionRef.current) {
-      ExamPersistenceService.saveProgress(sessionRef.current);
-    }
-
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  // NTA Action: Save & Mark for Review
-  const handleSaveAndMarkForReview = () => {
-    if (!currentQuestion) return;
-    setMarkedForReviewIndices((prev) => {
-      const next = new Set(prev);
-      next.add(currentIndex);
-      return next;
-    });
-
-    if (sessionRef.current) {
-      ExamPersistenceService.saveProgress(sessionRef.current);
-    }
-
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  // NTA Action: Mark for Review & Next
-  const handleMarkForReviewAndNext = () => {
-    setMarkedForReviewIndices((prev) => {
-      const next = new Set(prev);
-      next.add(currentIndex);
-      return next;
-    });
-
-    if (sessionRef.current) {
-      ExamPersistenceService.saveProgress(sessionRef.current);
-    }
-
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  // NTA Action: Clear Response
-  const handleClearResponse = () => {
-    if (!currentQuestion) return;
-    setAnswers((prev) => {
-      const next = { ...prev };
-      delete next[currentQuestion.id];
-      return next;
-    });
-    setActivityStates((prev) => {
-      const next = { ...prev };
-      delete next[currentQuestion.id];
-      return next;
-    });
-    setMarkedForReviewIndices((prev) => {
-      const next = new Set(prev);
-      next.delete(currentIndex);
-      return next;
-    });
-
-    if (sessionId) {
-      ExamPersistenceService.updateAnswer(sessionId, currentQuestion.id, undefined, undefined);
-    }
-  };
-
-  // Answer change handler (Debounced & immediate sync)
-  const handleAnswerChange = useCallback(
-    (val: any, actState?: any) => {
-      if (!currentQuestion) return;
-      const qId = currentQuestion.id;
-
-      setAnswers((prev) => ({
-        ...prev,
-        [qId]: val,
-      }));
-
-      if (actState !== undefined) {
-        setActivityStates((prev) => ({
-          ...prev,
-          [qId]: actState,
-        }));
-      }
-
-      if (sessionId) {
-        ExamPersistenceService.updateAnswer(sessionId, qId, val, actState);
-      }
-    },
-    [currentQuestion, sessionId]
+      },
+    [currentIndex, sections, exam, questions.length]
   );
 
-  // Final Exam Submission Handler
-  const handleFinalSubmit = async (reason: "normal" | "auto_timeout" = "normal") => {
-    if (isSubmitting || !exam) return;
-    setIsSubmitting(true);
-
-    try {
-      const endTime = new Date().toISOString();
-
-      const studentMeta: StudentMetadata = {
-        name: candidateName || "Candidate",
-        studentId: candidateId,
-        rollNumber: candidateId,
-        schoolName: schoolName || "Olympiad Academy",
-        grade: exam.grade,
-      };
-
-      const { attempt, report } = evaluateAndGenerateFullResult({
-        exam,
-        questions,
-        answers,
-        timeSpentMap,
-        student: studentMeta,
-        device: deviceInfo,
-        startedAt: startTime || new Date().toISOString(),
-        submittedAt: endTime,
-        submissionType: reason,
-      });
-
-      // Save to Repositories
-      await Promise.all([
-        attemptRepository.saveAttempt(attempt),
-        reportRepository.saveReport(report),
-        sessionId ? ExamPersistenceService.completeExam(sessionId) : Promise.resolve(),
-      ]);
-
-      router.push(`/results/${attempt.id}`);
-    } catch (err) {
-      console.error("Submission failed:", err);
-      setIsSubmitting(false);
-      setShowConfirmModal(false);
-    }
+  const indexById = useMemo(() => new Map(questions.map((q, i) => [q.id, i])), [questions]);
+  const toIndices = (ids: Set<string>) => {
+    const out = new Set<number>();
+    ids.forEach((id) => {
+      const i = indexById.get(id);
+      if (i !== undefined) out.add(i);
+    });
+    return out;
   };
+  const answeredIndices = useMemo(
+    () => new Set(questions.map((q, idx) => (isAnswered(answers[q.id]) ? idx : -1)).filter((idx) => idx !== -1)),
+    [questions, answers]
+  );
+  const visitedIndices = useMemo(() => toIndices(visitedIds), [visitedIds, indexById]); // eslint-disable-line react-hooks/exhaustive-deps
+  const markedForReviewIndices = useMemo(() => toIndices(markedIds), [markedIds, indexById]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) {
+  /* ── Render: states before the paper ─────────────────────── */
+
+  const retry = () => {
+    submittingRef.current = false;
+    setReloadKey((n) => n + 1);
+  };
+  const backToExams = { label: "Back to my examinations", href: examsHome };
+
+  if (phase.kind === "loading") return <AppLoading label="Loading the examination paper" />;
+  if (phase.kind === "finalising") return <AppLoading label="Submitting your paper — please keep this page open" />;
+
+  if (phase.kind === "error") {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-[#2468B2] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-extrabold text-slate-700">Loading Official Examination Paper...</p>
-        </div>
-      </div>
+      <StatusPanel
+        title="Unable to load this examination"
+        message={`${userMessageFor(phase.error, "the examination")} Any answers you have already given are saved.`}
+        actions={[backToExams, { label: "Retry", onClick: retry, primary: true }]}
+      />
     );
   }
 
-  if (!exam) {
+  if (phase.kind === "notfound" || !exam) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl border border-slate-300 max-w-md text-center space-y-4 shadow-lg">
-          <ShieldAlert className="w-12 h-12 text-rose-600 mx-auto" />
-          <h2 className="text-xl font-bold text-slate-900">Examination Paper Not Found</h2>
-          <p className="text-sm text-slate-600">The requested examination could not be loaded from storage.</p>
-          <Link
-            href="/"
-            className="inline-block px-5 py-2.5 bg-[#2468B2] text-white font-bold rounded-lg text-sm"
-          >
-            Return to Examination Portal
-          </Link>
-        </div>
-      </div>
+      <StatusPanel
+        tone="notfound"
+        title="Examination not found"
+        message="No examination matches this link. It may have been withdrawn, or the link is incomplete."
+        actions={[backToExams]}
+      />
     );
   }
 
-  // Candidate Lock Enforcement: Students cannot sit locked papers
-  const isLocked = ExamLockService.isExamLocked(resolvedParams.examId);
-  if (activeRole === "STUDENT" && isLocked) {
+  if (phase.kind === "empty") {
+    return (
+      <StatusPanel
+        title="This paper has no questions yet"
+        message="The examination exists but none of its questions could be loaded. Please let your teacher know."
+        actions={[backToExams, { label: "Retry", onClick: retry, primary: true }]}
+      />
+    );
+  }
+
+  if (phase.kind === "submitted") {
+    return (
+      <StatusPanel
+        tone="notfound"
+        title="You have already submitted this paper"
+        message="Each examination can be submitted once. Your score paper is ready."
+        actions={[
+          backToExams,
+          ...(isStaff
+            ? [
+                {
+                  label: "Start a new preview",
+                  onClick: async () => {
+                    await ExamPersistenceService.clearSession(ExamPersistenceService.generateSessionId(exam.id, uid));
+                    setPhase({ kind: "intro" });
+                  },
+                },
+              ]
+            : []),
+          ...(phase.attemptId ? [{ label: "View my result", href: resultRoute(phase.attemptId), primary: true }] : []),
+        ]}
+      />
+    );
+  }
+
+  if (phase.kind === "locked") {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans text-slate-800">
         <div className="bg-white p-8 rounded-3xl border border-slate-200 max-w-lg text-center space-y-5 shadow-xl">
@@ -657,76 +735,44 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
             <Lock className="w-7 h-7" />
           </div>
           <div className="space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
-              Access Restricted
-            </span>
-            <h2 className="text-xl font-bold text-slate-900">
-              Examination Paper Locked by Teacher
-            </h2>
+            <h2 className="text-xl font-bold text-slate-900">This examination is not open yet</h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              This examination (<strong className="text-slate-800">{exam.title}</strong>) is currently locked by your educator.
+              <strong className="text-slate-800">{exam.title}</strong> is currently locked by your teacher. This page
+              will open the paper automatically as soon as it is unlocked.
             </p>
           </div>
-
-          <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-left text-xs text-slate-700 space-y-1.5">
-            <div className="font-bold text-[#2468B2]">
-              <span>Available for Candidate Testing Today:</span>
-            </div>
-            <p className="text-[12px] text-slate-600">
-              Your teacher has unlocked the active examination paper. Please return to your exam portal to proceed.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Link
-              href="/student/exams"
-              className="flex-1 py-3 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
-            >
-              <span>Go to Mathematics Exam</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/student/dashboard"
-              className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all"
-            >
-              Dashboard
-            </Link>
-          </div>
+          <Link
+            href={examsHome}
+            className="inline-flex py-3 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white font-bold rounded-xl text-xs items-center justify-center gap-2 shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to my examinations</span>
+          </Link>
         </div>
       </div>
     );
   }
 
-  // CRASH RECOVERY MODAL (Isolated strictly to this exam)
-  if (showRecoveryModal && incompleteSession) {
+  if (phase.kind === "recover") {
+    const saved = phase.session;
     let formattedSavedTime = "Recently";
-    try {
-      if (incompleteSession.lastSavedAt) {
-        const d = new Date(incompleteSession.lastSavedAt);
-        if (!isNaN(d.getTime())) {
-          formattedSavedTime = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        }
-      }
-    } catch {
-      formattedSavedTime = "Recently";
-    }
+    const d = new Date(saved.lastSavedAt);
+    if (!isNaN(d.getTime())) formattedSavedTime = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    const trueRemaining = ExamPersistenceService.calculateTrueRemainingTime(incompleteSession);
-    const mins = Math.max(0, Math.floor(trueRemaining / 60));
-    const secs = Math.max(0, trueRemaining % 60);
+    const trueRemaining = ExamPersistenceService.calculateTrueRemainingTime(saved);
+    const mins = Math.floor(trueRemaining / 60);
+    const secs = trueRemaining % 60;
     const formattedRemaining = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-    const totalQCount = questions.length || exam.totalQuestions || 50;
-    const resumeQuestionNumber = Math.min((incompleteSession.currentQuestionIndex ?? 0) + 1, totalQCount);
-    const answeredCount = Object.keys(incompleteSession.answers || {}).length;
-    const progressPercent = Math.min(100, Math.max(4, Math.round((resumeQuestionNumber / totalQCount) * 100)));
+    const totalQCount = questions.length;
+    const resumeIdx = questions.findIndex((q) => q.id === saved.currentQuestionId);
+    const resumeQuestionNumber = Math.min((resumeIdx >= 0 ? resumeIdx : saved.currentQuestionIndex ?? 0) + 1, totalQCount);
+    const answeredCount = Object.values(saved.answers || {}).filter((a) => isAnswered(a?.answer)).length;
+    const progressPercent = Math.min(100, Math.max(4, Math.round((resumeQuestionNumber / Math.max(1, totalQCount)) * 100)));
 
     const isEnglish =
       (exam.subjectId || "").includes("eng") ||
       (exam.subjectName || "").toLowerCase().includes("english") ||
-      (exam.code || "").toLowerCase().includes("ieo") ||
-      exam.title.toLowerCase().includes("english") ||
-      exam.title.toLowerCase().includes("ieo");
-
+      (exam.code || "").toLowerCase().includes("ieo");
     const themeColor = isEnglish ? "#9333EA" : "#2468B2";
     const themeBg = isEnglish ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-blue-50 text-[#2468B2] border-blue-200";
     const themeButton = isEnglish
@@ -736,7 +782,6 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
     return (
       <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center p-4 font-sans select-none">
         <div className="bg-white rounded-3xl border-2 border-slate-300 max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
-          {/* Header */}
           <div className="flex items-start gap-4 border-b border-slate-200 pb-5">
             <div className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center shrink-0 shadow-xs ${themeBg}`}>
               {isEnglish ? <BookOpen className="w-7 h-7" /> : <History className="w-7 h-7" />}
@@ -745,58 +790,46 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider border ${themeBg}`}>
                 {isEnglish ? "English Olympiad (IEO)" : "Mathematics Olympiad (IMO)"} · Grade {exam.grade || 6}
               </span>
-              <h2 className="text-xl font-black text-slate-900 mt-1 leading-snug">
-                Resume Examination Session
-              </h2>
+              <h2 className="text-xl font-black text-slate-900 mt-1 leading-snug">Continue your examination</h2>
               <p className="text-xs text-slate-600 font-medium mt-0.5">
-                Saved attempt detected for this specific examination paper.
+                Your answers are saved. You will continue exactly where you left off, and the clock has kept running.
               </p>
             </div>
           </div>
 
-          {/* Exam Session Metadata Card */}
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs text-slate-800">
-            <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
+            <div className="flex justify-between items-center gap-3 py-1 border-b border-slate-200/80">
               <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Examination Paper</span>
               <span className="font-extrabold text-slate-900 text-right truncate max-w-[240px]">{exam.title}</span>
             </div>
-
             <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
-              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Candidate Name</span>
-              <span className="font-extrabold text-slate-900">{incompleteSession.studentName || "Registered Candidate"}</span>
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Candidate</span>
+              <span className="font-extrabold text-slate-900">{saved.studentName || user?.name}</span>
             </div>
-
             <div className="flex justify-between items-center py-1 border-b border-slate-200/80">
               <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Last Saved At</span>
               <span className="font-mono font-bold text-slate-700">{formattedSavedTime}</span>
             </div>
-
-            {/* Question Progress Bar */}
             <div className="py-1 border-b border-slate-200/80 space-y-1.5">
               <div className="flex justify-between items-center">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Current Position</span>
                 <span className="font-bold text-slate-900">
-                  Question <strong className="text-slate-900 font-black">{resumeQuestionNumber}</strong> of {totalQCount}
+                  Question <strong className="font-black">{resumeQuestionNumber}</strong> of {totalQCount}
                   <span className="text-slate-500 font-normal ml-1.5 font-mono">({answeredCount} answered)</span>
                 </span>
               </div>
               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercent}%`, backgroundColor: themeColor }}
-                />
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%`, backgroundColor: themeColor }} />
               </div>
             </div>
-
             <div className="flex justify-between items-center pt-0.5">
-              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Timer Remaining</span>
+              <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Time Remaining</span>
               <span className="font-mono font-black text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 text-sm">
                 {formattedRemaining}
               </span>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="space-y-2.5 pt-1">
             <button
               type="button"
@@ -807,21 +840,23 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
               <span>Resume This Examination</span>
             </button>
 
-            <button
-              type="button"
-              onClick={handleStartAgain}
-              className="w-full h-11 px-4 bg-white hover:bg-slate-100 border-2 border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Start Fresh Attempt (Reset This Paper)</span>
-            </button>
+            {isStaff && (
+              <button
+                type="button"
+                onClick={handleRestartPreview}
+                className="w-full h-11 px-4 bg-white hover:bg-slate-100 border-2 border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Discard this preview and start again (staff only)</span>
+              </button>
+            )}
 
             <Link
-              href="/student/exams"
+              href={examsHome}
               className="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Return to Examinations Portal</span>
+              <span>Back to my examinations</span>
             </Link>
           </div>
         </div>
@@ -829,24 +864,21 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
     );
   }
 
-  // SCREEN 1: Candidate Verification & Instructions
-  if (!hasStarted) {
+  if (phase.kind === "intro") {
     return (
       <div className="min-h-screen bg-[#F4F7FB] flex flex-col justify-between select-none font-sans">
-        <header className="bg-[#2468B2] text-white py-3.5 px-6 border-b-2 border-[#1C5190] shadow">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-9 h-9 rounded-lg bg-white text-[#2468B2] flex items-center justify-center font-black text-lg">
-                &Omega;
-              </span>
-              <div>
-                <div className="text-xs uppercase tracking-wider text-amber-300 font-bold">NTA Examination Portal</div>
-                <div className="text-base font-extrabold text-white">{exam.title}</div>
+        <header className="bg-[#2468B2] text-white py-3.5 px-4 sm:px-6 border-b-2 border-[#1C5190] shadow">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-9 h-9 shrink-0 rounded-lg bg-white text-[#2468B2] flex items-center justify-center font-black text-lg">&Omega;</span>
+              <div className="min-w-0">
+                <div className="text-xs uppercase tracking-wider text-amber-300 font-bold">Examination Portal</div>
+                <div className="text-base font-extrabold text-white truncate">{exam.title}</div>
               </div>
             </div>
             <Link
-              href="/"
-              className="text-xs font-bold text-white/80 hover:text-white flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded"
+              href={examsHome}
+              className="shrink-0 text-xs font-bold text-white/80 hover:text-white flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Back
             </Link>
@@ -854,36 +886,28 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
         </header>
 
         <main className="flex-1 max-w-3xl mx-auto w-full p-4 sm:p-6 my-6">
-          <div className="bg-white rounded-2xl border-2 border-slate-300 p-6 sm:p-8 shadow-xl space-y-6">
+          <div className="bg-white rounded-2xl border-2 border-slate-300 p-5 sm:p-8 shadow-xl space-y-6">
             <div className="border-b border-slate-200 pb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#2468B2] bg-blue-50 px-2.5 py-1 rounded border border-blue-200">
-                Official Level-1 Examination Paper
-              </span>
-              <h1 className="text-2xl font-black text-slate-900 mt-2">
-                {exam.title}
-              </h1>
-              {exam.subtitle && (
-                <p className="text-sm text-slate-600 mt-1 font-medium">{exam.subtitle}</p>
-              )}
+              <span className="text-xs font-bold uppercase tracking-wider text-[#2468B2]">Official Level-1 Examination Paper</span>
+              <h1 className="text-2xl font-black text-slate-900 mt-2">{exam.title}</h1>
+              {exam.subtitle && <p className="text-sm text-slate-600 mt-1 font-medium">{exam.subtitle}</p>}
             </div>
 
-            {/* Exam Parameters Overview */}
             <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
               <div>
                 <span className="text-xs text-slate-500 font-bold block">Duration</span>
-                <strong className="text-slate-900 text-lg font-mono font-black">{exam.durationMinutes} Mins</strong>
+                <strong className="text-slate-900 text-base sm:text-lg font-mono font-black">{exam.durationMinutes} Mins</strong>
               </div>
               <div>
                 <span className="text-xs text-slate-500 font-bold block">Questions</span>
-                <strong className="text-slate-900 text-lg font-mono font-black">{questions.length} Items</strong>
+                <strong className="text-slate-900 text-base sm:text-lg font-mono font-black">{questions.length} Items</strong>
               </div>
               <div>
                 <span className="text-xs text-slate-500 font-bold block">Max Marks</span>
-                <strong className="text-[#2468B2] text-lg font-mono font-black">+{exam.totalMarks} Marks</strong>
+                <strong className="text-[#2468B2] text-base sm:text-lg font-mono font-black">+{exam.totalMarks}</strong>
               </div>
             </div>
 
-            {/* Candidate Identity Form */}
             <form onSubmit={handleStartExam} className="space-y-4">
               <div>
                 <label htmlFor="c-name" className="text-xs font-bold text-slate-800 mb-1 block uppercase">
@@ -903,17 +927,16 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="c-id" className="text-xs font-bold text-slate-800 mb-1 block uppercase">
-                    Assigned Roll Number
+                    Roll Number
                   </label>
                   <input
                     id="c-id"
                     type="text"
                     disabled
-                    value={candidateId}
+                    value={rollNumber}
                     className="w-full h-11 px-3 text-sm bg-slate-100 border border-slate-300 rounded-lg font-mono font-bold text-[#2468B2]"
                   />
                 </div>
-
                 <div>
                   <label htmlFor="s-name" className="text-xs font-bold text-slate-800 mb-1 block uppercase">
                     School Name (Optional)
@@ -929,25 +952,30 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                 </div>
               </div>
 
-              {/* Instructions Box */}
               <div className="bg-amber-50/70 p-4 rounded-xl border border-amber-200 text-xs text-slate-800 space-y-2">
                 <div className="font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wider">
-                  <ShieldAlert className="w-4 h-4 text-amber-700" /> NTA Examination Instructions
+                  <ShieldAlert className="w-4 h-4 text-amber-700" /> Examination Instructions
                 </div>
                 <ul className="list-disc pl-5 space-y-1 text-slate-700">
-                  <li>The clock will be set at the server. The countdown timer at the top right indicates remaining time.</li>
-                  <li>Questions are structured strictly into 4 sections (1 to 50 in sequential order).</li>
-                  <li>Use <strong>Save & Next</strong> to confirm answers, or <strong>Save & Mark for Review</strong> to flag questions while keeping answers.</li>
-                  <li>All interactive simulations feature light-mode manipulatives and deterministic engine evaluation.</li>
-                  <li>Your progress is continuously backed up locally into IndexedDB with instant crash-recovery.</li>
+                  <li>The timer starts when you press Start and keeps running even if you close this page.</li>
+                  <li>Use <strong>Save &amp; Next</strong> to confirm answers, or <strong>Save &amp; Mark for Review</strong> to flag a question while keeping its answer.</li>
+                  <li>Every answer is saved automatically. If your connection drops or the page closes, open the paper again to continue where you left off.</li>
+                  <li>The paper is submitted automatically when time runs out. You can submit only once.</li>
                 </ul>
               </div>
 
+              {startError && (
+                <p role="alert" className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
+                  {startError}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="w-full h-12 bg-[#55B987] hover:bg-[#3E9E6F] active:bg-[#33875C] text-white rounded-lg text-base font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
+                disabled={starting}
+                className="w-full h-12 bg-[#55B987] hover:bg-[#3E9E6F] active:bg-[#33875C] disabled:opacity-60 text-white rounded-lg text-base font-black shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
               >
-                <span>Enter & Start Examination</span>
+                <span>{starting ? "Starting…" : "Enter & Start Examination"}</span>
                 <ArrowRight className="w-5 h-5 stroke-[2.5]" />
               </button>
             </form>
@@ -957,12 +985,9 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
     );
   }
 
-  // SCREEN 2: The Official NTA Digital Examination Paper
-  const answeredIndices = new Set(
-    questions
-      .map((q, idx) => (answers[q.id] !== undefined && answers[q.id] !== null && answers[q.id] !== "" ? idx : -1))
-      .filter((idx) => idx !== -1)
-  );
+  /* ── Render: the paper ───────────────────────────────────── */
+
+  const submitting = submitState.kind === "submitting";
 
   return (
     <div className="h-dvh w-full bg-[#F4F7FB] flex flex-col overflow-hidden select-none font-sans">
@@ -970,45 +995,33 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
         olympiadTitle={exam.title}
         examCode={exam.code}
         candidateName={candidateName}
-        candidateId={candidateId}
+        candidateId={rollNumber}
         timeRemainingSeconds={timeRemainingSeconds}
-        isSaving={isSaving}
+        sync={sync}
       />
 
-      {/* On large screens the workspace itself never scrolls: the question card scrolls
-          inside its column and the palette fills the column beside it, so no part of the
-          palette can be pushed off-screen at any window height. */}
       <main className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
         <div className="w-full max-w-[1750px] mx-auto px-3 sm:px-5 py-3 sm:py-4 lg:h-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start lg:items-stretch lg:h-full">
             <div className="lg:col-span-8 xl:col-span-9 bg-white border-2 border-slate-300 rounded-xl shadow-md flex flex-col overflow-hidden lg:min-h-0">
               <div className="shrink-0 bg-slate-100 border-b-2 border-slate-300 px-4 py-2 flex items-center gap-2 overflow-x-auto">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0 mr-2">
-                  Sections:
-                </span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 shrink-0 mr-2">Sections:</span>
                 {sections.map((sec) => {
                   const isActive = currentSection.id === sec.id;
                   const answeredInSection = questions
                     .slice(sec.startIdx, sec.endIdx + 1)
-                    .filter((q) => answers[q.id] !== undefined && answers[q.id] !== "").length;
-
+                    .filter((q) => isAnswered(answers[q.id])).length;
                   return (
                     <button
                       key={sec.id}
                       type="button"
-                      onClick={() => setCurrentIndex(sec.startIdx)}
+                      onClick={() => goTo(sec.startIdx)}
                       className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all shrink-0 flex items-center gap-1.5 cursor-pointer border ${
-                        isActive
-                          ? "bg-[#2468B2] text-white border-[#1C5190] shadow-subtle"
-                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-200"
+                        isActive ? "bg-[#2468B2] text-white border-[#1C5190] shadow-subtle" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-200"
                       }`}
                     >
                       <span>{sec.title}</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                          isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
-                        }`}
-                      >
+                      <span className={`text-[10px] px-1.5 rounded font-mono ${isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"}`}>
                         {answeredInSection}/{sec.count}
                       </span>
                     </button>
@@ -1034,9 +1047,7 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                   >
                     ?
                   </button>
-                  <span className="text-sm font-black text-[#2468B2]">
-                    Question No. {currentIndex + 1}
-                  </span>
+                  <span className="text-sm font-black text-[#2468B2]">Question No. {currentIndex + 1}</span>
                   <span className="text-slate-400">|</span>
                   <span className="text-slate-600 font-semibold">{currentSection.title}</span>
                 </div>
@@ -1048,16 +1059,13 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                   <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     Negative: -{currentQuestion?.negativeMarks || 0}.00
                   </span>
-
                   {currentQuestion && (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
                     <div className="flex items-center gap-0.5 bg-[#EAF2FC] p-0.5 rounded-lg border border-[#E1E7EF] font-sans ml-1">
                       <button
                         type="button"
                         onClick={() => setQuestionView("activity")}
                         className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
-                          questionView === "activity"
-                            ? "bg-[#2468B2] text-white shadow-subtle"
-                            : "text-[#1C5190] hover:bg-[#E1E7EF]"
+                          questionView === "activity" ? "bg-[#2468B2] text-white shadow-subtle" : "text-[#1C5190] hover:bg-[#E1E7EF]"
                         }`}
                       >
                         Interactive
@@ -1066,9 +1074,7 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                         type="button"
                         onClick={() => setQuestionView("standard")}
                         className={`px-2 py-0.5 text-[11px] font-bold rounded transition-all cursor-pointer ${
-                          questionView === "standard"
-                            ? "bg-slate-700 text-white shadow-subtle"
-                            : "text-slate-600 hover:bg-slate-200"
+                          questionView === "standard" ? "bg-slate-700 text-white shadow-subtle" : "text-slate-600 hover:bg-slate-200"
                         }`}
                       >
                         Standard
@@ -1080,12 +1086,15 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
 
               <div ref={questionScrollRef} className="p-4 sm:p-5 flex-1 space-y-4 lg:min-h-0 lg:overflow-y-auto">
                 {currentQuestion ? (
+                  // Keyed per question: every question mounts its own renderer, so no
+                  // component state can carry over from the previous question.
                   <QuestionRenderer
+                    key={currentQuestion.id}
                     question={currentQuestion}
-                    value={currentAnswerValue}
+                    value={answers[currentQuestion.id]}
                     activityState={activityStates[currentQuestion.id]}
                     onChange={handleAnswerChange}
-                    readOnly={false}
+                    readOnly={submitting}
                     showMetadata={false}
                     activeView={questionView}
                     onToggleView={setQuestionView}
@@ -1105,10 +1114,10 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                 answeredIndices={answeredIndices}
                 markedForReviewIndices={markedForReviewIndices}
                 activeSectionId={currentSection.id}
-                onSelectIndex={(idx) => setCurrentIndex(idx)}
+                onSelectIndex={goTo}
                 onSubmitExam={() => setShowConfirmModal(true)}
                 candidateName={candidateName}
-                candidateId={candidateId}
+                candidateId={rollNumber}
               />
             </div>
           </div>
@@ -1122,8 +1131,8 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
         onSaveAndMarkForReview={handleSaveAndMarkForReview}
         onMarkForReviewAndNext={handleMarkForReviewAndNext}
         onClearResponse={handleClearResponse}
-        onPrevious={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-        onNext={() => setCurrentIndex(Math.min(questions.length - 1, currentIndex + 1))}
+        onPrevious={() => goTo(currentIndex - 1)}
+        onNext={() => goTo(currentIndex + 1)}
         onSubmitExam={() => setShowConfirmModal(true)}
       />
 
@@ -1138,7 +1147,7 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
               markedForReviewIndices={markedForReviewIndices}
               activeSectionId={currentSection.id}
               onSelectIndex={(idx) => {
-                setCurrentIndex(idx);
+                goTo(idx);
                 setPaletteOpen(false);
               }}
               onSubmitExam={() => {
@@ -1148,7 +1157,7 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
               onOpenGuide={() => setGuideOpen(true)}
               onClose={() => setPaletteOpen(false)}
               candidateName={candidateName}
-              candidateId={candidateId}
+              candidateId={rollNumber}
             />
           </div>
         </div>
@@ -1156,15 +1165,17 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
 
       <ExamButtonGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
 
-      {showConfirmModal && (
+      {(showConfirmModal || submitState.kind !== "idle") && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-2xl max-w-xl w-full p-6 space-y-6">
+          <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-2xl max-w-xl w-full p-5 sm:p-6 space-y-5 max-h-[92dvh] overflow-y-auto">
             <div className="border-b border-slate-200 pb-3">
               <h3 className="text-lg font-black text-slate-900">
-                Summary of Examination Responses
+                {submitting ? "Submitting your paper…" : "Summary of Examination Responses"}
               </h3>
               <p className="text-xs text-slate-600 mt-0.5">
-                Review your final section-wise tally before closing the examination paper.
+                {submitting
+                  ? "Please keep this page open. Your answers are saved."
+                  : "Review your section-wise tally before submitting. You can submit only once."}
               </p>
             </div>
 
@@ -1182,20 +1193,14 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
                 <tbody className="divide-y divide-slate-100 text-slate-800">
                   {sections.map((sec) => {
                     const secQuestions = questions.slice(sec.startIdx, sec.endIdx + 1);
-                    const ansCount = secQuestions.filter(
-                      (q) => answers[q.id] !== undefined && answers[q.id] !== ""
-                    ).length;
-                    const markedCount = secQuestions.filter((_, idx) =>
-                      markedForReviewIndices.has(sec.startIdx + idx)
-                    ).length;
-                    const notAnsCount = sec.count - ansCount;
-
+                    const ansCount = secQuestions.filter((q) => isAnswered(answers[q.id])).length;
+                    const markedCount = secQuestions.filter((q) => markedIds.has(q.id)).length;
                     return (
                       <tr key={sec.id} className="hover:bg-slate-50">
                         <td className="p-2.5 font-semibold text-slate-900">{sec.title}</td>
                         <td className="p-2.5 text-center font-mono">{sec.count}</td>
                         <td className="p-2.5 text-center font-mono text-emerald-700">{ansCount}</td>
-                        <td className="p-2.5 text-center font-mono text-rose-700">{notAnsCount}</td>
+                        <td className="p-2.5 text-center font-mono text-rose-700">{sec.count - ansCount}</td>
                         <td className="p-2.5 text-center font-mono text-purple-700">{markedCount}</td>
                       </tr>
                     );
@@ -1211,20 +1216,31 @@ export default function ExamSessionClient({ params }: { params: Promise<{ examId
               </span>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            {submitState.kind === "failed" && (
+              <p role="alert" className="text-xs font-bold text-rose-800 bg-rose-50 border border-rose-200 rounded-lg p-3">
+                {submitState.message}
+              </p>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-1">
               <button
                 type="button"
-                onClick={() => setShowConfirmModal(false)}
-                className="h-10 px-4 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-bold text-slate-700 cursor-pointer"
+                disabled={submitting}
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setSubmitState({ kind: "idle" });
+                }}
+                className="h-10 px-4 bg-white border border-slate-300 hover:bg-slate-100 disabled:opacity-50 rounded-lg text-xs font-bold text-slate-700 cursor-pointer"
               >
                 No, Return to Paper
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => handleFinalSubmit("normal")}
-                className="h-10 px-6 bg-[#55B987] hover:bg-[#3E9E6F] text-white rounded-lg text-xs font-black shadow transition-all cursor-pointer uppercase tracking-wide"
+                className="h-10 px-6 bg-[#55B987] hover:bg-[#3E9E6F] disabled:opacity-60 text-white rounded-lg text-xs font-black shadow transition-all cursor-pointer uppercase tracking-wide"
               >
-                Yes, Final Submit
+                {submitting ? "Submitting…" : submitState.kind === "failed" ? "Try Submitting Again" : "Yes, Final Submit"}
               </button>
             </div>
           </div>

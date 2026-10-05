@@ -73,15 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setAccount(session.profile);
           setActiveRole(session.activeRole ?? session.profile.role);
         } else {
-          // If no session found in Firebase and no local cached session
-          const cached = authService.getCachedSession?.();
-          if (!cached) {
-            setAccount(null);
-          }
+          // Firebase definitively reports no signed-in user.
+          setAccount(null);
         }
       })
       .catch(() => {
-        // Network/offline error must NOT log user out if cached session exists
+        // A network/offline failure while re-validating must NOT sign the person out —
+        // a candidate mid-exam keeps their cached session until Firebase says otherwise.
       })
       .finally(() => {
         if (!cancelled) setIsReady(true);

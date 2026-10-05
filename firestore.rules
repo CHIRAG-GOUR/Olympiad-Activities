@@ -82,7 +82,13 @@ service cloud.firestore {
     // promote themselves: role and status changes are reserved to an admin.
     match /users/{userId} {
       allow read: if isStaff() || isOwner(userId);
-      allow create: if isSuperAdmin() || isOwner(userId);
+      // Self-registration may only create an ordinary account. Without the role check a
+      // new user could write role: 'SUPER_ADMIN' into their own document, and
+      // isSuperAdmin() below trusts that field - a one-request privilege escalation.
+      allow create: if isSuperAdmin() || (
+        isOwner(userId) &&
+        request.resource.data.role in ['STUDENT', 'TEACHER']
+      );
       allow delete: if isSuperAdmin();
       allow update: if isSuperAdmin() || (
         isOwner(userId) &&
@@ -145,11 +151,15 @@ service cloud.firestore {
     match /examSessions/{sessionId} {
       allow read: if isStaff() || isOwner(resource.data.ownerUid);
       allow create: if isAuthenticated() && isOwner(request.resource.data.ownerUid);
+      // Once a candidate's session is submitted it is closed to them: re-opening it
+      // (status back to in_progress) would hand them a second sitting.
       allow update: if isStaff() || (
         isOwner(resource.data.ownerUid) &&
-        request.resource.data.ownerUid == resource.data.ownerUid
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        resource.data.status != 'submitted'
       );
-      allow delete: if isSuperAdmin();
+      // Staff may discard their own preview sittings; candidates can never delete one.
+      allow delete: if isSuperAdmin() || (isStaff() && isOwner(resource.data.ownerUid));
     }
 
     // ------------------------------------------------------------------
@@ -157,9 +167,13 @@ service cloud.firestore {
     // ------------------------------------------------------------------
     // An attempt is a candidate's submitted paper. They may file their own and
     // read it back; amending a submitted attempt is reserved to an admin.
+    // Attempt ids are deterministic per sitting, so a resubmission of the same paper is
+    // an update - which candidates cannot make - and a submission is filed exactly once.
     match /attempts/{attemptId} {
       allow read: if isStaff() || isOwner(resource.data.ownerUid);
-      allow create: if isAuthenticated() && isOwner(request.resource.data.ownerUid);
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.ownerUid) &&
+        request.resource.data.student.studentId == request.auth.uid;
       allow update, delete: if isSuperAdmin();
     }
 

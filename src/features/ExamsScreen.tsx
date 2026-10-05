@@ -5,6 +5,8 @@ import { ROLE_PREFIX } from "@/lib/auth/sections";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { examRepository } from "@/repositories";
+import { examRoute, examDetailRoute } from "@/lib/routes";
+import { logError, userMessageFor } from "@/lib/logger";
 import { Exam } from "@/types/exam";
 import {
   Calculator,
@@ -58,7 +60,7 @@ export default function ExamsScreen() {
         const data = await examRepository.listExams();
         setExams(data);
       } catch (err) {
-        console.error("Failed to load exams:", err);
+        logError("EXAM_LOAD_FAILED", { operation: "listExams" }, err);
       } finally {
         setLoading(false);
       }
@@ -73,20 +75,29 @@ export default function ExamsScreen() {
     return unsub;
   }, []);
 
-  const handleToggleLock = async (examId: string) => {
-    await ExamLockService.toggleExamLocked(examId);
-    setLockVersion((v) => v + 1);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  /** Lock/class changes that fail to reach the server are rolled back and reported. */
+  const runLockChange = async (change: () => Promise<unknown>) => {
+    setActionError(null);
+    try {
+      await change();
+    } catch (err) {
+      setActionError(
+        `That change was not saved, so candidates still see the previous setting. ${userMessageFor(err, "the server").replace(" be loaded", " be reached")}`
+      );
+    } finally {
+      setLockVersion((v) => v + 1);
+    }
   };
 
-  const handleToggleClass = async (examId: string, classNum: number, defaultGrade?: number) => {
-    await ExamLockService.toggleExamClass(examId, classNum, defaultGrade || 6);
-    setLockVersion((v) => v + 1);
-  };
+  const handleToggleLock = (examId: string) => runLockChange(() => ExamLockService.toggleExamLocked(examId));
 
-  const handleSetAllClasses = async (examId: string, classes: number[]) => {
-    await ExamLockService.setVisibleClasses(examId, classes);
-    setLockVersion((v) => v + 1);
-  };
+  const handleToggleClass = (examId: string, classNum: number, defaultGrade?: number) =>
+    runLockChange(() => ExamLockService.toggleExamClass(examId, classNum, defaultGrade || 6));
+
+  const handleSetAllClasses = (examId: string, classes: number[]) =>
+    runLockChange(() => ExamLockService.setVisibleClasses(examId, classes));
 
   // Metrics calculation
   const unlockedCount = useMemo(() => {
@@ -164,6 +175,14 @@ export default function ExamsScreen() {
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
+      {actionError && (
+        <div role="alert" className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-[13px] font-semibold text-rose-800 flex items-start justify-between gap-3">
+          <span>{actionError}</span>
+          <button type="button" onClick={() => setActionError(null)} className="shrink-0 text-rose-700 hover:underline">
+            Dismiss
+          </button>
+        </div>
+      )}
       {/* 1. Header Banner */}
       <div className="bg-white/85 backdrop-blur-sm border border-slate-200/90 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -468,7 +487,7 @@ export default function ExamsScreen() {
                       </button>
 
                       <Link
-                        href={`/exam/${exam.id}`}
+                        href={examRoute(exam.id)}
                         className="h-11 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all"
                         title="Preview examination as candidate"
                       >
@@ -477,7 +496,7 @@ export default function ExamsScreen() {
                       </Link>
 
                       <Link
-                        href={`${roleBase}/exams/${exam.id}`}
+                        href={examDetailRoute(roleBase, exam.id)}
                         className="h-11 px-3.5 rounded-xl bg-[#2468B2] hover:bg-[#1C5190] text-white font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-all"
                       >
                         <span>Edit</span>
@@ -558,14 +577,14 @@ export default function ExamsScreen() {
 
                 <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                   <Link
-                    href={`/exam/${exam.id}`}
+                    href={examRoute(exam.id)}
                     className="flex-1 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 transition-all"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Test</span>
                   </Link>
                   <Link
-                    href={`${roleBase}/exams/${exam.id}`}
+                    href={examDetailRoute(roleBase, exam.id)}
                     className="flex-1 h-9 rounded-xl bg-[#2468B2] hover:bg-[#1C5190] text-white font-bold text-xs flex items-center justify-center gap-1 shadow-2xs transition-all"
                   >
                     <span>Manage</span>

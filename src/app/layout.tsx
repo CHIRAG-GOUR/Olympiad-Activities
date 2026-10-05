@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { SubmissionSyncAgent } from "@/components/sync/SubmissionSyncAgent";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,7 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
       <body className="bg-[#F4F7FB] text-slate-900 min-h-screen">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <SubmissionSyncAgent />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { examRoute } from "@/lib/routes";
 import React, { useState, useEffect, useMemo } from "react";
 import { examRepository, questionRepository, attemptRepository, userRepository } from "@/repositories";
 import { Exam } from "@/types/exam";
@@ -282,7 +283,7 @@ export default function DashboardView() {
             nextExam
               ? {
                   label: resumable ? "Continue examination" : "Begin examination",
-                  href: `/exam/${resumable?.examId ?? nextExam.id}`,
+                  href: examRoute(resumable?.examId ?? nextExam.id),
                 }
               : undefined
           }
@@ -301,7 +302,7 @@ export default function DashboardView() {
             grade={nextExam.grade}
             questionCount={nextExam.questionIds.length || nextExam.totalQuestions || questions.length}
             durationMinutes={nextExam.durationMinutes}
-            href={`/exam/${nextExam.id}`}
+            href={examRoute(nextExam.id)}
           />
         ) : (
           <Card>
@@ -411,7 +412,7 @@ export default function DashboardView() {
         ]}
         primary={
           isAdmin
-            ? { label: "Open examination", href: primaryExamId ? `/exam/${primaryExamId}` : `${base}/exams` }
+            ? { label: "Open examination", href: primaryExamId ? examRoute(primaryExamId) : `${base}/exams` }
             : { label: "Add question", href: `${base}/questions/new` }
         }
         secondary={

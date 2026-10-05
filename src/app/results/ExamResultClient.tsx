@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { attemptRepository, reportRepository } from "@/repositories";
 import { ExamAttempt } from "@/types/attempt";
@@ -8,7 +8,12 @@ import { ExamReport } from "@/types/report";
 import { RedPenScoreCircle } from "@/components/examination/RedPenScoreCircle";
 import { useAuth } from "@/context/AuthContext";
 import { canReadAttempt, canReadReport } from "@/lib/auth/dataAccess";
-import { homeFor, LOGIN_ROUTE } from "@/lib/auth/roleRoutes";
+import { homeFor } from "@/lib/auth/roleRoutes";
+import { ROLE_PREFIX } from "@/lib/auth/sections";
+import { StatusPanel } from "@/components/feedback/StatusPanel";
+import { summarizeResult } from "@/engine/score-summary";
+import { isSubmissionPending, retryPendingSubmissions } from "@/services/exam/SubmissionService";
+import { logError, userMessageFor } from "@/lib/logger";
 import { AccessRestricted } from "@/components/auth/AccessRestricted";
 import { AppLoading } from "@/components/auth/AppLoading";
 import {
@@ -30,41 +35,79 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-export default function ExamResultClient({ params }: { params: Promise<{ attemptId: string }> }) {
-  const resolvedParams = use(params);
-  const { scope, isReady, isAuthenticated, activeRole } = useAuth();
+export default function ExamResultClient({ attemptId }: { attemptId: string }) {
+  const { scope, activeRole, can } = useAuth();
   const [attempt, setAttempt] = useState<ExamAttempt | null>(null);
   const [report, setReport] = useState<ExamReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [uploadPending, setUploadPending] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
+      setLoading(true);
+      setError(null);
       try {
-        const [rep, att] = await Promise.all([
-          reportRepository.getReportByAttemptId(resolvedParams.attemptId),
-          attemptRepository.getAttempt(resolvedParams.attemptId),
+        const [rep, att, pending] = await Promise.all([
+          attemptId ? reportRepository.getReportByAttemptId(attemptId) : Promise.resolve(null),
+          attemptId ? attemptRepository.getAttempt(attemptId) : Promise.resolve(null),
+          attemptId ? isSubmissionPending(attemptId) : Promise.resolve(false),
         ]);
+        if (cancelled) return;
         setReport(rep);
         setAttempt(att);
+        setUploadPending(pending);
       } catch (err) {
-        console.error("Failed to load result:", err);
+        if (cancelled) return;
+        logError("RESULT_LOAD_FAILED", { attemptId }, err);
+        setError(err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
-  }, [resolvedParams.attemptId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [attemptId, reloadKey]);
+
+  // A submission made offline uploads when the connection returns; reflect that here.
+  useEffect(() => {
+    if (!uploadPending || !scope) return;
+    const retry = async () => {
+      const left = await retryPendingSubmissions(scope.userId);
+      if (left === 0) setUploadPending(await isSubmissionPending(attemptId));
+    };
+    window.addEventListener("online", retry);
+    void retry();
+    return () => window.removeEventListener("online", retry);
+  }, [uploadPending, scope, attemptId]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  if (!isReady || loading) {
+  const isStaff = can("result:view");
+  const portalHref = `${ROLE_PREFIX[activeRole]}/results`;
+  const portalLabel = isStaff ? "All results" : "My results";
+
+  if (loading) {
     return <AppLoading label="Opening the score paper" />;
   }
 
-  if (!isAuthenticated) {
-    return <AccessRestricted homeHref={LOGIN_ROUTE} />;
+  if (error) {
+    return (
+      <StatusPanel
+        title="Unable to load this score paper"
+        message={userMessageFor(error, "this score paper")}
+        actions={[
+          { label: portalLabel, href: portalHref },
+          { label: "Retry", onClick: () => setReloadKey((n) => n + 1), primary: true },
+        ]}
+      />
+    );
   }
 
   const permitted =
@@ -75,36 +118,32 @@ export default function ExamResultClient({ params }: { params: Promise<{ attempt
     return <AccessRestricted homeHref={homeFor(activeRole)} />;
   }
 
-  if (!attempt && !report) {
+  const summary = summarizeResult(report, attempt);
+  if (!summary) {
     return (
-      <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center p-6 font-sans">
-        <div className="bg-white border border-[#E1E7EF] rounded-2xl p-8 max-w-lg text-center space-y-4 shadow-sm">
-          <h2 className="text-xl font-bold text-[#182338]">Score Paper Not Found</h2>
-          <p className="text-xs text-[#667085]">
-            The requested examination attempt record could not be located in local storage or IndexedDB.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 h-10 px-6 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-subtle transition-all"
-          >
-            <ArrowLeft className="w-4 h-4" /> Return to Examination Portal
-          </Link>
-        </div>
-      </div>
+      <StatusPanel
+        tone="notfound"
+        title="Score paper not found"
+        message="No submitted examination matches this link. If you have just submitted, wait a moment and retry."
+        actions={[
+          { label: portalLabel, href: portalHref },
+          { label: "Retry", onClick: () => setReloadKey((n) => n + 1), primary: true },
+        ]}
+      />
     );
   }
 
-  const totalMarks = report?.totalMarks ?? attempt?.maximumMarks ?? 60;
-  const obtainedMarks = report?.obtainedMarks ?? attempt?.totalMarks ?? 0;
-  const examTitle = report?.examTitle ?? attempt?.examTitle ?? "SOF IMO Examination";
+  const totalMarks = summary.maximum;
+  const obtainedMarks = summary.obtained;
+  const examTitle = report?.examTitle ?? attempt?.examTitle ?? "Olympiad Examination";
   const studentName = report?.studentName ?? attempt?.student.name ?? "Candidate";
-  const studentId = report?.studentId ?? attempt?.student.studentId ?? "STU-000";
-  const grade = report?.classLevel ?? attempt?.student.grade ?? 6;
-  const correctCount = report?.correctAnswers ?? attempt?.questionEvaluations.filter((q) => q.isCorrect).length ?? 0;
-  const totalQuestions = report?.totalQuestions ?? attempt?.questionEvaluations.length ?? 50;
-  const wrongCount = report?.wrongAnswers ?? Math.max(0, (attempt?.questionEvaluations.filter((q) => !q.isCorrect && q.studentAnswer !== null).length || 0));
-  const unansweredCount = report?.unansweredQuestions ?? Math.max(0, totalQuestions - (correctCount + wrongCount));
-  const accuracy = report?.accuracy ?? (correctCount + wrongCount > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 0);
+  const studentId = attempt?.student.rollNumber ?? report?.studentId ?? attempt?.student.studentId ?? "—";
+  const grade = report?.classLevel ?? attempt?.student.grade ?? "—";
+  const correctCount = summary.correct;
+  const totalQuestions = summary.total;
+  const wrongCount = summary.wrong;
+  const unansweredCount = summary.unanswered;
+  const accuracy = summary.accuracy;
   const timeSpentMins = Math.round((report?.timeSpentSeconds ?? attempt?.totalTimeSpentSeconds ?? 0) / 60);
 
   const topicResults = report?.topicResults || [];
@@ -112,31 +151,29 @@ export default function ExamResultClient({ params }: { params: Promise<{ attempt
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] flex flex-col justify-between py-6 px-3 sm:px-6 lg:px-8 font-sans print:bg-white print:p-0 select-none text-[#182338]">
-      <div className="max-w-5xl mx-auto w-full flex items-center justify-between text-xs text-[#667085] mb-5 print:hidden">
+      <div className="max-w-5xl mx-auto w-full flex flex-wrap items-center justify-between gap-3 text-xs text-[#667085] mb-5 print:hidden">
         <Link
-          href="/"
+          href={portalHref}
           className="h-10 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#182338] flex items-center gap-2 font-bold rounded-xl transition-colors shadow-subtle"
         >
-          <ArrowLeft className="w-4 h-4 text-[#667085]" /> Return to Portal
+          <ArrowLeft className="w-4 h-4 text-[#667085]" /> {portalLabel}
         </Link>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin/results"
-            className="h-10 px-4 bg-white border border-[#E1E7EF] hover:bg-[#EAF2FC] text-[#2468B2] flex items-center gap-2 font-bold rounded-xl transition-colors shadow-subtle"
-          >
-            <FileSpreadsheet className="w-4 h-4" /> All Results Ledger
-          </Link>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="h-10 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl flex items-center gap-2 font-bold transition-all shadow-subtle cursor-pointer"
-          >
-            <Printer className="w-4 h-4" /> Download / Print Report
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="h-10 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl flex items-center gap-2 font-bold transition-all shadow-subtle cursor-pointer"
+        >
+          <Printer className="w-4 h-4" /> Download / Print Report
+        </button>
       </div>
+
+      {uploadPending && (
+        <div role="status" className="max-w-5xl mx-auto w-full mb-4 p-3 rounded-xl border border-amber-200 bg-amber-50 text-[12.5px] font-semibold text-amber-900 print:hidden">
+          Your paper is submitted and saved on this device. It will be sent to your teacher automatically as soon as
+          this device is back online — you do not need to do anything.
+        </div>
+      )}
 
       <main className="max-w-5xl mx-auto w-full space-y-6">
         <div className="bg-white border border-[#E1E7EF] rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden print:border-none print:shadow-none">
@@ -207,7 +244,7 @@ export default function ExamResultClient({ params }: { params: Promise<{ attempt
             <div className="bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl p-3">
               <span className="text-[10px] font-bold uppercase text-[#667085] block">Percentage</span>
               <strong className="text-lg font-mono font-black text-[#182338] block">
-                {Math.round((obtainedMarks / Math.max(1, totalMarks)) * 100)}%
+                {summary.percentage}%
               </strong>
             </div>
             <div className="bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl p-3">

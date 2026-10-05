@@ -6,6 +6,8 @@ import { LocalSubjectRepository } from "../local/LocalSubjectRepository";
 import { reviveNestedArrays } from "./decodeFirestore";
 
 import { SEED_SUBJECTS, reconcileWithSeed, preferSeed } from "@/lib/seedData";
+import { cached, invalidate, CACHE_TTL } from "../cache";
+import { logError, logWarn } from "@/lib/logger";
 
 export class FirestoreSubjectRepository implements ISubjectRepository {
   private localFallback = new LocalSubjectRepository();
@@ -19,27 +21,27 @@ export class FirestoreSubjectRepository implements ISubjectRepository {
       }
       return this.localFallback.getSubject(id);
     } catch (e) {
-      console.warn("Firestore getSubject failed, fallback to local:", e);
+      logWarn("FIRESTORE_QUERY_FAILED", { operation: "getSubject", id }, e);
       return this.localFallback.getSubject(id);
     }
   }
 
   async listSubjects(): Promise<Subject[]> {
-    const local = await this.localFallback.listSubjects();
-    if (!db) return local;
-    try {
-      const snap = await getDocs(collection(db, "subjects"));
-      if (!snap.empty) {
+    if (!db) return this.localFallback.listSubjects();
+    const firestore = db;
+    return cached("subjects:all", CACHE_TTL.content, async () => {
+      const local = await this.localFallback.listSubjects();
+      try {
+        const snap = await getDocs(collection(firestore, "subjects"));
+        if (snap.empty) return local;
         const remote = snap.docs.map((d) => reviveNestedArrays(d.data()) as Subject);
         const remoteIds = new Set(remote.map((s) => s.id));
-        const missingLocal = local.filter((s) => !remoteIds.has(s.id));
-        return reconcileWithSeed([...remote, ...missingLocal], SEED_SUBJECTS);
+        return reconcileWithSeed([...remote, ...local.filter((s) => !remoteIds.has(s.id))], SEED_SUBJECTS);
+      } catch (e) {
+        logWarn("FIRESTORE_QUERY_FAILED", { operation: "listSubjects" }, e);
+        return local;
       }
-      return local;
-    } catch (e) {
-      console.warn("Firestore listSubjects failed, fallback to local:", e);
-      return local;
-    }
+    });
   }
 
   async saveSubject(subject: Subject): Promise<void> {
@@ -47,10 +49,12 @@ export class FirestoreSubjectRepository implements ISubjectRepository {
       try {
         await setDoc(doc(db, "subjects", subject.id), subject);
       } catch (e) {
-        console.error("Firestore saveSubject failed:", e);
+        logError("FIRESTORE_WRITE_FAILED", { operation: "saveSubject", id: subject.id }, e);
+        throw e;
       }
     }
     await this.localFallback.saveSubject(subject);
+    invalidate("subjects:");
   }
 
   async deleteSubject(id: string): Promise<void> {
@@ -58,9 +62,11 @@ export class FirestoreSubjectRepository implements ISubjectRepository {
       try {
         await deleteDoc(doc(db, "subjects", id));
       } catch (e) {
-        console.error("Firestore deleteSubject failed:", e);
+        logError("FIRESTORE_WRITE_FAILED", { operation: "deleteSubject", id: id }, e);
+        throw e;
       }
     }
     await this.localFallback.deleteSubject(id);
+    invalidate("subjects:");
   }
 }
