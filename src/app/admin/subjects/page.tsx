@@ -26,7 +26,7 @@ export default function SubjectsPage() {
         subtitle="Manage academic subjects, chapters, topics, and grade-level curricula"
       />
 
-      <div className="p-6 md:p-8 space-y-6 w-full max-w-[1750px] min-w-0">
+      <div className="space-y-6 w-full min-w-0">
         {subjects.length === 0 ? (
           <div className="bg-white border-2 border-[#E1E7EF] rounded-2xl p-12 text-center shadow-sm space-y-4 max-w-xl mx-auto">
             <div className="w-16 h-16 bg-[#F4F7FB] text-[#2468B2] rounded-2xl flex items-center justify-center mx-auto border border-[#E1E7EF]">

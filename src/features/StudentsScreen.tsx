@@ -118,17 +118,17 @@ export default function StudentsScreen() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
+            <div className="overflow-x-auto rounded-xl">
+              <table className="w-full min-w-[1050px] text-left text-xs font-semibold">
                 <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-4">Candidate Name</th>
-                    <th className="p-4">Roll / Student ID</th>
-                    <th className="p-4 text-center">Class</th>
-                    <th className="p-4">Email</th>
-                    <th className="p-4 text-center">Exams Completed</th>
-                    <th className="p-4 text-center">Status</th>
-                    <th className="p-4 text-right">Actions</th>
+                    <th className="p-4 w-[200px]">Candidate Name</th>
+                    <th className="p-4 w-[160px]">Roll / Student ID</th>
+                    <th className="p-4 w-[85px] text-center">Class</th>
+                    <th className="p-4 min-w-[180px]">Email</th>
+                    <th className="p-4 w-[130px] text-center">Exams Completed</th>
+                    <th className="p-4 w-[95px] text-center">Status</th>
+                    <th className="p-4 w-[230px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">

@@ -154,17 +154,17 @@ export default function TeachersDirectoryPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
+            <div className="overflow-x-auto rounded-xl">
+              <table className="w-full min-w-[1050px] text-left text-xs font-semibold">
                 <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-4">Faculty Member</th>
-                    <th className="p-4">Teacher ID</th>
-                    <th className="p-4">Role</th>
-                    <th className="p-4">Official Email</th>
-                    <th className="p-4 text-center">Assigned Exams</th>
-                    <th className="p-4 text-center">Status</th>
-                    <th className="p-4 text-right">Actions</th>
+                    <th className="p-4 w-[200px]">Faculty Member</th>
+                    <th className="p-4 w-[140px]">Teacher ID</th>
+                    <th className="p-4 w-[140px]">Role</th>
+                    <th className="p-4 min-w-[180px]">Official Email</th>
+                    <th className="p-4 w-[130px] text-center">Assigned Exams</th>
+                    <th className="p-4 w-[95px] text-center">Status</th>
+                    <th className="p-4 w-[230px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">

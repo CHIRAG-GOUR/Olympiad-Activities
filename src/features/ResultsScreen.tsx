@@ -237,20 +237,20 @@ export default function ResultsScreen() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
+            <div className="overflow-x-auto rounded-xl">
+              <table className="w-full min-w-[1150px] text-left text-xs font-semibold">
                 <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-4">Student</th>
-                    <th className="p-4">Examination</th>
-                    <th className="p-4 text-center">Class</th>
-                    <th className="p-4 text-center">Score</th>
-                    <th className="p-4 text-center">Accuracy</th>
-                    <th className="p-4 text-center text-emerald-700">Correct</th>
-                    <th className="p-4 text-center text-rose-700">Wrong</th>
-                    <th className="p-4 text-center text-[#667085]">Unanswered</th>
-                    <th className="p-4 text-center">Submitted</th>
-                    <th className="p-4 text-right">Report</th>
+                    <th className="p-4 w-[200px]">Student</th>
+                    <th className="p-4 min-w-[220px]">Examination</th>
+                    <th className="p-4 w-[85px] text-center">Class</th>
+                    <th className="p-4 w-[95px] text-center">Score</th>
+                    <th className="p-4 w-[95px] text-center">Accuracy</th>
+                    <th className="p-4 w-[80px] text-center text-emerald-700">Correct</th>
+                    <th className="p-4 w-[80px] text-center text-rose-700">Wrong</th>
+                    <th className="p-4 w-[95px] text-center text-[#667085]">Unanswered</th>
+                    <th className="p-4 w-[110px] text-center">Submitted</th>
+                    <th className="p-4 w-[110px] text-right">Report</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">

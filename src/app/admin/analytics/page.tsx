@@ -279,18 +279,18 @@ export default function AnalyticsAdminPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
+            <div className="overflow-x-auto rounded-xl">
+              <table className="w-full min-w-[1150px] text-left text-xs font-semibold">
                 <thead className="bg-[#F8FAFC] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="p-3">Candidate</th>
-                    <th className="p-3">Exam Paper</th>
-                    <th className="p-3 text-center">Class</th>
-                    <th className="p-3 text-center">Current Progress</th>
-                    <th className="p-3 text-center">Answered</th>
-                    <th className="p-3 text-center">Time Left</th>
-                    <th className="p-3 text-center">Connection</th>
-                    <th className="p-3 text-right">Oversight</th>
+                    <th className="p-3 w-[200px]">Candidate</th>
+                    <th className="p-3 min-w-[200px]">Exam Paper</th>
+                    <th className="p-3 w-[90px] text-center">Class</th>
+                    <th className="p-3 w-[180px] text-center">Current Progress</th>
+                    <th className="p-3 w-[100px] text-center">Answered</th>
+                    <th className="p-3 w-[110px] text-center">Time Left</th>
+                    <th className="p-3 w-[120px] text-center">Connection</th>
+                    <th className="p-3 w-[100px] text-right">Oversight</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">

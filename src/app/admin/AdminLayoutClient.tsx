@@ -86,7 +86,7 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
               <TopBar onOpenNav={() => setNavOpen(true)} />
 
               <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
-                <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-7 py-6 sm:py-7 lg:py-8">
+                <div className="mx-auto w-full max-w-[1560px] px-4 sm:px-6 lg:px-7 py-6 sm:py-7 lg:py-8">
                   {children}
                 </div>
               </main>

@@ -202,18 +202,18 @@ export default function LiveMonitorScreen() {
         {/* Live Surveillance Table */}
         <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-[14px] border-collapse">
+            <table className="w-full min-w-[1300px] text-left text-[14px] border-collapse">
               <thead>
                 <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[12px] uppercase tracking-wider">
-                  <th className="py-4 px-6">Student Candidate</th>
-                  <th className="py-4 px-6">Session ID</th>
-                  <th className="py-4 px-6">Examination</th>
-                  <th className="py-4 px-6">Current Progress</th>
-                  <th className="py-4 px-6">Timeline</th>
-                  <th className="py-4 px-6">IP Address</th>
-                  <th className="py-4 px-6">Device Profile</th>
-                  <th className="py-4 px-6">Connection</th>
-                  <th className="py-4 px-6 text-right">Status</th>
+                  <th className="py-4 px-6 w-[220px]">Student Candidate</th>
+                  <th className="py-4 px-6 w-[220px]">Session ID</th>
+                  <th className="py-4 px-6 min-w-[240px]">Examination</th>
+                  <th className="py-4 px-6 w-[180px]">Current Progress</th>
+                  <th className="py-4 px-6 w-[140px]">Timeline</th>
+                  <th className="py-4 px-6 w-[130px]">IP Address</th>
+                  <th className="py-4 px-6 w-[150px]">Device Profile</th>
+                  <th className="py-4 px-6 w-[120px] text-center">Connection</th>
+                  <th className="py-4 px-6 w-[130px] text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E1E7EF]">
@@ -228,22 +228,26 @@ export default function LiveMonitorScreen() {
                     <tr key={session.id} className="hover:bg-white/70 transition-colors h-[76px]">
                       {/* Candidate Name & School */}
                       <td className="py-4 px-6">
-                        <div className="font-bold text-[15px] text-slate-900">
+                        <div className="font-bold text-[15px] text-slate-900 truncate max-w-[200px]" title={session.student.name}>
                           {session.student.name}
                         </div>
-                        <div className="text-[12px] font-mono text-slate-500 font-bold">
+                        <div className="text-[12px] font-mono text-slate-500 font-bold truncate max-w-[200px]" title={session.student.studentId}>
                           ID: {session.student.studentId} • {session.student.schoolName || "Registered Candidate"}
                         </div>
                       </td>
 
                       {/* Session ID */}
-                      <td className="py-4 px-6 font-mono font-bold text-[13px] text-[#1C5190]">
-                        {session.sessionId}
+                      <td className="py-4 px-6 font-mono font-bold text-[12px] text-[#1C5190]">
+                        <span className="block truncate max-w-[200px]" title={session.sessionId}>
+                          {session.sessionId}
+                        </span>
                       </td>
 
                       {/* Exam Title */}
                       <td className="py-4 px-6 text-slate-900 font-bold">
-                        {session.examTitle}
+                        <span className="line-clamp-2" title={session.examTitle}>
+                          {session.examTitle}
+                        </span>
                       </td>
 
                       {/* Current Progress & Question */}
@@ -277,13 +281,13 @@ export default function LiveMonitorScreen() {
 
                       {/* Device Profile */}
                       <td className="py-4 px-6 text-[13px]">
-                        <div className="font-bold text-slate-900">{session.device.browser}</div>
+                        <div className="font-bold text-slate-900 truncate max-w-[140px]" title={session.device.browser}>{session.device.browser}</div>
                         <div className="text-[12px] text-slate-500 font-mono font-bold">{session.device.os}</div>
                       </td>
 
                       {/* Connection */}
-                      <td className="py-4 px-6">
-                        <span className="inline-flex items-center gap-2 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold text-[12px]">
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-flex items-center gap-2 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold text-[12px] whitespace-nowrap">
                           <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
                           Connected
                         </span>
@@ -292,7 +296,7 @@ export default function LiveMonitorScreen() {
                       {/* Status */}
                       <td className="py-4 px-6 text-right">
                         <span
-                          className={`px-3 py-1 rounded-xl text-[12px] font-bold ${
+                          className={`inline-block px-3 py-1 rounded-xl text-[12px] font-bold whitespace-nowrap ${
                             session.isSubmitted
                               ? "bg-[#F4F7FB] text-slate-600 border border-[#E1E7EF]"
                               : "bg-[#2468B2] text-white shadow-subtle"

@@ -152,19 +152,19 @@ export default function ExamDetailScreen({ examId }: { examId: string }) {
           <div className="divide-y divide-olympiad-border">
             {questions.map((q, idx) => (
               <div key={q.id} className="p-5 flex items-center justify-between hover:bg-navy-50/40 transition-colors">
-                <div className="flex items-center gap-4">
-                  <span className="w-8 h-8 rounded-md bg-navy-100 text-navy-900 font-mono font-bold text-[13px] flex items-center justify-center">
+                <div className="flex items-center gap-4 min-w-0 flex-1 pr-4">
+                  <span className="w-8 h-8 rounded-md bg-navy-100 text-navy-900 font-mono font-bold text-[13px] flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono font-bold text-[13px] text-navy-900">{q.questionId}</span>
                       <span className="px-2 py-0.5 bg-blue-50 text-olympiad-primary rounded text-[11px] font-bold border border-blue-200">
                         {q.questionType}
                       </span>
-                      {q.section && <span className="text-[12px] text-olympiad-textMuted font-medium">{q.section}</span>}
+                      {q.section && <span className="text-[12px] text-olympiad-textMuted font-medium truncate">{q.section}</span>}
                     </div>
-                    <p className="text-[14px] text-navy-900 font-medium line-clamp-1 mt-1">{q.questionText}</p>
+                    <p className="text-[14px] text-navy-900 font-medium truncate mt-1">{q.questionText}</p>
                   </div>
                 </div>
 

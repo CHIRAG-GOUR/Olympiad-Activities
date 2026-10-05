@@ -614,9 +614,10 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
   return (
     <Card solid className="overflow-hidden">
       {/* Desktop: ruled academic register */}
-      <table className="hidden md:table w-full text-left border-collapse">
-        <thead>
-          <tr className="border-b border-[#E1E7EF] bg-white/70">
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left border-collapse">
+          <thead>
+            <tr className="border-b border-[#E1E7EF] bg-white/70">
             {["Candidate", "Examination", "Score", "Accuracy", "Submitted", ""].map((h, i) => (
               <th
                 key={h || i}
@@ -669,6 +670,7 @@ export function ResultsLedger({ attempts, limit = 8 }: { attempts: ExamAttempt[]
           ))}
         </tbody>
       </table>
+      </div>
 
       {/* Tablet & mobile: records as cards, never a squeezed table */}
       <ul className="md:hidden divide-y divide-[#E1E7EF]">
