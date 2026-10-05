@@ -6,6 +6,39 @@ import { UserProfile, UserRole } from "@/lib/auth/rbac";
 // The directory now starts empty and only ever holds accounts that actually exist.
 const LOCAL_STORAGE_KEY = "olympiad_users_repo_v3";
 
+const DEMO_STUDENT_SEED: UserProfile[] = [
+  {
+    id: "usr_demostudent1_olympiad_org",
+    email: "demostudent1@olympiad.org",
+    name: "DemoStudent1",
+    role: "STUDENT",
+    grade: 6,
+    schoolName: "Cambridge Court International School (CCIS)",
+    status: "active",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    id: "usr_demostudent2_olympiad_org",
+    email: "demostudent2@olympiad.org",
+    name: "DemoStudent2",
+    role: "STUDENT",
+    grade: 6,
+    schoolName: "Delhi Public School",
+    status: "active",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    id: "usr_demostudent3_olympiad_org",
+    email: "demostudent3@olympiad.org",
+    name: "DemoStudent3",
+    role: "STUDENT",
+    grade: 6,
+    schoolName: "St. Xavier's Senior Secondary School",
+    status: "active",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+];
+
 export class LocalUserRepository implements IUserRepository {
   // Every read used to re-parse the full localStorage blob from scratch, even though
   // this repository is a singleton queried from most admin pages on every mount. Cache
@@ -20,6 +53,14 @@ export class LocalUserRepository implements IUserRepository {
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (raw) {
           this.inMemory = JSON.parse(raw);
+          // Ensure demo student accounts are present
+          if (Array.isArray(this.inMemory)) {
+            for (const demo of DEMO_STUDENT_SEED) {
+              if (!this.inMemory.some((u) => u.email === demo.email)) {
+                this.inMemory.push(demo);
+              }
+            }
+          }
           return this.inMemory!;
         }
       } catch {
@@ -27,7 +68,7 @@ export class LocalUserRepository implements IUserRepository {
       }
     }
 
-    this.inMemory = [];
+    this.inMemory = [...DEMO_STUDENT_SEED];
     this.persist(this.inMemory);
     return this.inMemory;
   }

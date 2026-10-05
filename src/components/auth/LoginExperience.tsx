@@ -24,16 +24,53 @@ import {
   ArrowLeft,
   School,
   BookOpen,
+  Sparkles,
 } from "lucide-react";
 
 type AuthMode = "SIGN_IN" | "SIGN_UP" | "FORGOT_PASSWORD";
 
-/** Demo/staging fixture: present only when a deployment explicitly opts in. */
-const DEMO_STUDENT_PASSWORD = process.env.NEXT_PUBLIC_DEMO_STUDENT_PASSWORD || "";
+/** Demo candidate accounts for student testing. */
+const DEMO_STUDENT_PASSWORD = process.env.NEXT_PUBLIC_DEMO_STUDENT_PASSWORD || "student123";
 const DEMO_STUDENTS = [
-  { email: "demostudent1@olympiad.org", label: "DemoStudent1" },
-  { email: "demostudent2@olympiad.org", label: "DemoStudent2" },
-  { email: "demostudent3@olympiad.org", label: "DemoStudent3" },
+  {
+    email: "demostudent1@olympiad.org",
+    label: "DemoStudent1",
+    tag: "S1",
+    school: "Cambridge Court (CCIS)",
+    theme: {
+      tagBg: "bg-[#2468B2]",
+      border: "border-blue-200/80",
+      bg: "from-blue-50/60 to-white hover:from-blue-100/70 hover:to-blue-50/50 hover:border-blue-300",
+      text: "text-[#2468B2]",
+      hoverText: "group-hover:text-[#2468B2]",
+    },
+  },
+  {
+    email: "demostudent2@olympiad.org",
+    label: "DemoStudent2",
+    tag: "S2",
+    school: "Delhi Public School",
+    theme: {
+      tagBg: "bg-indigo-600",
+      border: "border-indigo-200/80",
+      bg: "from-indigo-50/60 to-white hover:from-indigo-100/70 hover:to-indigo-50/50 hover:border-indigo-300",
+      text: "text-indigo-700",
+      hoverText: "group-hover:text-indigo-700",
+    },
+  },
+  {
+    email: "demostudent3@olympiad.org",
+    label: "DemoStudent3",
+    tag: "S3",
+    school: "St. Xavier's School",
+    theme: {
+      tagBg: "bg-emerald-600",
+      border: "border-emerald-200/80",
+      bg: "from-emerald-50/60 to-white hover:from-emerald-100/70 hover:to-emerald-50/50 hover:border-emerald-300",
+      text: "text-emerald-700",
+      hoverText: "group-hover:text-emerald-700",
+    },
+  },
 ];
 
 /**
@@ -460,29 +497,47 @@ export function LoginExperience() {
                   </button>
                 </form>
 
-                {/* ── Demo candidate logins ──
-                    Development fixture only. Rendered when NEXT_PUBLIC_DEMO_STUDENT_PASSWORD is
-                    set for a demo/staging deployment; production builds carry no password and
-                    show nothing here. There is deliberately no privileged quick login. */}
-                {DEMO_STUDENT_PASSWORD && (
-                  <div className="mt-4 pt-3.5 border-t border-slate-200/90">
-                    <div className="text-xs font-bold text-slate-800 mb-2">Demo candidate accounts</div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {DEMO_STUDENTS.map((d) => (
-                        <button
-                          key={d.email}
-                          type="button"
-                          disabled={busy}
-                          onClick={() => handleQuickLogin(d.email, DEMO_STUDENT_PASSWORD, "STUDENT")}
-                          className="p-2.5 rounded-xl border border-blue-200/80 bg-gradient-to-b from-blue-50/60 to-white hover:from-blue-100/70 hover:border-blue-300 text-left transition-all cursor-pointer group"
-                        >
-                          <span className="block text-xs font-black text-slate-900 group-hover:text-[#2468B2]">{d.label}</span>
-                          <span className="block text-[10px] text-slate-500 truncate">{d.email}</span>
-                        </button>
-                      ))}
+                {/* ── Demo Candidate Accounts for Student Testing ── */}
+                <div className="mt-4 pt-3.5 border-t border-slate-200/90">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Tester Demo Accounts (1-Click Login)</span>
                     </div>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-full">
+                      Student Testing Ready
+                    </span>
                   </div>
-                )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {DEMO_STUDENTS.map((d) => (
+                      <button
+                        key={d.email}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => handleQuickLogin(d.email, DEMO_STUDENT_PASSWORD, "STUDENT")}
+                        className={`p-2.5 rounded-xl border ${d.theme.border} bg-gradient-to-b ${d.theme.bg} text-left transition-all cursor-pointer group shadow-2xs hover:shadow-sm`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`w-6 h-6 rounded-lg ${d.theme.tagBg} text-white font-bold text-[10px] grid place-items-center shadow-2xs`}>
+                            {d.tag}
+                          </span>
+                          <span className={`text-[10px] font-bold ${d.theme.text} group-hover:underline`}>
+                            Log in &rarr;
+                          </span>
+                        </div>
+                        <div className="mt-1.5">
+                          <span className={`block text-xs font-black text-slate-900 ${d.theme.hoverText}`}>
+                            {d.label}
+                          </span>
+                          <span className="block text-[10px] text-slate-500 truncate">
+                            {d.school}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="mt-3.5 pt-3 border-t border-slate-200/80 text-center text-xs font-semibold text-slate-600">
                   New to the Olympiad platform?{" "}

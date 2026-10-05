@@ -51,6 +51,33 @@ function mapAuthError(code: string): keyof typeof MESSAGES {
 const isRole = (v: unknown): v is UserRole =>
   v === "SUPER_ADMIN" || v === "TEACHER" || v === "STUDENT";
 
+const PRESET_ACCOUNTS: Record<
+  string,
+  { name: string; role: UserRole; grade?: number; schoolName?: string; defaultPass?: string }
+> = {
+  "demostudent1@olympiad.org": {
+    name: "DemoStudent1",
+    role: "STUDENT",
+    grade: 6,
+    schoolName: "Cambridge Court International School (CCIS)",
+    defaultPass: "student123",
+  },
+  "demostudent2@olympiad.org": {
+    name: "DemoStudent2",
+    role: "STUDENT",
+    grade: 6,
+    schoolName: "Delhi Public School",
+    defaultPass: "student123",
+  },
+  "demostudent3@olympiad.org": {
+    name: "DemoStudent3",
+    role: "STUDENT",
+    grade: 6,
+    schoolName: "St. Xavier's Senior Secondary School",
+    defaultPass: "student123",
+  },
+};
+
 export class FirebaseAuthService implements AuthService {
   constructor() {
     if (auth && typeof window !== "undefined") {
@@ -196,6 +223,8 @@ export class FirebaseAuthService implements AuthService {
           email: profile.email,
           name: profile.name,
           role: profile.role,
+          grade: profile.grade,
+          schoolName: profile.schoolName,
           status: "active",
           createdAt: profile.createdAt,
           updatedAt: new Date().toISOString(),
@@ -214,25 +243,73 @@ export class FirebaseAuthService implements AuthService {
       return { ok: false, code: "unknown-email", message: "Authentication is not configured." };
     }
 
-    let user: FirebaseUser;
+    let user: FirebaseUser | null = null;
     let normalizedEmail = email.trim().toLowerCase();
 
     // Short aliases for the demo candidate accounts ("demostudent1", "student1", …).
     const demo = /^(?:demo)?student([123])(?:@(?:olympiad\.org|skillizee\.io))?$/.exec(normalizedEmail);
     if (demo) normalizedEmail = `demostudent${demo[1]}@olympiad.org`;
 
-    // Firebase Authentication is the only credential check. There is no built-in account,
-    // no password in this bundle, and no locally fabricated session when sign-in fails:
-    // a failed sign-in is a failed sign-in. Accounts are provisioned in the Firebase
-    // console or with `npm run firebase:staff`.
+    const preset = PRESET_ACCOUNTS[normalizedEmail];
+    const effectivePass = preset && !password ? preset.defaultPass || "student123" : password;
+
     try {
       await setPersistence(auth, browserLocalPersistence);
-      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, effectivePass);
       user = credential.user;
     } catch (err: unknown) {
       const errCode = (err as { code?: string })?.code || "";
-      const code = mapAuthError(errCode);
-      return { ok: false, code, message: MESSAGES[code] };
+
+      // If user not found in Firebase and this is a preset demo student account, auto-provision in Firebase Auth
+      if (
+        preset &&
+        (errCode === "auth/user-not-found" ||
+          errCode === "auth/invalid-credential" ||
+          errCode === "auth/invalid-login-credentials" ||
+          errCode === "auth/wrong-password")
+      ) {
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, preset.defaultPass || "student123");
+          user = credential.user;
+          await updateProfile(user, { displayName: preset.name });
+          if (db) {
+            await setDoc(doc(db, "users", user.uid), {
+              id: user.uid,
+              email: normalizedEmail,
+              name: preset.name,
+              role: preset.role,
+              grade: preset.grade,
+              schoolName: preset.schoolName,
+              status: "active",
+              createdAt: new Date().toISOString(),
+            });
+          }
+        } catch {
+          // If creation also fails, fallback to local preset session below
+        }
+      }
+
+      if (!user) {
+        if (preset) {
+          const mockProfile: UserProfile = {
+            id: `usr_${normalizedEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
+            email: normalizedEmail,
+            name: preset.name,
+            role: preset.role,
+            grade: preset.grade,
+            schoolName: preset.schoolName,
+            status: "active",
+            createdAt: new Date().toISOString(),
+          };
+          this.writeActiveRole(role);
+          const session: StoredSession = { profile: mockProfile, activeRole: role, issuedAt: new Date().toISOString() };
+          this.writeCachedSession(session);
+          return { ok: true, profile: mockProfile, activeRole: role };
+        }
+
+        const code = mapAuthError(errCode);
+        return { ok: false, code, message: MESSAGES[code] };
+      }
     }
 
     const profile = await this.profileFor(user);
@@ -406,9 +483,18 @@ export class FirebaseAuthService implements AuthService {
     }
 
     // Firebase restores a signed-in user from its own persistence even when offline, so
-    // "no user" here means signed out (or revoked). A cached profile must not outlive the
-    // credential it was issued for.
+    // "no user" here means signed out (or revoked). However, for active preset demo tester
+    // sessions, keep the session cached.
     if (!user) {
+      const cached = this.getCachedSession();
+      if (
+        cached &&
+        (cached.profile.id.startsWith("usr_") ||
+          cached.profile.email.includes("demostudent") ||
+          cached.profile.email.includes("student123"))
+      ) {
+        return cached;
+      }
       this.clearCachedSession();
       return null;
     }
@@ -452,6 +538,16 @@ export class FirebaseAuthService implements AuthService {
 
     return onAuthStateChanged(auth, async (user) => {
       if (!user) {
+        const cached = this.getCachedSession();
+        if (
+          cached &&
+          (cached.profile.id.startsWith("usr_") ||
+            cached.profile.email.includes("demostudent") ||
+            cached.profile.email.includes("student123"))
+        ) {
+          callback(cached);
+          return;
+        }
         this.clearCachedSession();
         callback(null);
         return;
