@@ -28,22 +28,31 @@ export class QuestionService {
 
   async importQuestions(questions: Question[]): Promise<{ imported: number; errors: string[] }> {
     const errors: string[] = [];
-    let imported = 0;
+    const validQuestions: Question[] = [];
 
     for (const q of questions) {
+      if (!q.id || !q.questionText) {
+        errors.push(`Question missing required fields (ID or text): ${JSON.stringify(q).slice(0, 50)}...`);
+        continue;
+      }
+      validQuestions.push(q);
+    }
+
+    if (validQuestions.length > 0) {
       try {
-        if (!q.id || !q.questionText) {
-          errors.push(`Question missing required fields (ID or text): ${JSON.stringify(q).slice(0, 50)}...`);
-          continue;
+        if (typeof questionRepository.saveQuestions === "function") {
+          await questionRepository.saveQuestions(validQuestions);
+        } else {
+          for (const q of validQuestions) {
+            await questionRepository.saveQuestion(q);
+          }
         }
-        await questionRepository.saveQuestion(q);
-        imported++;
       } catch (err: any) {
-        errors.push(`Error saving question ${q.id}: ${err?.message || err}`);
+        errors.push(`Batch import error: ${err?.message || err}`);
       }
     }
 
-    return { imported, errors };
+    return { imported: validQuestions.length, errors };
   }
 }
 

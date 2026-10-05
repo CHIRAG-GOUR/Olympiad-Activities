@@ -150,7 +150,9 @@ service cloud.firestore {
     // the paper but is not something Firestore can verify, so it is not used here.
     match /examSessions/{sessionId} {
       allow read: if isStaff() || isOwner(resource.data.ownerUid);
-      allow create: if isAuthenticated() && isOwner(request.resource.data.ownerUid);
+      allow create: if isAuthenticated() && (
+        isStaff() || isOwner(request.resource.data.ownerUid)
+      );
       // Once a candidate's session is submitted it is closed to them: re-opening it
       // (status back to in_progress) would hand them a second sitting.
       allow update: if isStaff() || (
@@ -171,9 +173,9 @@ service cloud.firestore {
     // an update - which candidates cannot make - and a submission is filed exactly once.
     match /attempts/{attemptId} {
       allow read: if isStaff() || isOwner(resource.data.ownerUid);
-      allow create: if isAuthenticated() &&
-        isOwner(request.resource.data.ownerUid) &&
-        request.resource.data.student.studentId == request.auth.uid;
+      allow create: if isAuthenticated() && (
+        isStaff() || isOwner(request.resource.data.ownerUid)
+      );
       allow update, delete: if isSuperAdmin();
     }
 

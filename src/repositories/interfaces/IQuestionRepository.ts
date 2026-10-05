@@ -16,6 +16,7 @@ export interface IQuestionRepository {
   /** The given questions only, in the order asked for; ids with no question are skipped. */
   getQuestionsByIds(ids: string[]): Promise<Question[]>;
   saveQuestion(question: Question): Promise<void>;
+  saveQuestions?(questions: Question[]): Promise<void>;
   deleteQuestion(id: string): Promise<void>;
   countQuestions(): Promise<number>;
 }

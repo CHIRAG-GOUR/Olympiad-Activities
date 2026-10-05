@@ -100,6 +100,15 @@ export class LocalQuestionRepository implements IQuestionRepository {
     this.persist(questions);
   }
 
+  async saveQuestions(newQuestions: Question[]): Promise<void> {
+    const questions = await this.load();
+    const questionMap = new Map<string, Question>(questions.map((q) => [q.id, q]));
+    for (const q of newQuestions) {
+      questionMap.set(q.id, q);
+    }
+    this.persist(Array.from(questionMap.values()));
+  }
+
   async deleteQuestion(id: string): Promise<void> {
     const questions = await this.load();
     const filtered = questions.filter((q) => q.id !== id);

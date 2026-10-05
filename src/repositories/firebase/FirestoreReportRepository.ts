@@ -60,7 +60,7 @@ export class FirestoreReportRepository implements IReportRepository {
     const owner = filters?.ownerUid;
     const remote = await cached(`reports:${owner ?? "*"}`, CACHE_TTL.records, async () => {
       const constraints: QueryConstraint[] = owner
-        ? [where("ownerUid", "==", owner)]
+        ? [where("ownerUid", "==", owner), orderBy("submittedAt", "desc")]
         : [orderBy("submittedAt", "desc"), limit(COHORT_LIMIT)];
       try {
         const snap = await getDocs(query(collection(firestore, "reports"), ...constraints));

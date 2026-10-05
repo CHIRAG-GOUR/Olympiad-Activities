@@ -7,6 +7,9 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  query,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import { Question } from "@/types/question";
 import { Exam } from "@/types/exam";
@@ -69,6 +72,16 @@ function saveLocalCollection<T>(collectionName: string, items: T[]) {
   }
 }
 
+function sanitizeFirestoreData<T extends object>(data: T): T {
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (v !== undefined && typeof v !== "function" && typeof v !== "symbol") {
+      clean[k] = v;
+    }
+  }
+  return clean as T;
+}
+
 export const OlympiadStore = {
   // Reset / Clear all data
   clearAllLocalData(): void {
@@ -104,7 +117,7 @@ export const OlympiadStore = {
   async saveQuestion(question: Question): Promise<void> {
     if (isRealFirebaseConfigured && db) {
       try {
-        await setDoc(doc(db, "questions", question.id), question);
+        await setDoc(doc(db, "questions", question.id), sanitizeFirestoreData(question));
       } catch (e) {
         console.error("Firestore save failed", e);
       }
@@ -155,7 +168,7 @@ export const OlympiadStore = {
   async saveExam(exam: Exam): Promise<void> {
     if (isRealFirebaseConfigured && db) {
       try {
-        await setDoc(doc(db, "exams", exam.id), exam);
+        await setDoc(doc(db, "exams", exam.id), sanitizeFirestoreData(exam));
       } catch (e) {
         console.error("Firestore saveExam failed", e);
       }
@@ -168,6 +181,19 @@ export const OlympiadStore = {
       exams.unshift(exam);
     }
     saveLocalCollection("exams", exams);
+  },
+
+  async deleteExam(id: string): Promise<void> {
+    if (isRealFirebaseConfigured && db) {
+      try {
+        await deleteDoc(doc(db, "exams", id));
+      } catch (e) {
+        console.error("Firestore deleteExam failed", e);
+      }
+    }
+    const exams = getLocalCollection<Exam>("exams", SEED_EXAMS);
+    const filtered = exams.filter((e) => e.id !== id);
+    saveLocalCollection("exams", filtered);
   },
 
   // SUBJECTS
@@ -186,6 +212,13 @@ export const OlympiadStore = {
   },
 
   async saveSubject(subject: Subject): Promise<void> {
+    if (isRealFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, "subjects", subject.id), sanitizeFirestoreData(subject));
+      } catch (e) {
+        console.error("Firestore saveSubject failed", e);
+      }
+    }
     const subjects = getLocalCollection<Subject>("subjects", SEED_SUBJECTS);
     const idx = subjects.findIndex((s) => s.id === subject.id);
     if (idx >= 0) subjects[idx] = subject;
@@ -193,12 +226,90 @@ export const OlympiadStore = {
     saveLocalCollection("subjects", subjects);
   },
 
+  async deleteSubject(id: string): Promise<void> {
+    if (isRealFirebaseConfigured && db) {
+      try {
+        await deleteDoc(doc(db, "subjects", id));
+      } catch (e) {
+        console.error("Firestore deleteSubject failed", e);
+      }
+    }
+    const subjects = getLocalCollection<Subject>("subjects", SEED_SUBJECTS);
+    const filtered = subjects.filter((s) => s.id !== id);
+    saveLocalCollection("subjects", filtered);
+  },
+
   // SESSIONS / LIVE MONITOR
   async getLiveSessions(): Promise<ExamSession[]> {
-    return getLocalCollection<ExamSession>("examSessions", SEED_LIVE_SESSIONS);
+    const local = getLocalCollection<ExamSession>("examSessions", SEED_LIVE_SESSIONS);
+    if (isRealFirebaseConfigured && db) {
+      try {
+        const q = query(collection(db, "examSessions"), orderBy("lastSavedAt", "desc"), limit(100));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const remoteSessions: ExamSession[] = snap.docs.map((d) => {
+            const raw = d.data() as any;
+            if (raw.student && raw.sessionId) {
+              return raw as ExamSession;
+            }
+            const answeredCount = Object.keys(raw.answers || {}).length;
+            const totalQuestions = raw.totalQuestions || 50;
+            const progress = Math.min(100, Math.round((answeredCount / (totalQuestions || 1)) * 100));
+            return {
+              id: raw.sessionId || d.id,
+              sessionId: raw.sessionId || d.id,
+              examId: raw.examId || "",
+              examTitle: raw.examTitle || "Olympiad Examination",
+              student: {
+                name: raw.studentName || raw.student?.name || "Candidate",
+                studentId: raw.studentId || raw.student?.studentId || "STU-00",
+                schoolName: raw.schoolName || raw.student?.schoolName || "Cambridge Court High",
+                grade: raw.grade || raw.student?.grade || 6,
+              },
+              device: raw.device || {
+                ip: "—",
+                browser: "Desktop Browser",
+                os: "Windows / macOS",
+                device: "Desktop",
+              },
+              currentQuestionIndex: raw.currentQuestionIndex || 0,
+              currentQuestionId: raw.currentQuestionId || "",
+              totalQuestions,
+              answeredCount,
+              flaggedCount: (raw.markedForReview || []).length,
+              progressPercent: progress,
+              startedAt: raw.startedAt ? new Date(raw.startedAt).toLocaleTimeString() : "—",
+              lastActiveAt: raw.lastSavedAt ? new Date(raw.lastSavedAt).toLocaleTimeString() : "—",
+              connectionStatus: raw.status === "submitted" ? "Completed" : "Connected",
+              timeRemainingSeconds: raw.timeRemainingSeconds ?? 3600,
+              isSubmitted: raw.status === "submitted",
+            };
+          });
+
+          // Merge by sessionId
+          const map = new Map<string, ExamSession>();
+          local.forEach((s) => map.set(s.sessionId || s.id, s));
+          remoteSessions.forEach((s) => map.set(s.sessionId || s.id, s));
+          return Array.from(map.values());
+        }
+      } catch (e) {
+        console.warn("Firestore liveSessions query failed, using local sessions", e);
+      }
+    }
+    return local;
   },
 
   async upsertSession(session: ExamSession): Promise<void> {
+    if (isRealFirebaseConfigured && db) {
+      try {
+        const id = session.sessionId || session.id;
+        if (id) {
+          await setDoc(doc(db, "examSessions", id), sanitizeFirestoreData(session), { merge: true });
+        }
+      } catch (e) {
+        console.warn("Firestore upsertSession failed", e);
+      }
+    }
     const sessions = getLocalCollection<ExamSession>("examSessions", SEED_LIVE_SESSIONS);
     const index = sessions.findIndex((s) => s.id === session.id || s.sessionId === session.sessionId);
     if (index >= 0) {
@@ -211,15 +322,48 @@ export const OlympiadStore = {
 
   // ATTEMPTS & RESULTS
   async getAttempts(): Promise<ExamAttempt[]> {
-    return getLocalCollection<ExamAttempt>("attempts", []);
+    const local = getLocalCollection<ExamAttempt>("attempts", []);
+    if (isRealFirebaseConfigured && db) {
+      try {
+        const q = query(collection(db, "attempts"), orderBy("submittedAt", "desc"), limit(200));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const remote = snap.docs.map((d) => d.data() as ExamAttempt);
+          const map = new Map<string, ExamAttempt>();
+          local.forEach((a) => map.set(a.id, a));
+          remote.forEach((a) => map.set(a.id, a));
+          return Array.from(map.values());
+        }
+      } catch (e) {
+        console.warn("Firestore getAttempts failed, using local attempts", e);
+      }
+    }
+    return local;
   },
 
   async getAttemptById(attemptId: string): Promise<ExamAttempt | null> {
+    if (isRealFirebaseConfigured && db) {
+      try {
+        const snap = await getDoc(doc(db, "attempts", attemptId));
+        if (snap.exists()) {
+          return snap.data() as ExamAttempt;
+        }
+      } catch (e) {
+        console.warn("Firestore getAttemptById failed", e);
+      }
+    }
     const attempts = await this.getAttempts();
     return attempts.find((a) => a.id === attemptId) || null;
   },
 
   async saveAttempt(attempt: ExamAttempt): Promise<void> {
+    if (isRealFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, "attempts", attempt.id), sanitizeFirestoreData(attempt));
+      } catch (e) {
+        console.error("Firestore saveAttempt failed", e);
+      }
+    }
     const attempts = getLocalCollection<ExamAttempt>("attempts", []);
     const idx = attempts.findIndex((a) => a.id === attempt.id);
     if (idx >= 0) {
@@ -236,6 +380,11 @@ export const OlympiadStore = {
       const e = exams[examIndex];
       e.completionCount = (e.completionCount || 0) + 1;
       saveLocalCollection("exams", exams);
+      if (isRealFirebaseConfigured && db) {
+        try {
+          await updateDoc(doc(db, "exams", e.id), { completionCount: e.completionCount });
+        } catch {}
+      }
     }
   },
 };

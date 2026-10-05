@@ -50,7 +50,7 @@ export class FirestoreAttemptRepository implements IAttemptRepository {
 
     const remote = await cached(key, CACHE_TTL.records, async () => {
       const constraints: QueryConstraint[] = owner
-        ? [where("ownerUid", "==", owner)]
+        ? [where("ownerUid", "==", owner), orderBy("submittedAt", "desc")]
         : [orderBy("submittedAt", "desc"), limit(COHORT_LIMIT)];
       try {
         const snap = await getDocs(query(collection(firestore, "attempts"), ...constraints));

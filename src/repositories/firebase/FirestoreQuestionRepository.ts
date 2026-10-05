@@ -1,7 +1,7 @@
 import { IQuestionRepository, QuestionFilters } from "../interfaces/IQuestionRepository";
 import { Question } from "@/types/question";
 import { db } from "@/services/firebase/config";
-import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, where, documentId } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, where, documentId, writeBatch } from "firebase/firestore";
 import { LocalQuestionRepository } from "../local/LocalQuestionRepository";
 import { reviveNestedArrays } from "./decodeFirestore";
 import { SEED_QUESTIONS, preferSeed, reconcileWithSeed } from "@/lib/seedData";
@@ -126,6 +126,27 @@ export class FirestoreQuestionRepository implements IQuestionRepository {
       }
     }
     await this.local.saveQuestion(question);
+    invalidate("questions:");
+  }
+
+  async saveQuestions(questions: Question[]): Promise<void> {
+    if (db && questions.length > 0) {
+      const BATCH_SIZE = 450;
+      for (let i = 0; i < questions.length; i += BATCH_SIZE) {
+        const chunk = questions.slice(i, i + BATCH_SIZE);
+        const batch = writeBatch(db);
+        for (const q of chunk) {
+          batch.set(doc(db, "questions", q.id), q);
+        }
+        try {
+          await batch.commit();
+        } catch (e) {
+          logError("FIRESTORE_WRITE_FAILED", { operation: "saveQuestions.batch", count: chunk.length }, e);
+          throw e;
+        }
+      }
+    }
+    await this.local.saveQuestions(questions);
     invalidate("questions:");
   }
 
