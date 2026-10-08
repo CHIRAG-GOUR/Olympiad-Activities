@@ -12,6 +12,7 @@ import { IMO10_G6_SETA_PLAY_ACTIVITY_MAP } from "./imo10_g6_seta-play/registry";
 import { IMO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP } from "./imo_interactive_g6-play/registry";
 import { IEO_G6_SETA_PLAY_ACTIVITY_MAP } from "./ieo_g6_seta-play/registry";
 import { IEO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP } from "./ieo_interactive_g6-play/registry";
+import { IGKO_G6_SCITECH_ACTIVITY_MAP } from "./igko_g6_scitech-play/registry";
 
 // 50 Bespoke Interactive Olympiad Activities
 import { DiceLabActivity } from "./DiceLabActivity";
@@ -201,6 +202,7 @@ export function getQuestionActivity(
   if (!questionIdOrCode) return undefined;
   // All Olympiad sets mapped: Master Interactive Edition, 10th IMO Set A, 2023-24 Set C, Classic Set A, 3D Set A, 3D Set B #2, Paper 3 (Set C), and Set B
   return (
+    IGKO_G6_SCITECH_ACTIVITY_MAP[questionIdOrCode] ??
     IEO_G6_SETA_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
     IEO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP[questionIdOrCode] ??
     IMO_INTERACTIVE_G6_PLAY_ACTIVITY_MAP[questionIdOrCode] ??

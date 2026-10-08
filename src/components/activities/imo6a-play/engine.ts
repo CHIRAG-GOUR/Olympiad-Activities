@@ -26,6 +26,8 @@ export interface Derived {
   optionId?: string;
   /** Why no value exists yet, or a remark about the value. */
   note?: string;
+  /** Structured measurement behind the value, e.g. { prize: "Peace", country: "Norway" }. */
+  result?: Record<string, unknown>;
 }
 
 export interface PlayState<W> {
@@ -34,7 +36,7 @@ export interface PlayState<W> {
   locked: boolean;
   touched: boolean;
   /** Engine result recorded at submit, for reports: what the world produced and the option it mapped to. */
-  result?: { value?: string; mappedOption?: string; completed: boolean };
+  result?: { value?: string; mappedOption?: string; completed: boolean; data?: Record<string, unknown> };
   startedAt?: number;
   updatedAt?: number;
 }
@@ -110,7 +112,12 @@ export function usePlay<W>({ initial, derive, activityState, value, onChange, re
           ...p,
           locked: true,
           touched: true,
-          result: { value: d.value, mappedOption: d.optionId, completed: !!d.optionId },
+          result: {
+            value: d.value,
+            mappedOption: d.optionId,
+            completed: !!d.optionId,
+            ...(d.result ? { data: d.result } : {}),
+          },
           startedAt: p.startedAt ?? Date.now(),
           updatedAt: Date.now(),
         };

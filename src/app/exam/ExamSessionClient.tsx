@@ -1279,7 +1279,9 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
                   <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     Negative: -{currentQuestion?.negativeMarks || 0}.00
                   </span>
-                  {currentQuestion && (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
+                  {currentQuestion &&
+                    !currentQuestion.customConfig?.activityOnly &&
+                    (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
                     <div className="flex items-center gap-0.5 bg-[#EAF2FC] p-0.5 rounded-lg border border-[#E1E7EF] font-sans ml-1">
                       <button
                         type="button"

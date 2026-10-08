@@ -203,7 +203,7 @@ export default function StudentExamsScreen() {
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
           <span>Candidate Examination Hall</span>
           <span className="text-[#667085]">•</span>
-          <span>Grade 6 Olympiad Registry</span>
+          <span>Class {exam.grade || studentGrade} Olympiad Registry</span>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1.5">
           <div>
@@ -218,7 +218,7 @@ export default function StudentExamsScreen() {
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <span className="text-xs font-bold text-[#2468B2] font-mono">
-              Class 6 Mathematics
+              Class {exam.grade || 6} · {exam.subjectName}
             </span>
           </div>
         </div>
@@ -272,7 +272,7 @@ export default function StudentExamsScreen() {
                 <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Eligibility</span>
                 <span className="text-sm font-black text-slate-900 flex items-center gap-1.5 mt-0.5">
                   <GraduationCap className="w-4 h-4 text-emerald-600" />
-                  Grade 6
+                  Class {exam.grade || 6}
                 </span>
               </div>
             </div>
@@ -387,7 +387,7 @@ export default function StudentExamsScreen() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {accessibleExams.map((ex) => {
               const isSelected = ex.id === exam?.id;
-              const isEnglish = (ex.title || "").toLowerCase().includes("eng") || (ex.code || "").startsWith("IEO");
+              const paperQuestions = ex.questionIds?.length || ex.totalQuestions || 0;
 
               return (
                 <div
@@ -415,13 +415,13 @@ export default function StudentExamsScreen() {
 
                     <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{ex.title}</h4>
                     <p className="text-xs text-slate-500 line-clamp-1">
-                      {isEnglish ? "English Olympiad" : "Mathematics Olympiad"} &bull; Class {ex.grade || 6}
+                      {ex.subjectName} &bull; Class {ex.grade || 6}
                     </p>
                   </div>
 
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
                     <span>{ex.durationMinutes} mins</span>
-                    <span className="font-bold text-[#2468B2]">50 Questions</span>
+                    <span className="font-bold text-[#2468B2]">{paperQuestions} Questions</span>
                   </div>
                 </div>
               );
@@ -430,71 +430,44 @@ export default function StudentExamsScreen() {
         </section>
       )}
 
-      {/* 3. Syllabus Structure Breakdown */}
-      <section>
-        <SectionHeading
-          icon={Layers}
-          title="Examination Syllabus Sections"
-          description="The 50 questions are organized across four balanced cognitive sections."
-        />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2468B2] flex items-center justify-center font-bold text-xs">
-              01
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Section 1: Logical Reasoning</h3>
-            <p className="text-xs text-slate-500 font-medium">
-              3D Cube counting, pattern analogies, mirror reflections, and spatial unfolding.
-            </p>
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 pt-1 border-t border-slate-100">
-              <span>Q01 – Q15</span>
-              <span className="text-[#2468B2]">15 Marks (1 pt each)</span>
-            </div>
+      {/* 3. Syllabus Structure Breakdown — from the paper's own sections */}
+      {exam.sections && exam.sections.length > 0 && (
+        <section>
+          <SectionHeading
+            icon={Layers}
+            title="Examination Sections"
+            description={`The ${questionCount} questions are organised into ${exam.sections.length} section${exam.sections.length === 1 ? "" : "s"}.`}
+          />
+          <div className={`grid gap-3 ${["sm:grid-cols-1", "sm:grid-cols-2", "sm:grid-cols-2 lg:grid-cols-3", "sm:grid-cols-2 lg:grid-cols-4"][Math.min(4, exam.sections.length) - 1]}`}>
+            {(() => {
+              let start = 1;
+              return exam.sections.map((sec, i) => {
+                const n = sec.questionIds?.length || 0;
+                const from = start;
+                const to = start + n - 1;
+                start += n;
+                return (
+                  <div key={sec.id} className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2468B2] flex items-center justify-center font-bold text-xs">
+                      {String(i + 1).padStart(2, "0")}
+                    </div>
+                    <h3 className="font-bold text-sm text-slate-900">{sec.title}</h3>
+                    {sec.description && <p className="text-xs text-slate-500 font-medium">{sec.description}</p>}
+                    {n > 0 && (
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 pt-1 border-t border-slate-100">
+                        <span>
+                          Q{String(from).padStart(2, "0")} – Q{String(to).padStart(2, "0")}
+                        </span>
+                        <span className="text-[#2468B2]">{n} questions</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
           </div>
-
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs">
-              02
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Section 2: Mathematical Reasoning</h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Integers, fractions, coordinate geometry, angle protractors, and primes.
-            </p>
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 pt-1 border-t border-slate-100">
-              <span>Q16 – Q35</span>
-              <span className="text-indigo-700">20 Marks (1 pt each)</span>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
-              03
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Section 3: Everyday Mathematics</h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Real-world shopping scenarios, speed/distance calculations, and unitary method.
-            </p>
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 pt-1 border-t border-slate-100">
-              <span>Q36 – Q45</span>
-              <span className="text-emerald-700">10 Marks (1 pt each)</span>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs">
-              04
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Section 4: Achievers Section</h3>
-            <p className="text-xs text-slate-500 font-medium">
-              High-order thinking questions (HOTS) and multi-step interactive problem solving.
-            </p>
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 pt-1 border-t border-slate-100">
-              <span>Q46 – Q50</span>
-              <span className="text-amber-700 font-black">15 Marks (3 pts each)</span>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 4. Completed Section (If any) */}
       {myAttempts.length > 0 && (

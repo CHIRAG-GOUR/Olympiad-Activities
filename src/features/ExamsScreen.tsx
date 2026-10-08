@@ -49,7 +49,23 @@ const classesFor = (exam: Exam) => {
 };
 
 type MainViewTab = "table" | "access_control" | "catalogue";
-type SubjectTabKey = "all" | "math" | "english";
+type SubjectTabKey = "all" | "math" | "english" | "gk";
+
+/** Which olympiad a paper belongs to, for the subject filter and badges. */
+function subjectOf(e: Exam): Exclude<SubjectTabKey, "all"> {
+  const id = (e.subjectId || "").toLowerCase();
+  const name = (e.subjectName || "").toLowerCase();
+  const code = (e.code || "").toLowerCase();
+  if (id.includes("igko") || code.startsWith("igko") || name.includes("general knowledge")) return "gk";
+  if (id.includes("eng") || name.includes("english") || code.includes("ieo")) return "english";
+  return "math";
+}
+
+const SUBJECT_BADGE: Record<Exclude<SubjectTabKey, "all">, { label: string; cls: string }> = {
+  math: { label: "Mathematics (IMO)", cls: "bg-blue-50 text-[#2468B2] border border-blue-200" },
+  english: { label: "English (IEO)", cls: "bg-purple-50 text-purple-700 border border-purple-200" },
+  gk: { label: "General Knowledge (IGKO)", cls: "bg-teal-50 text-teal-700 border border-teal-200" },
+};
 type ClassFilterKey = "all" | "6" | "7" | "8";
 
 export default function ExamsScreen() {
@@ -212,44 +228,16 @@ export default function ExamsScreen() {
   }, [exams, lockVersion]);
 
   // Subject splits
-  const mathExams = useMemo(() => {
-    return exams.filter((e) => {
-      const sId = (e.subjectId || "").toLowerCase();
-      const sName = (e.subjectName || "").toLowerCase();
-      const code = (e.code || "").toLowerCase();
-      const title = (e.title || "").toLowerCase();
-      return (
-        sId.includes("math") ||
-        sName.includes("math") ||
-        code.includes("imo") ||
-        title.includes("mathematics") ||
-        title.includes("imo") ||
-        (!sId.includes("eng") && !sName.includes("english"))
-      );
-    });
-  }, [exams]);
-
-  const englishExams = useMemo(() => {
-    return exams.filter((e) => {
-      const sId = (e.subjectId || "").toLowerCase();
-      const sName = (e.subjectName || "").toLowerCase();
-      const code = (e.code || "").toLowerCase();
-      const title = (e.title || "").toLowerCase();
-      return (
-        sId.includes("eng") ||
-        sName.includes("english") ||
-        code.includes("ieo") ||
-        title.includes("english") ||
-        title.includes("ieo")
-      );
-    });
-  }, [exams]);
+  const mathExams = useMemo(() => exams.filter((e) => subjectOf(e) === "math"), [exams]);
+  const englishExams = useMemo(() => exams.filter((e) => subjectOf(e) === "english"), [exams]);
+  const gkExams = useMemo(() => exams.filter((e) => subjectOf(e) === "gk"), [exams]);
 
   // Filtered list
   const filteredExams = useMemo(() => {
     let pool = exams;
     if (activeSubjectTab === "math") pool = mathExams;
     else if (activeSubjectTab === "english") pool = englishExams;
+    else if (activeSubjectTab === "gk") pool = gkExams;
 
     return pool.filter((e) => {
       const matchesSearch =
@@ -271,7 +259,7 @@ export default function ExamsScreen() {
 
       return matchesSearch && matchesClass && matchesStatus;
     });
-  }, [exams, mathExams, englishExams, activeSubjectTab, searchTerm, classFilter, statusFilter, lockVersion]);
+  }, [exams, mathExams, englishExams, gkExams, activeSubjectTab, searchTerm, classFilter, statusFilter, lockVersion]);
 
   // Only students of the paper's class(es) can be assigned to it.
   const alignClasses = useMemo(() => (aligningExam ? classesFor(aligningExam) : []), [aligningExam, lockVersion]);
@@ -466,6 +454,7 @@ export default function ExamsScreen() {
             <option value="all">All Subjects (Math &amp; English)</option>
             <option value="math">Mathematics (IMO)</option>
             <option value="english">English (IEO)</option>
+            <option value="gk">General Knowledge (IGKO)</option>
           </select>
 
           {/* Class Dropdown */}
@@ -542,7 +531,7 @@ export default function ExamsScreen() {
                     const visibleClasses = ExamLockService.getVisibleClasses(exam.id, Number(exam.grade) || 6);
                     const assignedStudents = ExamLockService.getAssignedStudents(exam.id);
                     const count = exam.questionIds?.length || exam.totalQuestions || 50;
-                    const isEnglish = (exam.title || "").toLowerCase().includes("eng") || (exam.code || "").startsWith("IEO");
+                    const badge = SUBJECT_BADGE[subjectOf(exam)];
 
                     return (
                       <tr key={exam.id} className="hover:bg-white/70 transition-colors">
@@ -564,13 +553,9 @@ export default function ExamsScreen() {
 
                         <td className="py-3 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                              isEnglish
-                                ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                : "bg-blue-50 text-[#2468B2] border border-blue-200"
-                            }`}
+                            className={`px-2 py-0.5 rounded text-[11px] font-bold ${badge.cls}`}
                           >
-                            {isEnglish ? "English (IEO)" : "Mathematics (IMO)"}
+                            {badge.label}
                           </span>
                         </td>
 

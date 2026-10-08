@@ -17,6 +17,7 @@ import { IMO10_G6_SETA_QUESTIONS, IMO10_G6_SETA_EXAM } from "@/data/imo10_g6_set
 import { IMO_INTERACTIVE_G6_QUESTIONS, IMO_INTERACTIVE_G6_EXAM } from "@/data/imo_interactive_g6";
 import { IEO_G6_SETA_QUESTIONS, IEO_G6_SETA_EXAM } from "@/data/ieo_g6_seta";
 import { IEO_INTERACTIVE_G6_QUESTIONS, IEO_INTERACTIVE_G6_EXAM } from "@/data/ieo_interactive_g6";
+import { IGKO_G6_SCITECH_QUESTIONS, IGKO_G6_SCITECH_EXAM, IGKO_SUBJECT } from "@/data/igko_g6_scitech";
 
 /**
  * Seeded content: SOF Olympiad papers for Class 6.
@@ -83,6 +84,7 @@ export const SEED_QUESTIONS: Question[] = stamp([
   ...IMO_CLASS6_SETB_QUESTIONS,
   ...IMO6B2_QUESTIONS,
   ...IMO6P3_QUESTIONS,
+  ...IGKO_G6_SCITECH_QUESTIONS,
 ]);
 export const SEED_EXAMS: Exam[] = stamp([
   IEO_G6_SETA_EXAM,
@@ -96,6 +98,7 @@ export const SEED_EXAMS: Exam[] = stamp([
   IMO_CLASS6_SETB_2024_EXAM,
   IMO6B2_EXAM,
   IMO6P3_EXAM,
+  IGKO_G6_SCITECH_EXAM,
 ]);
 
 export const IEO_SUBJECT: Subject = {
@@ -142,6 +145,11 @@ export const SEED_SUBJECTS: Subject[] = [
     ...IEO_SUBJECT,
     questionCount: SEED_QUESTIONS.filter((q) => q.subjectId === "sub_english").length,
     examCount: SEED_EXAMS.filter((e) => e.subjectId === "sub_english").length,
+  },
+  {
+    ...IGKO_SUBJECT,
+    questionCount: SEED_QUESTIONS.filter((q) => q.subjectId === IGKO_SUBJECT.id).length,
+    examCount: SEED_EXAMS.filter((e) => e.subjectId === IGKO_SUBJECT.id).length,
   },
 ];
 

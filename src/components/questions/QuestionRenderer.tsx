@@ -37,12 +37,20 @@ export function QuestionRenderer({
   onToggleView,
 }: QuestionRendererProps) {
   const [internalActiveView, setInternalActiveView] = useState<"activity" | "standard">("activity");
-  const activeView = controlledActiveView !== undefined ? controlledActiveView : internalActiveView;
   const handleToggle = onToggleView || setInternalActiveView;
+  const [activityKey, setActivityKey] = useState(0);
 
   const BespokeActivityComponent =
     getQuestionActivity(question.id) ||
     getQuestionActivity(question.questionId);
+
+  /**
+   * Activity-only questions are answered through their investigation alone: the plain
+   * options view is never offered, so the answer can only come from the experiment.
+   */
+  const activityOnly = Boolean(question.customConfig?.activityOnly) && !!BespokeActivityComponent;
+  const requestedView = controlledActiveView !== undefined ? controlledActiveView : internalActiveView;
+  const activeView = activityOnly ? "activity" : requestedView;
 
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
@@ -215,7 +223,7 @@ export function QuestionRenderer({
             )}
 
             {/* Compact view toggle placed near right & negative */}
-            {BespokeActivityComponent && (
+            {BespokeActivityComponent && !activityOnly && (
               <div className="flex items-center gap-0.5 bg-[#F4F7FB] p-0.5 rounded-lg border border-[#E1E7EF] font-sans">
                 <button
                   type="button"
@@ -258,9 +266,21 @@ export function QuestionRenderer({
           /* Keyed per question so each microworld mounts clean and tears its
              animations / listeners down when the student navigates away. */
           <ActivityErrorBoundary
-            key={question.id || question.questionId}
+            key={`${question.id || question.questionId}:${activityKey}`}
             questionId={question.id || question.questionId}
             fallback={
+              activityOnly ? (
+                <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-xl text-sm text-amber-900 space-y-2">
+                  <p className="font-bold">This investigation stopped unexpectedly. Your saved work is safe.</p>
+                  <button
+                    type="button"
+                    onClick={() => setActivityKey((k) => k + 1)}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs transition-colors"
+                  >
+                    Reload the investigation
+                  </button>
+                </div>
+              ) : (
               <div className="space-y-3">
                 <div className="p-3.5 bg-amber-50 border-2 border-amber-200 rounded-xl text-xs text-amber-900 flex flex-wrap items-center justify-between gap-2">
                   <span className="font-bold">
@@ -276,6 +296,7 @@ export function QuestionRenderer({
                 </div>
                 {renderInteractionBody()}
               </div>
+              )
             }
           >
             <BespokeActivityComponent
