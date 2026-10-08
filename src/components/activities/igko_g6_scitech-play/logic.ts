@@ -22,8 +22,11 @@ export interface Evaluation {
   derivedAnswer?: string;
   /** The measured result itself. */
   result?: Record<string, unknown>;
-  /** Text of the source option this result corresponds to (matched case/space-insensitively). */
-  optionText?: string;
+  /**
+   * Text of the source option this result corresponds to (matched case/space-insensitively).
+   * Several spellings may be given where the printed paper spells a name its own way.
+   */
+  optionText?: string | string[];
   /** Why there is no result yet, or a remark about it. */
   note?: string;
 }
@@ -33,8 +36,8 @@ const norm = (s: string) => s.toLowerCase().replace(/[\s\-–—]+/g, " ").repla
 /** The one source option whose text matches the evaluation, if any. */
 export function resolveOption(options: SourceOption[] | undefined, evaluation: Evaluation): string | undefined {
   if (!evaluation.completed || !evaluation.optionText || !options) return undefined;
-  const want = norm(evaluation.optionText);
-  const hits = options.filter((o) => norm(o.text) === want);
+  const wanted = new Set((Array.isArray(evaluation.optionText) ? evaluation.optionText : [evaluation.optionText]).map(norm));
+  const hits = options.filter((o) => wanted.has(norm(o.text)));
   return hits.length === 1 ? hits[0].id : undefined;
 }
 
@@ -154,11 +157,12 @@ export const MODULE_INFO: Record<MissionModule, { name: string; role: string }> 
 };
 
 /** ISRO missions by configuration. A configuration not listed here is not a real mission. */
-const MISSIONS: { name: string; destination: Destination; modules: MissionModule[]; water: boolean }[] = [
-  { name: "Chandrayaan-1", destination: "moon", modules: ["orbiter", "impactor"], water: true },
-  { name: "Chandrayaan-2", destination: "moon", modules: ["orbiter", "lander", "rover"], water: false },
-  { name: "Chandrayaan-3", destination: "moon", modules: ["propulsion", "lander", "rover"], water: false },
-  { name: "Mangalyaan", destination: "mars", modules: ["orbiter"], water: false },
+/** `spellings` are how the printed paper may write the name (it uses "Chandrayan", "Mangalyan"). */
+const MISSIONS: { name: string; spellings: string[]; destination: Destination; modules: MissionModule[]; water: boolean }[] = [
+  { name: "Chandrayaan-1", spellings: ["Chandrayaan-1", "Chandrayan-1"], destination: "moon", modules: ["orbiter", "impactor"], water: true },
+  { name: "Chandrayaan-2", spellings: ["Chandrayaan-2", "Chandrayan-2"], destination: "moon", modules: ["orbiter", "lander", "rover"], water: false },
+  { name: "Chandrayaan-3", spellings: ["Chandrayaan-3", "Chandrayan-3"], destination: "moon", modules: ["propulsion", "lander", "rover"], water: false },
+  { name: "Mangalyaan", spellings: ["Mangalyaan", "Mangalyan"], destination: "mars", modules: ["orbiter"], water: false },
 ];
 
 export interface LunarWorld {
@@ -191,7 +195,7 @@ export function evaluateLunar(w: LunarWorld): Evaluation {
     completed: true,
     derivedAnswer: `${mission.name}`,
     result: { modules: w.stack, destination: w.destination, mission: mission.name, waterDetected },
-    optionText: mission.name,
+    optionText: mission.spellings,
   };
 }
 
@@ -273,7 +277,10 @@ export const STRUCTURES = ["Organs", "Bones", "Muscles", "Blood vessels"] as con
 
 export interface TechSpec {
   station: string;
+  /** Display name. */
   optionText: string;
+  /** How the printed paper may spell it. */
+  spellings: string[];
   /** Radiation detector reading during operation, in microsieverts. */
   radiationUSv: number;
   /** Magnetic field at the patient, in tesla. */
@@ -290,6 +297,7 @@ export const TECH_SPECS: Record<Tech, TechSpec> = {
   xray: {
     station: "Station 1",
     optionText: "X-ray",
+    spellings: ["X-ray"],
     radiationUSv: 20,
     fieldT: 0,
     invasive: false,
@@ -300,6 +308,7 @@ export const TECH_SPECS: Record<Tech, TechSpec> = {
   ultrasound: {
     station: "Station 2",
     optionText: "Sonography",
+    spellings: ["Sonography"],
     radiationUSv: 0,
     fieldT: 0,
     invasive: false,
@@ -310,6 +319,7 @@ export const TECH_SPECS: Record<Tech, TechSpec> = {
   mri: {
     station: "Station 3",
     optionText: "MRI",
+    spellings: ["MRI"],
     radiationUSv: 0,
     fieldT: 1.5,
     invasive: false,
@@ -320,6 +330,7 @@ export const TECH_SPECS: Record<Tech, TechSpec> = {
   chemo: {
     station: "Station 4",
     optionText: "Chemotherapy",
+    spellings: ["Chemotherapy", "Chemotheraphy"],
     radiationUSv: 0,
     fieldT: 0,
     invasive: true,
@@ -355,6 +366,6 @@ export function evaluateImaging(w: ImagingWorld): Evaluation {
       invasive: spec.invasive,
       structuresShown: spec.shows,
     },
-    optionText: spec.optionText,
+    optionText: spec.spellings,
   };
 }

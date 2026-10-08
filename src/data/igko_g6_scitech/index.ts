@@ -16,7 +16,13 @@ import { Subject } from "@/types/subject";
  * built; `IGKO_G6_SCITECH_EXAM.questionIds` only ever contains questions that have one.
  */
 
-/** Verified answer key for all 15 source questions (Q1 → Q15). */
+/**
+ * Verified answer key for all 15 source questions (Q1 → Q15).
+ *
+ * Source: IGKO/…/6.1 S&T.docx (questions) and 6.1 S&T AK.docx (answer key). The answer-key
+ * file marks Q4 as "Buoyant Force"; that is incorrect — gravity is what makes an object
+ * sink, buoyancy acts against it — so Q4 is keyed B (Gravitational Force), as verified.
+ */
 export const IGKO_G6_SCITECH_KEY = "BACBDCBDDCBABCC";
 
 export const IGKO_SUBJECT: Subject = {
@@ -100,29 +106,29 @@ export const IGKO_G6_SCITECH_QUESTIONS: Question[] = [
   q(
     2,
     "States of Matter",
-    "The fourth state of matter recently been discovered is:",
+    "The fourth state of matter recently been discovered is",
     ["Plasma", "Steam", "Gas", "Matteroid"],
     { type: "plasma-reactor" }
   ),
   q(
     3,
     "Space Missions",
-    "It is an Indian lunar probe launched by ISRO that consisted of an orbiter and an impactor. One significant finding was the detection of water molecules in lunar soil. Which mission is being talked about?",
-    ["Chandrayaan-2", "Chandrayaan-3", "Chandrayaan-1", "Mangalyaan"],
+    "It is an Indian lunar probe launched by the Indian Space Research Organisation (ISRO) consisted of an orbiter and an impactor. One of the most significant findings was the detection of water molecules in the lunar soil, a discovery that significantly advanced lunar science. Which mission is being talked about in the above paragraph?",
+    ["Chandrayan-2", "Chandrayan-3", "Chandrayan-1", "Mangalyan"],
     { type: "lunar-mission-reconstruction" }
   ),
   q(
     4,
     "Forces",
-    "Due to which force applied on an object does it sink to the bottom of a water body?",
-    ["Buoyant Force", "Gravitational Force", "Spring Force", "Air Resistance Force"],
+    "Due to which force applied on an object it sinks to the bottom of the water body?",
+    ["Buoyant Force", "Gravitational Force", "Spring Force", "Air resistant force"],
     { type: "underwater-force-lab" }
   ),
   q(
     5,
     "Medical Technology",
-    "It is a noninvasive medical imaging test that produces detailed images of almost every internal structure in the human body, including organs, bones, muscles and blood vessels. No ionizing radiation is produced. Identify the test.",
-    ["X-ray", "Chemotherapy", "Sonography", "MRI"],
+    "It is a noninvasive medical imaging test that produces detailed images of almost every internal structure in the human body, including the organs, bones, muscles and blood vessels. No ionizing radiation is produced during this scan. Identify the test.",
+    ["X-ray", "Chemotheraphy", "Sonography", "MRI"],
     { type: "medical-imaging-center" }
   ),
 ];
