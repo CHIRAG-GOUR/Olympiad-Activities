@@ -45,8 +45,7 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.email in [
         'pa1@skillizee.io',
         'swati123@gmail.com',
-        'aarna@cambridgecourtgroup.com',
-        'tech@skillizee.io'
+        'aarna@cambridgecourtgroup.com'
       ];
     }
 

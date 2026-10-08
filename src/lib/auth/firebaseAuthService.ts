@@ -76,12 +76,6 @@ const PRESET_ACCOUNTS: Record<
     schoolName: "Cambridge Court International School (CCIS)",
     defaultPass: "student123",
   },
-  "tech@skillizee.io": {
-    name: "Tech Administrator",
-    role: "SUPER_ADMIN",
-    schoolName: "Olympiad Examination Council",
-    defaultPass: "787700",
-  },
   "pa1@skillizee.io": {
     name: "Chirag Gour",
     role: "SUPER_ADMIN",
@@ -276,7 +270,11 @@ export class FirebaseAuthService implements AuthService {
     if (demo) normalizedEmail = `demostudent${demo[1]}@olympiad.org`;
 
     const preset = PRESET_ACCOUNTS[normalizedEmail];
-    const effectivePass = preset && !password ? preset.defaultPass || "student123" : password;
+    // Only the demo *student* accounts are ever created or signed in automatically. Staff
+    // accounts are real accounts with their own passwords: auto-creating one would let
+    // anyone who knows the address register it — and inherit administrator rights.
+    const demoStudent = preset?.role === "STUDENT" ? preset : undefined;
+    const effectivePass = demoStudent && !password ? demoStudent.defaultPass || "student123" : password;
 
     try {
       await setPersistence(auth, browserLocalPersistence);
@@ -287,24 +285,24 @@ export class FirebaseAuthService implements AuthService {
 
       // If user not found in Firebase and this is a preset demo student account, auto-provision in Firebase Auth
       if (
-        preset &&
+        demoStudent &&
         (errCode === "auth/user-not-found" ||
           errCode === "auth/invalid-credential" ||
           errCode === "auth/invalid-login-credentials" ||
           errCode === "auth/wrong-password")
       ) {
         try {
-          const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, preset.defaultPass || "student123");
+          const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, demoStudent.defaultPass || "student123");
           user = credential.user;
-          await updateProfile(user, { displayName: preset.name });
+          await updateProfile(user, { displayName: demoStudent.name });
           if (db) {
             await setDoc(doc(db, "users", user.uid), {
               id: user.uid,
               email: normalizedEmail,
-              name: preset.name,
-              role: preset.role,
-              grade: preset.grade,
-              schoolName: preset.schoolName,
+              name: demoStudent.name,
+              role: demoStudent.role,
+              grade: demoStudent.grade,
+              schoolName: demoStudent.schoolName,
               status: "active",
               createdAt: new Date().toISOString(),
             });
@@ -315,21 +313,22 @@ export class FirebaseAuthService implements AuthService {
       }
 
       if (!user) {
-        if (preset) {
+        if (demoStudent) {
           const mockProfile: UserProfile = {
             id: `usr_${normalizedEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
             email: normalizedEmail,
-            name: preset.name,
-            role: preset.role,
-            grade: preset.grade,
-            schoolName: preset.schoolName,
+            name: demoStudent.name,
+            role: "STUDENT",
+            grade: demoStudent.grade,
+            schoolName: demoStudent.schoolName,
             status: "active",
             createdAt: new Date().toISOString(),
           };
-          this.writeActiveRole(role);
-          const session: StoredSession = { profile: mockProfile, activeRole: role, issuedAt: new Date().toISOString() };
+          // A demo student is always a student, whatever role was asked for.
+          this.writeActiveRole("STUDENT");
+          const session: StoredSession = { profile: mockProfile, activeRole: "STUDENT", issuedAt: new Date().toISOString() };
           this.writeCachedSession(session);
-          return { ok: true, profile: mockProfile, activeRole: role };
+          return { ok: true, profile: mockProfile, activeRole: "STUDENT" };
         }
 
         const code = mapAuthError(errCode);

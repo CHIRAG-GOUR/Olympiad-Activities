@@ -554,38 +554,6 @@ export function LoginExperience() {
                       </button>
                     ))}
                   </div>
-
-                  {/* Super Admin Quick Access */}
-                  <div className="mt-2.5">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => handleQuickLogin("tech@skillizee.io", "787700", "SUPER_ADMIN")}
-                      className="w-full px-3 py-2 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40 hover:from-amber-100/90 hover:to-amber-50/80 hover:border-amber-300 flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-amber-500 text-white grid place-items-center shrink-0 shadow-2xs">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                        </div>
-                        <div className="text-left">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-black text-slate-900 group-hover:text-amber-900">
-                              tech@skillizee.io
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100/80 px-1.5 py-0.2 rounded">
-                              Super Admin
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-slate-500 font-mono">
-                            Password: 787700
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold text-amber-800 bg-amber-100/90 group-hover:bg-amber-200/90 px-2.5 py-1 rounded-lg transition-colors">
-                        1-Click Admin Login &rarr;
-                      </span>
-                    </button>
-                  </div>
                 </div>
 
                 <div className="mt-3.5 pt-3 border-t border-slate-200/80 text-center text-xs font-semibold text-slate-600">
