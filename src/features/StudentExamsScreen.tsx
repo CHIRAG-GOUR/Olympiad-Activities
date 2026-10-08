@@ -48,60 +48,52 @@ export default function StudentExamsScreen() {
   const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const ownerUid = user?.id;
+
   useEffect(() => {
     let cancelled = false;
-    async function load() {
+    const loadSessions = async () => {
       try {
-        const [ex, qs, atts, live] = await Promise.all([
-          examRepository.listExams(),
-          questionRepository.listQuestions(),
-          attemptRepository.listAttempts(),
-          (async () => {
-            try {
-              const { idbClient } = await import("@/services/persistence/indexeddb");
-              return await idbClient.getAll<LiveSession>("sessions");
-            } catch {
-              return [] as LiveSession[];
-            }
-          })(),
-        ]);
-        if (cancelled) return;
-        setExams(ex);
-        setQuestions(qs);
-        setAttempts(atts);
-        setSessions(live);
-      } finally {
-        if (!cancelled) setLoading(false);
+        const { idbClient } = await import("@/services/persistence/indexeddb");
+        return await idbClient.getAll<LiveSession>("sessions");
+      } catch {
+        return [] as LiveSession[];
       }
+    };
+    // Only this candidate's attempts: the rules refuse a cohort-wide read to a student.
+    const loadAttempts = () => attemptRepository.listAttempts(ownerUid ? { ownerUid } : undefined);
+
+    async function load() {
+      // Each source settles on its own. A failed results read must never hide the papers
+      // the candidate has been assigned.
+      const [ex, qs, atts, live] = await Promise.allSettled([
+        examRepository.listExams(),
+        questionRepository.listQuestions(),
+        loadAttempts(),
+        loadSessions(),
+      ]);
+      if (cancelled) return;
+      if (ex.status === "fulfilled") setExams(ex.value);
+      if (qs.status === "fulfilled") setQuestions(qs.value);
+      if (atts.status === "fulfilled") setAttempts(atts.value);
+      if (live.status === "fulfilled") setSessions(live.value);
+      setLoading(false);
     }
     load();
 
     const interval = setInterval(async () => {
       if (cancelled) return;
-      try {
-        const [atts, live] = await Promise.all([
-          attemptRepository.listAttempts(),
-          (async () => {
-            try {
-              const { idbClient } = await import("@/services/persistence/indexeddb");
-              return await idbClient.getAll<LiveSession>("sessions");
-            } catch {
-              return [] as LiveSession[];
-            }
-          })(),
-        ]);
-        if (!cancelled) {
-          setAttempts(atts);
-          setSessions(live);
-        }
-      } catch {}
+      const [atts, live] = await Promise.allSettled([loadAttempts(), loadSessions()]);
+      if (cancelled) return;
+      if (atts.status === "fulfilled") setAttempts(atts.value);
+      if (live.status === "fulfilled") setSessions(live.value);
     }, 8000);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [ownerUid]);
 
   const [lockVersion, setLockVersion] = useState(0);
 
@@ -122,24 +114,27 @@ export default function StudentExamsScreen() {
 
   // All papers accessible to this specific candidate
   const accessibleExams = useMemo(() => {
-    return exams.filter((e) =>
-      ExamLockService.isExamAccessibleToStudent(e.id, studentId, studentGrade)
-    );
-  }, [exams, studentId, studentGrade, lockVersion]);
+    const me = { id: studentId, email: user?.email, name: user?.name, grade: studentGrade };
+    const list = exams.filter((e) => ExamLockService.isExamAccessibleToStudent(e.id, me));
+    // Papers a teacher assigned by name come first, newest assignment work at the top.
+    return [
+      ...list.filter((e) => ExamLockService.isStudentAssigned(e.id, me)),
+      ...list.filter((e) => !ExamLockService.isStudentAssigned(e.id, me)),
+    ];
+  }, [exams, studentId, studentGrade, user?.email, user?.name, lockVersion]);
 
-  // Primary active paper for candidate
+  // Active paper for candidate. Only ever one this candidate may actually sit.
   const exam = useMemo(() => {
     if (selectedExamId) {
       const found = accessibleExams.find((e) => e.id === selectedExamId);
       if (found) return found;
     }
-    if (accessibleExams.length > 0) {
-      const primary = accessibleExams.find((e) => e.id === PRIMARY_EXAM_ID || e.id === "exam_imo_class6_setb_2022");
-      return primary || accessibleExams[0];
-    }
-    const primary = exams.find((e) => e.id === PRIMARY_EXAM_ID || e.id === "exam_imo_class6_setb_2022");
-    return primary || exams[0] || null;
-  }, [selectedExamId, accessibleExams, exams]);
+    if (accessibleExams.length === 0) return null;
+    const me = { id: studentId, email: user?.email, name: user?.name };
+    const assigned = accessibleExams.find((e) => ExamLockService.isStudentAssigned(e.id, me));
+    const primary = accessibleExams.find((e) => e.id === PRIMARY_EXAM_ID || e.id === "exam_imo_class6_setb_2022");
+    return assigned || primary || accessibleExams[0];
+  }, [selectedExamId, accessibleExams, studentId, user?.email, user?.name, lockVersion]);
 
   // Questions in this specific paper
   const examQuestions = useMemo(() => {
@@ -168,6 +163,15 @@ export default function StudentExamsScreen() {
     if (!exam) return null;
     return myAttempts.find((a) => a.examId === exam.id);
   }, [myAttempts, exam]);
+
+  /** Sittings used on this paper and the teacher's limit (null = unlimited). */
+  const attemptsUsed = useMemo(
+    () => (exam ? myAttempts.filter((a) => a.examId === exam.id).length : 0),
+    [myAttempts, exam]
+  );
+  const maxAttempts = exam ? ExamLockService.getMaxAttempts(exam.id) : null;
+  const attemptsLeft = maxAttempts === null ? null : Math.max(0, maxAttempts - attemptsUsed);
+  const outOfAttempts = attemptsLeft === 0 && !resumableSession;
 
   if (loading) {
     return (
@@ -316,6 +320,20 @@ export default function StudentExamsScreen() {
             </div>
 
             <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 px-0.5">
+                <span>Attempts</span>
+                <span className={outOfAttempts ? "text-rose-600" : "text-[#2468B2]"}>
+                  {maxAttempts === null
+                    ? `${attemptsUsed} used · Unlimited`
+                    : `${attemptsUsed} of ${maxAttempts} used`}
+                </span>
+              </div>
+              {outOfAttempts ? (
+                <div className="w-full h-12 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 font-bold text-sm flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>All attempts used</span>
+                </div>
+              ) : (
               <Link
                 href={
                   resumableSession
@@ -334,10 +352,14 @@ export default function StudentExamsScreen() {
                 ) : (
                   <>
                     <Play className="w-4 h-4 fill-current" />
-                    <span>{latestAttempt ? "Retake Examination" : "Begin Examination"}</span>
+                    <span>
+                      {latestAttempt ? "Retake Examination" : "Begin Examination"}
+                      {latestAttempt && attemptsLeft !== null ? ` (${attemptsLeft} left)` : ""}
+                    </span>
                   </>
                 )}
               </Link>
+              )}
 
               {latestAttempt && (
                 <Link

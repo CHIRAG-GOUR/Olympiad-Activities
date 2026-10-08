@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { examRepository, questionRepository } from "@/repositories";
+import { examRepository, questionRepository, attemptRepository } from "@/repositories";
 import { Exam } from "@/types/exam";
 import { Question } from "@/types/question";
 import { StudentMetadata } from "@/types/session";
@@ -51,6 +51,7 @@ type Phase =
   | { kind: "empty" }
   | { kind: "locked" }
   | { kind: "submitted"; attemptId?: string }
+  | { kind: "exhausted"; attemptId?: string }
   | { kind: "recover"; session: ExamSessionState }
   | { kind: "intro" }
   | { kind: "running" }
@@ -98,6 +99,21 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [lockVersion, setLockVersion] = useState(0);
+  /** Sittings this candidate has used on the paper, the limit, and the number of the next one. */
+  const [sitting, setSitting] = useState<{ used: number; max: number | null; next: number }>({
+    used: 0,
+    max: null,
+    next: 1,
+  });
+  const me = useMemo(
+    () => ({ id: uid, email: user?.email, name: user?.name, grade: user?.grade }),
+    [uid, user?.email, user?.name, user?.grade]
+  );
+  /** Staff preview any paper; a candidate needs it unlocked for their class, or assigned to them. */
+  const isBlocked = useCallback(
+    (paperId: string) => !isStaff && !ExamLockService.isExamAccessibleToStudent(paperId, me),
+    [isStaff, me]
+  );
 
   const questionScrollRef = useRef<HTMLDivElement>(null);
   const [deviceInfo] = useState(() => getClientDeviceInfo());
@@ -284,24 +300,50 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
           return;
         }
 
-        const existing = uid ? await ExamPersistenceService.findSession(examId, uid) : null;
+        // Sittings already filed for this paper. Each sitting has its own session
+        // (..._att1, ..._att2, ...), so a new one never collides with a submitted one.
+        let filed: { id: string }[] = [];
+        if (uid) {
+          try {
+            const mine = await attemptRepository.listAttempts({ ownerUid: uid });
+            filed = mine.filter((a) => a.examId === paper.id);
+          } catch (e) {
+            logWarn("EXAM_LOAD_FAILED", { examId, operation: "countAttempts" }, e);
+          }
+        }
         if (cancelled) return;
+
+        let attemptNumber = filed.length + 1;
+        let lastAttemptId: string | undefined = filed[0]?.id;
+        let existing = uid ? await ExamPersistenceService.findSession(examId, uid, attemptNumber) : null;
+        // A sitting submitted on this device but not yet counted (offline upload, stale
+        // read) still uses up its number.
+        while (
+          existing &&
+          (existing.status === "submitted" || existing.status === "completed") &&
+          attemptNumber < filed.length + 12
+        ) {
+          lastAttemptId = existing.attemptId || lastAttemptId;
+          attemptNumber += 1;
+          existing = await ExamPersistenceService.findSession(examId, uid, attemptNumber);
+        }
+        if (cancelled) return;
+
+        const used = attemptNumber - 1;
+        const max = ExamLockService.getMaxAttempts(paper.id);
+        setSitting({ used, max, next: attemptNumber });
+
+        if (existing && (existing.status === "submitted" || existing.status === "completed")) {
+          // Never re-open a submitted sitting.
+          setPhase({ kind: "exhausted", attemptId: existing.attemptId });
+          return;
+        }
 
         const isRetakeRequested =
           typeof window !== "undefined" &&
           (new URLSearchParams(window.location.search).get("retake") === "1" ||
             new URLSearchParams(window.location.search).get("mode") === "retake");
 
-        if (existing?.status === "submitted" || existing?.status === "completed") {
-          if (isRetakeRequested) {
-            // Student wants to sit the examination again with a fresh session
-            await ExamPersistenceService.clearSession(existing.sessionId);
-            setPhase({ kind: "intro" });
-            return;
-          }
-          setPhase({ kind: "submitted", attemptId: existing.attemptId });
-          return;
-        }
         if (existing?.status === "submitting") {
           // Interrupted mid-submit: finish uploading the same attempt.
           setPhase({ kind: "finalising" });
@@ -321,8 +363,16 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
           return;
         }
 
-        if (!isStaff && ExamLockService.isExamLocked(paper.id)) {
+        if (isBlocked(paper.id)) {
           setPhase({ kind: "locked" });
+          return;
+        }
+        if (used > 0 && !isStaff && max !== null && used >= max) {
+          setPhase({ kind: "exhausted", attemptId: lastAttemptId });
+          return;
+        }
+        if (used > 0 && !isRetakeRequested) {
+          setPhase({ kind: "submitted", attemptId: lastAttemptId });
           return;
         }
         setPhase({ kind: "intro" });
@@ -346,9 +396,18 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   // A teacher unlocking the paper reaches a waiting candidate without a refresh.
   useEffect(() => ExamLockService.subscribe(() => setLockVersion((v) => v + 1)), []);
   useEffect(() => {
-    if (phase.kind === "locked" && exam && !ExamLockService.isExamLocked(exam.id)) setPhase({ kind: "intro" });
-    if (phase.kind === "intro" && exam && !isStaff && ExamLockService.isExamLocked(exam.id)) setPhase({ kind: "locked" });
-  }, [lockVersion, phase.kind, exam, isStaff]);
+    if (!exam) return;
+    // Re-run the load rather than jumping to the intro, so the attempt limit applies too.
+    if (phase.kind === "locked" && !isBlocked(exam.id)) setReloadKey((k) => k + 1);
+    if (phase.kind === "intro" && isBlocked(exam.id)) setPhase({ kind: "locked" });
+    // A teacher changing the attempt limit reaches a candidate already on this page.
+    if (
+      (phase.kind === "intro" || phase.kind === "submitted" || phase.kind === "exhausted") &&
+      ExamLockService.getMaxAttempts(exam.id) !== sitting.max
+    ) {
+      setReloadKey((k) => k + 1);
+    }
+  }, [lockVersion, phase.kind, exam, isBlocked, sitting.max]);
 
   /* ── Start / resume ──────────────────────────────────────── */
 
@@ -410,6 +469,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
         durationMinutes: exam.durationMinutes || 60,
         firstQuestionId: questions[0]?.id || "",
         device: deviceInfo,
+        attemptNumber: sitting.next,
       });
       enterRunning(session, questions);
     } catch (err) {
@@ -713,24 +773,33 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     );
   }
 
-  if (phase.kind === "submitted") {
+  if (phase.kind === "submitted" || phase.kind === "exhausted") {
+    const left = sitting.max === null ? null : Math.max(0, sitting.max - sitting.used);
+    const canRetake = phase.kind === "submitted" && (isStaff || left === null || left > 0);
+    const usage =
+      sitting.max === null
+        ? `You have used ${sitting.used} attempt${sitting.used === 1 ? "" : "s"}; your teacher allows unlimited attempts.`
+        : `You have used ${sitting.used} of ${sitting.max} attempt${sitting.max === 1 ? "" : "s"}.`;
     return (
       <StatusPanel
         tone="info"
-        title="Examination Paper Completed"
-        message="Your score report has been generated and saved. You can review your detailed diagnostics or take this examination again as many times as you like to practice."
+        title={canRetake ? "Examination Paper Completed" : "All attempts used"}
+        message={
+          canRetake
+            ? `Your score report has been generated and saved. ${usage}`
+            : `${usage} Your teacher can allow more attempts if needed.`
+        }
         actions={[
           ...(phase.attemptId ? [{ label: "View Score Report", href: resultRoute(phase.attemptId), primary: true }] : []),
-          {
-            label: "Take Examination Again (Retake)",
-            primary: !phase.attemptId,
-            onClick: async () => {
-              if (exam && uid) {
-                await ExamPersistenceService.clearSession(ExamPersistenceService.generateSessionId(exam.id, uid));
-              }
-              setPhase({ kind: "intro" });
-            },
-          },
+          ...(canRetake
+            ? [
+                {
+                  label: left === null || isStaff ? "Take Examination Again" : `Take Examination Again (${left} left)`,
+                  primary: !phase.attemptId,
+                  onClick: () => setPhase({ kind: "intro" }),
+                },
+              ]
+            : []),
           backToExams,
         ]}
       />

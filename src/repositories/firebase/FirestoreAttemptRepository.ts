@@ -45,21 +45,38 @@ export class FirestoreAttemptRepository implements IAttemptRepository {
   async listAttempts(filters?: AttemptFilters): Promise<ExamAttempt[]> {
     if (!db) return this.local.listAttempts(filters);
     const firestore = db;
-    const owner = filters?.ownerUid;
-    const key = `attempts:${owner ?? "*"}`;
+    let owner = filters?.ownerUid;
 
-    const remote = await cached(key, CACHE_TTL.records, async () => {
-      const constraints: QueryConstraint[] = owner
-        ? [where("ownerUid", "==", owner), orderBy("submittedAt", "desc")]
-        : [orderBy("submittedAt", "desc"), limit(COHORT_LIMIT)];
-      try {
+    const fetchScope = (scopeOwner: string | undefined) =>
+      cached(`attempts:${scopeOwner ?? "*"}`, CACHE_TTL.records, async () => {
+        const constraints: QueryConstraint[] = scopeOwner
+          ? [where("ownerUid", "==", scopeOwner), orderBy("submittedAt", "desc")]
+          : [orderBy("submittedAt", "desc"), limit(COHORT_LIMIT)];
         const snap = await getDocs(query(collection(firestore, "attempts"), ...constraints));
         return snap.docs.map((d) => d.data() as ExamAttempt);
-      } catch (e) {
+      });
+
+    let remote: ExamAttempt[];
+    try {
+      remote = await fetchScope(owner);
+    } catch (e) {
+      // The rules refuse a cohort-wide read to a candidate. Screens shared between staff and
+      // candidates ask for the cohort; a candidate gets their own records instead of an error
+      // that would take the whole screen down with it.
+      const self = auth?.currentUser?.uid;
+      if (!owner && self && isPermissionDenied(e)) {
+        owner = self;
+        try {
+          remote = await fetchScope(owner);
+        } catch (e2) {
+          logError("FIRESTORE_QUERY_FAILED", { operation: "listAttempts", scope: "own" }, e2);
+          throw e2;
+        }
+      } else {
         logError("FIRESTORE_QUERY_FAILED", { operation: "listAttempts", scope: owner ? "own" : "cohort" }, e);
         throw e;
       }
-    });
+    }
 
     // Attempts submitted on this device but not yet uploaded (offline submission) are
     // still the candidate's results; merge them in so they never seem to vanish.

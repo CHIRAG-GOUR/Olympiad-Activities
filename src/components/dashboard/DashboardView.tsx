@@ -70,38 +70,38 @@ export default function DashboardView() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [loading, setLoading] = useState(true);
+  // A paper a teacher assigns reaches the candidate's dashboard without a refresh.
+  const [, setLockVersion] = useState(0);
+  useEffect(() => ExamLockService.subscribe(() => setLockVersion((v) => v + 1)), []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      try {
-        const [exList, attList, qList, uList, liveSessions] = await Promise.all([
-          examRepository.listExams(),
-          attemptRepository.listAttempts(),
-          questionRepository.listQuestions(),
-          userRepository.listUsers(),
-          (async () => {
-            try {
-              const { idbClient } = await import("@/services/persistence/indexeddb");
-              return await idbClient.getAll<LiveSession>("sessions");
-            } catch {
-              return [] as LiveSession[];
-            }
-          })(),
-        ]);
-        if (cancelled) return;
-        setExams(exList);
-        // Narrowed by entitlement before anything renders.
-        setAllAttempts(attList);
-        setQuestions(qList);
-        setUsers(uList);
-        setSessions(liveSessions);
-      } catch (err) {
-        console.error("Failed to load dashboard data:", err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      // Each source settles on its own: a candidate may not list other users, and that
+      // refusal must not blank their papers and results.
+      const [exList, attList, qList, uList, liveSessions] = await Promise.allSettled([
+        examRepository.listExams(),
+        attemptRepository.listAttempts(),
+        questionRepository.listQuestions(),
+        userRepository.listUsers(),
+        (async () => {
+          try {
+            const { idbClient } = await import("@/services/persistence/indexeddb");
+            return await idbClient.getAll<LiveSession>("sessions");
+          } catch {
+            return [] as LiveSession[];
+          }
+        })(),
+      ]);
+      if (cancelled) return;
+      if (exList.status === "fulfilled") setExams(exList.value);
+      // Narrowed by entitlement before anything renders.
+      if (attList.status === "fulfilled") setAllAttempts(attList.value);
+      if (qList.status === "fulfilled") setQuestions(qList.value);
+      if (uList.status === "fulfilled") setUsers(uList.value);
+      if (liveSessions.status === "fulfilled") setSessions(liveSessions.value);
+      setLoading(false);
     }
 
     load();
@@ -242,11 +242,17 @@ export default function DashboardView() {
     const studentGrade = Number(user?.grade) || 6;
     const studentId = user?.id || (user as any)?.studentId || "";
     const nextExam =
-      exams.find((e) => ExamLockService.isExamAccessibleToStudent(e.id, studentId, studentGrade)) ||
-      exams.find((e) => (e.id === "exam_imo_2022_g6_setb" || e.id === "exam_imo_class6_setb_2022")) ||
-      exams[0];
+      exams.find((e) =>
+        ExamLockService.isExamAccessibleToStudent(e.id, {
+          id: studentId,
+          email: user?.email,
+          name: user?.name,
+          grade: studentGrade,
+        })
+      ) || null;
     // `attempts` is already narrowed to this candidate by the data-access layer.
     const myAttempts = attempts;
+    const satNextExam = Boolean(nextExam && myAttempts.some((a) => a.examId === nextExam.id));
     const myAvg = myAttempts.length
       ? Math.round(myAttempts.reduce((s, a) => s + a.percentage, 0) / myAttempts.length)
       : null;
@@ -316,12 +322,12 @@ export default function DashboardView() {
               ? {
                   label: resumable
                     ? "Continue examination"
-                    : myAttempts.length > 0
+                    : satNextExam
                     ? "Retake examination"
                     : "Begin examination",
                   href: resumable
                     ? examRoute(resumable?.examId ?? nextExam.id)
-                    : myAttempts.length > 0
+                    : satNextExam
                     ? `${examRoute(nextExam.id)}&retake=1`
                     : examRoute(nextExam.id),
                 }
@@ -342,7 +348,7 @@ export default function DashboardView() {
             grade={nextExam.grade}
             questionCount={studentTotalQ}
             durationMinutes={nextExam.durationMinutes}
-            href={myAttempts.length > 0 ? `${examRoute(nextExam.id)}&retake=1` : examRoute(nextExam.id)}
+            href={satNextExam ? `${examRoute(nextExam.id)}&retake=1` : examRoute(nextExam.id)}
           />
         ) : (
           <Card>

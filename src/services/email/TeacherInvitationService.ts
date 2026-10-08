@@ -1,11 +1,9 @@
 "use client";
 
-import { userRepository } from "@/repositories";
-import { UserProfile } from "@/lib/auth/rbac";
-import { firebaseAuthService } from "@/lib/auth/firebaseAuthService";
 import { db, isRealFirebaseConfigured } from "@/services/firebase/config";
-import { doc, setDoc, collection, addDoc, getDocs, query, orderBy, limit } from "firebase/firestore";
-import { logWarn } from "@/lib/logger";
+import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
+import { invalidate } from "@/repositories/cache";
+import { logError, logWarn } from "@/lib/logger";
 import {
   generateTeacherInvitationHtml,
   generateTeacherInvitationPlainText,
@@ -13,12 +11,47 @@ import {
 } from "@/lib/email/invitationTemplate";
 
 const STORAGE_INVITATIONS_KEY = "olympiad_teacher_invitations_v1";
+const INVITATION_SUBJECT = "Official Invitation: Olympiad Dashboard Faculty Access";
+
+/**
+ * Where the invitation is in delivery. `queued` until the mail sender picks it up; the
+ * sender (Firebase "Trigger Email" extension on the `mail` collection) then reports
+ * `sending`, `sent` or `failed` on the mail document.
+ */
+export type InvitationDelivery = "queued" | "sending" | "sent" | "failed";
 
 export interface StoredInvitation extends TeacherInvitationData {
   invitationId: string;
   createdAt: string;
-  status: "sent" | "delivered" | "pending";
-  passwordResetTriggered: boolean;
+  /** Id of the queued message in the `mail` collection. */
+  mailId?: string;
+  delivery?: InvitationDelivery;
+  deliveryError?: string;
+  /** Retained for records written before invitations stopped sending password resets. */
+  status?: "sent" | "delivered" | "pending";
+  passwordResetTriggered?: boolean;
+}
+
+export interface InvitationOutcome {
+  ok: boolean;
+  invitation: StoredInvitation;
+  message: string;
+}
+
+function apiKey(): string {
+  return process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBRpGwa_39FWQL3fMK1uOJGS_EcK0aRC9Q";
+}
+
+/** The mail extension's delivery state, mapped onto ours. */
+function deliveryFrom(mail: { delivery?: { state?: string; error?: string } } | undefined): {
+  delivery: InvitationDelivery;
+  deliveryError?: string;
+} {
+  const state = mail?.delivery?.state;
+  if (state === "SUCCESS") return { delivery: "sent" };
+  if (state === "ERROR") return { delivery: "failed", deliveryError: mail?.delivery?.error };
+  if (state === "PROCESSING" || state === "RETRY") return { delivery: "sending" };
+  return { delivery: "queued" };
 }
 
 class TeacherInvitationServiceClass {
@@ -41,16 +74,30 @@ class TeacherInvitationServiceClass {
     } catch {}
   }
 
+  /** Invitations, newest first, each with the current delivery state of its email. */
   async listInvitations(): Promise<StoredInvitation[]> {
     const local = this.getLocalInvitations();
 
     if (isRealFirebaseConfigured && db) {
+      const firestore = db;
       try {
-        const q = query(collection(db, "faculty_invitations"), orderBy("createdAt", "desc"), limit(50));
+        const q = query(collection(firestore, "faculty_invitations"), orderBy("createdAt", "desc"), limit(50));
         const snap = await getDocs(q);
         const remote: StoredInvitation[] = [];
         snap.forEach((d) => remote.push(d.data() as StoredInvitation));
-        if (remote.length > 0) return remote;
+        if (remote.length > 0) {
+          return Promise.all(
+            remote.map(async (inv) => {
+              if (!inv.mailId) return inv;
+              try {
+                const mail = await getDoc(doc(firestore, "mail", inv.mailId));
+                return { ...inv, ...deliveryFrom(mail.data() as never) };
+              } catch {
+                return inv;
+              }
+            })
+          );
+        }
       } catch (err) {
         logWarn("FIRESTORE_QUERY_FAILED", { operation: "faculty_invitations.list" }, err);
       }
@@ -60,212 +107,148 @@ class TeacherInvitationServiceClass {
   }
 
   /**
-   * Dispatches teacher invitation in 1 click using Firebase:
-   * 1. Provisions account in Firebase Authentication if new.
-   * 2. Automatically triggers official password setup email via Firebase Identity Toolkit (with a reset button).
-   * 3. Creates/Updates User profile in repository & Firestore /users.
-   * 4. Logs to `faculty_invitations` and queues in Firestore `/mail`.
+   * Creates the sign-in account for the address, or reports that one already exists.
+   * Uses the REST endpoint so the administrator's own session is left untouched.
    */
-  async inviteTeacher(
-    data: TeacherInvitationData,
-    options?: { triggerFirebaseReset?: boolean }
-  ): Promise<{
-    ok: boolean;
-    emailSentViaFirebase: boolean;
-    invitation: StoredInvitation;
-    html: string;
-    text: string;
-    message: string;
-  }> {
-    const invitationId = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const html = generateTeacherInvitationHtml(data);
-    const text = generateTeacherInvitationPlainText(data);
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBRpGwa_39FWQL3fMK1uOJGS_EcK0aRC9Q";
-    const normalizedEmail = data.teacherEmail.trim().toLowerCase();
-    const tempPassword = data.temporaryPassword.trim() || "OlympiadFaculty#2026";
+  private async provisionAccount(
+    email: string,
+    password: string
+  ): Promise<{ uid?: string; existed: boolean }> {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey()}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, returnSecureToken: false }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.localId) return { uid: data.localId, existed: false };
+    if (data?.error?.message === "EMAIL_EXISTS") return { existed: true };
+    throw new Error(
+      data?.error?.message === "INVALID_EMAIL"
+        ? `${email} is not a valid email address.`
+        : `The sign-in account could not be created (${data?.error?.message || res.status}).`
+    );
+  }
 
-    let emailSentViaFirebase = false;
-    let firebaseStatusNote = "";
-
-    // Step 1: Ensure account exists in Firebase Authentication
-    try {
-      const signUpUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
-      const signUpRes = await fetch(signUpUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          password: tempPassword,
-          returnSecureToken: false,
-        }),
-      });
-      const signUpData = await signUpRes.json();
-      if (signUpRes.ok || signUpData.error?.message === "EMAIL_EXISTS") {
-        firebaseStatusNote = "Account provisioned in Firebase Auth.";
-      }
-    } catch (e) {
-      console.warn("Firebase Auth provisioning error:", e);
-    }
-
-    // Step 2: Trigger official email from Firebase directly to user's inbox
-    if (options?.triggerFirebaseReset !== false) {
-      try {
-        const sendResetUrl = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`;
-        const redirectUrl =
-          typeof window !== "undefined"
-            ? `${window.location.origin}/login`
-            : "https://the-olympiad-dashboard.web.app/login";
-
-        const resetRes = await fetch(sendResetUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            requestType: "PASSWORD_RESET",
-            email: normalizedEmail,
-            continueUri: redirectUrl,
-          }),
-        });
-
-        const resetData = await resetRes.json();
-        if (resetData.email) {
-          emailSentViaFirebase = true;
-          firebaseStatusNote = "Official access email sent successfully by Firebase.";
-        } else {
-          firebaseStatusNote = resetData.error?.message || "Firebase email dispatch pending.";
-        }
-      } catch (err: any) {
-        console.warn("Firebase email dispatch error:", err);
-      }
-    }
-
-    // Step 3: Ensure User Account exists in platform repository
-    const teacherProfile: UserProfile = {
-      id: data.teacherId,
-      name: data.teacherName.trim(),
-      email: normalizedEmail,
-      role: "TEACHER",
-      createdAt: new Date().toISOString(),
-      metadata: {
-        subject: data.subjectName,
-        assignedClasses: data.assignedClasses,
-        temporaryPassword: data.temporaryPassword,
-        invitedAt: new Date().toISOString(),
-        emailSentViaFirebase,
-      },
-    };
-
-    try {
-      await userRepository.saveUser(teacherProfile);
-    } catch (err) {
-      console.warn("Could not save teacher profile to user repository:", err);
-    }
-
-    const invitation: StoredInvitation = {
-      ...data,
-      invitationId,
-      createdAt: new Date().toISOString(),
-      status: "sent",
-      passwordResetTriggered: emailSentViaFirebase,
-    };
-
-    this.saveLocalInvitation(invitation);
-
-    // Step 4: Save to Firestore if available
-    if (isRealFirebaseConfigured && db) {
-      try {
-        // Save invitation record
-        await setDoc(doc(db, "faculty_invitations", invitationId), invitation, { merge: true });
-
-        // Save teacher user record
-        await setDoc(
-          doc(db, "users", data.teacherId),
-          {
-            id: data.teacherId,
-            email: normalizedEmail,
-            name: data.teacherName.trim(),
-            role: "TEACHER",
-            createdAt: new Date().toISOString(),
-            status: "active",
-            subject: data.subjectName,
-            assignedClasses: data.assignedClasses,
-          },
-          { merge: true }
-        );
-
-        // Queue in mail collection
-        await addDoc(collection(db, "mail"), {
-          to: [normalizedEmail],
-          message: {
-            subject: "Official Invitation: Olympiad Dashboard Faculty Access",
-            html,
-            text,
-          },
-          createdAt: new Date().toISOString(),
-        }).catch(() => {});
-      } catch (err) {
-        logWarn("FIRESTORE_WRITE_FAILED", { operation: "faculty_invitations.write" }, err);
-      }
-    }
-
-    return {
-      ok: true,
-      emailSentViaFirebase,
-      invitation,
-      html,
-      text,
-      message: emailSentViaFirebase
-        ? `Official invitation email successfully sent to ${data.teacherEmail} via Firebase.`
-        : `Faculty account registered (${firebaseStatusNote}).`,
-    };
+  /** The `/users` document id of an existing account with this address, if there is one. */
+  private async findUserIdByEmail(email: string): Promise<string | undefined> {
+    if (!db) return undefined;
+    const snap = await getDocs(query(collection(db, "users"), where("email", "==", email), limit(1)));
+    return snap.docs[0]?.id;
   }
 
   /**
-   * 1-Click re-dispatch of official invitation / password email via Firebase.
+   * Invites a teacher in one click:
+   *   1. Creates their sign-in account with the temporary password (or finds the existing one).
+   *   2. Gives that account the TEACHER role, on the document its sign-in actually reads.
+   *   3. Queues the themed Olympiad Dashboard invitation to the address entered — and only
+   *      that address. No password-reset email is sent.
    */
-  async dispatchFirebaseEmail(email: string): Promise<{ ok: boolean; message: string }> {
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBRpGwa_39FWQL3fMK1uOJGS_EcK0aRC9Q";
-    const normalized = email.trim().toLowerCase();
+  async inviteTeacher(data: TeacherInvitationData): Promise<InvitationOutcome> {
+    const normalizedEmail = data.teacherEmail.trim().toLowerCase();
+    const tempPassword = data.temporaryPassword.trim() || "OlympiadFaculty#2026";
+
+    const account = await this.provisionAccount(normalizedEmail, tempPassword);
+    let uid = account.uid;
+    if (account.existed) {
+      try {
+        uid = await this.findUserIdByEmail(normalizedEmail);
+      } catch (err) {
+        logWarn("FIRESTORE_QUERY_FAILED", { operation: "users.findByEmail" }, err);
+      }
+    }
+
+    const invitationData: TeacherInvitationData = {
+      ...data,
+      teacherEmail: normalizedEmail,
+      temporaryPassword: tempPassword,
+      // The account already had a password of its own; the generated one was not applied.
+      existingAccount: account.existed,
+    };
+
+    if (uid && db) {
+      try {
+        await setDoc(
+          doc(db, "users", uid),
+          {
+            id: uid,
+            email: normalizedEmail,
+            name: data.teacherName.trim(),
+            role: "TEACHER",
+            status: "active",
+            updatedAt: new Date().toISOString(),
+            metadata: {
+              subject: data.subjectName,
+              assignedClasses: data.assignedClasses,
+              teacherCode: data.teacherId,
+              invitedAt: new Date().toISOString(),
+            },
+            ...(account.existed ? {} : { createdAt: new Date().toISOString() }),
+          },
+          { merge: true }
+        );
+        invalidate("users:");
+      } catch (err) {
+        logError("FIRESTORE_WRITE_FAILED", { operation: "users.inviteTeacher" }, err);
+        throw new Error("The teacher's account was created, but their teacher role could not be saved. Please try again.");
+      }
+    }
+
+    const invitation = await this.queueInvitationEmail(invitationData);
+    return {
+      ok: true,
+      invitation,
+      message: !uid
+        ? `Invitation queued for ${normalizedEmail}, but that address already has a sign-in account with no profile here, so teacher access could not be applied. Ask them to sign in once, then invite again.`
+        : account.existed
+        ? `${normalizedEmail} already had an account; it now has teacher access and the invitation is queued.`
+        : `Invitation queued for ${normalizedEmail}.`,
+    };
+  }
+
+  /** Sends the same themed invitation again. Never a password reset. */
+  async resendInvitation(data: TeacherInvitationData): Promise<InvitationOutcome> {
+    const invitation = await this.queueInvitationEmail({
+      ...data,
+      teacherEmail: data.teacherEmail.trim().toLowerCase(),
+    });
+    return { ok: true, invitation, message: `Invitation queued again for ${invitation.teacherEmail}.` };
+  }
+
+  /** Writes the invitation record and the outgoing message to the `mail` queue. */
+  private async queueInvitationEmail(data: TeacherInvitationData): Promise<StoredInvitation> {
+    const invitationId = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const invitation: StoredInvitation = {
+      ...data,
+      invitationId,
+      mailId: invitationId,
+      createdAt: new Date().toISOString(),
+      delivery: "queued",
+    };
+
+    if (!isRealFirebaseConfigured || !db) {
+      this.saveLocalInvitation(invitation);
+      throw new Error("Email cannot be sent: the platform is not connected to Firebase.");
+    }
 
     try {
-      // 1. Ensure user exists in Firebase Auth
-      const signUpUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
-      await fetch(signUpUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: normalized,
-          password: "OlympiadPass#2026",
-          returnSecureToken: false,
-        }),
+      await setDoc(doc(db, "mail", invitationId), {
+        to: [data.teacherEmail],
+        message: {
+          subject: INVITATION_SUBJECT,
+          html: generateTeacherInvitationHtml(data),
+          text: generateTeacherInvitationPlainText(data),
+        },
+        createdAt: new Date().toISOString(),
       });
-
-      // 2. Dispatch email via Firebase
-      const sendResetUrl = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`;
-      const redirectUrl =
-        typeof window !== "undefined"
-          ? `${window.location.origin}/login`
-          : "https://the-olympiad-dashboard.web.app/login";
-
-      const res = await fetch(sendResetUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requestType: "PASSWORD_RESET",
-          email: normalized,
-          continueUri: redirectUrl,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.email) {
-        return { ok: true, message: `Official email sent to ${normalized} via Firebase!` };
-      }
-      return { ok: false, message: data.error?.message || "Failed to send email via Firebase." };
-    } catch (err: any) {
-      return { ok: false, message: err?.message || "Network error contacting Firebase." };
+      await setDoc(doc(db, "faculty_invitations", invitationId), invitation);
+    } catch (err) {
+      logError("FIRESTORE_WRITE_FAILED", { operation: "mail.queueInvitation" }, err);
+      throw new Error("The invitation email could not be queued. Please try again.");
     }
+
+    this.saveLocalInvitation(invitation);
+    return invitation;
   }
 }
 
 export const TeacherInvitationService = new TeacherInvitationServiceClass();
-

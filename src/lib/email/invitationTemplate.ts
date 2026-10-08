@@ -12,6 +12,8 @@ export interface TeacherInvitationData {
   assignedClasses: number[] | string[];
   invitedBy?: string;
   portalUrl?: string;
+  /** The address already had an account, so its own password stands and none is issued. */
+  existingAccount?: boolean;
 }
 
 export function generateTeacherInvitationHtml(data: TeacherInvitationData): string {
@@ -91,8 +93,10 @@ export function generateTeacherInvitationHtml(data: TeacherInvitationData): stri
                         <td style="padding: 6px 0; font-size: 13px; color: #0F172A; font-weight: 700;">${data.teacherEmail}</td>
                       </tr>
                       <tr>
-                        <td style="padding: 6px 0; font-size: 13px; color: #64748B; font-weight: 600;">Temporary Pass:</td>
-                        <td style="padding: 6px 0; font-size: 14px; color: #1E293B; font-family: monospace; font-weight: 800; background: #E2E8F0; padding: 2px 8px; border-radius: 6px; display: inline-block;">${data.temporaryPassword}</td>
+                        <td style="padding: 6px 0; font-size: 13px; color: #64748B; font-weight: 600;">${data.existingAccount ? "Password:" : "Temporary Pass:"}</td>
+                        ${data.existingAccount
+                          ? `<td style="padding: 6px 0; font-size: 13px; color: #0F172A; font-weight: 700;">Your existing Olympiad Dashboard password</td>`
+                          : `<td style="padding: 6px 0; font-size: 14px; color: #1E293B; font-family: monospace; font-weight: 800; background: #E2E8F0; padding: 2px 8px; border-radius: 6px; display: inline-block;">${data.temporaryPassword}</td>`}
                       </tr>
                       <tr>
                         <td style="padding: 6px 0; font-size: 13px; color: #64748B; font-weight: 600;">Assigned Subject:</td>
@@ -191,13 +195,13 @@ YOUR FACULTY CREDENTIALS:
 - Portal URL: ${portalUrl}
 - Teacher ID: ${data.teacherId}
 - Official Email: ${data.teacherEmail}
-- Temporary Password: ${data.temporaryPassword}
+- ${data.existingAccount ? "Password: your existing Olympiad Dashboard password" : `Temporary Password: ${data.temporaryPassword}`}
 - Assigned Subject: ${data.subjectName}
 - Assigned Classes: ${classesText}
 
 HOW TO LOG IN:
 1. Visit: ${portalUrl}
-2. Enter your registered email (${data.teacherEmail}) and temporary password.
+2. Enter your registered email (${data.teacherEmail}) and ${data.existingAccount ? "your existing password" : "temporary password"}.
 3. Access your Teacher Dashboard.
 
 PASSWORD RESET:

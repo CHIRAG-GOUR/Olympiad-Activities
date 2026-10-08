@@ -181,11 +181,13 @@ class ExamPersistenceServiceClass {
     durationMinutes: number;
     firstQuestionId: string;
     device?: DeviceInfo;
+    /** Which sitting of this paper this is (1 for the first). Each sitting has its own id. */
+    attemptNumber?: number;
   }): Promise<ExamSessionState> {
     const now = new Date().toISOString();
     const durationSec = params.durationMinutes * 60;
     const session: ExamSessionState = {
-      sessionId: this.generateSessionId(params.examId, params.studentId),
+      sessionId: this.generateSessionId(params.examId, params.studentId, params.attemptNumber || 1),
       examId: params.examId,
       examTitle: params.examTitle,
       studentId: params.studentId,
@@ -323,19 +325,25 @@ class ExamPersistenceServiceClass {
    * This device's copy is preferred; the cloud copy is consulted when this device has none
    * (cleared browser, different computer) or when the cloud copy is newer.
    */
-  async findSession(examId: string, studentId: string): Promise<ExamSessionState | null> {
+  async findSession(examId: string, studentId: string, attemptNumber = 1): Promise<ExamSessionState | null> {
     if (!examId || !studentId) return null;
-    const sessionId = this.generateSessionId(examId, studentId);
+    const sessionId = this.generateSessionId(examId, studentId, attemptNumber);
     let local = await this.loadLocal(sessionId).catch(() => null);
 
     // Sessions written before ids were tied to the account carry a random roll code;
-    // adopt one for this paper only if it was made by this same account.
-    if (!local) {
+    // adopt one for this paper only if it was made by this same account. Those predate
+    // retakes, so they can only ever be a first sitting.
+    if (!local && attemptNumber === 1) {
       try {
         const all = await idbClient.getAll<ExamSessionState & { ownerUid?: string }>("sessions");
         local =
           all
-            .filter((s) => s.examId === examId && (s.studentId === studentId || s.ownerUid === studentId))
+            .filter(
+              (s) =>
+                s.examId === examId &&
+                (s.studentId === studentId || s.ownerUid === studentId) &&
+                !/_att\d+$/.test(s.sessionId || "")
+            )
             .sort((a, b) => new Date(b.lastSavedAt || 0).getTime() - new Date(a.lastSavedAt || 0).getTime())[0] ?? null;
       } catch {
         // fall through to the cloud

@@ -38,7 +38,17 @@ import {
   Table as TableIcon,
   Sparkles,
 } from "lucide-react";
-import { ExamLockService } from "@/services/exam/ExamLockService";
+import { ExamLockService, MAX_ATTEMPT_CHOICES } from "@/services/exam/ExamLockService";
+
+/** Student ID shown to staff: the class the student is registered in, then a stable code. */
+const studentCode = (s: UserProfile) =>
+  `C${Number(s.grade) || 6}-${s.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase()}`;
+
+/** The classes a paper may be assigned to: its own class plus any it was opened to. */
+const classesFor = (exam: Exam) => {
+  const own = Number(exam.grade) || 6;
+  return Array.from(new Set([own, ...ExamLockService.getVisibleClasses(exam.id, own)])).sort((a, b) => a - b);
+};
 
 type MainViewTab = "table" | "access_control" | "catalogue";
 type SubjectTabKey = "all" | "math" | "english";
@@ -66,22 +76,26 @@ export default function ExamsScreen() {
   const [studentFilterClass, setStudentFilterClass] = useState<string>("all");
   const [studentSearchTerm, setStudentSearchTerm] = useState<string>("");
   const [isSavingAlignment, setIsSavingAlignment] = useState(false);
+  /** Sittings each assigned student may take; null = unlimited. */
+  const [alignMaxAttempts, setAlignMaxAttempts] = useState<number | null>(null);
   const [alignmentSuccess, setAlignmentSuccess] = useState(false);
 
   useEffect(() => {
     async function load() {
-      try {
-        const [exData, uData] = await Promise.all([
-          examRepository.listExams(),
-          userRepository.listUsers(),
-        ]);
-        setExams(exData);
-        setOnboardedStudents(uData.filter((u) => u.role === "STUDENT"));
-      } catch (err) {
-        logError("EXAM_LOAD_FAILED", { operation: "listExams" }, err);
-      } finally {
-        setLoading(false);
+      // The papers and the student roster load independently: a roster that cannot be
+      // read must not hide the papers, and vice versa.
+      const [exData, uData] = await Promise.allSettled([
+        examRepository.listExams(),
+        userRepository.listUsers(),
+      ]);
+      if (exData.status === "fulfilled") setExams(exData.value);
+      else logError("EXAM_LOAD_FAILED", { operation: "listExams" }, exData.reason);
+      if (uData.status === "fulfilled") setOnboardedStudents(uData.value.filter((u) => u.role === "STUDENT"));
+      else {
+        logError("FIRESTORE_QUERY_FAILED", { operation: "listUsers" }, uData.reason);
+        setActionError("The student list could not be loaded, so exams cannot be added to students right now. Please refresh.");
       }
+      setLoading(false);
     }
     load();
   }, []);
@@ -120,10 +134,13 @@ export default function ExamsScreen() {
   // Alignment Handlers
   const handleOpenAlignModal = (exam: Exam) => {
     setAligningExam(exam);
-    const assigned = ExamLockService.getAssignedStudents(exam.id);
-    setSelectedStudentIds(assigned);
+    // Matched by uid or email, so students assigned under an older id still show as ticked.
+    setSelectedStudentIds(
+      onboardedStudents.filter((s) => ExamLockService.isStudentAssigned(exam.id, s)).map((s) => s.id)
+    );
     setStudentFilterClass(String(exam.grade || 6));
     setStudentSearchTerm("");
+    setAlignMaxAttempts(ExamLockService.getMaxAttempts(exam.id));
     setAlignmentSuccess(false);
   };
 
@@ -148,14 +165,22 @@ export default function ExamsScreen() {
     setIsSavingAlignment(true);
     setActionError(null);
     try {
-      await ExamLockService.setAssignedStudents(aligningExam.id, selectedStudentIds);
+      // Each student is saved with their class, so the paper reaches exactly them.
+      const byId = new Map(onboardedStudents.map((s) => [s.id, s]));
+      const chosen = selectedStudentIds
+        .map((id) => byId.get(id))
+        .filter((s): s is UserProfile => Boolean(s))
+        .map((s) => ({ id: s.id, email: s.email, name: s.name, grade: Number(s.grade) || Number(aligningExam.grade) || 6 }));
+      await ExamLockService.assignStudents(aligningExam.id, chosen, alignMaxAttempts);
       setAlignmentSuccess(true);
       setTimeout(() => {
         setAligningExam(null);
         setAlignmentSuccess(false);
       }, 1200);
     } catch (err) {
-      setActionError("Failed to save student alignment to database.");
+      setActionError(
+        `The exam was not added, so students do not see it yet. ${userMessageFor(err, "the server").replace(" be loaded", " be reached")}`
+      );
     } finally {
       setIsSavingAlignment(false);
       setLockVersion((v) => v + 1);
@@ -242,18 +267,22 @@ export default function ExamsScreen() {
     });
   }, [exams, mathExams, englishExams, activeSubjectTab, searchTerm, classFilter, statusFilter, lockVersion]);
 
-  // Filtered Onboarded Students for Alignment Modal
+  // Only students of the paper's class(es) can be assigned to it.
+  const alignClasses = useMemo(() => (aligningExam ? classesFor(aligningExam) : []), [aligningExam, lockVersion]);
   const modalFilteredStudents = useMemo(() => {
     return onboardedStudents.filter((s) => {
-      const matchesClass = studentFilterClass === "all" || String(s.grade || 6) === studentFilterClass;
+      const grade = Number(s.grade) || 6;
+      if (!alignClasses.includes(grade)) return false;
+      const matchesClass = studentFilterClass === "all" || String(grade) === studentFilterClass;
       const matchesSearch =
         s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
         s.id.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+        studentCode(s).toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
         (s.email && s.email.toLowerCase().includes(studentSearchTerm.toLowerCase())) ||
         (s.schoolName && s.schoolName.toLowerCase().includes(studentSearchTerm.toLowerCase()));
       return matchesClass && matchesSearch;
     });
-  }, [onboardedStudents, studentFilterClass, studentSearchTerm]);
+  }, [onboardedStudents, studentFilterClass, studentSearchTerm, alignClasses]);
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
@@ -483,7 +512,7 @@ export default function ExamsScreen() {
                     <th className="py-3 px-2 w-[110px] text-center">Questions</th>
                     <th className="py-3 px-2 w-[100px] text-center">Duration</th>
                     <th className="py-3 px-2.5 w-[140px] text-center">Access Status</th>
-                    <th className="py-3 px-2.5 w-[150px] text-center">Aligned Students</th>
+                    <th className="py-3 px-2.5 w-[150px] text-center">Assigned Students</th>
                     <th className="py-3 px-3.5 w-[210px] text-right">Actions</th>
                   </tr>
                 </thead>
@@ -559,13 +588,20 @@ export default function ExamsScreen() {
                           {assignedStudents.length > 0 ? (
                             <span className="px-2 py-0.5 rounded-md text-[10.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
                               <Users className="w-3 h-3" />
-                              <span>{assignedStudents.length} Aligned</span>
+                              <span>{assignedStudents.length} Assigned</span>
                             </span>
+                          ) : isLocked ? (
+                            <span className="text-[10px] text-slate-500 font-medium">Not assigned</span>
                           ) : (
                             <span className="text-[10px] text-slate-500 font-medium">
                               All Visible (Cl {visibleClasses.join(",")})
                             </span>
                           )}
+                          <span className="block text-[10px] text-slate-500 font-medium mt-0.5">
+                            {ExamLockService.getMaxAttempts(exam.id) === null
+                              ? "Unlimited attempts"
+                              : `${ExamLockService.getMaxAttempts(exam.id)} attempt${ExamLockService.getMaxAttempts(exam.id) === 1 ? "" : "s"}`}
+                          </span>
                         </td>
 
                         <td className="py-3 px-3.5 text-right whitespace-nowrap">
@@ -578,7 +614,7 @@ export default function ExamsScreen() {
                               title="Align this examination paper to specific onboarded students"
                             >
                               <Users className="w-3 h-3" />
-                              <span>Align to Students</span>
+                              <span>Add to Students</span>
                             </button>
 
                             <Link
@@ -722,7 +758,7 @@ export default function ExamsScreen() {
                         className="h-11 px-3.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <Users className="w-3.5 h-3.5" />
-                        <span>Align</span>
+                        <span>Add to Students</span>
                       </button>
 
                       <Link
@@ -812,7 +848,7 @@ export default function ExamsScreen() {
                     className="flex-1 h-9 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 font-bold text-xs flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <Users className="w-3.5 h-3.5" />
-                    <span>Align</span>
+                    <span>Add to Students</span>
                   </button>
                   <Link
                     href={examRoute(exam.id)}
@@ -840,13 +876,13 @@ export default function ExamsScreen() {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-[#2468B2] uppercase tracking-wider">
-                    Faculty Alignment Controller
+                    Add Exam to Students
                   </span>
                   <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                    Align Paper: {aligningExam.title}
+                    {aligningExam.title}
                   </h3>
                   <p className="text-xs text-slate-500 font-mono mt-0.5">
-                    Code: {aligningExam.code} &bull; Target Class: {aligningExam.grade || 6}
+                    Code: {aligningExam.code} &bull; Class {alignClasses.join(", ")} students only
                   </p>
                 </div>
               </div>
@@ -877,7 +913,7 @@ export default function ExamsScreen() {
 
                 {/* Class Filter */}
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                  {["all", "6", "7", "8"].map((c) => (
+                  {(alignClasses.length > 1 ? ["all", ...alignClasses.map(String)] : alignClasses.map(String)).map((c) => (
                     <button
                       key={c}
                       type="button"
@@ -888,10 +924,30 @@ export default function ExamsScreen() {
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      {c === "all" ? "All" : `Cl-${c}`}
+                      {c === "all" ? "All" : `Class ${c}`}
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Attempts allowed */}
+              <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <label htmlFor="align-max-attempts" className="text-xs font-bold text-slate-700">
+                  Attempts allowed per student
+                </label>
+                <select
+                  id="align-max-attempts"
+                  value={alignMaxAttempts === null ? "unlimited" : String(alignMaxAttempts)}
+                  onChange={(e) => setAlignMaxAttempts(e.target.value === "unlimited" ? null : Number(e.target.value))}
+                  className="h-8 px-2.5 text-xs font-bold bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-[#2468B2] cursor-pointer"
+                >
+                  {Array.from({ length: MAX_ATTEMPT_CHOICES }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>
+                      {n} {n === 1 ? "attempt" : "attempts"}
+                    </option>
+                  ))}
+                  <option value="unlimited">Unlimited</option>
+                </select>
               </div>
 
               {/* Bulk Toggle Buttons */}
@@ -923,7 +979,7 @@ export default function ExamsScreen() {
             <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200 divide-y divide-slate-100 max-h-[360px]">
               {modalFilteredStudents.length === 0 ? (
                 <div className="py-12 text-center text-xs text-slate-500 font-medium">
-                  No onboarded students match the selected filter.
+                  No Class {alignClasses.join(" / ")} students match this search.
                 </div>
               ) : (
                 modalFilteredStudents.map((s) => {
@@ -945,7 +1001,8 @@ export default function ExamsScreen() {
                         <div className="min-w-0">
                           <span className="font-bold text-xs text-slate-900 block truncate">{s.name}</span>
                           <span className="text-[10px] text-slate-500 font-mono block">
-                            {s.id} &bull; Class {s.grade || 6} &bull; {s.schoolName || "Cambridge Court (CCIS)"}
+                            {studentCode(s)} &bull; Class {Number(s.grade) || 6}
+                            {s.email ? <> &bull; {s.email}</> : null}
                           </span>
                         </div>
                       </div>
@@ -957,7 +1014,7 @@ export default function ExamsScreen() {
                             : "bg-slate-100 text-slate-500 border-slate-200"
                         }`}
                       >
-                        {isChecked ? "Aligned" : "Not Aligned"}
+                        {isChecked ? "Selected" : "Not added"}
                       </span>
                     </label>
                   );
@@ -971,10 +1028,10 @@ export default function ExamsScreen() {
                 {alignmentSuccess ? (
                   <span className="text-emerald-700 font-bold flex items-center gap-1">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Alignment saved successfully to Firebase!</span>
+                    <span>Exam added. It is on the selected students&apos; dashboards now.</span>
                   </span>
                 ) : (
-                  <span>Selected students will see this examination paper in their catalog immediately.</span>
+                  <span>Selected students see this exam on their dashboard as soon as you add it.</span>
                 )}
               </span>
 
@@ -993,11 +1050,13 @@ export default function ExamsScreen() {
                   className="h-10 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60"
                 >
                   {isSavingAlignment ? (
-                    <span>Saving...</span>
+                    <span>Adding...</span>
                   ) : (
                     <>
                       <Check className="w-4 h-4" />
-                      <span>Save Student Alignment</span>
+                      <span>
+                        Add Exam{selectedStudentIds.length > 0 ? ` (${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"})` : ""}
+                      </span>
                     </>
                   )}
                 </button>

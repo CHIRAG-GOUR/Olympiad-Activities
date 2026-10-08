@@ -31,10 +31,17 @@ import {
   TeacherInvitationService,
   StoredInvitation,
 } from "@/services/email/TeacherInvitationService";
-import {
-  generateTeacherInvitationHtml,
-  generateTeacherInvitationPlainText,
-} from "@/lib/email/invitationTemplate";
+import type { TeacherInvitationData } from "@/lib/email/invitationTemplate";
+
+const portalUrl = () =>
+  typeof window !== "undefined" ? `${window.location.origin}/login` : "https://the-olympiad-dashboard.web.app/login";
+
+const DELIVERY_LABEL: Record<string, { label: string; className: string }> = {
+  queued: { label: "Queued", className: "bg-amber-100 text-amber-800" },
+  sending: { label: "Sending", className: "bg-blue-100 text-blue-800" },
+  sent: { label: "Delivered", className: "bg-emerald-100 text-emerald-800" },
+  failed: { label: "Failed", className: "bg-rose-100 text-rose-800" },
+};
 
 function generateSecurePassword(): string {
   const chars = "abcdefghijkmnpqrstuvwxyz";
@@ -78,6 +85,7 @@ export default function TeachersDirectoryPage() {
   const [successBanner, setSuccessBanner] = useState<{
     message: string;
     email: string;
+    tone?: "success" | "error";
   } | null>(null);
   const [sendingEmailForId, setSendingEmailForId] = useState<string | null>(null);
 
@@ -132,6 +140,7 @@ export default function TeachersDirectoryPage() {
     const teacherId = `tea_${inviteEmail.trim().split("@")[0].replace(/[^a-zA-Z0-9]/g, "_")}`;
 
     try {
+      // The invitation goes to the address typed here — and only there.
       const res = await TeacherInvitationService.inviteTeacher({
         teacherName: inviteName.trim(),
         teacherEmail: inviteEmail.trim().toLowerCase(),
@@ -140,40 +149,56 @@ export default function TeachersDirectoryPage() {
         subjectName: inviteSubject,
         assignedClasses: inviteClasses,
         invitedBy: user?.name || "Super Administrator",
-        portalUrl: typeof window !== "undefined" ? `${window.location.origin}/login` : "https://the-olympiad-dashboard.web.app/login",
+        portalUrl: portalUrl(),
       });
 
       setShowInviteModal(false);
-      setSuccessBanner({
-        message: res.emailSentViaFirebase
-          ? `Official invitation email successfully sent to ${inviteEmail.trim()} via Firebase!`
-          : res.message,
-        email: inviteEmail.trim(),
-      });
+      setSuccessBanner({ message: res.message, email: res.invitation.teacherEmail, tone: "success" });
+      setActiveTab("invitations");
       await loadData();
     } catch (err) {
-      console.error("Failed to send teacher invitation:", err);
+      setSuccessBanner({
+        message: err instanceof Error ? err.message : "The invitation could not be sent. Please try again.",
+        email: inviteEmail.trim(),
+        tone: "error",
+      });
     } finally {
       setIsSubmittingInvite(false);
     }
   };
 
-  const handleDirectSendEmail = async (email: string, id: string) => {
+  /** Re-sends the themed invitation to that one address. Never a password reset. */
+  const handleResendInvitation = async (data: TeacherInvitationData, id: string) => {
     setSendingEmailForId(id);
     try {
-      const res = await TeacherInvitationService.dispatchFirebaseEmail(email);
-      setSuccessBanner({
-        message: res.ok
-          ? `Official email successfully sent to ${email} via Firebase!`
-          : `Firebase email dispatch: ${res.message}`,
-        email,
-      });
+      const res = await TeacherInvitationService.resendInvitation({ ...data, portalUrl: portalUrl() });
+      setSuccessBanner({ message: res.message, email: data.teacherEmail, tone: "success" });
       await loadData();
     } catch (err) {
-      console.error("Direct send error:", err);
+      setSuccessBanner({
+        message: err instanceof Error ? err.message : "The invitation could not be sent. Please try again.",
+        email: data.teacherEmail,
+        tone: "error",
+      });
     } finally {
       setSendingEmailForId(null);
     }
+  };
+
+  /** Invitation details for a directory row: the latest invitation, else the profile. */
+  const invitationFor = (t: UserProfile): TeacherInvitationData => {
+    const last = invitations.find((i) => i.teacherEmail === (t.email || "").toLowerCase());
+    if (last) return last;
+    return {
+      teacherName: t.name,
+      teacherEmail: t.email,
+      teacherId: (t.metadata?.teacherCode as string) || t.id,
+      temporaryPassword: "",
+      subjectName: (t.metadata?.subject as string) || "Mathematics",
+      assignedClasses: (t.metadata?.assignedClasses as number[]) || [6, 7, 8],
+      invitedBy: user?.name || "Super Administrator",
+      existingAccount: true,
+    };
   };
 
   const filteredTeachers = teachers.filter(
@@ -216,14 +241,29 @@ export default function TeachersDirectoryPage() {
 
       {/* Success Notification Banner */}
       {successBanner && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between gap-3 text-emerald-950 shadow-xs animate-rise-in">
+        <div
+          role={successBanner.tone === "error" ? "alert" : "status"}
+          className={`border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-xs animate-rise-in ${
+            successBanner.tone === "error"
+              ? "bg-rose-50 border-rose-200 text-rose-950"
+              : "bg-emerald-50 border-emerald-200 text-emerald-950"
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0">
-              <Check className="w-4 h-4 text-white" />
+            <div
+              className={`w-8 h-8 rounded-xl text-white flex items-center justify-center font-bold shrink-0 ${
+                successBanner.tone === "error" ? "bg-rose-600" : "bg-emerald-600"
+              }`}
+            >
+              {successBanner.tone === "error" ? <Mail className="w-4 h-4 text-white" /> : <Check className="w-4 h-4 text-white" />}
             </div>
             <div>
               <p className="text-xs font-bold">{successBanner.message}</p>
-              <p className="text-[11px] text-emerald-700">Account provisioned in Firebase with official email dispatched.</p>
+              {successBanner.tone !== "error" && (
+                <p className="text-[11px] text-emerald-700">
+                  Delivery status for {successBanner.email} is shown under Mail Invitations History.
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -372,16 +412,18 @@ export default function TeachersDirectoryPage() {
                           </td>
                           <td className="py-3 px-3 text-right whitespace-nowrap">
                             <div className="inline-flex items-center justify-end gap-1.5">
-                              <button
-                                type="button"
-                                disabled={sendingEmailForId === t.id}
-                                onClick={() => handleDirectSendEmail(t.email, t.id)}
-                                className="h-7 px-2.5 bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                                title="Send official email directly using Firebase"
-                              >
-                                <Send className="w-3 h-3" />
-                                <span>{sendingEmailForId === t.id ? "Sending..." : "Send Email"}</span>
-                              </button>
+                              {t.role === "TEACHER" && t.email && (
+                                <button
+                                  type="button"
+                                  disabled={sendingEmailForId === t.id}
+                                  onClick={() => handleResendInvitation(invitationFor(t), t.id)}
+                                  className="h-7 px-2.5 bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                  title={`Send the faculty invitation to ${t.email}`}
+                                >
+                                  <Send className="w-3 h-3" />
+                                  <span>{sendingEmailForId === t.id ? "Sending..." : "Resend Invitation"}</span>
+                                </button>
+                              )}
 
                               <button
                                 type="button"
@@ -439,7 +481,7 @@ export default function TeachersDirectoryPage() {
                       <th className="py-3 px-3.5">Recipient</th>
                       <th className="py-3 px-3">Subject &amp; Classes</th>
                       <th className="py-3 px-3">Password Issued</th>
-                      <th className="py-3 px-3">Firebase Reset Sent</th>
+                      <th className="py-3 px-3">Email Status</th>
                       <th className="py-3 px-3">Sent At</th>
                       <th className="py-3 px-3 text-right">Actions</th>
                     </tr>
@@ -463,9 +505,17 @@ export default function TeachersDirectoryPage() {
                           </span>
                         </td>
                         <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            Active Link Sent
-                          </span>
+                          {(() => {
+                            const d = DELIVERY_LABEL[inv.delivery || "queued"] || DELIVERY_LABEL.queued;
+                            return (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${d.className}`}
+                                title={inv.deliveryError || undefined}
+                              >
+                                {inv.mailId ? d.label : "Not sent"}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="py-3 px-3 text-slate-500 font-mono text-[11px]">
                           {new Date(inv.createdAt).toLocaleString([], {
@@ -477,12 +527,12 @@ export default function TeachersDirectoryPage() {
                           <button
                             type="button"
                             disabled={sendingEmailForId === inv.invitationId}
-                            onClick={() => handleDirectSendEmail(inv.teacherEmail, inv.invitationId)}
+                            onClick={() => handleResendInvitation(inv, inv.invitationId)}
                             className="h-7 px-3 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-lg text-[11px] font-bold cursor-pointer inline-flex items-center gap-1.5 transition-all disabled:opacity-50"
-                            title="Resend email to faculty using Firebase"
+                            title={`Send the faculty invitation to ${inv.teacherEmail} again`}
                           >
                             <Send className="w-3 h-3" />
-                            <span>{sendingEmailForId === inv.invitationId ? "Sending..." : "Resend Email via Firebase"}</span>
+                            <span>{sendingEmailForId === inv.invitationId ? "Sending..." : "Resend Invitation"}</span>
                           </button>
                         </td>
                       </tr>
@@ -598,7 +648,7 @@ export default function TeachersDirectoryPage() {
                   />
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  The faculty member can change or reset this password anytime from the dashboard or forgot password link.
+                  Included in the invitation email. The teacher can change it later with &ldquo;Forgot Password&rdquo; on the sign-in page.
                 </p>
               </div>
 
@@ -616,7 +666,7 @@ export default function TeachersDirectoryPage() {
                   className="h-11 px-6 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{isSubmittingInvite ? "Sending Email via Firebase..." : "Send Invitation Email via Firebase"}</span>
+                  <span>{isSubmittingInvite ? "Sending Invitation..." : "Send Invitation Email"}</span>
                 </button>
               </div>
             </form>
