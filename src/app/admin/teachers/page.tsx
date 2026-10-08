@@ -74,14 +74,12 @@ export default function TeachersDirectoryPage() {
   const [invitePassword, setInvitePassword] = useState(generateSecurePassword());
   const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
 
-  // Dispatch / Preview Center Modal State
-  const [dispatchResult, setDispatchResult] = useState<{
-    html: string;
-    text: string;
-    mailtoUrl: string;
-    invitation: StoredInvitation;
+  // Success Banner State
+  const [successBanner, setSuccessBanner] = useState<{
+    message: string;
+    email: string;
   } | null>(null);
-  const [copiedType, setCopiedType] = useState<"html" | "text" | "pass" | null>(null);
+  const [sendingEmailForId, setSendingEmailForId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -146,7 +144,12 @@ export default function TeachersDirectoryPage() {
       });
 
       setShowInviteModal(false);
-      setDispatchResult(res);
+      setSuccessBanner({
+        message: res.emailSentViaFirebase
+          ? `Official invitation email successfully sent to ${inviteEmail.trim()} via Firebase!`
+          : res.message,
+        email: inviteEmail.trim(),
+      });
       await loadData();
     } catch (err) {
       console.error("Failed to send teacher invitation:", err);
@@ -155,13 +158,21 @@ export default function TeachersDirectoryPage() {
     }
   };
 
-  const copyToClipboard = async (content: string, type: "html" | "text" | "pass") => {
+  const handleDirectSendEmail = async (email: string, id: string) => {
+    setSendingEmailForId(id);
     try {
-      await navigator.clipboard.writeText(content);
-      setCopiedType(type);
-      setTimeout(() => setCopiedType(null), 2500);
-    } catch (e) {
-      console.error("Failed to copy:", e);
+      const res = await TeacherInvitationService.dispatchFirebaseEmail(email);
+      setSuccessBanner({
+        message: res.ok
+          ? `Official email successfully sent to ${email} via Firebase!`
+          : `Firebase email dispatch: ${res.message}`,
+        email,
+      });
+      await loadData();
+    } catch (err) {
+      console.error("Direct send error:", err);
+    } finally {
+      setSendingEmailForId(null);
     }
   };
 
@@ -202,6 +213,28 @@ export default function TeachersDirectoryPage() {
           </button>
         </div>
       </div>
+
+      {/* Success Notification Banner */}
+      {successBanner && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between gap-3 text-emerald-950 shadow-xs animate-rise-in">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0">
+              <Check className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-xs font-bold">{successBanner.message}</p>
+              <p className="text-[11px] text-emerald-700">Account provisioned in Firebase with official email dispatched.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessBanner(null)}
+            className="text-xs font-bold text-emerald-800 hover:text-emerald-950 px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 transition-colors cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* 2. Mode Tabs */}
       <div className="bg-white border border-[#E1E7EF] rounded-2xl p-2 shadow-xs flex items-center gap-2">
@@ -341,12 +374,13 @@ export default function TeachersDirectoryPage() {
                             <div className="inline-flex items-center justify-end gap-1.5">
                               <button
                                 type="button"
-                                onClick={() => handleOpenInviteModal(t)}
-                                className="h-7 px-2.5 bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer"
-                                title="Send official email invitation with credentials"
+                                disabled={sendingEmailForId === t.id}
+                                onClick={() => handleDirectSendEmail(t.email, t.id)}
+                                className="h-7 px-2.5 bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                title="Send official email directly using Firebase"
                               >
-                                <Mail className="w-3 h-3" />
-                                <span>Send Mail</span>
+                                <Send className="w-3 h-3" />
+                                <span>{sendingEmailForId === t.id ? "Sending..." : "Send Email"}</span>
                               </button>
 
                               <button
@@ -442,19 +476,13 @@ export default function TeachersDirectoryPage() {
                         <td className="py-3 px-3 text-right">
                           <button
                             type="button"
-                            onClick={() =>
-                              setDispatchResult({
-                                html: generateTeacherInvitationHtml(inv),
-                                text: generateTeacherInvitationPlainText(inv),
-                                mailtoUrl: `mailto:${encodeURIComponent(inv.teacherEmail)}?subject=${encodeURIComponent(
-                                  "Official Invitation: Olympiad Digital Examination Faculty Access"
-                                )}&body=${encodeURIComponent(generateTeacherInvitationPlainText(inv))}`,
-                                invitation: inv,
-                              })
-                            }
-                            className="h-7 px-2.5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-lg text-[11px] font-bold cursor-pointer"
+                            disabled={sendingEmailForId === inv.invitationId}
+                            onClick={() => handleDirectSendEmail(inv.teacherEmail, inv.invitationId)}
+                            className="h-7 px-3 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-lg text-[11px] font-bold cursor-pointer inline-flex items-center gap-1.5 transition-all disabled:opacity-50"
+                            title="Resend email to faculty using Firebase"
                           >
-                            View Email
+                            <Send className="w-3 h-3" />
+                            <span>{sendingEmailForId === inv.invitationId ? "Sending..." : "Resend Email via Firebase"}</span>
                           </button>
                         </td>
                       </tr>
@@ -585,98 +613,13 @@ export default function TeachersDirectoryPage() {
                 <button
                   type="submit"
                   disabled={isSubmittingInvite}
-                  className="h-10 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60"
+                  className="h-11 px-6 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{isSubmittingInvite ? "Generating..." : "Generate & Dispatch Invitation"}</span>
+                  <span>{isSubmittingInvite ? "Sending Email via Firebase..." : "Send Invitation Email via Firebase"}</span>
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* 6. DISPATCH & LIVE EMAIL PREVIEW MODAL */}
-      {dispatchResult && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 animate-rise-in max-h-[92vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Faculty Invitation Ready to Send</h3>
-                  <p className="text-xs text-slate-500">
-                    Recipient: <strong className="text-slate-800">{dispatchResult.invitation.teacherName}</strong> ({dispatchResult.invitation.teacherEmail})
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDispatchResult(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Quick Action Toolbar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
-              <a
-                href={dispatchResult.mailtoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="h-10 px-3 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>Open in Mail App</span>
-              </a>
-
-              <button
-                type="button"
-                onClick={() => copyToClipboard(dispatchResult.html, "html")}
-                className="h-10 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                {copiedType === "html" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedType === "html" ? "HTML Copied!" : "Copy Themed HTML"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => copyToClipboard(dispatchResult.text, "text")}
-                className="h-10 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                {copiedType === "text" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Key className="w-3.5 h-3.5" />}
-                <span>{copiedType === "text" ? "Text Copied!" : "Copy Text Summary"}</span>
-              </button>
-            </div>
-
-            {/* Live Visual Preview of Email */}
-            <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:p-4">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
-                Visual Email Preview (Styled with Olympiad Navy &amp; Cobalt Theme)
-              </span>
-              <iframe
-                title="Email Preview"
-                srcDoc={dispatchResult.html}
-                className="w-full h-[360px] rounded-xl border border-slate-200 bg-white shadow-2xs"
-              />
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0">
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Account registered &bull; Firebase reset token active</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setDispatchResult(null)}
-                className="h-8 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}
