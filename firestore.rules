@@ -107,6 +107,17 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------------
+    // Faculty invitations and outbound mail queue
+    // ------------------------------------------------------------------
+    match /faculty_invitations/{invitationId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /mail/{mailId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // ------------------------------------------------------------------
     // Exams and subjects
     // ------------------------------------------------------------------
     // Readable by any signed-in member of the platform — a candidate needs the

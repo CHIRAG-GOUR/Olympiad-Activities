@@ -588,3 +588,6 @@ export class FirebaseAuthService implements AuthService {
     });
   }
 }
+
+export const firebaseAuthService = new FirebaseAuthService();
+

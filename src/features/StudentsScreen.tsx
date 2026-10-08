@@ -176,6 +176,14 @@ export default function StudentsScreen() {
                               </button>
                             )}
                             <Link
+                              href={`${roleBase}/exams`}
+                              className="h-7 px-2.5 bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 shrink-0"
+                              title="Align and assign examination papers to this candidate"
+                            >
+                              <BookOpen className="w-3 h-3" />
+                              <span>Align Paper</span>
+                            </Link>
+                            <Link
                               href={`${roleBase}/results`}
                               className="h-7 px-2.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-[11px] font-bold transition-all inline-flex items-center shrink-0"
                             >

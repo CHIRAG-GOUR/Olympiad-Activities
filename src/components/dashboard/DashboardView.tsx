@@ -240,11 +240,10 @@ export default function DashboardView() {
       .sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime())[0];
 
     const studentGrade = Number(user?.grade) || 6;
+    const studentId = user?.id || (user as any)?.studentId || "";
     const nextExam =
-      exams.find((e) => (e.id === "exam_imo_2022_g6_setb" || e.id === "exam_imo_class6_setb_2022") && !ExamLockService.isExamLocked(e.id)) ||
-      exams.find((e) => (e.subjectId === "sub_math" || e.code?.startsWith("IMO")) && !ExamLockService.isExamLocked(e.id) && ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)) ||
-      exams.find((e) => !ExamLockService.isExamLocked(e.id) && ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)) ||
-      exams.find((e) => e.id === "exam_imo_2022_g6_setb") ||
+      exams.find((e) => ExamLockService.isExamAccessibleToStudent(e.id, studentId, studentGrade)) ||
+      exams.find((e) => (e.id === "exam_imo_2022_g6_setb" || e.id === "exam_imo_class6_setb_2022")) ||
       exams[0];
     // `attempts` is already narrowed to this candidate by the data-access layer.
     const myAttempts = attempts;

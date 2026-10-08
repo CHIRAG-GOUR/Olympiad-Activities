@@ -194,6 +194,17 @@ export default function ResultsScreen() {
                 />
               </div>
 
+              {/* Subject Dropdown Filter */}
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value as any)}
+                className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+              >
+                <option value="all">All Subjects (Math &amp; English)</option>
+                <option value="math">Mathematics (IMO)</option>
+                <option value="english">English (IEO)</option>
+              </select>
+
               {/* Class Filter (Classes 1 - 12) */}
               <select
                 value={selectedClass}

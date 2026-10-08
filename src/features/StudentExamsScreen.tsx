@@ -117,38 +117,29 @@ export default function StudentExamsScreen() {
 
   const studentGrade = Number(user?.grade) || 6;
 
-  // Primary active math examination paper for candidates
+  const studentId = user?.id || (user as any)?.studentId || "";
+  const [selectedExamId, setSelectedExamId] = useState<string>("");
+
+  // All papers accessible to this specific candidate
+  const accessibleExams = useMemo(() => {
+    return exams.filter((e) =>
+      ExamLockService.isExamAccessibleToStudent(e.id, studentId, studentGrade)
+    );
+  }, [exams, studentId, studentGrade, lockVersion]);
+
+  // Primary active paper for candidate
   const exam = useMemo(() => {
-    // 1. First priority: Primary Math Exam (IMO 2022-23 Class 6 Set B)
+    if (selectedExamId) {
+      const found = accessibleExams.find((e) => e.id === selectedExamId);
+      if (found) return found;
+    }
+    if (accessibleExams.length > 0) {
+      const primary = accessibleExams.find((e) => e.id === PRIMARY_EXAM_ID || e.id === "exam_imo_class6_setb_2022");
+      return primary || accessibleExams[0];
+    }
     const primary = exams.find((e) => e.id === PRIMARY_EXAM_ID || e.id === "exam_imo_class6_setb_2022");
-    if (primary && !ExamLockService.isExamLocked(primary.id)) return primary;
-
-    // 2. Any unlocked math exam assigned to this student's class (6, 7, 8)
-    const mathUnlocked = exams.find(
-      (e) =>
-        (e.subjectId === "sub_math" || e.code?.startsWith("IMO")) &&
-        !ExamLockService.isExamLocked(e.id) &&
-        ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)
-    );
-    if (mathUnlocked) return mathUnlocked;
-
-    // 3. Any unlocked exam assigned to this student's class
-    const classUnlocked = exams.find(
-      (e) =>
-        !ExamLockService.isExamLocked(e.id) &&
-        ExamLockService.isExamVisibleToClass(e.id, studentGrade, Number(e.grade) || 6)
-    );
-    if (classUnlocked) return classUnlocked;
-
-    // 4. Primary fallback
-    return (
-      primary ||
-      exams.find((e) => e.subjectId === "sub_math" || e.code?.startsWith("IMO")) ||
-      exams.find((e) => e.code?.includes("2022-23") && e.code?.includes("SETB")) ||
-      exams[0] ||
-      null
-    );
-  }, [exams, studentGrade, lockVersion]);
+    return primary || exams[0] || null;
+  }, [selectedExamId, accessibleExams, exams]);
 
   // Questions in this specific paper
   const examQuestions = useMemo(() => {
@@ -361,6 +352,60 @@ export default function StudentExamsScreen() {
           </div>
         </div>
       </div>
+
+      {/* 2.5 Multiple Assigned Papers Selector (When teacher aligns papers) */}
+      {accessibleExams.length > 1 && (
+        <section className="space-y-3">
+          <SectionHeading
+            icon={FileText}
+            title="Your Assigned Question Papers"
+            description="Select any of the examination papers aligned to your student profile by your teacher."
+          />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {accessibleExams.map((ex) => {
+              const isSelected = ex.id === exam?.id;
+              const isEnglish = (ex.title || "").toLowerCase().includes("eng") || (ex.code || "").startsWith("IEO");
+
+              return (
+                <div
+                  key={ex.id}
+                  onClick={() => setSelectedExamId(ex.id)}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                    isSelected
+                      ? "bg-white border-[#2468B2] shadow-md ring-2 ring-[#2468B2]/20"
+                      : "bg-white/80 hover:bg-white border-slate-200 shadow-2xs hover:border-slate-300"
+                  }`}
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-[11px] text-[#2468B2] bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                        {ex.code}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isSelected ? "bg-[#2468B2] text-white" : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {isSelected ? "Active Paper" : "Select"}
+                      </span>
+                    </div>
+
+                    <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{ex.title}</h4>
+                    <p className="text-xs text-slate-500 line-clamp-1">
+                      {isEnglish ? "English Olympiad" : "Mathematics Olympiad"} &bull; Class {ex.grade || 6}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                    <span>{ex.durationMinutes} mins</span>
+                    <span className="font-bold text-[#2468B2]">50 Questions</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* 3. Syllabus Structure Breakdown */}
       <section>

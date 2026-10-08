@@ -134,6 +134,23 @@ export function LoginExperience() {
     if (isReady && isAuthenticated) router.replace(destinationFor(sessionRole));
   }, [isReady, isAuthenticated, sessionRole, router]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const action = params.get("action");
+        const queryEmail = params.get("email");
+        if (queryEmail) {
+          setEmail(queryEmail);
+          setResetEmail(queryEmail);
+        }
+        if (action === "forgot") {
+          setMode("FORGOT_PASSWORD");
+        }
+      } catch {}
+    }
+  }, []);
+
   // Handle Sign In Submit
   const handleSignInSubmit = useCallback(
     async (e: React.FormEvent) => {

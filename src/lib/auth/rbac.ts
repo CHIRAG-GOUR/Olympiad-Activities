@@ -159,6 +159,7 @@ export interface UserProfile {
   avatarUrl?: string;
   createdAt: string;
   updatedAt?: string;
+  metadata?: Record<string, any>;
 }
 
 /* ── Privileged testing accounts ───────────────────────────── */

@@ -17,62 +17,155 @@ import {
   ShieldCheck,
   Mail,
   Award,
+  Send,
+  Key,
+  Copy,
+  Check,
+  ExternalLink,
+  RefreshCw,
+  Sparkles,
+  History,
+  Lock,
 } from "lucide-react";
+import {
+  TeacherInvitationService,
+  StoredInvitation,
+} from "@/services/email/TeacherInvitationService";
+import {
+  generateTeacherInvitationHtml,
+  generateTeacherInvitationPlainText,
+} from "@/lib/email/invitationTemplate";
+
+function generateSecurePassword(): string {
+  const chars = "abcdefghijkmnpqrstuvwxyz";
+  const uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const numbers = "23456789";
+  const symbols = "!@#$%&*";
+  
+  const rand = (set: string) => set[Math.floor(Math.random() * set.length)];
+  let pwd = "";
+  pwd += rand(uppers);
+  pwd += rand(chars);
+  pwd += rand(numbers);
+  pwd += rand(symbols);
+  for (let i = 0; i < 4; i++) {
+    const all = chars + uppers + numbers;
+    pwd += rand(all);
+  }
+  return `Oly@${pwd}`;
+}
 
 export default function TeachersDirectoryPage() {
   const router = useRouter();
-  const { switchRole } = useAuth();
+  const { user, switchRole } = useAuth();
   const [teachers, setTeachers] = useState<UserProfile[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [invitations, setInvitations] = useState<StoredInvitation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newTeacherName, setNewTeacherName] = useState("");
-  const [newTeacherEmail, setNewTeacherEmail] = useState("");
-  const [newTeacherSubject, setNewTeacherSubject] = useState("Mathematics");
+  const [activeTab, setActiveTab] = useState<"directory" | "invitations">("directory");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [uList, exList] = await Promise.all([
-          userRepository.listUsers(),
-          examRepository.listExams(),
-        ]);
-        setTeachers(uList.filter((u) => u.role === "TEACHER" || u.role === "SUPER_ADMIN"));
-        setExams(exList);
-      } catch (err) {
-        console.error("Failed to load teachers:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  // Invitation Modal State
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteSubject, setInviteSubject] = useState("Mathematics");
+  const [inviteClasses, setInviteClasses] = useState<number[]>([6, 7, 8]);
+  const [invitePassword, setInvitePassword] = useState(generateSecurePassword());
+  const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
 
-  const handleAddTeacher = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTeacherName.trim()) return;
+  // Dispatch / Preview Center Modal State
+  const [dispatchResult, setDispatchResult] = useState<{
+    html: string;
+    text: string;
+    mailtoUrl: string;
+    invitation: StoredInvitation;
+  } | null>(null);
+  const [copiedType, setCopiedType] = useState<"html" | "text" | "pass" | null>(null);
 
-    const teacherObj: UserProfile = {
-      id: `tea_${Date.now()}`,
-      name: newTeacherName.trim(),
-      email: newTeacherEmail.trim() || `${newTeacherName.toLowerCase().replace(/\s+/g, ".")}@olympiad.org`,
-      role: "TEACHER",
-      createdAt: new Date().toISOString(),
-    };
-
+  const loadData = async () => {
     try {
-      await userRepository.saveUser(teacherObj);
-      setTeachers((prev) => [...prev, teacherObj]);
-      setShowAddModal(false);
-      setNewTeacherName("");
-      setNewTeacherEmail("");
+      const [uList, exList, invList] = await Promise.all([
+        userRepository.listUsers(),
+        examRepository.listExams(),
+        TeacherInvitationService.listInvitations(),
+      ]);
+      setTeachers(uList.filter((u) => u.role === "TEACHER" || u.role === "SUPER_ADMIN"));
+      setExams(exList);
+      setInvitations(invList);
     } catch (err) {
-      console.error("Failed to add teacher:", err);
+      console.error("Failed to load teachers and invitations:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filtered = teachers.filter(
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleOpenInviteModal = (presetTeacher?: UserProfile) => {
+    if (presetTeacher) {
+      setInviteName(presetTeacher.name);
+      setInviteEmail(presetTeacher.email || "");
+      setInviteSubject((presetTeacher.metadata?.subject as string) || "Mathematics");
+      setInviteClasses((presetTeacher.metadata?.assignedClasses as number[]) || [6, 7, 8]);
+    } else {
+      setInviteName("");
+      setInviteEmail("");
+      setInviteSubject("Mathematics");
+      setInviteClasses([6, 7, 8]);
+    }
+    setInvitePassword(generateSecurePassword());
+    setShowInviteModal(true);
+  };
+
+  const toggleClass = (c: number) => {
+    setInviteClasses((prev) =>
+      prev.includes(c) ? (prev.length > 1 ? prev.filter((x) => x !== c) : prev) : [...prev, c].sort()
+    );
+  };
+
+  const handleSendInvitation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteName.trim() || !inviteEmail.trim()) return;
+
+    setIsSubmittingInvite(true);
+    const teacherId = `tea_${inviteEmail.trim().split("@")[0].replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+    try {
+      const res = await TeacherInvitationService.inviteTeacher({
+        teacherName: inviteName.trim(),
+        teacherEmail: inviteEmail.trim().toLowerCase(),
+        teacherId,
+        temporaryPassword: invitePassword,
+        subjectName: inviteSubject,
+        assignedClasses: inviteClasses,
+        invitedBy: user?.name || "Super Administrator",
+        portalUrl: typeof window !== "undefined" ? `${window.location.origin}/login` : "https://the-olympiad-dashboard.web.app/login",
+      });
+
+      setShowInviteModal(false);
+      setDispatchResult(res);
+      await loadData();
+    } catch (err) {
+      console.error("Failed to send teacher invitation:", err);
+    } finally {
+      setIsSubmittingInvite(false);
+    }
+  };
+
+  const copyToClipboard = async (content: string, type: "html" | "text" | "pass") => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedType(type);
+      setTimeout(() => setCopiedType(null), 2500);
+    } catch (e) {
+      console.error("Failed to copy:", e);
+    }
+  };
+
+  const filteredTeachers = teachers.filter(
     (t) =>
       t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,223 +174,512 @@ export default function TeachersDirectoryPage() {
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
-      {/* 1. Header (Requirement 8, 46) */}
+      {/* 1. Header Banner */}
       <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl px-6 sm:px-7 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#2468B2]">
-            <span>Faculty & Evaluator Roster</span>
+            <Mail className="w-3.5 h-3.5" />
+            <span>Faculty Management &amp; Mail Dispatch</span>
             <span className="text-[#667085]">•</span>
-            <span>People</span>
+            <span>Super Administrator Control</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#182338] mt-1">
-            Teachers & Evaluators
+            Faculty Roster &amp; Mail Access
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] mt-1 font-medium max-w-2xl">
-            Certified Olympiad faculty examiners, test paper authors, and evaluation coordinators.
+            Invite teachers via themed official email directives, dispatch auto-generated credentials, and manage examiner permissions.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             type="button"
-            onClick={() => setShowAddModal(true)}
-            className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
+            onClick={() => handleOpenInviteModal()}
+            className="h-10 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Faculty</span>
+            <Send className="w-3.5 h-3.5" />
+            <span>Invite Faculty via Email</span>
           </button>
         </div>
       </div>
 
-      <div className="space-y-6">
-        
-        {/* 2. Search Toolbar */}
-        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative flex-1 w-full min-w-[260px]">
-            <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search faculty by name, ID, or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
-            />
+      {/* 2. Mode Tabs */}
+      <div className="bg-white border border-[#E1E7EF] rounded-2xl p-2 shadow-xs flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("directory")}
+          className={`h-9 px-4 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer border ${
+            activeTab === "directory"
+              ? "bg-[#2468B2] text-white border-[#2468B2] shadow-xs"
+              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>Faculty Directory ({teachers.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("invitations")}
+          className={`h-9 px-4 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer border ${
+            activeTab === "invitations"
+              ? "bg-[#0F172A] text-white border-[#0F172A] shadow-xs"
+              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+          }`}
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>Mail Invitations History ({invitations.length})</span>
+        </button>
+      </div>
+
+      {/* 3. DIRECTORY TAB */}
+      {activeTab === "directory" && (
+        <div className="space-y-6">
+          {/* Search Toolbar */}
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl p-4 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative flex-1 w-full min-w-[260px]">
+              <Search className="w-4 h-4 text-[#667085] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search faculty by name, ID, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
+              />
+            </div>
+
+            <span className="text-xs font-bold text-[#667085] px-2">
+              Showing <strong className="text-[#2468B2]">{filteredTeachers.length}</strong> faculty members
+            </span>
           </div>
 
-          <span className="text-xs font-bold text-[#667085] px-2">
-            Showing <strong className="text-[#2468B2]">{filtered.length}</strong> faculty members
-          </span>
-        </div>
+          {/* Teachers Table */}
+          <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl shadow-subtle overflow-hidden">
+            {filteredTeachers.length === 0 ? (
+              <div className="py-16 px-6 text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#EAF2FC] text-[#2468B2] flex items-center justify-center mx-auto border border-[#E1E7EF]">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-[#182338]">No Faculty Members Found</h3>
+                  <p className="text-xs text-[#667085] max-w-md mx-auto">
+                    Invite faculty members to authorize examiners to compile test papers and align them to students.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenInviteModal()}
+                    className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-subtle inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Invite First Teacher</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto w-full">
+                <table className="w-full min-w-[980px] text-left text-xs font-semibold">
+                  <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-3.5 w-[200px]">Faculty Member</th>
+                      <th className="py-3 px-3 w-[140px]">Teacher ID</th>
+                      <th className="py-3 px-3 w-[120px]">Subject</th>
+                      <th className="py-3 px-3 min-w-[170px]">Official Email</th>
+                      <th className="py-3 px-2 w-[100px] text-center">Classes</th>
+                      <th className="py-3 px-2 w-[85px] text-center">Role</th>
+                      <th className="py-3 px-3 w-[260px] text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
+                    {filteredTeachers.map((t) => {
+                      const subject = (t.metadata?.subject as string) || "Mathematics";
+                      const classes = (t.metadata?.assignedClasses as number[]) || [6, 7, 8];
 
-        {/* 3. Teachers Table */}
-        <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl shadow-subtle overflow-hidden">
-          {filtered.length === 0 ? (
-            <div className="py-16 px-6 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#EAF2FC] text-[#2468B2] flex items-center justify-center mx-auto border border-[#E1E7EF]">
-                <Users className="w-6 h-6" />
+                      return (
+                        <tr key={t.id} className="hover:bg-white/70 transition-colors">
+                          <td className="py-3 px-3.5">
+                            <div className="font-bold text-xs text-[#182338] truncate max-w-[190px]" title={t.name}>
+                              {t.name}
+                            </div>
+                            <div className="text-[10px] text-[#667085]">Cambridge Court Faculty</div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="font-mono font-bold text-xs text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] inline-block">
+                              {t.id}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 inline-block">
+                              {subject}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-[#667085] text-xs font-mono truncate max-w-[170px]" title={t.email}>
+                            {t.email || "faculty@olympiad.org"}
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {classes.map((c) => (
+                                <span key={c} className="px-1.5 py-0.2 rounded font-bold text-[10px] bg-slate-100 text-slate-700">
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase ${
+                                t.role === "SUPER_ADMIN"
+                                  ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                  : "bg-[#EAF2FC] text-[#1C5190] border border-[#E1E7EF]"
+                              }`}
+                            >
+                              {t.role === "SUPER_ADMIN" ? "Admin" : "Teacher"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenInviteModal(t)}
+                                className="h-7 px-2.5 bg-blue-50 hover:bg-blue-100 text-[#2468B2] border border-blue-200 rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer"
+                                title="Send official email invitation with credentials"
+                              >
+                                <Mail className="w-3 h-3" />
+                                <span>Send Mail</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  switchRole("TEACHER");
+                                  router.push("/teacher/dashboard");
+                                }}
+                                className="h-7 px-2.5 bg-[#FFF4E5] hover:bg-[#FFE6C2] text-[#B54708] border border-[#FEDF89] rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer shrink-0"
+                                title="Login and view platform as Teacher"
+                              >
+                                <ShieldCheck className="w-3 h-3" />
+                                <span>Switch</span>
+                              </button>
+
+                              <Link
+                                href="/admin/exams"
+                                className="h-7 px-2.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-[11px] font-bold transition-all inline-flex items-center shrink-0"
+                              >
+                                Papers
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-[#182338]">No Faculty Members Found</h3>
-                <p className="text-xs text-[#667085] max-w-md mx-auto">
-                  Add teacher accounts to authorize examiners to compile test papers and review student results.
-                </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 4. INVITATIONS HISTORY TAB */}
+      {activeTab === "invitations" && (
+        <div className="space-y-4">
+          <div className="bg-white border border-[#E1E7EF] rounded-2xl shadow-subtle overflow-hidden">
+            {invitations.length === 0 ? (
+              <div className="py-16 px-6 text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-[#182338]">No Invitations Sent Yet</h3>
+                  <p className="text-xs text-[#667085] max-w-md mx-auto">
+                    Click &ldquo;Invite Faculty via Email&rdquo; above to dispatch your first official invitation directive.
+                  </p>
+                </div>
               </div>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(true)}
-                  className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-subtle inline-flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add First Teacher</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto w-full">
-              <table className="w-full min-w-[980px] text-left text-xs font-semibold">
-                <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-3.5 w-[180px]">Faculty Member</th>
-                    <th className="py-3 px-3 w-[130px]">Teacher ID</th>
-                    <th className="py-3 px-3 w-[120px]">Role</th>
-                    <th className="py-3 px-3 min-w-[160px]">Official Email</th>
-                    <th className="py-3 px-2 w-[110px] text-center">Assigned Exams</th>
-                    <th className="py-3 px-2 w-[85px] text-center">Status</th>
-                    <th className="py-3 px-3 w-[230px] text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E1E7EF] text-[#182338]">
-                  {filtered.map((t) => (
-                    <tr key={t.id} className="hover:bg-white/70 transition-colors">
-                      <td className="py-3 px-3.5">
-                        <div className="font-bold text-xs text-[#182338] truncate max-w-[170px]" title={t.name}>{t.name}</div>
-                        <div className="text-[10px] text-[#667085]">Olympiad Examination Council</div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="font-mono font-bold text-xs text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] inline-block">
-                          {t.id}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="font-bold text-xs text-[#182338]">
-                          {t.role === "SUPER_ADMIN" ? "Super Admin" : "Faculty Examiner"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-[#667085] text-xs truncate max-w-[160px]" title={t.email || "faculty@olympiad.org"}>
-                        {t.email || "faculty@olympiad.org"}
-                      </td>
-                      <td className="py-3 px-2 text-center font-mono font-bold text-xs text-[#1C5190]">
-                        {exams.length}
-                      </td>
-                      <td className="py-3 px-2 text-center">
-                        <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase bg-[#EAF2FC] text-[#1C5190] border border-[#E1E7EF] whitespace-nowrap">
-                          Active
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center justify-end gap-1.5">
+            ) : (
+              <div className="overflow-x-auto w-full">
+                <table className="w-full min-w-[900px] text-left text-xs font-semibold">
+                  <thead className="bg-[#F4F7FB] text-[#667085] border-b border-[#E1E7EF] uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-3.5">Recipient</th>
+                      <th className="py-3 px-3">Subject &amp; Classes</th>
+                      <th className="py-3 px-3">Password Issued</th>
+                      <th className="py-3 px-3">Firebase Reset Sent</th>
+                      <th className="py-3 px-3">Sent At</th>
+                      <th className="py-3 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E1E7EF]">
+                    {invitations.map((inv) => (
+                      <tr key={inv.invitationId} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3 px-3.5">
+                          <div className="font-bold text-slate-900">{inv.teacherName}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{inv.teacherEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="font-bold text-slate-800">{inv.subjectName}</span>
+                          <span className="text-[10px] text-slate-500 block">
+                            Classes: {(inv.assignedClasses || []).join(", ")}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="font-mono text-xs font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                            {inv.temporaryPassword}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            Active Link Sent
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-slate-500 font-mono text-[11px]">
+                          {new Date(inv.createdAt).toLocaleString([], {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </td>
+                        <td className="py-3 px-3 text-right">
                           <button
                             type="button"
-                            onClick={() => {
-                              switchRole("TEACHER");
-                              router.push("/teacher/dashboard");
-                            }}
-                            className="h-7 px-2.5 bg-[#FFF4E5] hover:bg-[#FFE6C2] text-[#B54708] border border-[#FEDF89] rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1 cursor-pointer shrink-0"
-                            title="Login and view platform as Teacher"
+                            onClick={() =>
+                              setDispatchResult({
+                                html: generateTeacherInvitationHtml(inv),
+                                text: generateTeacherInvitationPlainText(inv),
+                                mailtoUrl: `mailto:${encodeURIComponent(inv.teacherEmail)}?subject=${encodeURIComponent(
+                                  "Official Invitation: Olympiad Digital Examination Faculty Access"
+                                )}&body=${encodeURIComponent(generateTeacherInvitationPlainText(inv))}`,
+                                invitation: inv,
+                              })
+                            }
+                            className="h-7 px-2.5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-lg text-[11px] font-bold cursor-pointer"
                           >
-                            <ShieldCheck className="w-3 h-3" />
-                            <span>Login as Teacher</span>
+                            View Email
                           </button>
-                          <Link
-                            href="/admin/exams"
-                            className="h-7 px-2.5 bg-[#EAF2FC] hover:bg-[#E1E7EF] text-[#1C5190] rounded-lg text-[11px] font-bold transition-all inline-flex items-center shrink-0"
-                          >
-                            Papers
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
+      )}
 
-        {/* Add Teacher Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-[#E1E7EF] pb-3">
-                <h3 className="text-base font-bold text-[#182338]">Add Faculty Examiner</h3>
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="text-slate-400 hover:text-slate-600 font-bold"
-                >
-                  ✕
-                </button>
+      {/* 5. INVITE FACULTY MODAL */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 animate-rise-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div>
+                <span className="text-[10px] font-bold text-[#2468B2] uppercase tracking-wider">Super Administrator</span>
+                <h3 className="text-lg font-black text-slate-900">Invite Faculty Member via Email</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInviteModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSendInvitation} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 mb-1 block">Faculty Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  placeholder="e.g. Dr. Ramesh Gupta"
+                  className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
+                />
               </div>
 
-              <form onSubmit={handleAddTeacher} className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold text-[#182338] mb-1 block">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newTeacherName}
-                    onChange={(e) => setNewTeacherName(e.target.value)}
-                    placeholder="e.g. Dr. Ramesh Gupta"
-                    className="w-full h-9 px-3 text-xs bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2]"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 mb-1 block">Official Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="e.g. ramesh.gupta@cambridgecourt.com"
+                  className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
+                />
+              </div>
 
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-[#182338] mb-1 block">Official Email</label>
-                  <input
-                    type="email"
-                    value={newTeacherEmail}
-                    onChange={(e) => setNewTeacherEmail(e.target.value)}
-                    placeholder="e.g. ramesh.gupta@olympiad.org"
-                    className="w-full h-9 px-3 text-xs bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-[#182338] mb-1 block">Primary Subject</label>
+                  <label className="text-xs font-bold text-slate-700 mb-1 block">Primary Subject</label>
                   <select
-                    value={newTeacherSubject}
-                    onChange={(e) => setNewTeacherSubject(e.target.value)}
-                    className="w-full h-9 px-3 text-xs font-bold bg-[#F4F7FB] border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2]"
+                    value={inviteSubject}
+                    onChange={(e) => setInviteSubject(e.target.value)}
+                    className="w-full h-10 px-3 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#2468B2]"
                   >
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="Science">Science</option>
+                    <option value="Mathematics">Mathematics (IMO)</option>
+                    <option value="English">English (IEO)</option>
+                    <option value="Science">Science (NSO)</option>
                     <option value="Logical Reasoning">Logical Reasoning</option>
                   </select>
                 </div>
 
-                <div className="pt-3 border-t border-[#E1E7EF] flex items-center justify-end gap-2">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 mb-1 block">Assigned Classes</label>
+                  <div className="flex items-center gap-1.5 h-10">
+                    {[6, 7, 8].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => toggleClass(c)}
+                        className={`flex-1 h-9 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          inviteClasses.includes(c)
+                            ? "bg-[#2468B2] text-white border-[#2468B2]"
+                            : "bg-slate-100 text-slate-600 border-slate-200"
+                        }`}
+                      >
+                        Cl-{c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Generator Field */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-700">Auto-Generated Temporary Password</label>
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="h-9 px-4 bg-white border border-[#E1E7EF] text-[#667085] rounded-xl text-xs font-bold cursor-pointer"
+                    onClick={() => setInvitePassword(generateSecurePassword())}
+                    className="text-[11px] font-bold text-[#2468B2] hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="h-9 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold cursor-pointer"
-                  >
-                    Create Faculty Account
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Regenerate</span>
                   </button>
                 </div>
-              </form>
+                <div className="relative">
+                  <Key className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    value={invitePassword}
+                    onChange={(e) => setInvitePassword(e.target.value)}
+                    className="w-full h-10 pl-9 pr-3 text-xs font-mono font-bold bg-slate-100 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#2468B2]"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  The faculty member can change or reset this password anytime from the dashboard or forgot password link.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  className="h-10 px-4 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingInvite}
+                  className="h-10 px-5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isSubmittingInvite ? "Generating..." : "Generate & Dispatch Invitation"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. DISPATCH & LIVE EMAIL PREVIEW MODAL */}
+      {dispatchResult && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 animate-rise-in max-h-[92vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Faculty Invitation Ready to Send</h3>
+                  <p className="text-xs text-slate-500">
+                    Recipient: <strong className="text-slate-800">{dispatchResult.invitation.teacherName}</strong> ({dispatchResult.invitation.teacherEmail})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDispatchResult(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Quick Action Toolbar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 shrink-0">
+              <a
+                href={dispatchResult.mailtoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="h-10 px-3 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Open in Mail App</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => copyToClipboard(dispatchResult.html, "html")}
+                className="h-10 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                {copiedType === "html" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedType === "html" ? "HTML Copied!" : "Copy Themed HTML"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => copyToClipboard(dispatchResult.text, "text")}
+                className="h-10 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                {copiedType === "text" ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Key className="w-3.5 h-3.5" />}
+                <span>{copiedType === "text" ? "Text Copied!" : "Copy Text Summary"}</span>
+              </button>
+            </div>
+
+            {/* Live Visual Preview of Email */}
+            <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:p-4">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
+                Visual Email Preview (Styled with Olympiad Navy &amp; Cobalt Theme)
+              </span>
+              <iframe
+                title="Email Preview"
+                srcDoc={dispatchResult.html}
+                className="w-full h-[360px] rounded-xl border border-slate-200 bg-white shadow-2xs"
+              />
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0">
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Account registered &bull; Firebase reset token active</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setDispatchResult(null)}
+                className="h-8 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { logError, logWarn } from "@/lib/logger";
 
 const STORAGE_LOCKS_KEY = "olympiad_exam_locks_v3";
 const STORAGE_CLASSES_KEY = "olympiad_exam_classes_v3";
+const STORAGE_STUDENTS_KEY = "olympiad_exam_students_v3";
 
 /**
  * Default unlocked exams:
@@ -23,6 +24,7 @@ export interface ExamAccessConfig {
   examId: string;
   isLocked: boolean;
   visibleClasses: number[];
+  assignedStudentIds?: string[];
   updatedAt?: string;
 }
 
@@ -30,6 +32,7 @@ class ExamLockServiceClass {
   private listeners: Set<() => void> = new Set();
   private lockState: Record<string, boolean> = {};
   private classState: Record<string, number[]> = {};
+  private studentState: Record<string, string[]> = {};
   private initialized = false;
   private snapshotUnsub: Unsubscribe | null = null;
   private readyResolve: (() => void) | null = null;
@@ -59,6 +62,9 @@ class ExamLockServiceClass {
 
       const rawClasses = localStorage.getItem(STORAGE_CLASSES_KEY);
       if (rawClasses) this.classState = JSON.parse(rawClasses);
+
+      const rawStudents = localStorage.getItem(STORAGE_STUDENTS_KEY);
+      if (rawStudents) this.studentState = JSON.parse(rawStudents);
     } catch {}
 
     if (!isRealFirebaseConfigured || !db || !auth) {
@@ -87,6 +93,9 @@ class ExamLockServiceClass {
             }
             if (Array.isArray(data?.visibleClasses)) {
               this.classState[d.id] = data.visibleClasses.map(Number).filter(Boolean);
+            }
+            if (Array.isArray(data?.assignedStudentIds)) {
+              this.studentState[d.id] = data.assignedStudentIds.map(String).filter(Boolean);
             }
           });
           this.saveLocal();
@@ -119,6 +128,7 @@ class ExamLockServiceClass {
     try {
       localStorage.setItem(STORAGE_LOCKS_KEY, JSON.stringify(this.lockState));
       localStorage.setItem(STORAGE_CLASSES_KEY, JSON.stringify(this.classState));
+      localStorage.setItem(STORAGE_STUDENTS_KEY, JSON.stringify(this.studentState));
     } catch {}
   }
 
@@ -271,6 +281,86 @@ class ExamLockServiceClass {
     return next;
   }
 
+  /**
+   * Get students explicitly aligned/assigned to this examination.
+   */
+  getAssignedStudents(examId: string): string[] {
+    if (!examId) return [];
+    return this.studentState[examId] || [];
+  }
+
+  /**
+   * Set specific students assigned to an exam.
+   * If students are assigned, those students can access the exam directly.
+   */
+  async setAssignedStudents(examId: string, studentIds: string[]): Promise<void> {
+    const sanitized = Array.from(new Set(studentIds.map((s) => s.trim()).filter(Boolean)));
+    const previous = this.studentState[examId];
+    this.studentState[examId] = sanitized;
+    this.saveLocal();
+    this.notify();
+
+    if (isRealFirebaseConfigured && db) {
+      try {
+        await setDoc(
+          doc(db, "exam_locks", examId),
+          {
+            examId,
+            isLocked: this.isExamLocked(examId),
+            visibleClasses: this.getVisibleClasses(examId),
+            assignedStudentIds: sanitized,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        if (previous) this.studentState[examId] = previous;
+        else delete this.studentState[examId];
+        this.saveLocal();
+        this.notify();
+        logError("FIRESTORE_WRITE_FAILED", { operation: "exam_locks.writeStudents", examId }, err);
+        throw err;
+      }
+    }
+  }
+
+  /**
+   * Check if an examination is accessible to a given student.
+   * Priority:
+   * 1. Explicit student alignment: if studentId is assigned to the paper, they have access.
+   * 2. Default unlocked dice exam: accessible to demo students.
+   * 3. General unlocked exam: accessible if candidate's grade is in visible classes.
+   */
+  isExamAccessibleToStudent(
+    examId: string,
+    studentId?: string,
+    studentGrade?: number | string
+  ): boolean {
+    if (!examId) return false;
+
+    // 1. Direct candidate alignment
+    const assigned = this.getAssignedStudents(examId);
+    if (studentId && assigned.length > 0) {
+      if (assigned.includes(studentId)) {
+        return true;
+      }
+    }
+
+    // 2. Default unlocked paper (Dice Mathematics Olympiad)
+    if (DEFAULT_UNLOCKED_EXAMS.has(examId)) {
+      return true;
+    }
+
+    // 3. Locked papers are hidden unless explicitly aligned to student
+    if (this.isExamLocked(examId)) {
+      return false;
+    }
+
+    // 4. Class visibility check
+    const grade = Number(studentGrade) || 6;
+    return this.isExamVisibleToClass(examId, grade);
+  }
+
   subscribe(callback: () => void): () => void {
     this.listeners.add(callback);
     return () => {
@@ -284,6 +374,10 @@ class ExamLockServiceClass {
 
   getAllClasses(): Record<string, number[]> {
     return { ...this.classState };
+  }
+
+  getAllStudentAssignments(): Record<string, string[]> {
+    return { ...this.studentState };
   }
 }
 
