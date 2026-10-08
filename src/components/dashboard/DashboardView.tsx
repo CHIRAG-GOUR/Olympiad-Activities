@@ -105,8 +105,31 @@ export default function DashboardView() {
     }
 
     load();
+
+    const interval = setInterval(async () => {
+      if (cancelled) return;
+      try {
+        const [attList, liveSessions] = await Promise.all([
+          attemptRepository.listAttempts(),
+          (async () => {
+            try {
+              const { idbClient } = await import("@/services/persistence/indexeddb");
+              return await idbClient.getAll<LiveSession>("sessions");
+            } catch {
+              return [] as LiveSession[];
+            }
+          })(),
+        ]);
+        if (!cancelled) {
+          setAllAttempts(attList);
+          setSessions(liveSessions);
+        }
+      } catch {}
+    }, 10000);
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
@@ -229,20 +252,29 @@ export default function DashboardView() {
       ? Math.round(myAttempts.reduce((s, a) => s + a.percentage, 0) / myAttempts.length)
       : null;
 
+    const studentExamQuestions =
+      nextExam && nextExam.questionIds && nextExam.questionIds.length > 0
+        ? nextExam.questionIds
+            .map((qId) => questions.find((q) => q.id === qId || q.questionId === qId))
+            .filter((q): q is Question => Boolean(q))
+        : questions.slice(0, nextExam?.totalQuestions || 50);
+
+    const studentTotalQ = nextExam?.questionIds?.length || nextExam?.totalQuestions || studentExamQuestions.length || 50;
+
     const studentMetrics: MetricCard[] = [
       {
         label: "Activities waiting",
-        value: totalActivities,
+        value: studentTotalQ,
         hint: "Every question is hands-on",
         tone: "#2468B2",
         toneSoft: "#EAF2FC",
         icon: MousePointerClick,
-        progress: questions.length ? (totalActivities / questions.length) * 100 : 0,
+        progress: 100,
       },
       {
         label: "Questions",
-        value: questions.length,
-        hint: `${sectionInsights.length} syllabus sections`,
+        value: studentTotalQ,
+        hint: `4 official syllabus sections`,
         tone: "#8067D9",
         toneSoft: "#F0EDFC",
         icon: Layers,
@@ -251,16 +283,16 @@ export default function DashboardView() {
       {
         label: "Papers completed",
         value: myAttempts.length,
-        hint: myAttempts.length ? "Marked and available" : "None submitted yet",
+        hint: myAttempts.length ? `${myAttempts.length} attempt${myAttempts.length > 1 ? "s" : ""} recorded` : "None submitted yet",
         tone: "#55B987",
         toneSoft: "#EAF7F1",
         icon: Trophy,
-        dots: { filled: myAttempts.length, total: Math.max(myAttempts.length, exams.length, 1) },
+        dots: { filled: myAttempts.length, total: Math.max(myAttempts.length, 1) },
       },
       {
         label: "Average accuracy",
         value: myAvg !== null ? `${myAvg}%` : "—",
-        hint: myAvg !== null ? "Across your papers" : "Awaiting your first result",
+        hint: myAvg !== null ? "Across your attempts" : "Awaiting your first result",
         tone: "#F29A38",
         toneSoft: "#FDF0E3",
         icon: BarChart3,
@@ -276,15 +308,23 @@ export default function DashboardView() {
           roleLine="My Olympiad"
           blurb="Official Olympiad examination portal. Access your assigned question paper, track your progress, and view verified score reports."
           facts={[
-            { value: totalActivities, label: "Activities waiting", tone: "#2468B2" },
-            { value: questions.length, label: "Questions in your paper", tone: "#8067D9" },
+            { value: studentTotalQ, label: "Activities waiting", tone: "#2468B2" },
+            { value: studentTotalQ, label: "Questions in your paper", tone: "#8067D9" },
             { value: myAttempts.length, label: "Papers completed", tone: "#55B987" },
           ]}
           primary={
             nextExam
               ? {
-                  label: resumable ? "Continue examination" : "Begin examination",
-                  href: examRoute(resumable?.examId ?? nextExam.id),
+                  label: resumable
+                    ? "Continue examination"
+                    : myAttempts.length > 0
+                    ? "Retake examination"
+                    : "Begin examination",
+                  href: resumable
+                    ? examRoute(resumable?.examId ?? nextExam.id)
+                    : myAttempts.length > 0
+                    ? `${examRoute(nextExam.id)}&retake=1`
+                    : examRoute(nextExam.id),
                 }
               : undefined
           }
@@ -295,15 +335,15 @@ export default function DashboardView() {
         {resumable ? (
           <ContinueExamCard
             session={resumable}
-            totalQuestions={questionCountByExam[resumable.examId] || questions.length}
+            totalQuestions={questionCountByExam[resumable.examId] || studentTotalQ}
           />
         ) : nextExam ? (
           <NextExamCard
             title={nextExam.title}
             grade={nextExam.grade}
-            questionCount={nextExam.questionIds.length || nextExam.totalQuestions || questions.length}
+            questionCount={studentTotalQ}
             durationMinutes={nextExam.durationMinutes}
-            href={examRoute(nextExam.id)}
+            href={myAttempts.length > 0 ? `${examRoute(nextExam.id)}&retake=1` : examRoute(nextExam.id)}
           />
         ) : (
           <Card>

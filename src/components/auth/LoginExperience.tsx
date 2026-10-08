@@ -49,7 +49,7 @@ const DEMO_STUDENTS = [
     email: "demostudent2@olympiad.org",
     label: "DemoStudent2",
     tag: "S2",
-    school: "Delhi Public School",
+    school: "Cambridge Court (CCIS)",
     theme: {
       tagBg: "bg-indigo-600",
       border: "border-indigo-200/80",
@@ -62,7 +62,7 @@ const DEMO_STUDENTS = [
     email: "demostudent3@olympiad.org",
     label: "DemoStudent3",
     tag: "S3",
-    school: "St. Xavier's School",
+    school: "Cambridge Court (CCIS)",
     theme: {
       tagBg: "bg-emerald-600",
       border: "border-emerald-200/80",

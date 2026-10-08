@@ -66,6 +66,12 @@ export function submitExam(input: SubmitInput): Promise<SubmitOutcome> {
     let attempt = await idbClient.get<ExamAttempt>("attempts", attemptId);
     let report = await idbClient.get<ExamReport>("reports", `rep_${attemptId}`);
     if (!attempt || !report) {
+      const prevAttempts = await idbClient.getAll<ExamAttempt>("attempts").catch(() => []);
+      const prevCount = prevAttempts.filter(
+        (a) => a.examId === input.exam.id && a.student?.studentId === input.student.studentId
+      ).length;
+      const attemptNumber = prevCount + 1;
+
       const result = evaluateAndGenerateFullResult({
         exam: input.exam,
         questions: input.questions,
@@ -77,6 +83,7 @@ export function submitExam(input: SubmitInput): Promise<SubmitOutcome> {
         submittedAt,
         submissionType: session.submissionType || input.submissionType,
         attemptId,
+        attemptNumber,
       });
       attempt = result.attempt;
       report = result.report;

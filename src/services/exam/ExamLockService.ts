@@ -17,7 +17,6 @@ const DEFAULT_UNLOCKED_EXAMS = new Set([
   "exam_imo_2022_g6_setb",
   "exam_imo_class6_setb_2022",
   "IMO-2022-23-G6-SETB",
-  "exam_imo_2024_g6_setb",
 ]);
 
 export interface ExamAccessConfig {

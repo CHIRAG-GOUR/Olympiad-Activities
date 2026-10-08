@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { AlertTriangle, FileQuestion, RotateCcw, ArrowLeft, WifiOff, type LucideIcon } from "lucide-react";
+import { AlertTriangle, FileQuestion, RotateCcw, ArrowLeft, WifiOff, Info, CheckCircle2, type LucideIcon } from "lucide-react";
 import { AmbientField } from "@/components/ui/AmbientField";
 
 /**
@@ -14,7 +14,7 @@ import { AmbientField } from "@/components/ui/AmbientField";
  * a console page.
  */
 
-export type StatusTone = "error" | "notfound" | "offline";
+export type StatusTone = "error" | "notfound" | "offline" | "info" | "success";
 
 export interface StatusAction {
   label: string;
@@ -28,6 +28,8 @@ const ICONS: Record<StatusTone, LucideIcon> = {
   error: AlertTriangle,
   notfound: FileQuestion,
   offline: WifiOff,
+  info: Info,
+  success: CheckCircle2,
 };
 
 function ActionButton({ action }: { action: StatusAction }) {
@@ -71,7 +73,13 @@ function Body({
     <div className="w-full max-w-[460px] text-center bg-white/80 backdrop-blur-sm border border-white/80 rounded-2xl shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_14px_40px_-16px_rgba(38,45,90,0.22)] p-6 sm:p-8">
       <span
         className={`w-12 h-12 mx-auto rounded-xl grid place-items-center ${
-          tone === "notfound" ? "bg-[#2468B2]/10 text-[#2468B2]" : "bg-[#F29A38]/15 text-[#B4701F]"
+          tone === "notfound"
+            ? "bg-[#2468B2]/10 text-[#2468B2]"
+            : tone === "info"
+            ? "bg-[#2468B2]/10 text-[#2468B2]"
+            : tone === "success"
+            ? "bg-[#1B8354]/10 text-[#1B8354]"
+            : "bg-[#F29A38]/15 text-[#B4701F]"
         }`}
       >
         <Icon className="w-6 h-6" strokeWidth={2.1} />

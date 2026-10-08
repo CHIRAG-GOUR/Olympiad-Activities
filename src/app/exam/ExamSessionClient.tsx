@@ -287,7 +287,18 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
         const existing = uid ? await ExamPersistenceService.findSession(examId, uid) : null;
         if (cancelled) return;
 
+        const isRetakeRequested =
+          typeof window !== "undefined" &&
+          (new URLSearchParams(window.location.search).get("retake") === "1" ||
+            new URLSearchParams(window.location.search).get("mode") === "retake");
+
         if (existing?.status === "submitted" || existing?.status === "completed") {
+          if (isRetakeRequested) {
+            // Student wants to sit the examination again with a fresh session
+            await ExamPersistenceService.clearSession(existing.sessionId);
+            setPhase({ kind: "intro" });
+            return;
+          }
           setPhase({ kind: "submitted", attemptId: existing.attemptId });
           return;
         }
@@ -705,23 +716,22 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   if (phase.kind === "submitted") {
     return (
       <StatusPanel
-        tone="notfound"
-        title="You have already submitted this paper"
-        message="Each examination can be submitted once. Your score paper is ready."
+        tone="info"
+        title="Examination Paper Completed"
+        message="Your score report has been generated and saved. You can review your detailed diagnostics or take this examination again as many times as you like to practice."
         actions={[
+          ...(phase.attemptId ? [{ label: "View Score Report", href: resultRoute(phase.attemptId), primary: true }] : []),
+          {
+            label: "Take Examination Again (Retake)",
+            primary: !phase.attemptId,
+            onClick: async () => {
+              if (exam && uid) {
+                await ExamPersistenceService.clearSession(ExamPersistenceService.generateSessionId(exam.id, uid));
+              }
+              setPhase({ kind: "intro" });
+            },
+          },
           backToExams,
-          ...(isStaff
-            ? [
-                {
-                  label: "Start a new preview",
-                  onClick: async () => {
-                    await ExamPersistenceService.clearSession(ExamPersistenceService.generateSessionId(exam.id, uid));
-                    setPhase({ kind: "intro" });
-                  },
-                },
-              ]
-            : []),
-          ...(phase.attemptId ? [{ label: "View my result", href: resultRoute(phase.attemptId), primary: true }] : []),
         ]}
       />
     );

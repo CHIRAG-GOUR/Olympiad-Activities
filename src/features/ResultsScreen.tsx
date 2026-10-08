@@ -22,7 +22,9 @@ import {
   ArrowRight,
   Printer,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
+import { invalidate } from "@/repositories/cache";
 
 export default function ResultsScreen() {
   // Links resolve into the route group the active role actually owns.
@@ -32,6 +34,7 @@ export default function ResultsScreen() {
   const [reports, setReports] = useState<ExamReport[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,25 +43,40 @@ export default function ResultsScreen() {
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [attList, repList, exList] = await Promise.all([
-          attemptRepository.listAttempts(),
-          reportRepository.listReports(),
-          examRepository.listExams(),
-        ]);
-        setAttempts(attList);
-        setReports(repList);
-        setExams(exList);
-      } catch (err) {
-        console.error("Failed to load results ledger:", err);
-      } finally {
-        setLoading(false);
-      }
+  const loadData = async (forceInvalidate = false) => {
+    if (forceInvalidate) {
+      invalidate("attempts:", "reports:");
     }
-    load();
+    try {
+      const [attList, repList, exList] = await Promise.all([
+        attemptRepository.listAttempts(),
+        reportRepository.listReports(),
+        examRepository.listExams(),
+      ]);
+      setAttempts(attList);
+      setReports(repList);
+      setExams(exList);
+    } catch (err) {
+      console.error("Failed to load results ledger:", err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData(false);
+    // Real-time synchronization every 8 seconds so teachers & admins see newly submitted student attempts immediately
+    const interval = setInterval(() => {
+      loadData(true);
+    }, 8000);
+    return () => clearInterval(interval);
   }, []);
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    loadData(true);
+  };
 
   // Filtered List with Strict Classwise and Subjectwise sorting
   const filteredAttempts = attempts.filter((att) => {
@@ -101,7 +119,17 @@ export default function ResultsScreen() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="h-9 px-3.5 bg-white/80 hover:bg-white text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-60"
+            title="Refresh attempts and reports ledger from Firebase"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-[#2468B2] ${isRefreshing ? "animate-spin" : ""}`} />
+            <span>{isRefreshing ? "Syncing…" : "Refresh"}</span>
+          </button>
           <Link
             href={`${roleBase}/live-monitor`}
             className="h-9 px-4 bg-white/70 backdrop-blur-sm border border-white/90 hover:bg-white/95 text-[#1C5190] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all"

@@ -19,8 +19,8 @@ const entries = new Map<string, Entry>();
 export const CACHE_TTL = {
   /** Papers and the question bank change rarely and are large. */
   content: 5 * 60_000,
-  /** Results and people change as candidates submit. */
-  records: 30_000,
+  /** Results and people change as candidates submit in real time. */
+  records: 5_000,
 } as const;
 
 export function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {

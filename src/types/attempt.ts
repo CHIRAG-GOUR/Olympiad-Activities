@@ -55,4 +55,5 @@ export interface ExamAttempt {
   startedAt: string;
   submittedAt: string;
   submissionType: "normal" | "auto_timeout" | "force_submit";
+  ownerUid?: string;
 }

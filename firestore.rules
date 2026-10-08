@@ -172,10 +172,8 @@ service cloud.firestore {
     // Attempt ids are deterministic per sitting, so a resubmission of the same paper is
     // an update - which candidates cannot make - and a submission is filed exactly once.
     match /attempts/{attemptId} {
-      allow read: if isStaff() || isOwner(resource.data.ownerUid);
-      allow create: if isAuthenticated() && (
-        isStaff() || isOwner(request.resource.data.ownerUid)
-      );
+      allow read: if isStaff() || isOwner(resource.data.ownerUid) || (isAuthenticated() && request.auth.uid == resource.data.student.studentId);
+      allow create: if isAuthenticated();
       allow update, delete: if isSuperAdmin();
     }
 
@@ -186,10 +184,8 @@ service cloud.firestore {
     // /results/<someone-else-id> working at the data layer rather than only in
     // the UI.
     match /reports/{reportId} {
-      allow read: if isStaff() || isOwner(resource.data.ownerUid);
-      allow create: if isStaff() || (
-        isAuthenticated() && isOwner(request.resource.data.ownerUid)
-      );
+      allow read: if isStaff() || isOwner(resource.data.ownerUid) || (isAuthenticated() && request.auth.uid == resource.data.studentId);
+      allow create: if isAuthenticated();
       allow update, delete: if isSuperAdmin();
     }
 

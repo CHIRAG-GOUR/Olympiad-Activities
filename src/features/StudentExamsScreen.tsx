@@ -75,8 +75,31 @@ export default function StudentExamsScreen() {
       }
     }
     load();
+
+    const interval = setInterval(async () => {
+      if (cancelled) return;
+      try {
+        const [atts, live] = await Promise.all([
+          attemptRepository.listAttempts(),
+          (async () => {
+            try {
+              const { idbClient } = await import("@/services/persistence/indexeddb");
+              return await idbClient.getAll<LiveSession>("sessions");
+            } catch {
+              return [] as LiveSession[];
+            }
+          })(),
+        ]);
+        if (!cancelled) {
+          setAttempts(atts);
+          setSessions(live);
+        }
+      } catch {}
+    }, 8000);
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
@@ -303,7 +326,13 @@ export default function StudentExamsScreen() {
 
             <div className="space-y-2 pt-2">
               <Link
-                href={examRoute(exam.id)}
+                href={
+                  resumableSession
+                    ? examRoute(exam.id)
+                    : latestAttempt
+                    ? `${examRoute(exam.id)}&retake=1`
+                    : examRoute(exam.id)
+                }
                 className="w-full h-12 rounded-xl bg-[#2468B2] hover:bg-[#1C5190] active:bg-[#153E6F] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {resumableSession ? (

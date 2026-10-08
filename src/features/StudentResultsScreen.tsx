@@ -23,12 +23,19 @@ export default function StudentResultsScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    attemptRepository
-      .listAttempts()
-      .then((a) => !cancelled && setAttempts(a))
-      .finally(() => !cancelled && setLoading(false));
+    const fetchAttempts = () => {
+      attemptRepository
+        .listAttempts()
+        .then((a) => !cancelled && setAttempts(a))
+        .finally(() => !cancelled && setLoading(false));
+    };
+
+    fetchAttempts();
+    const interval = setInterval(fetchAttempts, 8000);
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 

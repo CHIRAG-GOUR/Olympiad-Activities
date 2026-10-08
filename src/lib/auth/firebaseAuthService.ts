@@ -66,14 +66,14 @@ const PRESET_ACCOUNTS: Record<
     name: "DemoStudent2",
     role: "STUDENT",
     grade: 6,
-    schoolName: "Delhi Public School",
+    schoolName: "Cambridge Court International School (CCIS)",
     defaultPass: "student123",
   },
   "demostudent3@olympiad.org": {
     name: "DemoStudent3",
     role: "STUDENT",
     grade: 6,
-    schoolName: "St. Xavier's Senior Secondary School",
+    schoolName: "Cambridge Court International School (CCIS)",
     defaultPass: "student123",
   },
   "tech@skillizee.io": {

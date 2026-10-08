@@ -82,4 +82,5 @@ export interface ExamReport {
   lastKnownIp?: string;
   generatedAt: string;
   version: number;
+  ownerUid?: string;
 }
