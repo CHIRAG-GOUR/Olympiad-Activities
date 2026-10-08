@@ -55,6 +55,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
         display: ["var(--font-manrope)", "Manrope", "system-ui", "sans-serif"],
+        hand: ["var(--font-hand)", "Caveat", "Segoe Print", "cursive"],
       },
       borderRadius: {
         sm: "4px",

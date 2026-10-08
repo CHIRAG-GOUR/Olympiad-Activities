@@ -1,5 +1,5 @@
 import { QuestionAnswerPayload, QuestionType } from "./question";
-import { StudentMetadata, DeviceInfo } from "./session";
+import { StudentMetadata, DeviceInfo, IntegrityLog } from "./session";
 
 export interface QuestionEvaluationResult {
   questionId: string;
@@ -56,4 +56,8 @@ export interface ExamAttempt {
   submittedAt: string;
   submissionType: "normal" | "auto_timeout" | "force_submit";
   ownerUid?: string;
+  /** Which sitting of this paper this was (1 = first). */
+  attemptNumber?: number;
+  /** Tab switches and full-screen exits during the sitting. */
+  integrity?: IntegrityLog;
 }

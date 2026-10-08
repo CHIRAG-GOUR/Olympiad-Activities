@@ -6,6 +6,9 @@ import { attemptRepository, reportRepository } from "@/repositories";
 import { ExamAttempt } from "@/types/attempt";
 import { ExamReport } from "@/types/report";
 import { RedPenScoreCircle } from "@/components/examination/RedPenScoreCircle";
+import { CheckedAnswerSheet, teacherRemark } from "@/components/examination/CheckedAnswerSheet";
+import type { QuestionReportItem } from "@/types/report";
+import type { SectionScore } from "@/types/attempt";
 import { useAuth } from "@/context/AuthContext";
 import { canReadAttempt, canReadReport } from "@/lib/auth/dataAccess";
 import { homeFor } from "@/lib/auth/roleRoutes";
@@ -147,7 +150,51 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
   const timeSpentMins = Math.round((report?.timeSpentSeconds ?? attempt?.totalTimeSpentSeconds ?? 0) / 60);
 
   const topicResults = report?.topicResults || [];
-  const questionResults = report?.questionResults || [];
+  // The report carries the full item list; an attempt alone (report not yet synced) is
+  // turned into the same shape so the checked sheet always renders.
+  const questionResults: QuestionReportItem[] =
+    report?.questionResults && report.questionResults.length > 0
+      ? report.questionResults
+      : (attempt?.questionEvaluations || []).map((e) => ({
+          questionNumber: e.questionNumber,
+          questionId: e.questionId,
+          questionText: "",
+          questionType: e.questionType,
+          section: e.sectionTitle || "General",
+          subject: attempt?.subjectName || "",
+          chapter: "",
+          topic: "",
+          difficulty: "MEDIUM",
+          maxMarks: e.maxMarks,
+          marksAwarded: e.marksAwarded,
+          status: e.isCorrect ? "CORRECT" : e.isPartial ? "PARTIAL" : e.studentAnswer === undefined || e.studentAnswer === null || e.studentAnswer === "" ? "UNANSWERED" : "INCORRECT",
+          studentAnswerFormatted: e.studentAnswer === undefined || e.studentAnswer === null ? "" : String(e.studentAnswer),
+          correctAnswerFormatted: e.correctAnswerSummary,
+          explanation: e.explanation,
+          timeSpentSeconds: e.timeSpentSeconds,
+        }));
+  const sortedQuestions = [...questionResults].sort((a, b) => a.questionNumber - b.questionNumber);
+  const sectionScores: SectionScore[] =
+    attempt?.sectionScores && attempt.sectionScores.length > 0
+      ? attempt.sectionScores
+      : Object.values(
+          sortedQuestions.reduce<Record<string, SectionScore>>((acc, q) => {
+            const key = q.section || "General";
+            const cur = acc[key] || { sectionTitle: key, marksAwarded: 0, maxMarks: 0, accuracyPercent: 0, questionsTotal: 0, questionsCorrect: 0 };
+            cur.marksAwarded += Math.max(0, q.marksAwarded);
+            cur.maxMarks += q.maxMarks;
+            cur.questionsTotal += 1;
+            if (q.status === "CORRECT") cur.questionsCorrect += 1;
+            acc[key] = cur;
+            return acc;
+          }, {})
+        );
+  const attemptNumber = report?.attemptNumber || attempt?.attemptNumber || 1;
+  const submittedAt = report?.submittedAt || attempt?.submittedAt;
+  const checkedOn = submittedAt
+    ? new Date(submittedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    : "";
+  const focus = attempt?.integrity;
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] flex flex-col justify-between py-6 px-3 sm:px-6 lg:px-8 font-sans print:bg-white print:p-0 select-none text-[#182338]">
@@ -206,7 +253,9 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#667085] block">Attempt No.</span>
-                <strong className="text-xs font-mono font-bold text-[#667085] block">01 (Final)</strong>
+                <strong className="text-xs font-mono font-bold text-[#667085] block">
+                  {String(attemptNumber).padStart(2, "0")}
+                </strong>
               </div>
             </div>
           </div>
@@ -220,6 +269,9 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
               maxScore={totalMarks}
               scale={1.25}
             />
+            <p className="font-hand text-[26px] text-[#B42318] mt-6 text-center leading-tight">
+              {teacherRemark(summary.percentage)}
+            </p>
 
             <div className="flex items-center justify-center gap-6 mt-4 text-xs font-bold text-[#182338]">
               <div className="flex items-center gap-1.5">
@@ -262,6 +314,20 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
               <strong className="text-lg font-mono font-black text-[#182338] block">{timeSpentMins} min</strong>
             </div>
           </div>
+
+          {isStaff && focus && (
+            <p
+              className={`max-w-2xl mx-auto mt-4 text-center text-xs font-bold rounded-xl border px-3 py-2 ${
+                focus.tabSwitches + focus.fullscreenExits > 0
+                  ? "text-rose-800 bg-rose-50 border-rose-200"
+                  : "text-emerald-800 bg-emerald-50 border-emerald-200"
+              }`}
+            >
+              {focus.tabSwitches + focus.fullscreenExits > 0
+                ? `During this sitting the student left the exam window ${focus.tabSwitches} time${focus.tabSwitches === 1 ? "" : "s"} and full screen ${focus.fullscreenExits} time${focus.fullscreenExits === 1 ? "" : "s"}.`
+                : "The student stayed in the exam window for the whole sitting."}
+            </p>
+          )}
         </div>
 
         {topicResults.length > 0 && (
@@ -319,95 +385,18 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
           </div>
         )}
 
-        <div className="bg-white border border-[#E1E7EF] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex items-center justify-between border-b border-[#E1E7EF] pb-3">
-            <div className="flex items-center gap-2">
-              <Layers className="w-5 h-5 text-[#2468B2]" />
-              <h2 className="text-base font-extrabold text-[#182338]">Itemized Question Analysis</h2>
-            </div>
-            <span className="text-xs font-mono font-bold text-[#667085]">
-              {questionResults.length || attempt?.questionEvaluations.length || 0} Questions Evaluated
-            </span>
+        {sortedQuestions.length > 0 ? (
+          <CheckedAnswerSheet
+            questions={sortedQuestions}
+            sections={sectionScores}
+            percentage={summary.percentage}
+            checkedOn={checkedOn}
+          />
+        ) : (
+          <div className="bg-white border border-[#E1E7EF] rounded-3xl p-6 text-xs text-[#667085] text-center">
+            No detailed items recorded for this paper.
           </div>
-
-          <div className="space-y-4">
-            {questionResults.length > 0 ? (
-              questionResults.map((q) => {
-                const isCorrect = q.status === "CORRECT";
-                const isUnanswered = q.status === "UNANSWERED";
-
-                return (
-                  <div
-                    key={q.questionId}
-                    className={`p-4 rounded-2xl border transition-all ${
-                      isCorrect
-                        ? "bg-emerald-50/40 border-emerald-200"
-                        : isUnanswered
-                        ? "bg-[#F4F7FB] border-[#E1E7EF]"
-                        : "bg-rose-50/40 border-rose-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-[#182338] font-mono text-sm">
-                          Q{String(q.questionNumber).padStart(2, "0")}
-                        </span>
-                        <span className="text-[#667085]">•</span>
-                        <span className="font-bold text-[#182338]">{q.section}</span>
-                        <span className="text-[#667085]">•</span>
-                        <span className="text-[11px] font-medium text-[#667085]">{q.topic}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {isCorrect ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-800 font-extrabold bg-emerald-100 px-2 py-0.5 rounded-md text-[11px]">
-                            <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[3]" /> Correct (+{q.marksAwarded})
-                          </span>
-                        ) : isUnanswered ? (
-                          <span className="inline-flex items-center gap-1 text-[#667085] font-bold bg-[#EAF2FC] px-2 py-0.5 rounded-md text-[11px]">
-                            <MinusCircle className="w-3.5 h-3.5 text-[#667085]" /> Unanswered (0)
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-rose-800 font-extrabold bg-rose-100 px-2 py-0.5 rounded-md text-[11px]">
-                            <XCircle className="w-3.5 h-3.5 text-rose-600" /> Incorrect ({q.marksAwarded})
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-[#182338] font-semibold mb-3">{q.questionText}</p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-white p-3 rounded-xl border border-[#E1E7EF]">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-[#667085] block">Candidate Answer:</span>
-                        <span
-                          className={`font-bold font-mono ${
-                            isCorrect ? "text-emerald-700" : isUnanswered ? "text-[#667085]" : "text-rose-700"
-                          }`}
-                        >
-                          {q.studentAnswerFormatted}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-[#667085] block">Correct Answer:</span>
-                        <span className="font-bold font-mono text-[#2468B2]">{q.correctAnswerFormatted}</span>
-                      </div>
-                    </div>
-
-                    {q.explanation && (
-                      <div className="mt-2 text-[11px] text-[#667085] bg-[#F4F7FB] p-2.5 rounded-xl border border-[#E1E7EF]">
-                        <strong className="text-[#182338] font-bold">Explanation: </strong>
-                        {q.explanation}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-xs text-[#667085] text-center py-4">No detailed items recorded.</div>
-            )}
-          </div>
-        </div>
+        )}
 
         <div className="text-center text-xs text-[#667085] pb-8 print:hidden">
           Official Digital Examination Record • Evaluated by Central Olympiad Scoring Engine

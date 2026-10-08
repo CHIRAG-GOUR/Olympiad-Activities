@@ -68,13 +68,13 @@ export function RedPenScoreCircle({ scoreObtained, maxScore, scale = 1 }: RedPen
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}
       >
-        <div className="flex items-baseline tracking-tight font-black font-mono">
-          <span className="text-5xl sm:text-6xl text-[#B42318]">{scoreObtained}</span>
-          <span className="text-2xl sm:text-3xl text-[#B42318]/80 mx-1">/</span>
-          <span className="text-2xl sm:text-3xl text-[#B42318]/90">{maxScore}</span>
+        <div className="flex items-baseline font-hand font-bold leading-none">
+          <span className="text-7xl sm:text-8xl text-[#B42318]">{scoreObtained}</span>
+          <span className="text-4xl sm:text-5xl text-[#B42318]/80 mx-1">/</span>
+          <span className="text-4xl sm:text-5xl text-[#B42318]/90">{maxScore}</span>
         </div>
-        <span className="text-xs font-bold text-[#B42318] mt-0.5 tracking-wide">
-          Verified ✓
+        <span className="font-hand text-xl font-bold text-[#B42318] mt-1">
+          Checked ✓
         </span>
       </motion.div>
     </div>

@@ -85,15 +85,26 @@ service cloud.firestore {
       // Self-registration may only create an ordinary account. Without the role check a
       // new user could write role: 'SUPER_ADMIN' into their own document, and
       // isSuperAdmin() below trusts that field - a one-request privilege escalation.
+      //
+      // Teachers enrol students in bulk (class lists), so they may create and amend
+      // STUDENT profiles — and only those: a teacher can never create, promote or edit
+      // a teacher or administrator.
       allow create: if isSuperAdmin() || (
         isOwner(userId) &&
         request.resource.data.role in ['STUDENT', 'TEACHER']
+      ) || (
+        isTeacher() &&
+        request.resource.data.role == 'STUDENT'
       );
       allow delete: if isSuperAdmin();
       allow update: if isSuperAdmin() || (
         isOwner(userId) &&
         request.resource.data.role == resource.data.role &&
         request.resource.data.status == resource.data.status
+      ) || (
+        isTeacher() &&
+        resource.data.role == 'STUDENT' &&
+        request.resource.data.role == 'STUDENT'
       );
     }
 

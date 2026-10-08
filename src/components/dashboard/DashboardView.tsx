@@ -39,6 +39,7 @@ import {
   greetingFor,
   firstName,
   toneForIndex,
+  remainingSecondsFor,
   type LiveSession,
 } from "@/lib/dashboard/insights";
 import {
@@ -235,8 +236,10 @@ export default function DashboardView() {
   /* ── Student view ───────────────────────────────────────── */
 
   if (role === "STUDENT") {
+    // Only this student's own unfinished sittings: a shared computer holds other students'
+    // saved sessions too, and those must never be offered here.
     const resumable = sessions
-      .filter((s) => s.status === "in_progress")
+      .filter((s) => s.status === "in_progress" && s.studentId === user?.id && remainingSecondsFor(s) > 0)
       .sort((a, b) => new Date(b.lastSavedAt).getTime() - new Date(a.lastSavedAt).getTime())[0];
 
     const studentGrade = Number(user?.grade) || 6;

@@ -46,3 +46,7 @@ olympiad-two-exams/
 scratch/
 *.pdf
 
+
+# Playwright
+/test-results/
+/playwright-report/

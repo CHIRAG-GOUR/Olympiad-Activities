@@ -5,7 +5,7 @@ import { AdminHeader } from "@/components/admin/AdminHeader";
 import { OlympiadStore } from "@/services/firebase/firestore";
 import { examRepository } from "@/repositories";
 import { ExamSession } from "@/types/session";
-import { Activity, RefreshCw, Search, Users, Wifi, Clock, ShieldCheck } from "lucide-react";
+import { Activity, RefreshCw, Search, Users, Wifi, Clock, ShieldCheck, EyeOff } from "lucide-react";
 
 export default function LiveMonitorScreen() {
   const [sessions, setSessions] = useState<ExamSession[]>([]);
@@ -73,6 +73,7 @@ export default function LiveMonitorScreen() {
               connectionStatus: s.status === "submitted" ? "Completed" : "Connected",
               timeRemainingSeconds: remaining,
               isSubmitted: s.status === "submitted",
+              integrity: s.integrity,
             };
           });
         } catch {
@@ -119,6 +120,7 @@ export default function LiveMonitorScreen() {
     }, new Map<string, { id: string; title: string }>()).values()
   );
   const activeCount = sessions.filter((s) => s.connectionStatus === "Connected" && !s.isSubmitted).length;
+  const flaggedCount = sessions.filter((s) => (s.integrity?.tabSwitches || 0) + (s.integrity?.fullscreenExits || 0) > 0).length;
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
@@ -152,6 +154,14 @@ export default function LiveMonitorScreen() {
               </div>
               <div className="text-[12px] font-bold text-white/90 uppercase tracking-wider">
                 Students Active
+              </div>
+            </div>
+            <div className="bg-white/15 px-6 py-3 rounded-2xl border border-white/20 text-center backdrop-blur-sm">
+              <div className={`text-3xl font-bold font-mono ${flaggedCount > 0 ? "text-rose-200" : "text-white"}`}>
+                {flaggedCount}
+              </div>
+              <div className="text-[12px] font-bold text-white/90 uppercase tracking-wider">
+                Left the Exam Window
               </div>
             </div>
 
@@ -202,7 +212,7 @@ export default function LiveMonitorScreen() {
         {/* Live Surveillance Table */}
         <div className="bg-white/80 backdrop-blur-sm border border-white/80 shadow-[0_1px_0_0_rgba(255,255,255,0.7)_inset,0_2px_10px_-4px_rgba(38,45,90,0.10)] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto w-full">
-            <table className="w-full min-w-[1100px] text-left text-[13px] border-collapse">
+            <table className="w-full min-w-[1250px] text-left text-[13px] border-collapse">
               <thead>
                 <tr className="bg-white/60 border-b border-white/70 text-slate-600 font-bold text-[11px] uppercase tracking-wider">
                   <th className="py-3 px-3.5 w-[190px]">Student Candidate</th>
@@ -212,6 +222,7 @@ export default function LiveMonitorScreen() {
                   <th className="py-3 px-3.5 w-[120px]">Timeline</th>
                   <th className="py-3 px-3.5 w-[110px]">IP Address</th>
                   <th className="py-3 px-3.5 w-[120px]">Device Profile</th>
+                  <th className="py-3 px-3.5 w-[150px]">Focus</th>
                   <th className="py-3 px-3.5 w-[110px] text-center">Connection</th>
                   <th className="py-3 px-3.5 w-[110px] text-right">Status</th>
                 </tr>
@@ -219,7 +230,7 @@ export default function LiveMonitorScreen() {
               <tbody className="divide-y divide-[#E1E7EF]">
                 {filteredSessions.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-12 text-center text-slate-500 font-medium">
+                    <td colSpan={10} className="py-12 text-center text-slate-500 font-medium">
                       No candidate sessions currently match your filter.
                     </td>
                   </tr>
@@ -283,6 +294,36 @@ export default function LiveMonitorScreen() {
                       <td className="py-3 px-3.5 text-xs">
                         <div className="font-bold text-slate-900 truncate max-w-[120px]" title={session.device.browser}>{session.device.browser}</div>
                         <div className="text-[11px] text-slate-500 font-mono font-bold">{session.device.os}</div>
+                      </td>
+
+                      {/* Focus: tab switches and full-screen exits */}
+                      <td className="py-3 px-3.5 text-xs">
+                        {(() => {
+                          const tabs = session.integrity?.tabSwitches || 0;
+                          const exits = session.integrity?.fullscreenExits || 0;
+                          const last = session.integrity?.events?.[session.integrity.events.length - 1];
+                          if (tabs + exits === 0) {
+                            return <span className="text-emerald-700 font-bold">No issues</span>;
+                          }
+                          return (
+                            <div title={(session.integrity?.events || []).map((e) => `${new Date(e.at).toLocaleTimeString()} — ${e.type === "fullscreen_exit" ? "left full screen" : "left exam window"}${e.questionIndex !== undefined ? ` (on question ${e.questionIndex + 1})` : ""}`).join(" | ")}>
+                              <span className="inline-flex items-center gap-1 text-rose-800 bg-rose-50 border border-rose-200 rounded-lg px-2 py-0.5 font-bold text-[11px] whitespace-nowrap">
+                                <EyeOff className="w-3 h-3" />
+                                {tabs} tab switch{tabs === 1 ? "" : "es"}
+                              </span>
+                              {exits > 0 && (
+                                <span className="block mt-0.5 text-[11px] font-bold text-rose-700">
+                                  {exits} full-screen exit{exits === 1 ? "" : "s"}
+                                </span>
+                              )}
+                              {last && (
+                                <span className="block text-[10px] font-mono text-slate-500">
+                                  last {new Date(last.at).toLocaleTimeString()}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* Connection */}

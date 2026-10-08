@@ -155,7 +155,8 @@ export default function StudentExamsScreen() {
         s.examId === exam.id &&
         s.status === "in_progress" &&
         remainingSecondsFor(s) > 0 &&
-        (!user?.name || !s.studentName || s.studentName?.trim().toLowerCase() === user.name.trim().toLowerCase())
+        // Matched by account, never by name: two students can share a name or a computer.
+        s.studentId === studentId
     );
   }, [sessions, exam, user]);
 

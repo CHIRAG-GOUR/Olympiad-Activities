@@ -169,6 +169,7 @@ export class FirebaseAuthService implements AuthService {
     let name = user.displayName ?? "";
     let schoolName: string | undefined;
     let grade: number | string | undefined;
+    let section: string | undefined;
 
     try {
       const token = await user.getIdTokenResult();
@@ -194,6 +195,7 @@ export class FirebaseAuthService implements AuthService {
           if (data.name) name = data.name;
           schoolName = data.schoolName;
           grade = data.grade;
+          section = data.section;
         }
       } catch {
         // A denied or offline read must not block sign-in; the claim still governs.
@@ -206,6 +208,7 @@ export class FirebaseAuthService implements AuthService {
           name = name || cached.profile.name;
           schoolName = cached.profile.schoolName;
           grade = cached.profile.grade;
+          section = cached.profile.section;
         }
       }
     }
@@ -224,6 +227,7 @@ export class FirebaseAuthService implements AuthService {
       role,
       schoolName,
       grade,
+      ...(section ? { section } : {}),
       createdAt: user.metadata.creationTime ?? new Date().toISOString(),
     };
   }

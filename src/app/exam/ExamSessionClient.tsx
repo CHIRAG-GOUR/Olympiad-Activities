@@ -19,12 +19,29 @@ import { hasBespokeActivity } from "@/components/activities/ActivityRegistry";
 import { StatusPanel } from "@/components/feedback/StatusPanel";
 import { AppLoading } from "@/components/auth/AppLoading";
 import { useExamSyncStatus } from "@/hooks/useExamSyncStatus";
-import { ShieldAlert, ArrowRight, ArrowLeft, BookOpen, RotateCcw, History, Check, Lock } from "lucide-react";
+import { ShieldAlert, ArrowRight, ArrowLeft, BookOpen, RotateCcw, History, Check, Lock, Maximize, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ExamLockService } from "@/services/exam/ExamLockService";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
 import { resultRoute } from "@/lib/routes";
 import { logError, logWarn, userMessageFor } from "@/lib/logger";
+import { orderForSitting, restorePaperOrder } from "@/lib/exam/shuffle";
+import { resolveSitting } from "@/lib/exam/sitting";
+import type { IntegrityEvent, IntegrityLog } from "@/types/session";
+
+const EMPTY_INTEGRITY: IntegrityLog = { tabSwitches: 0, fullscreenExits: 0, events: [] };
+/** Events kept on the session; counts are exact, the event list is the most recent. */
+const MAX_INTEGRITY_EVENTS = 50;
+
+const fullscreenSupported = () =>
+  typeof document !== "undefined" && Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen);
+
+function enterFullscreen() {
+  if (!fullscreenSupported() || document.fullscreenElement) return;
+  document.documentElement.requestFullscreen().catch(() => {
+    // Refused (no user gesture, kiosk policy): the paper still works, just not full screen.
+  });
+}
 
 /**
  * The examination paper.
@@ -99,6 +116,11 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [lockVersion, setLockVersion] = useState(0);
+  /** The paper in its printed order; the candidate's view is derived from this per sitting. */
+  const paperQuestionsRef = useRef<Question[]>([]);
+  const [integrity, setIntegrity] = useState<IntegrityLog>(EMPTY_INTEGRITY);
+  const [focusWarning, setFocusWarning] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(true);
   /** Sittings this candidate has used on the paper, the limit, and the number of the next one. */
   const [sitting, setSitting] = useState<{ used: number; max: number | null; next: number }>({
     used: 0,
@@ -140,6 +162,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     candidateName: "",
     schoolName: "",
     version: 0,
+    integrity: EMPTY_INTEGRITY as IntegrityLog,
   });
   live.current = {
     ...live.current,
@@ -195,6 +218,8 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
       totalTimeSeconds: (s.exam.durationMinutes || 60) * 60,
       status: "in_progress",
       version: s.version,
+      integrity: s.integrity,
+      questionOrder: s.questions.map((qq) => qq.id),
     };
   }, [uid, rollNumber, user?.grade, deviceInfo]);
 
@@ -211,6 +236,8 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   /* ── Submission ──────────────────────────────────────────── */
 
   const submittingRef = useRef(false);
+  /** Set while the page itself leaves full screen (on submit), so that is not logged. */
+  const leavingFullscreenRef = useRef(false);
 
   const finalise = useCallback(
     async (session: ExamSessionState, paper: Exam, paperQuestions: Question[], reason: "normal" | "auto_timeout") => {
@@ -223,11 +250,17 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
         rollNumber: session.rollNumber || rollNumber,
         schoolName: session.schoolName || user?.schoolName || "",
         grade: session.grade ?? paper.grade,
+        ...(user?.section ? { section: user.section } : {}),
       };
+      if (typeof document !== "undefined" && document.fullscreenElement) {
+        leavingFullscreenRef.current = true;
+        document.exitFullscreen().catch(() => {});
+      }
       const outcome = await submitExam({
         session,
         exam: paper,
-        questions: paperQuestions,
+        // Scored in the paper's printed order, so Q12 is the same question for every student.
+        questions: restorePaperOrder(paperQuestions, paper.questionIds || []),
         answers: answerValues,
         timeSpentMap: session.timeSpentMap || {},
         student,
@@ -237,7 +270,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
       // replace, not push: Back from the score paper must not reopen a submitted paper.
       router.replace(resultRoute(outcome.attemptId));
     },
-    [router, uid, rollNumber, user?.name, user?.schoolName, deviceInfo]
+    [router, uid, rollNumber, user?.name, user?.schoolName, user?.section, deviceInfo]
   );
 
   const handleFinalSubmit = useCallback(
@@ -294,6 +327,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
           });
         }
         setExam(paper);
+        paperQuestionsRef.current = paperQuestions;
         setQuestions(paperQuestions);
         if (paperQuestions.length === 0) {
           setPhase({ kind: "empty" });
@@ -313,31 +347,19 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
         }
         if (cancelled) return;
 
-        let attemptNumber = filed.length + 1;
-        let lastAttemptId: string | undefined = filed[0]?.id;
-        let existing = uid ? await ExamPersistenceService.findSession(examId, uid, attemptNumber) : null;
-        // A sitting submitted on this device but not yet counted (offline upload, stale
-        // read) still uses up its number.
-        while (
-          existing &&
-          (existing.status === "submitted" || existing.status === "completed") &&
-          attemptNumber < filed.length + 12
-        ) {
-          lastAttemptId = existing.attemptId || lastAttemptId;
-          attemptNumber += 1;
-          existing = await ExamPersistenceService.findSession(examId, uid, attemptNumber);
-        }
+        const resolved = uid
+          ? await resolveSitting(
+              filed.map((a) => a.id),
+              (n) => ExamPersistenceService.findSession(examId, uid, n)
+            )
+          : { used: 0, attemptNumber: 1, current: null, lastAttemptId: undefined };
         if (cancelled) return;
 
-        const used = attemptNumber - 1;
+        const existing = resolved.current;
+        const used = resolved.used;
+        const lastAttemptId = resolved.lastAttemptId;
         const max = ExamLockService.getMaxAttempts(paper.id);
-        setSitting({ used, max, next: attemptNumber });
-
-        if (existing && (existing.status === "submitted" || existing.status === "completed")) {
-          // Never re-open a submitted sitting.
-          setPhase({ kind: "exhausted", attemptId: existing.attemptId });
-          return;
-        }
+        setSitting({ used, max, next: resolved.attemptNumber });
 
         const isRetakeRequested =
           typeof window !== "undefined" &&
@@ -411,7 +433,25 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
 
   /* ── Start / resume ──────────────────────────────────────── */
 
-  const enterRunning = useCallback((session: ExamSessionState, paperQuestions: Question[]) => {
+  /** The paper as this sitting shows it: shuffled per candidate, printed order for staff. */
+  const orderFor = useCallback(
+    (sittingId: string, paper: Exam | null, printed: Question[]) => {
+      if (isStaff) return printed;
+      const sectionIndex = new Map<string, number>();
+      (paper?.sections || []).forEach((sec, i) => (sec.questionIds || []).forEach((id) => sectionIndex.set(id, i)));
+      return orderForSitting(printed, sittingId, (q) =>
+        sectionIndex.has(q.id) ? `s${sectionIndex.get(q.id)}` : sectionIndex.has(q.questionId) ? `s${sectionIndex.get(q.questionId)}` : q.section ?? ""
+      );
+    },
+    [isStaff]
+  );
+
+  const enterRunning = useCallback((session: ExamSessionState, printed: Question[]) => {
+    const paperQuestions = orderFor(session.sessionId, live.current.exam, printed);
+    setQuestions(paperQuestions);
+    const restoredIntegrity = session.integrity || EMPTY_INTEGRITY;
+    live.current.integrity = restoredIntegrity;
+    setIntegrity(restoredIntegrity);
     const restoredAnswers: Record<string, unknown> = {};
     Object.entries(session.answers || {}).forEach(([qId, a]) => {
       if (isAnswered(a?.answer)) restoredAnswers[qId] = a.answer;
@@ -434,11 +474,12 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     setTimeRemainingSeconds(ExamPersistenceService.calculateTrueRemainingTime(session));
     live.current.version = session.version || 0;
     setPhase({ kind: "running" });
-  }, [user?.name]);
+  }, [user?.name, orderFor]);
 
   const handleResumeSession = () => {
     if (phase.kind !== "recover") return;
-    enterRunning(phase.session, questions);
+    if (!isStaff) enterFullscreen();
+    enterRunning(phase.session, paperQuestionsRef.current);
   };
 
   /** Staff only: discard a preview sitting and start again. Candidates cannot reset the clock. */
@@ -457,7 +498,11 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     }
     setStarting(true);
     setStartError(null);
+    // Full screen needs the click that started the paper, so it is requested first.
+    if (!isStaff) enterFullscreen();
     try {
+      const sittingId = ExamPersistenceService.generateSessionId(exam.id, uid, sitting.next);
+      const ordered = orderFor(sittingId, exam, paperQuestionsRef.current);
       const session = await ExamPersistenceService.createSession({
         examId: exam.id,
         examTitle: exam.title,
@@ -467,11 +512,11 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
         schoolName: schoolName.trim(),
         grade: user?.grade ?? exam.grade ?? 6,
         durationMinutes: exam.durationMinutes || 60,
-        firstQuestionId: questions[0]?.id || "",
+        firstQuestionId: ordered[0]?.id || "",
         device: deviceInfo,
         attemptNumber: sitting.next,
       });
-      enterRunning(session, questions);
+      enterRunning(session, paperQuestionsRef.current);
     } catch (err) {
       logError("EXAM_LOAD_FAILED", { examId: exam.id, operation: "createSession" }, err);
       setStartError("The examination could not be started on this device. Please try again.");
@@ -517,6 +562,61 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
       window.removeEventListener("online", onOnline);
     };
   }, [running, saveNow]);
+
+  // Focus record: leaving the tab or window, and leaving full screen, are logged on the
+  // sitting and sent to the live monitor at once. Staff previews are not monitored.
+  useEffect(() => {
+    if (!running || isStaff) return;
+    let lastHiddenAt = 0;
+    let blurTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const record = (type: IntegrityEvent["type"]) => {
+      const prev = live.current.integrity;
+      const event: IntegrityEvent = { type, at: new Date().toISOString(), questionIndex: live.current.currentIndex };
+      const next: IntegrityLog = {
+        tabSwitches: prev.tabSwitches + (type === "fullscreen_exit" ? 0 : 1),
+        fullscreenExits: prev.fullscreenExits + (type === "fullscreen_exit" ? 1 : 0),
+        events: [...prev.events, event].slice(-MAX_INTEGRITY_EVENTS),
+      };
+      live.current.integrity = next;
+      setIntegrity(next);
+      setFocusWarning(true);
+      saveNow({ remoteNow: true });
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        lastHiddenAt = Date.now();
+        record("tab_hidden");
+      }
+    };
+    // Switching to another window keeps the tab "visible" but takes focus; switching tabs
+    // fires both events, so a blur is only counted when no tab switch accompanies it.
+    const onBlur = () => {
+      if (blurTimer) clearTimeout(blurTimer);
+      blurTimer = setTimeout(() => {
+        if (document.visibilityState === "visible" && Date.now() - lastHiddenAt > 1500 && !document.hasFocus()) {
+          record("window_blur");
+        }
+      }, 400);
+    };
+    const onFullscreen = () => {
+      const inFull = Boolean(document.fullscreenElement);
+      setIsFullscreen(inFull);
+      if (!inFull && !leavingFullscreenRef.current) record("fullscreen_exit");
+    };
+
+    setIsFullscreen(!fullscreenSupported() || Boolean(document.fullscreenElement));
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("fullscreenchange", onFullscreen);
+    return () => {
+      if (blurTimer) clearTimeout(blurTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("fullscreenchange", onFullscreen);
+    };
+  }, [running, isStaff, saveNow]);
 
   /* ── Clock ───────────────────────────────────────────────── */
 
@@ -1068,8 +1168,49 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
 
   const submitting = submitState.kind === "submitting";
 
+  const totalFocusEvents = integrity.tabSwitches + integrity.fullscreenExits;
+
   return (
     <div className="h-dvh w-full bg-[#F4F7FB] flex flex-col overflow-hidden select-none font-sans">
+      {!isStaff && !isFullscreen && fullscreenSupported() && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
+            <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto">
+              <Maximize className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">Return to full screen to continue</h2>
+            <p className="text-sm text-slate-600">
+              This examination runs in full screen. Leaving it is recorded and shown to your teacher
+              {totalFocusEvents > 0 ? ` (${totalFocusEvents} so far)` : ""}. Your answers and time are safe.
+            </p>
+            <button
+              type="button"
+              onClick={enterFullscreen}
+              className="w-full h-11 rounded-xl bg-[#2468B2] hover:bg-[#1C5190] text-white font-bold text-sm cursor-pointer"
+            >
+              Return to full screen
+            </button>
+          </div>
+        </div>
+      )}
+      {!isStaff && focusWarning && totalFocusEvents > 0 && (
+        <div
+          role="alert"
+          className="shrink-0 bg-rose-50 border-b border-rose-200 text-rose-900 px-4 py-2 text-xs font-semibold flex items-center justify-between gap-3"
+        >
+          <span className="flex items-center gap-2">
+            <EyeOff className="w-4 h-4 text-rose-600 shrink-0" />
+            You left the examination window {integrity.tabSwitches} time{integrity.tabSwitches === 1 ? "" : "s"}
+            {integrity.fullscreenExits > 0
+              ? ` and full screen ${integrity.fullscreenExits} time${integrity.fullscreenExits === 1 ? "" : "s"}`
+              : ""}
+            . This is recorded and visible to your teacher.
+          </span>
+          <button type="button" onClick={() => setFocusWarning(false)} className="shrink-0 font-bold hover:underline cursor-pointer">
+            OK
+          </button>
+        </div>
+      )}
       <ExamHeader
         olympiadTitle={exam.title}
         examCode={exam.code}

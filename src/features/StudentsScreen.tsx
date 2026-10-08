@@ -18,7 +18,10 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
+  Upload,
 } from "lucide-react";
+import { BulkStudentUpload } from "./BulkStudentUpload";
+import { studentCode } from "@/lib/students/roster";
 
 export default function StudentsScreen() {
   // Links resolve into the route group the active role actually owns.
@@ -29,31 +32,50 @@ export default function StudentsScreen() {
   const [attempts, setAttempts] = useState<ExamAttempt[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [classFilter, setClassFilter] = useState("all");
+
+  async function load() {
+    const [uList, attList] = await Promise.allSettled([
+      userRepository.listUsers(),
+      attemptRepository.listAttempts(),
+    ]);
+    if (uList.status === "fulfilled") {
+      setStudents(
+        uList.value
+          .filter((u) => u.role === "STUDENT")
+          .sort(
+            (a, b) =>
+              (Number(a.grade) || 0) - (Number(b.grade) || 0) ||
+              (a.section || "").localeCompare(b.section || "") ||
+              a.name.localeCompare(b.name)
+          )
+      );
+    } else console.error("Failed to load students:", uList.reason);
+    if (attList.status === "fulfilled") setAttempts(attList.value);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [uList, attList] = await Promise.all([
-          userRepository.listUsers(),
-          attemptRepository.listAttempts(),
-        ]);
-        setStudents(uList.filter((u) => u.role === "STUDENT"));
-        setAttempts(attList);
-      } catch (err) {
-        console.error("Failed to load students:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
   }, []);
 
-  const filtered = students.filter(
-    (s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  /** "6", "6-A", … for the class filter, from the students actually registered. */
+  const classOptions = Array.from(
+    new Set(students.map((s) => `${Number(s.grade) || 6}${s.section ? `-${s.section}` : ""}`))
+  ).sort((a, b) => parseInt(a) - parseInt(b) || a.localeCompare(b));
+
+  const filtered = students.filter((s) => {
+    const q = searchTerm.toLowerCase();
+    const cls = `${Number(s.grade) || 6}${s.section ? `-${s.section}` : ""}`;
+    const matchesClass = classFilter === "all" || cls === classFilter || String(Number(s.grade) || 6) === classFilter;
+    const matchesSearch =
+      s.name.toLowerCase().includes(q) ||
+      s.id.toLowerCase().includes(q) ||
+      studentCode(s).toLowerCase().includes(q) ||
+      (s.email && s.email.toLowerCase().includes(q));
+    return matchesClass && matchesSearch;
+  });
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
@@ -80,6 +102,14 @@ export default function StudentsScreen() {
           >
             <span>Live Monitor</span>
           </Link>
+          <button
+            type="button"
+            onClick={() => setShowBulkUpload(true)}
+            className="h-9 px-3.5 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-subtle transition-all cursor-pointer"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Bulk Upload Students</span>
+          </button>
         </div>
       </div>
 
@@ -97,6 +127,20 @@ export default function StudentsScreen() {
               className="w-full h-9 pl-9 pr-3 text-xs bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
             />
           </div>
+
+          <select
+            value={classFilter}
+            onChange={(e) => setClassFilter(e.target.value)}
+            aria-label="Filter by class"
+            className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+          >
+            <option value="all">All classes</option>
+            {classOptions.map((c) => (
+              <option key={c} value={c}>
+                Class {c}
+              </option>
+            ))}
+          </select>
 
           <span className="text-xs font-bold text-[#667085] px-2">
             Showing <strong className="text-[#2468B2]">{filtered.length}</strong> candidates
@@ -116,6 +160,13 @@ export default function StudentsScreen() {
                   Student candidate records will appear here as they register and participate in Olympiad examinations.
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowBulkUpload(true)}
+                className="h-9 px-4 bg-[#2468B2] hover:bg-[#1C5190] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5" /> Upload a class list
+              </button>
             </div>
           ) : (
             <div className="overflow-x-auto w-full">
@@ -142,11 +193,12 @@ export default function StudentsScreen() {
                         </td>
                         <td className="py-3 px-3">
                           <span className="font-mono font-bold text-xs text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] inline-block">
-                            {s.id}
+                            {studentCode(s)}
                           </span>
                         </td>
                         <td className="py-3 px-2 text-center font-bold">
-                          Class {s.grade || 6}
+                          Class {Number(s.grade) || 6}
+                          {s.section ? `-${s.section}` : ""}
                         </td>
                         <td className="py-3 px-3 text-[#667085] text-xs truncate max-w-[160px]" title={s.email || "student@olympiad.org"}>
                           {s.email || "student@olympiad.org"}
@@ -181,7 +233,7 @@ export default function StudentsScreen() {
                               title="Align and assign examination papers to this candidate"
                             >
                               <BookOpen className="w-3 h-3" />
-                              <span>Align Paper</span>
+                              <span>Add Exam</span>
                             </Link>
                             <Link
                               href={`${roleBase}/results`}
@@ -201,6 +253,10 @@ export default function StudentsScreen() {
         </div>
 
       </div>
+
+      {showBulkUpload && (
+        <BulkStudentUpload onClose={() => setShowBulkUpload(false)} onCreated={() => void load()} />
+      )}
     </div>
   );
 }

@@ -40,9 +40,7 @@ import {
 } from "lucide-react";
 import { ExamLockService, MAX_ATTEMPT_CHOICES } from "@/services/exam/ExamLockService";
 
-/** Student ID shown to staff: the class the student is registered in, then a stable code. */
-const studentCode = (s: UserProfile) =>
-  `C${Number(s.grade) || 6}-${s.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase()}`;
+import { studentCode } from "@/lib/students/roster";
 
 /** The classes a paper may be assigned to: its own class plus any it was opened to. */
 const classesFor = (exam: Exam) => {
@@ -74,6 +72,7 @@ export default function ExamsScreen() {
   const [onboardedStudents, setOnboardedStudents] = useState<UserProfile[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [studentFilterClass, setStudentFilterClass] = useState<string>("all");
+  const [studentFilterSection, setStudentFilterSection] = useState<string>("all");
   const [studentSearchTerm, setStudentSearchTerm] = useState<string>("");
   const [isSavingAlignment, setIsSavingAlignment] = useState(false);
   /** Sittings each assigned student may take; null = unlimited. */
@@ -139,6 +138,7 @@ export default function ExamsScreen() {
       onboardedStudents.filter((s) => ExamLockService.isStudentAssigned(exam.id, s)).map((s) => s.id)
     );
     setStudentFilterClass(String(exam.grade || 6));
+    setStudentFilterSection("all");
     setStudentSearchTerm("");
     setAlignMaxAttempts(ExamLockService.getMaxAttempts(exam.id));
     setAlignmentSuccess(false);
@@ -170,7 +170,13 @@ export default function ExamsScreen() {
       const chosen = selectedStudentIds
         .map((id) => byId.get(id))
         .filter((s): s is UserProfile => Boolean(s))
-        .map((s) => ({ id: s.id, email: s.email, name: s.name, grade: Number(s.grade) || Number(aligningExam.grade) || 6 }));
+        .map((s) => ({
+          id: s.id,
+          email: s.email,
+          name: s.name,
+          grade: Number(s.grade) || Number(aligningExam.grade) || 6,
+          ...(s.section ? { section: s.section } : {}),
+        }));
       await ExamLockService.assignStudents(aligningExam.id, chosen, alignMaxAttempts);
       setAlignmentSuccess(true);
       setTimeout(() => {
@@ -274,15 +280,29 @@ export default function ExamsScreen() {
       const grade = Number(s.grade) || 6;
       if (!alignClasses.includes(grade)) return false;
       const matchesClass = studentFilterClass === "all" || String(grade) === studentFilterClass;
+      const matchesSection = studentFilterSection === "all" || (s.section || "") === studentFilterSection;
       const matchesSearch =
         s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
         s.id.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
         studentCode(s).toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
         (s.email && s.email.toLowerCase().includes(studentSearchTerm.toLowerCase())) ||
         (s.schoolName && s.schoolName.toLowerCase().includes(studentSearchTerm.toLowerCase()));
-      return matchesClass && matchesSearch;
+      return matchesClass && matchesSection && matchesSearch;
     });
-  }, [onboardedStudents, studentFilterClass, studentSearchTerm, alignClasses]);
+  }, [onboardedStudents, studentFilterClass, studentFilterSection, studentSearchTerm, alignClasses]);
+
+  /** Sections present among the students of the paper's class(es). */
+  const alignSections = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          onboardedStudents
+            .filter((s) => alignClasses.includes(Number(s.grade) || 6) && s.section)
+            .map((s) => s.section as string)
+        )
+      ).sort(),
+    [onboardedStudents, alignClasses]
+  );
 
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
@@ -930,6 +950,27 @@ export default function ExamsScreen() {
                 </div>
               </div>
 
+              {alignSections.length > 0 && (
+                <div className="flex items-center gap-1 flex-wrap" role="group" aria-label="Filter by section">
+                  <span className="text-[11px] font-bold text-slate-500 mr-1">Section:</span>
+                  {["all", ...alignSections].map((sec) => (
+                    <button
+                      key={sec}
+                      type="button"
+                      onClick={() => setStudentFilterSection(sec)}
+                      aria-pressed={studentFilterSection === sec}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer border ${
+                        studentFilterSection === sec
+                          ? "bg-[#2468B2] text-white border-[#2468B2]"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {sec === "all" ? "All" : sec}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Attempts allowed */}
               <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                 <label htmlFor="align-max-attempts" className="text-xs font-bold text-slate-700">
@@ -1002,6 +1043,7 @@ export default function ExamsScreen() {
                           <span className="font-bold text-xs text-slate-900 block truncate">{s.name}</span>
                           <span className="text-[10px] text-slate-500 font-mono block">
                             {studentCode(s)} &bull; Class {Number(s.grade) || 6}
+                            {s.section ? `-${s.section}` : ""}
                             {s.email ? <> &bull; {s.email}</> : null}
                           </span>
                         </div>

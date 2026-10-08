@@ -5,6 +5,7 @@ import { evaluateAndGenerateFullResult } from "@/engine/scoring-engine";
 import { idbClient } from "@/services/persistence/indexeddb";
 import { ExamPersistenceService, type ExamSessionState } from "@/services/persistence/ExamPersistenceService";
 import { logError, logWarn } from "@/lib/logger";
+import { sittingNumberFromSessionId } from "@/lib/exam/sitting";
 import type { Exam } from "@/types/exam";
 import type { Question } from "@/types/question";
 import type { ExamAttempt } from "@/types/attempt";
@@ -66,11 +67,9 @@ export function submitExam(input: SubmitInput): Promise<SubmitOutcome> {
     let attempt = await idbClient.get<ExamAttempt>("attempts", attemptId);
     let report = await idbClient.get<ExamReport>("reports", `rep_${attemptId}`);
     if (!attempt || !report) {
-      const prevAttempts = await idbClient.getAll<ExamAttempt>("attempts").catch(() => []);
-      const prevCount = prevAttempts.filter(
-        (a) => a.examId === input.exam.id && a.student?.studentId === input.student.studentId
-      ).length;
-      const attemptNumber = prevCount + 1;
+      // The sitting number is part of the session id, so it is exact even on a device that
+      // has never seen this candidate's earlier sittings.
+      const attemptNumber = sittingNumberFromSessionId(input.session.sessionId);
 
       const result = evaluateAndGenerateFullResult({
         exam: input.exam,
@@ -85,7 +84,11 @@ export function submitExam(input: SubmitInput): Promise<SubmitOutcome> {
         attemptId,
         attemptNumber,
       });
-      attempt = result.attempt;
+      attempt = {
+        ...result.attempt,
+        attemptNumber,
+        ...(session.integrity ? { integrity: session.integrity } : {}),
+      };
       report = result.report;
       await idbClient.put("attempts", attempt);
       await idbClient.put("reports", report);

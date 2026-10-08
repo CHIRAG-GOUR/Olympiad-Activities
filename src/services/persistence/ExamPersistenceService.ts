@@ -1,7 +1,7 @@
 "use client";
 
 import { idbClient } from "./indexeddb";
-import type { DeviceInfo } from "@/types/session";
+import type { DeviceInfo, IntegrityLog } from "@/types/session";
 import { db, auth } from "@/services/firebase/config";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { logError, logWarn, withTimeout } from "@/lib/logger";
@@ -105,6 +105,10 @@ export interface ExamSessionState {
   attemptId?: string;
   submittedAt?: string;
   submissionType?: "normal" | "auto_timeout" | "force_submit";
+  /** Tab switches and full-screen exits during this sitting. */
+  integrity?: IntegrityLog;
+  /** Question ids in the order this candidate sees them (shuffled per sitting). */
+  questionOrder?: string[];
 }
 
 /** Cloud mirror cadence while a candidate is working. */

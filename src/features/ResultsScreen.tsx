@@ -3,7 +3,7 @@
 import { resultRoute } from "@/lib/routes";
 import { useAuth } from "@/context/AuthContext";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { attemptRepository, reportRepository, examRepository } from "@/repositories";
 import { ExamAttempt } from "@/types/attempt";
@@ -25,6 +25,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { invalidate } from "@/repositories/cache";
+import { selectAttempts, type CountPolicy } from "@/lib/results/analysis";
+import { ResultsAnalysisPanel } from "./ResultsAnalysisPanel";
+import { FileSpreadsheet } from "lucide-react";
 
 export default function ResultsScreen() {
   // Links resolve into the route group the active role actually owns.
@@ -42,26 +45,25 @@ export default function ResultsScreen() {
   const [selectedExamId, setSelectedExamId] = useState("all");
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  /** With retakes, which of a student's attempts count in the analysis and export. */
+  const [countPolicy, setCountPolicy] = useState<CountPolicy>("latest");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const loadData = async (forceInvalidate = false) => {
     if (forceInvalidate) {
       invalidate("attempts:", "reports:");
     }
-    try {
-      const [attList, repList, exList] = await Promise.all([
-        attemptRepository.listAttempts(),
-        reportRepository.listReports(),
-        examRepository.listExams(),
-      ]);
-      setAttempts(attList);
-      setReports(repList);
-      setExams(exList);
-    } catch (err) {
-      console.error("Failed to load results ledger:", err);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
+    const [attList, repList, exList] = await Promise.allSettled([
+      attemptRepository.listAttempts(),
+      reportRepository.listReports(),
+      examRepository.listExams(),
+    ]);
+    if (attList.status === "fulfilled") setAttempts(attList.value);
+    if (repList.status === "fulfilled") setReports(repList.value);
+    if (exList.status === "fulfilled") setExams(exList.value);
+    setLoading(false);
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -101,6 +103,38 @@ export default function ResultsScreen() {
     return matchesSearch && matchesSubject && matchesExam && matchesClass && matchesStatus;
   });
 
+  /** Attempts that count under the policy, within the current filters. */
+  const countedAttempts = useMemo(() => selectAttempts(filteredAttempts, countPolicy), [filteredAttempts, countPolicy]);
+
+  /** Question wording comes from the stored reports; attempts carry only ids. */
+  const questionText = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of reports) for (const q of r.questionResults || []) if (q.questionText && !map.has(q.questionId)) map.set(q.questionId, q.questionText);
+    return map;
+  }, [reports]);
+
+  const selectedExam = exams.find((e) => e.id === selectedExamId);
+
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const { downloadResultsWorkbook } = await import("@/lib/results/exportExcel");
+      await downloadResultsWorkbook({
+        attempts: countedAttempts,
+        exams,
+        questionText,
+        policy: countPolicy,
+        fileLabel: selectedExam ? `${selectedExam.code || selectedExam.title} Results` : "Olympiad Results",
+      });
+    } catch (err) {
+      console.error("Results export failed:", err);
+      setExportError("The Excel file could not be created. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-rise-in font-sans text-[#182338]">
       {/* 1. HEADER (Requirement 17) */}
@@ -119,7 +153,17 @@ export default function ResultsScreen() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting || countedAttempts.length === 0}
+            className="h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            title="Download the filtered results, question analysis and section averages as an Excel file"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>{exporting ? "Preparing…" : "Download Excel"}</span>
+          </button>
           <button
             type="button"
             onClick={handleManualRefresh}
@@ -243,6 +287,18 @@ export default function ResultsScreen() {
                 <option value="passed">Passed Tier</option>
                 <option value="failed">Review Needed</option>
               </select>
+
+              {/* Which attempt counts when a student retook the paper */}
+              <select
+                value={countPolicy}
+                onChange={(e) => setCountPolicy(e.target.value as CountPolicy)}
+                className="h-9 px-3 text-xs font-bold bg-[#F4F7FB]/60 border border-[#E1E7EF] rounded-xl text-[#182338] focus:outline-none focus:border-[#2468B2] cursor-pointer"
+                title="Which attempts count in the analysis and Excel export"
+              >
+                <option value="latest">Count latest attempt</option>
+                <option value="best">Count best attempt</option>
+                <option value="all">Count all attempts</option>
+              </select>
             </div>
 
             <div className="text-xs text-[#667085] font-semibold text-right">
@@ -250,6 +306,27 @@ export default function ResultsScreen() {
             </div>
           </div>
         </div>
+
+        {exportError && (
+          <div role="alert" className="p-3 rounded-xl border border-rose-200 bg-rose-50 text-xs font-semibold text-rose-800">
+            {exportError}
+          </div>
+        )}
+
+        {/* Class analysis for one paper */}
+        {selectedExam ? (
+          <ResultsAnalysisPanel
+            attempts={countedAttempts.filter((a) => a.examId === selectedExam.id)}
+            examTitle={selectedExam.title}
+            questionText={questionText}
+          />
+        ) : (
+          countedAttempts.length > 0 && (
+            <div className="p-3.5 rounded-xl border border-[#E1E7EF] bg-white text-xs text-[#667085] font-semibold">
+              Choose an examination in the filter above to see question-by-question analysis: which questions the class missed most, average time per question, and section averages.
+            </div>
+          )
+        )}
 
         {/* 3. RESULT TABLE (Requirements 18, 24) */}
         <div className="bg-[#FFFFFF] border border-[#E1E7EF] rounded-2xl shadow-subtle overflow-hidden">

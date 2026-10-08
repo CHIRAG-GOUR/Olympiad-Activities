@@ -283,6 +283,7 @@ export const OlympiadStore = {
               connectionStatus: raw.status === "submitted" ? "Completed" : "Connected",
               timeRemainingSeconds: raw.timeRemainingSeconds ?? 3600,
               isSubmitted: raw.status === "submitted",
+              integrity: raw.integrity,
             };
           });
 

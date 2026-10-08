@@ -4,6 +4,17 @@ import { db, auth, isRealFirebaseConfigured } from "@/services/firebase/config";
 import { doc, setDoc, onSnapshot, collection, type Unsubscribe } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { logError, logWarn } from "@/lib/logger";
+import {
+  MAX_ATTEMPT_CHOICES,
+  normalizeMaxAttempts,
+  isAssigned,
+  canStudentAccess,
+  type AssignedStudent,
+  type StudentIdentity,
+} from "@/lib/exam/access";
+
+export { MAX_ATTEMPT_CHOICES, normalizeMaxAttempts };
+export type { AssignedStudent, StudentIdentity };
 
 const STORAGE_LOCKS_KEY = "olympiad_exam_locks_v3";
 const STORAGE_CLASSES_KEY = "olympiad_exam_classes_v3";
@@ -22,25 +33,6 @@ const DEFAULT_UNLOCKED_EXAMS = new Set([
   "IMO-2022-23-G6-SETB",
 ]);
 
-/** Highest finite attempt limit a teacher can choose; above this the paper is unlimited. */
-export const MAX_ATTEMPT_CHOICES = 10;
-
-/** A student a paper has been assigned to, recorded with the class they were assigned in. */
-export interface AssignedStudent {
-  id: string;
-  email?: string;
-  name?: string;
-  grade: number;
-}
-
-/** Who is asking for a paper. Any one identifier matching an assignment is enough. */
-export interface StudentIdentity {
-  id?: string;
-  email?: string;
-  name?: string;
-  grade?: number | string;
-}
-
 export interface ExamAccessConfig {
   examId: string;
   isLocked: boolean;
@@ -50,15 +42,6 @@ export interface ExamAccessConfig {
   /** Sittings allowed per student; absent or null means unlimited. */
   maxAttempts?: number | null;
   updatedAt?: string;
-}
-
-const norm = (s: unknown) => String(s ?? "").trim().toLowerCase();
-
-/** 1–10, or null for unlimited. Anything else is treated as unlimited. */
-export function normalizeMaxAttempts(value: unknown): number | null {
-  const n = Number(value);
-  if (!Number.isFinite(n) || n < 1) return null;
-  return Math.min(MAX_ATTEMPT_CHOICES, Math.floor(n));
 }
 
 class ExamLockServiceClass {
@@ -381,8 +364,9 @@ class ExamLockServiceClass {
       sanitized.push({
         id,
         grade: Number(s.grade) || 6,
-        ...(s.email ? { email: norm(s.email) } : {}),
+        ...(s.email ? { email: String(s.email).trim().toLowerCase() } : {}),
         ...(s.name ? { name: String(s.name).trim() } : {}),
+        ...(s.section ? { section: String(s.section).trim().toUpperCase() } : {}),
       });
     }
     await this.persist(
@@ -430,43 +414,28 @@ class ExamLockServiceClass {
 
   /** Whether this student is named in the paper's assignment, by uid, email or legacy id. */
   isStudentAssigned(examId: string, student: StudentIdentity): boolean {
-    const keys = new Set([norm(student.id), norm(student.email), norm(student.name)].filter(Boolean));
-    if (keys.size === 0) return false;
-    const records = this.getAssignedStudentRecords(examId);
-    if (records.some((r) => keys.has(norm(r.id)) || (r.email && keys.has(norm(r.email))))) return true;
-    // Id-only lists written before assignments carried a class (including demo aliases
-    // such as the student's email or display name).
-    return (this.studentState[examId] || []).some((id) => keys.has(norm(id)));
+    return isAssigned(
+      { assignedStudents: this.getAssignedStudentRecords(examId), legacyAssignedIds: this.studentState[examId] || [] },
+      student
+    );
   }
 
   /**
-   * Check if an examination is accessible to a given student.
-   * Priority:
-   * 1. Explicit student assignment: if the student is assigned to the paper, they have access.
-   * 2. Default unlocked dice exam: accessible to demo students.
-   * 3. General unlocked exam: accessible if candidate's grade is in visible classes.
+   * Whether a candidate may see and sit a paper: assigned to them (even while locked), the
+   * always-open demo paper, or unlocked and open to their class.
    */
   isExamAccessibleToStudent(examId: string, student: StudentIdentity | undefined): boolean {
     if (!examId) return false;
-
-    // 1. Direct candidate assignment
-    if (student && this.isStudentAssigned(examId, student)) {
-      return true;
-    }
-
-    // 2. Default unlocked paper (Dice Mathematics Olympiad)
-    if (DEFAULT_UNLOCKED_EXAMS.has(examId)) {
-      return true;
-    }
-
-    // 3. Locked papers are hidden unless explicitly assigned to the student
-    if (this.isExamLocked(examId)) {
-      return false;
-    }
-
-    // 4. Class visibility check
-    const grade = Number(student?.grade) || 6;
-    return this.isExamVisibleToClass(examId, grade);
+    return canStudentAccess(
+      {
+        isLocked: this.isExamLocked(examId),
+        visibleClasses: this.getVisibleClasses(examId),
+        assignedStudents: this.getAssignedStudentRecords(examId),
+        legacyAssignedIds: this.studentState[examId] || [],
+        alwaysOpen: DEFAULT_UNLOCKED_EXAMS.has(examId),
+      },
+      student
+    );
   }
 
   subscribe(callback: () => void): () => void {

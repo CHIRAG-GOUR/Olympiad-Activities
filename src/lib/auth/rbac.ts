@@ -156,6 +156,8 @@ export interface UserProfile {
   status?: UserStatus;
   schoolName?: string;
   grade?: number | string;
+  /** Class section, e.g. "A" for Class 6-A. */
+  section?: string;
   avatarUrl?: string;
   createdAt: string;
   updatedAt?: string;
