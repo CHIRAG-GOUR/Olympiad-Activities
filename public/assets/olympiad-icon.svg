@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2B74C7" />
+      <stop offset="100%" stop-color="#1B5291" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0B132B" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#blueGrad)" filter="url(#shadow)" />
+  <rect x="8.5" y="8.5" width="111" height="111" rx="27.5" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-opacity="0.4" />
+  <text x="64" y="74" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="64">Ω</text>
+</svg>

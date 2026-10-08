@@ -302,7 +302,7 @@ export default function TeachersDirectoryPage() {
                             <div className="font-bold text-xs text-[#182338] truncate max-w-[190px]" title={t.name}>
                               {t.name}
                             </div>
-                            <div className="text-[10px] text-[#667085]">Cambridge Court Faculty</div>
+                            <div className="text-[10px] text-[#667085]">Olympiad Dashboard Faculty</div>
                           </td>
                           <td className="py-3 px-3">
                             <span className="font-mono font-bold text-xs text-[#2468B2] bg-[#EAF2FC] px-2 py-0.5 rounded-md border border-[#E1E7EF] inline-block">
@@ -505,7 +505,7 @@ export default function TeachersDirectoryPage() {
                   required
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="e.g. ramesh.gupta@cambridgecourt.com"
+                  placeholder="e.g. faculty.member@olympiad.org"
                   className="w-full h-10 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:outline-none focus:border-[#2468B2] focus:bg-white"
                 />
               </div>

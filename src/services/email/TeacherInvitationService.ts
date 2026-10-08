@@ -134,7 +134,7 @@ class TeacherInvitationServiceClass {
         await addDoc(collection(db, "mail"), {
           to: [data.teacherEmail.trim()],
           message: {
-            subject: "Official Invitation: Olympiad Digital Examination Faculty Access",
+            subject: "Official Invitation: Olympiad Dashboard Faculty Access",
             html,
             text,
           },
@@ -146,7 +146,7 @@ class TeacherInvitationServiceClass {
     }
 
     // 4. Construct direct mailto link
-    const subject = "Official Invitation: Olympiad Digital Examination Faculty Access";
+    const subject = "Official Invitation: Olympiad Dashboard Faculty Access";
     const mailtoUrl = `mailto:${encodeURIComponent(data.teacherEmail.trim())}?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(text)}`;
