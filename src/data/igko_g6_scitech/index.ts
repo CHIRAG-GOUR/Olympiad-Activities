@@ -12,8 +12,7 @@ import { Subject } from "@/types/subject";
  *
  * The question wording and options are the source paper's, unchanged.
  *
- * The paper is released in batches. Questions are listed here as their activities are
- * built; `IGKO_G6_SCITECH_EXAM.questionIds` only ever contains questions that have one.
+ * All 15 source questions are included, each with its own investigation.
  */
 
 /**
@@ -45,6 +44,12 @@ export const IGKO_SUBJECT: Subject = {
         { id: "t_igko_space", name: "Space Missions" },
         { id: "t_igko_forces", name: "Forces" },
         { id: "t_igko_health", name: "Health & Medicine" },
+        { id: "t_igko_changes", name: "Physical & Chemical Changes" },
+        { id: "t_igko_plants", name: "Plants" },
+        { id: "t_igko_energy", name: "Energy" },
+        { id: "t_igko_light_heat", name: "Light & Heat" },
+        { id: "t_igko_pressure", name: "Pressure" },
+        { id: "t_igko_motors", name: "Electricity & Magnetism" },
       ],
     },
   ],
@@ -130,6 +135,88 @@ export const IGKO_G6_SCITECH_QUESTIONS: Question[] = [
     "It is a noninvasive medical imaging test that produces detailed images of almost every internal structure in the human body, including the organs, bones, muscles and blood vessels. No ionizing radiation is produced during this scan. Identify the test.",
     ["X-ray", "Chemotheraphy", "Sonography", "MRI"],
     { type: "medical-imaging-center" }
+  ),
+  q(
+    6,
+    "Awards & Scientists",
+    "He was the first Asian and the first non-white to receive any Nobel Prize in the sciences for his work on the scattering of light and for the discovery of the effect named after him. Who is he?",
+    ["Subrahmanyan Chandrasekhar", "Venkatraman Ramakrishnan", "Chandrasekhara Venkata Raman", "Har Gobind Khorana"],
+    { type: "raman-light-lab" }
+  ),
+  q(
+    7,
+    "Physical & Chemical Changes",
+    "When fresh milk is left outside for overnight it leads to souring. This is an example of",
+    ["Physical Change", "Chemical change", "Both a and b", "None of the above"],
+    { type: "milk-transformation-lab" }
+  ),
+  q(
+    8,
+    "Chemical Reactions",
+    "If you combine vinegar and baking soda for a chemical reaction or milk with baking powder in a recipe, you experience a double displacement. The ingredients recombine to produce carbon dioxide gas and water. The carbon dioxide forms bubbles in the volcano and helps baked goods rise. This reaction is called",
+    ["Combustion", "Anaerobic Respiration", "Aerobic Cellular Respiration", "Metathesis"],
+    {
+      type: "chemical-reaction-reactor",
+      config: {
+        // The source's wording is school-level: vinegar + baking soda is an acid–base reaction
+        // that is classified as double displacement (metathesis); D is the best supplied answer.
+        classificationNote: "school-level double-displacement (metathesis) classification",
+      },
+    }
+  ),
+  q(
+    9,
+    "Plants",
+    "It is a plant whose fruit is an edible berry that is eaten as a vegetable. Identify it",
+    ["Cranberry", "Elderberry", "Blueberry", "Tomato"],
+    { type: "botanical-fruit-detective" }
+  ),
+  q(
+    10,
+    "Energy",
+    "Which of the following is a non conventional source of energy?",
+    ["Coal", "Natural gas", "Solar energy", "Petroleum"],
+    { type: "renewable-energy-city" }
+  ),
+  q(
+    11,
+    "Light",
+    "Which of the following is a non-luminous object?",
+    ["Sun", "Moon", "Star", "Firefly"],
+    { type: "light-observatory" }
+  ),
+  q(
+    12,
+    "Indian Scientists",
+    "Who is known as the father of Indian nuclear programme?",
+    ["Homi Jehangir Bhabha", "Jagadish Chandra Bose", "A.P.J Abdul Kalam", "Vikram Sarabhai"],
+    { type: "science-heritage-museum" }
+  ),
+  q(
+    13,
+    "Heat",
+    "What is the primary method of heat transfer when you touch a hot stove?",
+    ["Convection", "Conduction", "Insulation", "Radiation"],
+    { type: "thermal-transfer-lab" }
+  ),
+  q(
+    14,
+    "Pressure",
+    "What happens to the pressure as you go deeper into a body of water?",
+    ["It fluctuates randomly", "It decreases", "It increases", "It stays the same"],
+    { type: "deep-sea-pressure-dive" }
+  ),
+  q(
+    15,
+    "Electricity & Magnetism",
+    "What is the primary function of an electric motor?",
+    [
+      "A device that produces light",
+      "A device that stores electrical energy into motion",
+      "A device that changes electrical energy into motion",
+      "A device that measures temperature",
+    ],
+    { type: "electric-motor-workshop" }
   ),
 ];
 

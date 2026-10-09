@@ -3,38 +3,39 @@
 import React, { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { Waves, ArrowDownToLine, Anchor } from "lucide-react";
+import { RoundedBox } from "@react-three/drei";
+import { Waves, ArrowDownToLine, ToggleLeft, ToggleRight } from "lucide-react";
 import type { ActivityComponentProps } from "../kit/types";
 import { Label3D } from "../imo6a-play/three";
-import { Investigation, Lab3D, Panel, Slider, Reading, Chip, useInvestigation } from "./kit";
-import { G, WATER_DENSITY, evaluateForce, forceInitial, forceOutcome, forces, type ForceWorld } from "./logic";
+import { Investigation, Lab3D, Panel, AnswerStation, Chip, Slider, Reading, Studio, useInvestigation } from "./kit";
+import { LabBench, Floor, Glass, Metal, Brushed, Wood } from "./models";
+import { FORCES, G, evaluateForce, forceInitial, forceOutcome, forces, type ForceId, type ForceWorld } from "./logic";
 
 /**
- * Q4 · Underwater Force Laboratory.
- * Choose an object's mass and size, release it into the tank and watch the two forces on
- * it: gravity pulling down, buoyancy pushing up. The motion comes from those forces; what
- * happens to the object — and which force drove it — is the answer.
+ * Q4 · Underwater force laboratory.
+ * Investigate: a switchboard turns each force on or off; release the object and watch what
+ * the remaining forces do to it. Isolating one force at a time shows what each one does.
+ * Answer: mark the force that makes an object sink.
  */
 
-const TANK = { w: 3.2, h: 2.4, d: 1.6 };
-const WATER_TOP = 1.7; // resting water level (y)
-const FLOOR = 0.08;
-const ABOVE = 2.65; // where the object waits before release
+const BENCH_Y = 0.9;
+const TANK = { w: 1.6, h: 1.25, d: 0.8 };
+const BASE = BENCH_Y + 0.05;
+const WATER_TOP = BASE + 0.9;
+const ABOVE = BASE + TANK.h + 0.35;
+const sideFor = (volumeL: number) => 0.24 * Math.cbrt(volumeL);
 
-/** Edge length of a cube holding `volumeL` litres, scaled for the scene. */
-const sideFor = (volumeL: number) => 0.42 * Math.cbrt(volumeL);
-
-function Arrow({ dir, length, color, origin }: { dir: 1 | -1; length: number; color: string; origin: THREE.Vector3 }) {
-  const l = Math.max(0.05, length);
+function Arrow({ dir, length, color, visible }: { dir: 1 | -1; length: number; color: string; visible: boolean }) {
+  const l = Math.max(0.04, length);
   return (
-    <group position={origin}>
+    <group visible={visible}>
       <mesh position={[0, (dir * l) / 2, 0]}>
-        <cylinderGeometry args={[0.035, 0.035, l, 12]} />
-        <meshBasicMaterial color={color} toneMapped={false} />
+        <cylinderGeometry args={[0.018, 0.018, l, 12]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
       </mesh>
-      <mesh position={[0, dir * (l + 0.09), 0]} rotation={[dir === 1 ? 0 : Math.PI, 0, 0]}>
-        <coneGeometry args={[0.09, 0.18, 16]} />
-        <meshBasicMaterial color={color} toneMapped={false} />
+      <mesh position={[0, dir * (l + 0.05), 0]} rotation={[dir === 1 ? 0 : Math.PI, 0, 0]}>
+        <coneGeometry args={[0.05, 0.1, 16]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
       </mesh>
     </group>
   );
@@ -43,142 +44,118 @@ function Arrow({ dir, length, color, origin }: { dir: 1 | -1; length: number; co
 function Tank({ world }: { world: ForceWorld }) {
   const obj = useRef<THREE.Group>(null);
   const water = useRef<THREE.Mesh>(null);
-  const gravArrow = useRef<THREE.Group>(null);
-  const buoyArrow = useRef<THREE.Group>(null);
+  const down = useRef<THREE.Group>(null);
+  const up = useRef<THREE.Group>(null);
   const spring = useRef<THREE.Mesh>(null);
-  const motion = useRef({ y: ABOVE, v: 0 });
-
+  const m = useRef({ y: ABOVE, v: 0 });
   const side = sideFor(world.volumeL);
   const { gravity, maxBuoyancy, density } = forces(world);
-  const scale = 0.055; // metres of arrow per newton
-  const outcome = forceOutcome(world);
-
-  // Heavier-per-litre objects look darker and more metallic.
-  const color = useMemo(() => new THREE.Color().setHSL(0.08, 0.55, THREE.MathUtils.clamp(0.75 - density * 0.18, 0.2, 0.75)), [density]);
+  const scale = 0.035;
+  const isMetal = density > 1;
+  const color = useMemo(() => (isMetal ? "#8C939B" : "#C08A52"), [isMetal]);
 
   useFrame((_, dtRaw) => {
     const dt = Math.min(dtRaw, 1 / 30);
-    const m = motion.current;
+    const s = m.current;
     const half = side / 2;
+    const e = world.enabled;
     if (!world.released) {
-      m.y = THREE.MathUtils.lerp(m.y, ABOVE, 0.15);
-      m.v = 0;
-    } else if (world.onSpring) {
-      // Hanging from the spring balance: settles just below the surface.
-      m.y = THREE.MathUtils.lerp(m.y, WATER_TOP - half - 0.12, 0.08);
-      m.v = 0;
+      s.y = THREE.MathUtils.lerp(s.y, ABOVE, 0.15);
+      s.v = 0;
+    } else if (e.spring && e.gravitational) {
+      s.y = THREE.MathUtils.lerp(s.y, WATER_TOP - half * 0.4, 0.06);
+      s.v = 0;
     } else {
-      // Net force = gravity − buoyancy (submerged share) − water drag.
-      const submerged = THREE.MathUtils.clamp((WATER_TOP - (m.y - half)) / side, 0, 1);
-      const buoy = submerged * maxBuoyancy;
-      const drag = (submerged > 0 ? 3.2 : 0.2) * m.v;
-      const acc = (buoy - gravity) / Math.max(0.05, world.massKg) - drag;
-      m.v += acc * dt * 0.18;
-      m.y += m.v * dt * 2.2;
-      if (m.y - half < FLOOR) {
-        m.y = FLOOR + half;
-        m.v = 0;
+      const submerged = THREE.MathUtils.clamp((WATER_TOP - (s.y - half)) / side, 0, 1);
+      const fDown = e.gravitational ? gravity : 0;
+      const fUp = e.buoyant ? submerged * maxBuoyancy : 0;
+      const inWater = submerged > 0;
+      const drag = (inWater ? 2.6 : e.air ? 0.6 : 0) * s.v;
+      const acc = (fUp - fDown) / Math.max(0.05, world.massKg) - drag;
+      s.v += acc * dt * 0.2;
+      s.y += s.v * dt * 2.2;
+      if (s.y - half < BASE + 0.02) {
+        s.y = BASE + 0.02 + half;
+        s.v = 0;
+      }
+      if (s.y > ABOVE) {
+        s.y = ABOVE;
+        s.v = 0;
       }
     }
-    if (obj.current) obj.current.position.y = m.y;
-
-    // Water rises by the volume the object displaces.
-    const submergedNow = THREE.MathUtils.clamp((WATER_TOP - (m.y - half)) / side, 0, 1);
-    const rise = (submergedNow * side * side * side) / (TANK.w * TANK.d);
+    if (obj.current) obj.current.position.y = s.y;
+    const submergedNow = THREE.MathUtils.clamp((WATER_TOP - (s.y - half)) / side, 0, 1);
+    const rise = (submergedNow * side ** 3) / (TANK.w * TANK.d);
     if (water.current) {
-      const top = WATER_TOP + rise;
-      water.current.scale.y = top;
-      water.current.position.y = top / 2;
+      const h = WATER_TOP - BASE + rise;
+      water.current.scale.y = h;
+      water.current.position.y = BASE + h / 2;
     }
-    const buoyNow = submergedNow * maxBuoyancy;
-    if (gravArrow.current) {
-      gravArrow.current.position.y = m.y;
-      gravArrow.current.scale.y = 1;
-    }
-    if (buoyArrow.current) {
-      buoyArrow.current.visible = buoyNow > 0.05;
-      buoyArrow.current.position.y = m.y;
-      buoyArrow.current.scale.y = Math.max(0.01, (buoyNow * scale) / Math.max(0.01, maxBuoyancy * scale));
+    if (down.current) down.current.position.y = s.y - half;
+    if (up.current) {
+      up.current.position.y = s.y + half;
+      up.current.scale.y = Math.max(0.02, world.enabled.buoyant ? submergedNow : 0);
     }
     if (spring.current) {
-      spring.current.visible = world.onSpring;
-      const topY = TANK.h + 0.55;
-      const len = Math.max(0.1, topY - (m.y + half));
+      spring.current.visible = world.enabled.spring;
+      const top = BASE + TANK.h + 0.7;
+      const len = Math.max(0.05, top - (s.y + half));
       spring.current.scale.y = len;
-      spring.current.position.y = topY - len / 2;
+      spring.current.position.y = top - len / 2;
     }
   });
 
   return (
     <group>
       {/* Water */}
-      <mesh ref={water} position={[0, WATER_TOP / 2, 0]} scale={[1, WATER_TOP, 1]}>
-        <boxGeometry args={[TANK.w - 0.04, 1, TANK.d - 0.04]} />
-        <meshPhysicalMaterial color="#38BDF8" transparent opacity={0.38} roughness={0.08} transmission={0.4} />
+      <mesh ref={water} position={[0, BASE + 0.45, 0]} scale={[1, 0.9, 1]}>
+        <boxGeometry args={[TANK.w - 0.03, 1, TANK.d - 0.03]} />
+        <meshPhysicalMaterial color="#3AA0D8" transparent opacity={0.42} roughness={0.05} clearcoat={1} depthWrite={false} />
       </mesh>
-      {/* Glass */}
-      <mesh position={[0, TANK.h / 2, 0]}>
+      {/* Glass walls in an aluminium frame */}
+      <mesh position={[0, BASE + TANK.h / 2, 0]}>
         <boxGeometry args={[TANK.w, TANK.h, TANK.d]} />
-        <meshPhysicalMaterial color="#F0F9FF" transparent opacity={0.12} roughness={0.02} side={THREE.DoubleSide} />
+        <Glass opacity={0.1} />
       </mesh>
-      <mesh position={[0, 0.02, 0]} receiveShadow>
-        <boxGeometry args={[TANK.w + 0.2, 0.04, TANK.d + 0.2]} />
-        <meshStandardMaterial color="#334155" />
+      {[-1, 1].map((sx) =>
+        [-1, 1].map((sz) => (
+          <mesh key={`${sx}${sz}`} position={[(sx * TANK.w) / 2, BASE + TANK.h / 2, (sz * TANK.d) / 2]}>
+            <boxGeometry args={[0.03, TANK.h, 0.03]} />
+            <Metal color="#C9D0D7" />
+          </mesh>
+        ))
+      )}
+      <RoundedBox args={[TANK.w + 0.08, 0.05, TANK.d + 0.08]} radius={0.01} position={[0, BASE, 0]} receiveShadow>
+        <Brushed color="#4B5563" />
+      </RoundedBox>
+      {/* Gantry for the spring balance */}
+      <mesh position={[0, BASE + TANK.h + 0.72, 0]}>
+        <boxGeometry args={[TANK.w + 0.2, 0.04, 0.06]} />
+        <Metal />
       </mesh>
-      {/* Depth ruler */}
-      {[0, 0.5, 1, 1.5, 2].map((y) => (
-        <mesh key={y} position={[-TANK.w / 2 + 0.02, y + FLOOR, TANK.d / 2]}>
-          <boxGeometry args={[0.18, 0.015, 0.01]} />
-          <meshBasicMaterial color="#0F172A" />
+      {[-1, 1].map((sx) => (
+        <mesh key={sx} position={[(sx * (TANK.w + 0.2)) / 2, BASE + (TANK.h + 0.72) / 2, 0]}>
+          <boxGeometry args={[0.04, TANK.h + 0.72, 0.04]} />
+          <Metal />
         </mesh>
       ))}
-
-      {/* The object */}
-      <group ref={obj} position={[0, ABOVE, 0]}>
-        <mesh castShadow>
-          <boxGeometry args={[side, side, side]} />
-          <meshStandardMaterial color={color} metalness={THREE.MathUtils.clamp((density - 0.6) * 0.6, 0, 0.8)} roughness={0.45} />
-        </mesh>
-        <Label3D text={`${world.massKg} kg · ${world.volumeL} L`} position={[0, side / 2 + 0.2, 0]} size={[1.1, 0.24]} billboard style={{ bg: "#FFFFFF", fg: "#0F172A", border: "#CBD5E1", scale: 0.5 }} />
-      </group>
-
-      {/* Forces */}
-      <group ref={gravArrow} position={[0.62, ABOVE, 0]}>
-        <Arrow dir={-1} length={gravity * scale} color="#EF4444" origin={new THREE.Vector3(0, 0, 0)} />
-        <Label3D text={`Gravity ${gravity} N`} position={[0.62, -0.25, 0]} size={[1.0, 0.22]} billboard style={{ bg: "#FEE2E2", fg: "#991B1B", scale: 0.5 }} />
-      </group>
-      <group ref={buoyArrow} position={[-0.62, ABOVE, 0]} visible={false}>
-        <Arrow dir={1} length={maxBuoyancy * scale} color="#2563EB" origin={new THREE.Vector3(0, 0, 0)} />
-        <Label3D text="Buoyancy" position={[-0.55, 0.3, 0]} size={[0.8, 0.22]} billboard style={{ bg: "#DBEAFE", fg: "#1E3A8A", scale: 0.5 }} />
-      </group>
-
-      {/* Spring balance */}
-      <mesh position={[0, TANK.h + 0.6, 0]}>
-        <boxGeometry args={[0.5, 0.12, 0.2]} />
-        <meshStandardMaterial color="#64748B" metalness={0.6} />
-      </mesh>
       <mesh ref={spring} visible={false}>
-        <cylinderGeometry args={[0.03, 0.03, 1, 8]} />
-        <meshStandardMaterial color="#A3A3A3" metalness={0.8} />
+        <cylinderGeometry args={[0.02, 0.02, 1, 8]} />
+        <Metal color="#E5E7EB" roughness={0.15} />
       </mesh>
-
-      <Label3D
-        text={
-          !world.released
-            ? "Waiting above the water"
-            : outcome === "sank"
-            ? "Resting on the bottom"
-            : outcome === "floated"
-            ? "Floating at the surface"
-            : outcome === "held"
-            ? "Held by the spring"
-            : "Hovering in the water"
-        }
-        position={[0, TANK.h + 1.05, 0]}
-        size={[2.2, 0.3]}
-        billboard
-        style={{ bg: "#0F172A", fg: "#FFFFFF", scale: 0.5 }}
-      />
+      {/* Object with force arrows */}
+      <group ref={obj} position={[0, ABOVE, 0]}>
+        <RoundedBox args={[side, side, side]} radius={side * 0.06} castShadow>
+          {isMetal ? <Metal color={color} roughness={0.35} /> : <Wood color={color} />}
+        </RoundedBox>
+        <Label3D text={`${world.massKg} kg · ${world.volumeL} L`} position={[0, side / 2 + 0.38, 0]} size={[0.8, 0.16]} billboard style={{ bg: "#FFFFFF", fg: "#0F172A", border: "#CBD5E1", scale: 0.55 }} />
+      </group>
+      <group ref={down} position={[0.36, ABOVE, 0]}>
+        <Arrow dir={-1} length={gravity * scale} color="#EF4444" visible={world.enabled.gravitational} />
+      </group>
+      <group ref={up} position={[-0.36, ABOVE, 0]}>
+        <Arrow dir={1} length={maxBuoyancy * scale} color="#2563EB" visible={world.enabled.buoyant} />
+      </group>
     </group>
   );
 }
@@ -188,57 +165,89 @@ export function IgkoQ04Force(props: ActivityComponentProps) {
   const { world, readOnly } = play;
   const ro = !!readOnly;
   const { gravity, maxBuoyancy, density } = forces(world);
+  const outcome = forceOutcome(world);
+  const reset = (patch: Partial<ForceWorld>) => play.patch({ ...patch, released: false });
+  const toggleForce = (f: ForceId) => reset({ enabled: { ...world.enabled, [f]: !world.enabled[f] } });
 
-  // Changing the object lifts it back out: a new object is a new experiment.
-  const setObject = (patch: Partial<ForceWorld>) => play.patch({ ...patch, released: false });
+  const outcomeText = {
+    waiting: "Waiting above the water",
+    sinks: "Went down to the bottom",
+    floats: "Floats at the surface",
+    rises: "Pushed up and out of the water",
+    hangs: "Hangs from the spring balance",
+    drifts: "Stays exactly where it is",
+  }[outcome];
 
   return (
     <Investigation
       play={play}
       question={props.question}
       title="Underwater Force Laboratory"
-      mission="Release objects into the tank and watch the forces on them. Find out which force takes a sinking object to the bottom."
+      mission="Switch forces on and off, release the object and see what each force does to it. Then mark the force that makes an object sink."
       icon={Waves}
       live={
         <>
-          <Reading label="Gravity (down)" value={`${gravity} N`} tone="rose" />
-          <Reading label="Max buoyancy (up)" value={`${maxBuoyancy} N`} tone="teal" />
-          <Reading label="Density" value={`${density} kg/L`} />
-          <Reading label="Water" value={`${WATER_DENSITY} kg/L`} />
+          <Reading label="Object" value={`${density} kg/L`} />
+          <Reading label="Red arrow" value={world.enabled.gravitational ? `${gravity} N ↓` : "off"} tone="rose" />
+          <Reading label="Blue arrow (max)" value={world.enabled.buoyant ? `${maxBuoyancy} N ↑` : "off"} tone="teal" />
+          <Reading label="What happened" value={outcomeText} />
         </>
       }
     >
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <Lab3D camera={{ position: [0.4, 2.1, 4.6], fov: 44 }} readOnly={readOnly}>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_310px]">
+        <Lab3D camera={{ position: [0.8, 2.5, 3.8], fov: 44 }} readOnly={readOnly} orbit={{ target: [0, BENCH_Y + 0.95, 0], minDistance: 1.8, maxDistance: 7 }}>
+          <Studio shadowScale={8} />
+          <Floor />
+          <LabBench size={[3.2, 1.6]} height={BENCH_Y} />
           <Tank world={world} />
         </Lab3D>
 
         <div className="space-y-3">
+          <Panel title="Force switchboard">
+            <ul className="space-y-1.5">
+              {(Object.keys(FORCES) as ForceId[]).map((f) => (
+                <li key={f} className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-800">{FORCES[f].name}</span>
+                  <button
+                    type="button"
+                    disabled={ro}
+                    aria-pressed={world.enabled[f]}
+                    onClick={() => toggleForce(f)}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold border cursor-pointer disabled:opacity-40 ${
+                      world.enabled[f] ? "bg-emerald-50 border-emerald-300 text-emerald-800" : "bg-slate-50 border-slate-200 text-slate-500"
+                    }`}
+                  >
+                    {world.enabled[f] ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                    {world.enabled[f] ? "On" : "Off"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Panel>
           <Panel title="The object">
             <div className="space-y-3">
-              <Slider label="Mass" value={world.massKg} min={0.2} max={3} step={0.1} unit=" kg" disabled={ro} onChange={(v) => setObject({ massKg: +v.toFixed(1) })} />
-              <Slider label="Size (volume)" value={world.volumeL} min={0.5} max={2} step={0.1} unit=" L" disabled={ro} onChange={(v) => setObject({ volumeL: +v.toFixed(1) })} />
-              <p className="text-[11px] text-slate-500">
-                Gravity on it = mass × {G}. The most water can push up = its volume of water × {G}.
-              </p>
-            </div>
-          </Panel>
-          <Panel title="Experiment">
-            <div className="flex flex-wrap gap-1.5">
-              <Chip active={world.onSpring} disabled={ro} onClick={() => setObject({ onSpring: !world.onSpring })}>
-                <Anchor className="inline w-3 h-3 mr-1" />
-                {world.onSpring ? "Hanging on spring balance" : "Hang on spring balance"}
-              </Chip>
+              <Slider label="Mass" value={world.massKg} min={0.2} max={3} step={0.1} unit=" kg" disabled={ro} onChange={(v) => reset({ massKg: +v.toFixed(1) })} />
+              <Slider label="Size (volume)" value={world.volumeL} min={0.5} max={2} step={0.1} unit=" L" disabled={ro} onChange={(v) => reset({ volumeL: +v.toFixed(1) })} />
             </div>
             <button
               type="button"
               disabled={ro}
               onClick={() => play.patch({ released: !world.released })}
-              className="mt-2 w-full h-9 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
+              className="mt-3 w-full h-9 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
             >
-              <ArrowDownToLine className="w-4 h-4" /> {world.released ? "Lift object out" : "Release into the water"}
+              <ArrowDownToLine className="w-4 h-4" /> {world.released ? "Lift it back out" : "Release into the water"}
             </button>
+            <p className="mt-1 text-[10.5px] text-slate-500">g = {G} N per kg</p>
           </Panel>
+          <AnswerStation title="Cause of sinking" hint="Mark the force you think makes an object sink to the bottom.">
+            <div className="grid grid-cols-2 gap-1.5">
+              {(Object.keys(FORCES) as ForceId[]).map((f) => (
+                <Chip key={f} active={world.cause === f} disabled={ro} onClick={() => play.patch({ cause: world.cause === f ? null : f })} tone="violet">
+                  {FORCES[f].name}
+                </Chip>
+              ))}
+            </div>
+          </AnswerStation>
         </div>
       </div>
     </Investigation>

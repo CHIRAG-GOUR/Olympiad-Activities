@@ -2,6 +2,7 @@
 
 import React, { useCallback } from "react";
 import type { LucideIcon } from "lucide-react";
+import { Environment, Lightformer, ContactShadows } from "@react-three/drei";
 import type { Question } from "@/types/question";
 import { usePlay, type Derived } from "../imo6a-play/engine";
 import { Shell } from "../imo_interactive_g6-play/kit";
@@ -13,30 +14,24 @@ export { Btn, Gauge } from "../imo_interactive_g6-play/kit";
 
 /**
  * Binds one investigation's pure `evaluate` to the shared play engine:
- * world → evaluate → result → resolveOption → recorded option. The engine saves the
- * world after every change (restored on reload) and records the result only when the
- * student locks it in.
+ * world → evaluate → the student's answer → resolveOption → recorded option. The world is
+ * saved after every change (restored on reload); the answer is recorded when locked in.
  */
-export function useInvestigation<W>(
-  props: ActivityComponentProps,
-  initial: () => W,
-  evaluate: (w: W) => Evaluation
-) {
+export function useInvestigation<W>(props: ActivityComponentProps, initial: () => W, evaluate: (w: W) => Evaluation) {
   const { question } = props;
   const derive = useCallback(
     (world: W): Derived => {
       const ev = evaluate(world);
-      const optionId = resolveOption(question?.multipleChoiceConfig?.options, ev);
       return {
         value: ev.completed ? ev.derivedAnswer : undefined,
-        optionId,
+        optionId: resolveOption(question?.multipleChoiceConfig?.options, ev),
         note: ev.note,
         result: ev.result,
       };
     },
     [evaluate, question]
   );
-  const play = usePlay<W>({
+  return usePlay<W>({
     question,
     initial,
     derive,
@@ -45,12 +40,14 @@ export function useInvestigation<W>(
     onChange: props.onChange,
     readOnly: props.readOnly,
   });
-  return play;
 }
 
 type Play<W> = ReturnType<typeof useInvestigation<W>>;
 
-/** The frame every IGKO investigation sits in. */
+/**
+ * The frame every IGKO investigation sits in. The read-out states the student's answer in
+ * the world's own terms — never an option letter, never whether it is right.
+ */
 export function Investigation<W>({
   play,
   question,
@@ -59,7 +56,7 @@ export function Investigation<W>({
   icon,
   dim = "3D",
   live,
-  submitLabel = "Lock in result",
+  submitLabel = "Lock in my answer",
   children,
 }: {
   play: Play<W>;
@@ -84,14 +81,44 @@ export function Investigation<W>({
       badge="IGKO · Science & Technology · Interactive Investigation"
       submitLabel={submitLabel}
       live={live}
-      submitBlocked={
-        hasValue && !play.derived.optionId
-          ? "This result is not one of the answers in the paper. Keep investigating."
-          : undefined
-      }
+      showMappedOption={false}
+      answerHeading={{ live: "Your answer", locked: "Your answer is recorded" }}
+      // An answer the paper does not offer cannot be recorded; the note explains, neutrally.
+      submitBlocked={hasValue && !play.derived.optionId ? " " : undefined}
     >
       {children}
     </Shell>
+  );
+}
+
+/** Image-based studio lighting and soft grounded shadows, generated in the browser. */
+export function Studio({
+  shadowY = 0,
+  shadowScale = 14,
+  shadowOpacity = 0.4,
+  intensity = 1,
+  shadows = true,
+}: {
+  shadowY?: number;
+  shadowScale?: number;
+  shadowOpacity?: number;
+  intensity?: number;
+  shadows?: boolean;
+}) {
+  return (
+    <>
+      <Environment resolution={256} environmentIntensity={intensity}>
+        <Lightformer form="rect" intensity={2.2} position={[0, 6, -6]} scale={[12, 5, 1]} />
+        <Lightformer form="rect" intensity={1.1} position={[-6, 3, 1]} rotation-y={Math.PI / 2} scale={[10, 4, 1]} />
+        <Lightformer form="rect" intensity={1.1} position={[6, 3, 1]} rotation-y={-Math.PI / 2} scale={[10, 4, 1]} />
+        <Lightformer form="ring" intensity={1.6} position={[0, 7, 5]} scale={3.5} />
+        <Lightformer form="rect" intensity={1.0} position={[0, 2.5, 9]} rotation-y={Math.PI} scale={[14, 5, 1]} />
+        <Lightformer form="rect" intensity={0.5} position={[0, -4, 0]} rotation-x={Math.PI / 2} scale={[12, 12, 1]} color="#dbe4ff" />
+      </Environment>
+      {shadows && (
+        <ContactShadows position={[0, shadowY + 0.003, 0]} scale={shadowScale} blur={2.2} far={5} opacity={shadowOpacity} resolution={512} color="#0f172a" />
+      )}
+    </>
   );
 }
 
@@ -99,11 +126,12 @@ export function Investigation<W>({
 export function Lab3D({
   children,
   camera,
-  height = "clamp(260px, 46vw, 420px)",
+  height = "clamp(280px, 48vw, 460px)",
   background,
   controls = true,
   readOnly,
-  badge = "3D Lab · drag to look around",
+  badge = "3D lab · drag to look around",
+  orbit,
 }: {
   children: React.ReactNode;
   camera: { position: [number, number, number]; fov?: number };
@@ -112,15 +140,25 @@ export function Lab3D({
   controls?: boolean;
   readOnly?: boolean;
   badge?: string | null;
+  orbit?: { target?: [number, number, number]; minDistance?: number; maxDistance?: number; maxPolarAngle?: number };
 }) {
   return (
-    <Stage3D camera={camera} height={height} background={background} controls={controls} readOnly={readOnly} badge={badge}>
+    <Stage3D
+      camera={camera}
+      height={height}
+      background={background}
+      controls={controls}
+      readOnly={readOnly}
+      badge={badge}
+      lighting="studio"
+      orbit={orbit}
+    >
       {children}
     </Stage3D>
   );
 }
 
-/** A labelled group of DOM controls beside the 3D view. */
+/** A labelled group of investigation tools. */
 export function Panel({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <section className={`rounded-xl border border-slate-200 bg-white p-3 ${className}`}>
@@ -130,20 +168,37 @@ export function Panel({ title, children, className = "" }: { title: string; chil
   );
 }
 
-/** A toggle-style choice chip used for selecting objects in the world (not answers). */
+/**
+ * Where the answer is given: one deliberate action in the world. Visually set apart from
+ * the investigation tools so it is clear which action counts.
+ */
+export function AnswerStation({ title, hint, children, className = "" }: { title: string; hint: string; children: React.ReactNode; className?: string }) {
+  return (
+    <section className={`rounded-xl border-2 border-violet-300 bg-gradient-to-br from-violet-50 to-white p-3 ${className}`}>
+      <h4 className="text-[11px] font-black uppercase tracking-wider text-violet-700">{title}</h4>
+      <p className="text-[11px] text-violet-900/70 mb-2">{hint}</p>
+      {children}
+    </section>
+  );
+}
+
+/** A selectable object in the world (a tool, a specimen, a place) — never an answer letter. */
 export function Chip({
   active,
   disabled,
   onClick,
   children,
   title,
+  tone = "teal",
 }: {
   active?: boolean;
   disabled?: boolean;
   onClick?: () => void;
   children: React.ReactNode;
   title?: string;
+  tone?: "teal" | "violet";
 }) {
+  const on = tone === "violet" ? "bg-violet-600 text-white border-violet-600" : "bg-teal-600 text-white border-teal-600";
   return (
     <button
       type="button"
@@ -152,7 +207,7 @@ export function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-        active ? "bg-teal-600 text-white border-teal-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+        active ? on : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
       }`}
     >
       {children}

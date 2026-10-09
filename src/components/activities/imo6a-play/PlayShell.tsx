@@ -41,6 +41,13 @@ export interface PlayShellProps {
   live?: React.ReactNode;
   /** Extra condition that must hold before submitting, beyond having a value. */
   submitBlocked?: string;
+  /**
+   * Show which printed option the answer lands on. Papers answered only through their
+   * activities hide it: the student states an answer in the world's own terms.
+   */
+  showMappedOption?: boolean;
+  /** Heading over the live answer read-out. */
+  answerHeading?: { live: string; locked: string };
   children: React.ReactNode;
 }
 
@@ -59,6 +66,8 @@ export function PlayShell({
   submitLabel = "Submit answer",
   live,
   submitBlocked,
+  showMappedOption = true,
+  answerHeading = { live: "Answer your world produces right now", locked: "Answer recorded from your world" },
   children,
 }: PlayShellProps) {
   const hasValue = derived.value !== undefined && derived.value !== "";
@@ -132,22 +141,23 @@ export function PlayShell({
         <div className="min-w-0">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
             {locked ? <Lock className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
-            {locked ? "Answer recorded from your world" : "Answer your world produces right now"}
+            {locked ? answerHeading.locked : answerHeading.live}
           </div>
           {hasValue ? (
             <div className="flex flex-wrap items-baseline gap-2">
               <span className={`font-mono text-xl font-black break-all ${locked ? "text-emerald-800" : "text-violet-900"}`}>
                 {derived.value}
               </span>
-              {mapped ? (
-                <span className="text-[11px] font-bold text-slate-700 bg-white border border-slate-300 rounded px-1.5 py-0.5">
-                  {mapped}
-                </span>
-              ) : (
-                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5">
-                  matches none of the printed options
-                </span>
-              )}
+              {showMappedOption &&
+                (mapped ? (
+                  <span className="text-[11px] font-bold text-slate-700 bg-white border border-slate-300 rounded px-1.5 py-0.5">
+                    {mapped}
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5">
+                    matches none of the printed options
+                  </span>
+                ))}
             </div>
           ) : (
             <div className="text-sm font-semibold text-slate-500">{derived.note ?? "Work the world to produce an answer."}</div>

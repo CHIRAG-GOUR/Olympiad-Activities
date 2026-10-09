@@ -88,6 +88,13 @@ export interface Stage3DProps {
   className?: string;
   /** Read-only review renders at 1× — nothing moves, so the sharper pass is wasted. */
   readOnly?: boolean;
+  /**
+   * "studio": scenes that bring their own image-based lighting get a softer base rig, so
+   * metals and glass are lit by reflections rather than flat fill light.
+   */
+  lighting?: "default" | "studio";
+  /** Orbit target and limits, for scenes not centred on the origin. */
+  orbit?: { target?: [number, number, number]; minDistance?: number; maxDistance?: number; maxPolarAngle?: number };
 }
 
 export function Stage3D({
@@ -100,7 +107,10 @@ export function Stage3D({
   badge = "3D Studio",
   className = "",
   readOnly = false,
+  lighting = "default",
+  orbit,
 }: Stage3DProps) {
+  const studio = lighting === "studio";
   const [ok, setOk] = useState<boolean | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -138,17 +148,18 @@ export function Stage3D({
           >
             {background && <color attach="background" args={[background]} />}
 
-            <ambientLight intensity={0.75} />
-            <hemisphereLight intensity={0.55} groundColor="#e0e7ff" />
+            <ambientLight intensity={studio ? 0.18 : 0.75} />
+            <hemisphereLight intensity={studio ? 0.3 : 0.55} groundColor="#e0e7ff" />
             <directionalLight
               position={[10, 15, 10]}
-              intensity={1.2}
+              intensity={studio ? 1.1 : 1.2}
               castShadow
-              shadow-mapSize-width={1024}
-              shadow-mapSize-height={1024}
+              shadow-mapSize-width={studio ? 2048 : 1024}
+              shadow-mapSize-height={studio ? 2048 : 1024}
+              shadow-bias={-0.0004}
             />
             {/* Cool rim light, so edges read against the pale background. */}
-            <directionalLight position={[-10, 8, -5]} intensity={0.4} color="#818cf8" />
+            <directionalLight position={[-10, 8, -5]} intensity={studio ? 0.25 : 0.4} color="#818cf8" />
 
             <Suspense fallback={null}>{children}</Suspense>
 
@@ -160,7 +171,10 @@ export function Stage3D({
                 enablePan={false}
                 autoRotate={autoRotate && !reducedMotion}
                 autoRotateSpeed={1}
-                maxPolarAngle={Math.PI / 2 + 0.1}
+                maxPolarAngle={orbit?.maxPolarAngle ?? Math.PI / 2 + 0.1}
+                target={orbit?.target}
+                minDistance={orbit?.minDistance}
+                maxDistance={orbit?.maxDistance}
               />
             )}
           </Canvas>

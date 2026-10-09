@@ -38,8 +38,21 @@ const Q02 = lazyActivity(() => import("./q02_plasma").then((m) => ({ default: m.
 const Q03 = lazyActivity(() => import("./q03_lunar").then((m) => ({ default: m.IgkoQ03Lunar })));
 const Q04 = lazyActivity(() => import("./q04_force").then((m) => ({ default: m.IgkoQ04Force })));
 const Q05 = lazyActivity(() => import("./q05_imaging").then((m) => ({ default: m.IgkoQ05Imaging })));
+const Q06 = lazyActivity(() => import("./q06_raman").then((m) => ({ default: m.IgkoQ06Raman })));
+const Q07 = lazyActivity(() => import("./q07_milk").then((m) => ({ default: m.IgkoQ07Milk })));
+const Q08 = lazyActivity(() => import("./q08_reactor").then((m) => ({ default: m.IgkoQ08Reactor })));
+const Q09 = lazyActivity(() => import("./q09_botany").then((m) => ({ default: m.IgkoQ09Botany })));
+const Q10 = lazyActivity(() => import("./q10_energy").then((m) => ({ default: m.IgkoQ10Energy })));
+const Q11 = lazyActivity(() => import("./q11_observatory").then((m) => ({ default: m.IgkoQ11Observatory })));
+const Q12 = lazyActivity(() => import("./q12_museum").then((m) => ({ default: m.IgkoQ12Museum })));
+const Q13 = lazyActivity(() => import("./q13_thermal").then((m) => ({ default: m.IgkoQ13Thermal })));
+const Q14 = lazyActivity(() => import("./q14_dive").then((m) => ({ default: m.IgkoQ14Dive })));
+const Q15 = lazyActivity(() => import("./q15_motor").then((m) => ({ default: m.IgkoQ15Motor })));
 
-const BY_NUMBER: Record<number, ActivityComponentType> = { 1: Q01, 2: Q02, 3: Q03, 4: Q04, 5: Q05 };
+const BY_NUMBER: Record<number, ActivityComponentType> = {
+  1: Q01, 2: Q02, 3: Q03, 4: Q04, 5: Q05, 6: Q06, 7: Q07, 8: Q08,
+  9: Q09, 10: Q10, 11: Q11, 12: Q12, 13: Q13, 14: Q14, 15: Q15,
+};
 
 export const IGKO_G6_SCITECH_ACTIVITY_MAP: Record<string, ActivityComponentType> = Object.fromEntries(
   Object.entries(BY_NUMBER).flatMap(([n, C]) => {
