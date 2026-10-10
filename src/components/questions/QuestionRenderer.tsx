@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Question } from "@/types/question";
 import { getQuestionActivity } from "@/components/activities/ActivityRegistry";
 import { ActivityErrorBoundary } from "@/components/activities/ActivityErrorBoundary";
-import { FileText, Layers } from "lucide-react";
+import { FileText, Layers, Lightbulb } from "lucide-react";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
 import { OrderingQuestion } from "./OrderingQuestion";
 import { DragDropQuestion } from "./DragDropQuestion";
@@ -24,6 +24,8 @@ interface QuestionRendererProps {
   showMetadata?: boolean;
   activeView?: "activity" | "standard";
   onToggleView?: (view: "activity" | "standard") => void;
+  hintUnlocked?: boolean;
+  hintText?: string;
 }
 
 export function QuestionRenderer({
@@ -35,6 +37,8 @@ export function QuestionRenderer({
   showMetadata = true,
   activeView: controlledActiveView,
   onToggleView,
+  hintUnlocked = false,
+  hintText,
 }: QuestionRendererProps) {
   const [internalActiveView, setInternalActiveView] = useState<"activity" | "standard">("activity");
   const handleToggle = onToggleView || setInternalActiveView;
@@ -253,61 +257,96 @@ export function QuestionRenderer({
         </div>
       )}
 
-      {/* Prominent, Large Question Prompt Text */}
+      {/* Prominent Question Prompt Text */}
       <div className="space-y-1">
-        <h2 className="text-xl sm:text-2xl lg:text-[26px] font-extrabold text-[#182338] leading-snug tracking-tight">
+        <h2 className="text-lg sm:text-xl font-extrabold text-[#182338] leading-snug tracking-tight">
           {question.questionText}
         </h2>
       </div>
 
+      {/* Unlocked Hint Clue Banner */}
+      {hintUnlocked && hintText && (
+        <div className="bg-amber-50/95 border-2 border-amber-300 rounded-xl p-3 sm:p-3.5 text-amber-950 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-1">
+          <div className="p-1.5 bg-amber-200/90 rounded-lg text-amber-800 shrink-0 mt-0.5">
+            <Lightbulb className="w-4 h-4 fill-amber-500 text-amber-700" />
+          </div>
+          <div className="flex-1 space-y-0.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[11.5px] font-black uppercase tracking-wider text-amber-900">
+                Question Clue / Hint
+              </span>
+              <span className="text-[10.5px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                -{(question.marks || 1) >= 3 ? "1.5" : "0.5"} Mark{(question.marks || 1) >= 3 ? "s" : ""} Applied
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-slate-800 leading-relaxed">
+              {hintText}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Interactive Core Body */}
       <div className="pt-1">
         {BespokeActivityComponent && activeView === "activity" ? (
-          /* Keyed per question so each microworld mounts clean and tears its
-             animations / listeners down when the student navigates away. */
-          <ActivityErrorBoundary
-            key={`${question.id || question.questionId}:${activityKey}`}
-            questionId={question.id || question.questionId}
-            fallback={
-              activityOnly ? (
-                <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-xl text-sm text-amber-900 space-y-2">
-                  <p className="font-bold">This investigation stopped unexpectedly. Your saved work is safe.</p>
-                  <button
-                    type="button"
-                    onClick={() => setActivityKey((k) => k + 1)}
-                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs transition-colors"
-                  >
-                    Reload the investigation
-                  </button>
-                </div>
-              ) : (
-              <div className="space-y-3">
-                <div className="p-3.5 bg-amber-50 border-2 border-amber-200 rounded-xl text-xs text-amber-900 flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-bold">
-                    Interactive simulation switched to standard question view for stability.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleToggle("standard")}
-                    className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[11px] transition-colors"
-                  >
-                    View Standard Format
-                  </button>
-                </div>
-                {renderInteractionBody()}
-              </div>
-              )
-            }
-          >
-            <BespokeActivityComponent
+          <div className="space-y-3">
+            <ActivityErrorBoundary
+              key={`${question.id || question.questionId}:${activityKey}`}
               questionId={question.id || question.questionId}
-              question={question}
-              value={value}
-              activityState={activityState}
-              onChange={onChange}
-              readOnly={readOnly}
-            />
-          </ActivityErrorBoundary>
+              fallback={
+                activityOnly ? (
+                  <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-xl text-sm text-amber-900 space-y-2">
+                    <p className="font-bold">This investigation stopped unexpectedly. Your saved work is safe.</p>
+                    <button
+                      type="button"
+                      onClick={() => setActivityKey((k) => k + 1)}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs transition-colors"
+                    >
+                      Reload the investigation
+                    </button>
+                  </div>
+                ) : (
+                <div className="space-y-3">
+                  <div className="p-3.5 bg-amber-50 border-2 border-amber-200 rounded-xl text-xs text-amber-900 flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-bold">
+                      Interactive simulation switched to standard question view for stability.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggle("standard")}
+                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[11px] transition-colors"
+                    >
+                      View Standard Format
+                    </button>
+                  </div>
+                  {renderInteractionBody()}
+                </div>
+                )
+              }
+            >
+              <BespokeActivityComponent
+                questionId={question.id || question.questionId}
+                question={question}
+                value={value}
+                activityState={activityState}
+                onChange={onChange}
+                readOnly={readOnly}
+              />
+            </ActivityErrorBoundary>
+
+            {/* Options of all questions available and clearly visible directly below the activity */}
+            {question.multipleChoiceConfig && (
+              <div className="pt-2 border-t border-slate-200">
+                <MultipleChoiceQuestion
+                  question={question}
+                  value={value}
+                  onChange={onChange}
+                  readOnly={readOnly}
+                  isBelowActivity={true}
+                />
+              </div>
+            )}
+          </div>
         ) : (
           renderInteractionBody()
         )}

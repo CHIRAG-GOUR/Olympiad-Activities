@@ -176,7 +176,7 @@ export interface Question {
   chapter: string;
   topic: string;
   grade: number | string;
-  section?: "Logical Reasoning" | "Mathematical Reasoning" | "Everyday Mathematics" | "Achievers Section" | "Science & Technology";
+  section?: "Logical Reasoning" | "Mathematical Reasoning" | "Everyday Mathematics" | "Achievers Section" | "Science & Technology" | "India and the World";
   questionText: string;
   questionPromptHtml?: string;
   questionType: QuestionType;

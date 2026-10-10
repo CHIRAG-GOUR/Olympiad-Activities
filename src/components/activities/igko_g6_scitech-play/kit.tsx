@@ -57,6 +57,7 @@ export function Investigation<W>({
   dim = "3D",
   live,
   submitLabel = "Lock in my answer",
+  badge = "IGKO · Science & Technology · Interactive Investigation",
   children,
 }: {
   play: Play<W>;
@@ -67,6 +68,8 @@ export function Investigation<W>({
   dim?: "2D" | "3D";
   live?: React.ReactNode;
   submitLabel?: string;
+  /** The strip above the activity, naming the paper. */
+  badge?: string;
   children: React.ReactNode;
 }) {
   const hasValue = Boolean(play.derived.value);
@@ -78,7 +81,7 @@ export function Investigation<W>({
       title={title}
       mission={mission}
       icon={icon}
-      badge="IGKO · Science & Technology · Interactive Investigation"
+      badge={badge}
       submitLabel={submitLabel}
       live={live}
       showMappedOption={false}

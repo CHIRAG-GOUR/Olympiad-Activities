@@ -152,7 +152,7 @@ export function DiceLabActivity({ value, activityState, onChange, readOnly }: Ac
       readOnly={engine.readOnly}
     >
       <div className="grid gap-3 lg:grid-cols-[1fr_200px]">
-        <Stage className="min-h-[280px] flex items-center justify-center overflow-hidden">
+        <Stage className="min-h-[190px] sm:min-h-[210px] flex items-center justify-center overflow-hidden">
           <div
             onPointerDown={(e) => start(e, undefined)}
             className={`absolute inset-0 ${engine.readOnly ? "" : dragging ? "cursor-grabbing" : "cursor-grab"}`}

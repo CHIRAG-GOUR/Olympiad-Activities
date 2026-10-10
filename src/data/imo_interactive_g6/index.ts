@@ -457,6 +457,7 @@ export const IMO_INTERACTIVE_G6_EXAM: Exam = {
     passPercentage: 40,
     negativeMarkingEnabled: false,
     instructions: [
+      "Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 & half mark for taking a hint",
       "This examination contains 50 questions across 4 sections.",
       "Section A: Logical Reasoning (Q1–Q15, 1 mark each).",
       "Section B: Mathematical Reasoning (Q16–Q35, 1 mark each).",

@@ -92,8 +92,8 @@ function q(
       paper: "SOF IGKO Class 6 — Science & Technology (Interactive)",
       examId: "igko-class6-scitech-interactive",
       questionNumber: n,
-      /** Answered only through the activity: the plain-options view is never offered. */
-      activityOnly: true,
+      /** Answered through the activity or through the options below. */
+      activityOnly: false,
       activityType: activity.type,
       activityConfig: activity.config ?? {},
     },
@@ -254,8 +254,9 @@ export const IGKO_G6_SCITECH_EXAM: Exam = {
     passPercentage: 40,
     negativeMarkingEnabled: false,
     instructions: [
+      "Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 & half mark for taking a hint",
       `This paper has ${ids.length} Science & Technology questions, 1 mark each. There is no negative marking.`,
-      "Each question is an interactive investigation. There are no option buttons: run the experiment, and the result it produces becomes your answer.",
+      "Each question is an interactive investigation. You can solve it through the activity or choose options directly below.",
       "When your investigation gives a result, press the activity's lock-in button to record it. Changing the experiment afterwards withdraws the answer until you lock it in again.",
       "Your work is saved continuously. If the page reloads, every activity returns exactly as you left it.",
       "You can move between questions freely using the question palette.",

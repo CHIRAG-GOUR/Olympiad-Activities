@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Clock, Wifi, WifiOff, CloudUpload, AlertTriangle } from "lucide-react";
+import { Clock, Wifi, WifiOff, CloudUpload, AlertTriangle, Maximize2, Minimize2 } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 interface ExamHeaderProps {
@@ -12,6 +12,8 @@ interface ExamHeaderProps {
   timeRemainingSeconds: number;
   /** Where the candidate's work is saved right now — see useExamSyncStatus. */
   sync?: { tone: "ok" | "pending" | "offline" | "error"; label: string };
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export function ExamHeader({
@@ -21,6 +23,8 @@ export function ExamHeader({
   candidateId,
   timeRemainingSeconds,
   sync,
+  isFullscreen,
+  onToggleFullscreen,
 }: ExamHeaderProps) {
   const isCritical = timeRemainingSeconds <= 180;
 
@@ -98,6 +102,19 @@ export function ExamHeader({
               <span className="text-[#2468B2] font-bold">{formatTime(timeRemainingSeconds)}</span>
             </div>
           </div>
+
+          {/* Optional Fullscreen Toggle */}
+          {onToggleFullscreen && (
+            <button
+              type="button"
+              onClick={onToggleFullscreen}
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold border border-white/20"
+            >
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{isFullscreen ? "Exit Full" : "Fullscreen"}</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

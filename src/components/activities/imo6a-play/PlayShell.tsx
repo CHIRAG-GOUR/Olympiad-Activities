@@ -66,8 +66,8 @@ export function PlayShell({
   submitLabel = "Submit answer",
   live,
   submitBlocked,
-  showMappedOption = true,
-  answerHeading = { live: "Answer your world produces right now", locked: "Answer recorded from your world" },
+  showMappedOption = false,
+  answerHeading = { live: "Current Workspace Output", locked: "Answer recorded from your world" },
   children,
 }: PlayShellProps) {
   const hasValue = derived.value !== undefined && derived.value !== "";
@@ -148,7 +148,7 @@ export function PlayShell({
               <span className={`font-mono text-xl font-black break-all ${locked ? "text-emerald-800" : "text-violet-900"}`}>
                 {derived.value}
               </span>
-              {showMappedOption &&
+              {showMappedOption && readOnly &&
                 (mapped ? (
                   <span className="text-[11px] font-bold text-slate-700 bg-white border border-slate-300 rounded px-1.5 py-0.5">
                     {mapped}
@@ -160,9 +160,9 @@ export function PlayShell({
                 ))}
             </div>
           ) : (
-            <div className="text-sm font-semibold text-slate-500">{derived.note ?? "Work the world to produce an answer."}</div>
+            <div className="text-sm font-semibold text-slate-500">Interact with the simulation above to manipulate values.</div>
           )}
-          {hasValue && derived.note && <div className="text-[11px] text-slate-500 mt-0.5">{derived.note}</div>}
+          {readOnly && hasValue && derived.note && <div className="text-[11px] text-slate-500 mt-0.5">{derived.note}</div>}
           {submitBlocked && hasValue && !locked && (
             <div className="text-[11px] font-semibold text-amber-700 mt-0.5">{submitBlocked}</div>
           )}

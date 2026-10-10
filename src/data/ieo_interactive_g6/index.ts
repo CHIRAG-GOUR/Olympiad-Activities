@@ -511,6 +511,7 @@ export const IEO_INTERACTIVE_G6_EXAM: Exam = {
     passPercentage: 40,
     negativeMarkingEnabled: false,
     instructions: [
+      "Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 & half mark for taking a hint",
       "This examination contains 50 questions across 6 sections.",
       "Section 1: Word & Structure Knowledge (Q1–Q25, 1 mark each).",
       "Section 2: Spelling (Q26, 1 mark).",

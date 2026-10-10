@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, RotateCcw, Send, X, MousePointerClick, LayoutGrid } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, RotateCcw, Send, X, MousePointerClick, LayoutGrid, Lightbulb } from "lucide-react";
 
 /**
  * Plain-language guide to every control on the examination screen: the navigation bar,
@@ -153,6 +153,18 @@ export function ExamButtonGuide({ open, onClose }: { open: boolean; onClose: () 
                 <b className="text-slate-900">Time Left</b>: the paper submits itself when the clock reaches zero. It turns red in the last three minutes.
               </li>
             </ul>
+          </section>
+
+          <section className="bg-rose-50/80 border-2 border-rose-300 rounded-xl p-3.5 space-y-2">
+            <h4 className="text-[12px] font-black uppercase tracking-wider text-rose-800 flex items-center gap-1.5">
+              <Lightbulb className="w-4 h-4 text-rose-600 fill-rose-500" /> Hints &amp; Marking Rule
+            </h4>
+            <div className="text-rose-600 font-extrabold text-[13.5px] leading-snug">
+              Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 &amp; half mark for taking a hint
+            </div>
+            <p className="text-xs text-rose-800 leading-relaxed font-semibold">
+              You can unlock a hint using the 💡 button in the question toolbar. Up to 4 hints may be used across the entire examination. For 1-mark questions, using a hint gives only 1/2 mark (-0.5 deduction). For 3-mark questions, using a hint cuts 1 &amp; half marks (-1.5 deduction).
+            </p>
           </section>
         </div>
 

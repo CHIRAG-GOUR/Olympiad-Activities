@@ -24,11 +24,11 @@ test("the paper is a real exam in the normal exam system", () => {
   assert.equal(IGKO_G6_SCITECH_EXAM.totalQuestions, IGKO_G6_SCITECH_EXAM.questionIds.length);
 });
 
-test("every question in the paper has its activity and never offers option buttons", () => {
+test("every question in the paper has its activity and offers selectable options", () => {
   for (const q of IGKO_G6_SCITECH_QUESTIONS) {
     assert.ok(IGKO_G6_SCITECH_ACTIVITY_MAP[q.id], `${q.id} has no activity`);
     assert.ok(IGKO_G6_SCITECH_ACTIVITY_MAP[q.questionId], `${q.questionId} has no activity`);
-    assert.equal(q.customConfig?.activityOnly, true);
+    assert.equal(q.customConfig?.activityOnly, false);
   }
 });
 

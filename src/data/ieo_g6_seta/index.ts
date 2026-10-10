@@ -490,6 +490,7 @@ export const IEO_G6_SETA_EXAM: Exam = {
     passPercentage: 40,
     negativeMarkingEnabled: false,
     instructions: [
+      "Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 & half mark for taking a hint",
       "This examination contains 50 questions across 5 sections totaling 60 marks.",
       "Section 1–4 questions carry 1 mark each; Achievers Section (Q46–Q50) questions carry 3 marks each.",
       "Every question is solved through interactive 3D manipulation, puzzle assembly, or contextual deduction.",

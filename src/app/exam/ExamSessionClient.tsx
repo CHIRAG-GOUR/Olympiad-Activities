@@ -19,7 +19,8 @@ import { hasBespokeActivity } from "@/components/activities/ActivityRegistry";
 import { StatusPanel } from "@/components/feedback/StatusPanel";
 import { AppLoading } from "@/components/auth/AppLoading";
 import { useExamSyncStatus } from "@/hooks/useExamSyncStatus";
-import { ShieldAlert, ArrowRight, ArrowLeft, BookOpen, RotateCcw, History, Check, Lock, Maximize, EyeOff } from "lucide-react";
+import { ShieldAlert, ArrowRight, ArrowLeft, BookOpen, RotateCcw, History, Check, Lock, Maximize, EyeOff, Lightbulb } from "lucide-react";
+import { getQuestionHint } from "@/lib/exam/hints";
 import { useAuth } from "@/context/AuthContext";
 import { ExamLockService } from "@/services/exam/ExamLockService";
 import { ROLE_PREFIX } from "@/lib/auth/sections";
@@ -113,6 +114,8 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   const [questionView, setQuestionView] = useState<"activity" | "standard">("activity");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState<string[]>([]);
+  const [hintModalTarget, setHintModalTarget] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [lockVersion, setLockVersion] = useState(0);
@@ -159,6 +162,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     visitedIds: new Set<string>(),
     markedIds: new Set<string>(),
     timeSpentMap: {} as Record<string, number>,
+    hintsUsed: [] as string[],
     candidateName: "",
     schoolName: "",
     version: 0,
@@ -176,6 +180,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     visitedIds,
     markedIds,
     timeSpentMap,
+    hintsUsed,
     candidateName,
     schoolName,
   };
@@ -217,6 +222,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
       }),
       totalTimeSeconds: (s.exam.durationMinutes || 60) * 60,
       status: "in_progress",
+      hintsUsed: s.hintsUsed || [],
       version: s.version,
       integrity: s.integrity,
       questionOrder: s.questions.map((qq) => qq.id),
@@ -238,6 +244,10 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   const submittingRef = useRef(false);
   /** Set while the page itself leaves full screen (on submit), so that is not logged. */
   const leavingFullscreenRef = useRef(false);
+  /** Track if the student ever chose to enter full screen, so we only track exits if they did. */
+  const hasEverEnteredFullscreenRef = useRef(false);
+  /** Startup grace period (timestamp) to ignore browser startup blur/visibility fluctuations. */
+  const startupGraceRef = useRef<number>(0);
 
   const finalise = useCallback(
     async (session: ExamSessionState, paper: Exam, paperQuestions: Question[], reason: "normal" | "auto_timeout") => {
@@ -257,7 +267,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
         document.exitFullscreen().catch(() => {});
       }
       const outcome = await submitExam({
-        session,
+        session: { ...session, hintsUsed: live.current.hintsUsed || hintsUsed },
         exam: paper,
         // Scored in the paper's printed order, so Q12 is the same question for every student.
         questions: restorePaperOrder(paperQuestions, paper.questionIds || []),
@@ -433,10 +443,10 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
 
   /* ── Start / resume ──────────────────────────────────────── */
 
-  /** The paper as this sitting shows it: shuffled per candidate, printed order for staff. */
+  /** The paper as this sitting shows it: shuffled per candidate (if configured), printed order for staff or unshuffled papers. */
   const orderFor = useCallback(
     (sittingId: string, paper: Exam | null, printed: Question[]) => {
-      if (isStaff) return printed;
+      if (isStaff || !paper?.rules?.shuffleQuestions) return printed;
       const sectionIndex = new Map<string, number>();
       (paper?.sections || []).forEach((sec, i) => (sec.questionIds || []).forEach((id) => sectionIndex.set(id, i)));
       return orderForSitting(printed, sittingId, (q) =>
@@ -447,6 +457,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
   );
 
   const enterRunning = useCallback((session: ExamSessionState, printed: Question[]) => {
+    startupGraceRef.current = Date.now() + 5000;
     const paperQuestions = orderFor(session.sessionId, live.current.exam, printed);
     setQuestions(paperQuestions);
     const restoredIntegrity = session.integrity || EMPTY_INTEGRITY;
@@ -471,6 +482,8 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     setVisitedIds(new Set([...(session.visitedQuestions || []), paperQuestions[idx]?.id].filter(Boolean) as string[]));
     setMarkedIds(new Set(session.markedForReview || []));
     setTimeSpentMap(session.timeSpentMap || {});
+    setHintsUsed(session.hintsUsed || []);
+    live.current.hintsUsed = session.hintsUsed || [];
     setTimeRemainingSeconds(ExamPersistenceService.calculateTrueRemainingTime(session));
     live.current.version = session.version || 0;
     setPhase({ kind: "running" });
@@ -498,8 +511,6 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     }
     setStarting(true);
     setStartError(null);
-    // Full screen needs the click that started the paper, so it is requested first.
-    if (!isStaff) enterFullscreen();
     try {
       const sittingId = ExamPersistenceService.generateSessionId(exam.id, uid, sitting.next);
       const ordered = orderFor(sittingId, exam, paperQuestionsRef.current);
@@ -525,6 +536,15 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     }
   };
 
+  const toggleFullscreen = useCallback(() => {
+    if (!fullscreenSupported()) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      enterFullscreen();
+    }
+  }, []);
+
   /* ── Autosave ────────────────────────────────────────────── */
 
   // Any answer, navigation or flag change is written to this device within ~0.5s.
@@ -532,7 +552,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     if (!running) return;
     const t = setTimeout(() => saveNow(), 500);
     return () => clearTimeout(t);
-  }, [running, answers, activityStates, currentIndex, visitedIds, markedIds, saveNow]);
+  }, [running, answers, activityStates, hintsUsed, currentIndex, visitedIds, markedIds, saveNow]);
 
   // Time-on-question changes every second; it is saved with the next change or every 15s.
   useEffect(() => {
@@ -585,6 +605,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     };
 
     const onVisibility = () => {
+      if (Date.now() < startupGraceRef.current) return;
       if (document.visibilityState === "hidden") {
         lastHiddenAt = Date.now();
         record("tab_hidden");
@@ -593,8 +614,10 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     // Switching to another window keeps the tab "visible" but takes focus; switching tabs
     // fires both events, so a blur is only counted when no tab switch accompanies it.
     const onBlur = () => {
+      if (Date.now() < startupGraceRef.current) return;
       if (blurTimer) clearTimeout(blurTimer);
       blurTimer = setTimeout(() => {
+        if (Date.now() < startupGraceRef.current) return;
         if (document.visibilityState === "visible" && Date.now() - lastHiddenAt > 1500 && !document.hasFocus()) {
           record("window_blur");
         }
@@ -603,10 +626,14 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     const onFullscreen = () => {
       const inFull = Boolean(document.fullscreenElement);
       setIsFullscreen(inFull);
-      if (!inFull && !leavingFullscreenRef.current) record("fullscreen_exit");
+      if (inFull) {
+        hasEverEnteredFullscreenRef.current = true;
+      } else if (hasEverEnteredFullscreenRef.current && !leavingFullscreenRef.current && Date.now() > startupGraceRef.current) {
+        record("fullscreen_exit");
+      }
     };
 
-    setIsFullscreen(!fullscreenSupported() || Boolean(document.fullscreenElement));
+    setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("blur", onBlur);
     document.addEventListener("fullscreenchange", onFullscreen);
@@ -746,6 +773,38 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
     },
     [currentQuestionId, recordAnswer]
   );
+
+  const handleRequestHint = useCallback(
+    (questionId: string) => {
+      if (!questionId) return;
+      if (hintsUsed.includes(questionId)) {
+        return; // already unlocked
+      }
+      if (hintsUsed.length >= 4) {
+        alert("Maximum limit reached: Only 4 hints can be used across the entire examination.");
+        return;
+      }
+      setHintModalTarget(questionId);
+    },
+    [hintsUsed]
+  );
+
+  const confirmUnlockHint = useCallback(() => {
+    if (!hintModalTarget) return;
+    if (hintsUsed.includes(hintModalTarget)) {
+      setHintModalTarget(null);
+      return;
+    }
+    if (hintsUsed.length >= 4) {
+      alert("Maximum limit reached: Only 4 hints can be used across the entire examination.");
+      setHintModalTarget(null);
+      return;
+    }
+    const nextHints = [...hintsUsed, hintModalTarget];
+    setHintsUsed(nextHints);
+    live.current.hintsUsed = nextHints;
+    setHintModalTarget(null);
+  }, [hintModalTarget, hintsUsed]);
 
   /* ── Sections ────────────────────────────────────────────── */
 
@@ -1131,15 +1190,27 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
                 </div>
               </div>
 
-              <div className="bg-amber-50/70 p-4 rounded-xl border border-amber-200 text-xs text-slate-800 space-y-2">
+              <div className="bg-amber-50/70 p-4 rounded-xl border border-amber-200 text-xs text-slate-800 space-y-2.5">
                 <div className="font-bold text-amber-900 flex items-center gap-1.5 uppercase tracking-wider">
                   <ShieldAlert className="w-4 h-4 text-amber-700" /> Examination Instructions
                 </div>
+                <div className="p-2.5 bg-rose-50 border-2 border-rose-300 rounded-lg text-rose-600 font-extrabold text-[13px] leading-snug flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 &amp; half mark for taking a hint</span>
+                </div>
                 <ul className="list-disc pl-5 space-y-1 text-slate-700">
-                  <li>The timer starts when you press Start and keeps running even if you close this page.</li>
-                  <li>Use <strong>Save &amp; Next</strong> to confirm answers, or <strong>Save &amp; Mark for Review</strong> to flag a question while keeping its answer.</li>
-                  <li>Every answer is saved automatically. If your connection drops or the page closes, open the paper again to continue where you left off.</li>
-                  <li>The paper is submitted automatically when time runs out. You can submit only once.</li>
+                  {exam.rules?.instructions && exam.rules.instructions.length > 0 ? (
+                    exam.rules.instructions
+                      .filter((i) => !i.includes("hints can be used"))
+                      .map((instr, idx) => <li key={idx}>{instr}</li>)
+                  ) : (
+                    <>
+                      <li>The timer starts when you press Start and keeps running even if you close this page.</li>
+                      <li>Use <strong>Save &amp; Next</strong> to confirm answers, or <strong>Save &amp; Mark for Review</strong> to flag a question while keeping its answer.</li>
+                      <li>Every answer is saved automatically. If your connection drops or the page closes, open the paper again to continue where you left off.</li>
+                      <li>The paper is submitted automatically when time runs out. You can submit only once.</li>
+                    </>
+                  )}
                 </ul>
               </div>
 
@@ -1172,27 +1243,6 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
 
   return (
     <div className="h-dvh w-full bg-[#F4F7FB] flex flex-col overflow-hidden select-none font-sans">
-      {!isStaff && !isFullscreen && fullscreenSupported() && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
-            <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto">
-              <Maximize className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-bold text-slate-900">Return to full screen to continue</h2>
-            <p className="text-sm text-slate-600">
-              This examination runs in full screen. Leaving it is recorded and shown to your teacher
-              {totalFocusEvents > 0 ? ` (${totalFocusEvents} so far)` : ""}. Your answers and time are safe.
-            </p>
-            <button
-              type="button"
-              onClick={enterFullscreen}
-              className="w-full h-11 rounded-xl bg-[#2468B2] hover:bg-[#1C5190] text-white font-bold text-sm cursor-pointer"
-            >
-              Return to full screen
-            </button>
-          </div>
-        </div>
-      )}
       {!isStaff && focusWarning && totalFocusEvents > 0 && (
         <div
           role="alert"
@@ -1218,6 +1268,8 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
         candidateId={rollNumber}
         timeRemainingSeconds={timeRemainingSeconds}
         sync={sync}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
       />
 
       <main className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
@@ -1272,13 +1324,54 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
                   <span className="text-slate-600 font-semibold">{currentSection.title}</span>
                 </div>
 
-                <div className="flex items-center gap-2.5 font-mono">
+                <div className="flex items-center gap-2 font-mono flex-wrap">
                   <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                     Right: +{currentQuestion?.marks || 1}.00
                   </span>
                   <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     Negative: -{currentQuestion?.negativeMarks || 0}.00
                   </span>
+
+                  {/* Hint Button with remaining counter */}
+                  {currentQuestion && (() => {
+                    const qMarks = currentQuestion.marks || 1;
+                    const isAchiever = qMarks >= 3;
+                    const hintCostStr = isAchiever ? "1.5" : "0.5";
+                    const isUnlocked = hintsUsed.includes(currentQuestion.id);
+
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleRequestHint(currentQuestion.id)}
+                        className={`px-2.5 py-0.5 text-[11px] font-sans font-bold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer shadow-subtle ${
+                          isUnlocked
+                            ? "bg-amber-100 text-amber-900 border-amber-300 ring-1 ring-amber-300"
+                            : hintsUsed.length < 4
+                            ? "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300"
+                            : "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-75"
+                        }`}
+                        title={
+                          isUnlocked
+                            ? `Hint unlocked (-${hintCostStr} marks applied)`
+                            : `${4 - hintsUsed.length} hints remaining (-${hintCostStr} mark on this question)`
+                        }
+                      >
+                        <Lightbulb
+                          className={`w-3.5 h-3.5 ${
+                            isUnlocked
+                              ? "text-amber-600 fill-amber-500"
+                              : "text-amber-600"
+                          }`}
+                        />
+                        <span>
+                          {isUnlocked
+                            ? `Hint Unlocked (-${hintCostStr})`
+                            : `Hint (${4 - hintsUsed.length}/4 left)`}
+                        </span>
+                      </button>
+                    );
+                  })()}
+
                   {currentQuestion &&
                     !currentQuestion.customConfig?.activityOnly &&
                     (hasBespokeActivity(currentQuestion.id) || hasBespokeActivity(currentQuestion.questionId)) && (
@@ -1306,7 +1399,7 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
                 </div>
               </div>
 
-              <div ref={questionScrollRef} className="p-4 sm:p-5 flex-1 space-y-4 lg:min-h-0 lg:overflow-y-auto">
+              <div ref={questionScrollRef} className="p-3 sm:p-4.5 flex-1 space-y-3 lg:min-h-0 lg:overflow-y-auto">
                 {currentQuestion ? (
                   // Keyed per question: every question mounts its own renderer, so no
                   // component state can carry over from the previous question.
@@ -1320,6 +1413,8 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
                     showMetadata={false}
                     activeView={questionView}
                     onToggleView={setQuestionView}
+                    hintUnlocked={hintsUsed.includes(currentQuestion.id)}
+                    hintText={getQuestionHint(currentQuestion)}
                   />
                 ) : (
                   <div className="p-8 text-center text-slate-400">Question not loaded.</div>
@@ -1386,6 +1481,73 @@ export default function ExamSessionClient({ examId }: { examId: string }) {
       )}
 
       <ExamButtonGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      {hintModalTarget && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-2xl max-w-md w-full p-5 sm:p-6 space-y-4">
+            {(() => {
+              const targetQ = questions.find((q) => q.id === hintModalTarget) || currentQuestion;
+              const qMarks = targetQ?.marks || 1;
+              const isAchiever = qMarks >= 3;
+              const hintCostStr = isAchiever ? "1.5" : "0.5";
+
+              return (
+                <>
+                  <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
+                    <div className="p-2.5 bg-amber-100 rounded-xl text-amber-700 shrink-0">
+                      <Lightbulb className="w-6 h-6 fill-amber-500 text-amber-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 leading-tight">Unlock Question Hint?</h3>
+                      <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                        Question #{currentIndex + 1} • <span className="font-bold text-slate-700">{qMarks} Mark{qMarks > 1 ? "s" : ""}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-rose-50 border-2 border-rose-300 rounded-xl text-rose-600 font-extrabold text-[13px] leading-snug flex items-center gap-2">
+                    <span className="text-base shrink-0">⚠️</span>
+                    <span>Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 &amp; half mark for taking a hint</span>
+                  </div>
+
+                  <div className="text-xs text-slate-700 leading-relaxed space-y-2 font-medium bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <p>
+                      You currently have <strong className="text-slate-950 font-black">{4 - hintsUsed.length}</strong> of 4 hints remaining for this exam.
+                    </p>
+                    {isAchiever ? (
+                      <p>
+                        This question is worth <strong className="text-slate-900 font-bold">3 marks</strong>. Unlocking a hint will <strong className="text-rose-700 font-extrabold">cut 1 &amp; half marks (-1.5)</strong> from it, so you can earn at most <strong>1.5 marks</strong>.
+                      </p>
+                    ) : (
+                      <p>
+                        This question is worth <strong className="text-slate-900 font-bold">1 mark</strong>. Unlocking a hint means you <strong className="text-rose-700 font-extrabold">will only get 1/2 mark (0.5)</strong> if answered correctly (-0.5 deduction).
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setHintModalTarget(null)}
+                      className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmUnlockHint}
+                      className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Lightbulb className="w-3.5 h-3.5 fill-white" />
+                      Unlock Hint (-{hintCostStr} Mark{isAchiever ? "s" : ""})
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {(showConfirmModal || submitState.kind !== "idle") && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">

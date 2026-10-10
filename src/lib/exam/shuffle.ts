@@ -56,14 +56,9 @@ export function canShuffleOptions(question: Question): boolean {
   return !options.some((o) => POSITIONAL_OPTION.test(`${o.text ?? ""} ${o.subtext ?? ""}`));
 }
 
-/** The question with its answer options in this sitting's order. Letters stay with their option. */
-export function shuffleOptions(question: Question, seed: string): Question {
-  if (!canShuffleOptions(question)) return question;
-  const config = question.multipleChoiceConfig!;
-  return {
-    ...question,
-    multipleChoiceConfig: { ...config, options: seededShuffle(config.options, `${seed}|opt|${question.id}`) },
-  };
+/** Options always remain in canonical A, B, C, D order. */
+export function shuffleOptions(question: Question, _seed: string): Question {
+  return question;
 }
 
 /**

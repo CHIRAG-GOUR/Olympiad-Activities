@@ -273,7 +273,7 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
               {teacherRemark(summary.percentage)}
             </p>
 
-            <div className="flex items-center justify-center gap-6 mt-4 text-xs font-bold text-[#182338]">
+            <div className="flex items-center justify-center gap-4 sm:gap-6 mt-4 text-xs font-bold text-[#182338] flex-wrap">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
                 <span>Correct:</span>
@@ -289,6 +289,15 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
                 <span>Unanswered:</span>
                 <strong className="font-mono text-[#667085] font-extrabold">{unansweredCount}</strong>
               </div>
+              {Boolean((attempt?.hintsCount ?? report?.hintsCount ?? 0) > 0) && (
+                <div className="flex items-center gap-1.5 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <span>Hints:</span>
+                  <strong className="font-mono text-rose-700 font-extrabold">
+                    {attempt?.hintsCount ?? report?.hintsCount} (-{attempt?.hintPenalty ?? report?.hintPenalty} marks)
+                  </strong>
+                </div>
+              )}
             </div>
           </div>
 
@@ -314,6 +323,15 @@ export default function ExamResultClient({ attemptId }: { attemptId: string }) {
               <strong className="text-lg font-mono font-black text-[#182338] block">{timeSpentMins} min</strong>
             </div>
           </div>
+
+          {Boolean((attempt?.hintsCount ?? report?.hintsCount ?? 0) > 0) && (
+            <div className="max-w-2xl mx-auto mt-3 p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-center text-xs text-amber-900 font-semibold flex items-center justify-center gap-2">
+              <span>💡</span>
+              <span>
+                <strong>{attempt?.hintsCount ?? report?.hintsCount} hint{(attempt?.hintsCount ?? report?.hintsCount) === 1 ? "" : "s"}</strong> used during this exam ({attempt?.hintPenalty ?? report?.hintPenalty} marks deducted: 0.5 for 1-mark questions, 1.5 for 3-mark questions).
+              </span>
+            </div>
+          )}
 
           {isStaff && focus && (
             <p

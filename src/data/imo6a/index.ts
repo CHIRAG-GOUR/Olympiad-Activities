@@ -48,6 +48,7 @@ export const IMO6A_EXAM: Exam = {
     passPercentage: 40,
     negativeMarkingEnabled: false,
     instructions: [
+      "Only 4 hints can be used: 1-mark questions will only get 1/2 mark, and 3-mark questions cut 1 & half mark for taking a hint",
       "The question paper comprises four sections: Logical Reasoning (15 questions), Mathematical Reasoning (20 questions), Everyday Mathematics (10 questions) and Achievers Section (5 questions).",
       "Each question in the Achievers Section carries 3 marks, whereas all other questions carry 1 mark each.",
       "All questions are compulsory. There is no negative marking. Use of a calculator is not permitted.",

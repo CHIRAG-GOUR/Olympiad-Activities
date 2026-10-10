@@ -83,6 +83,7 @@ export function submitExam(input: SubmitInput): Promise<SubmitOutcome> {
         submissionType: session.submissionType || input.submissionType,
         attemptId,
         attemptNumber,
+        hintsUsed: session.hintsUsed || input.session.hintsUsed || [],
       });
       attempt = {
         ...result.attempt,

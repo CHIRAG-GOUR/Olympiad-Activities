@@ -21,6 +21,8 @@ export interface ScoreEngineInput {
    * it makes submission idempotent: a retry produces the same attempt, never a second one.
    */
   attemptId?: string;
+  /** Question IDs where hints were unlocked during the exam (costs -1 mark each, max 4). */
+  hintsUsed?: string[];
 }
 
 export interface ScoreEngineResult {
@@ -35,6 +37,7 @@ export function computeExamAttemptScore(input: ScoreEngineInput): ExamAttempt {
 
 export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEngineResult {
   const { exam, questions, answers, timeSpentMap, student, device, startedAt, submittedAt, submissionType = "normal" } = input;
+  const hintsUsed = input.hintsUsed || [];
 
   let totalMarksAwarded = 0;
   let maximumPossibleMarks = 0;
@@ -120,7 +123,6 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
       sectionAggregates[sectionTitle] = { marksAwarded: 0, maxMarks: 0, total: 0, correct: 0 };
     }
     sectionAggregates[sectionTitle].maxMarks += maxMarks;
-    sectionAggregates[sectionTitle].marksAwarded += Math.max(0, outcome.marksAwarded);
     sectionAggregates[sectionTitle].total += 1;
     if (outcome.isCorrect) {
       sectionAggregates[sectionTitle].correct += 1;
@@ -143,7 +145,6 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
     }
     topicAggregates[topicKey].total += 1;
     topicAggregates[topicKey].maxMarks += maxMarks;
-    topicAggregates[topicKey].marksAwarded += Math.max(0, outcome.marksAwarded);
     if (isAttempted) topicAggregates[topicKey].attempted += 1;
     if (outcome.isCorrect) topicAggregates[topicKey].correct += 1;
     if (status === "INCORRECT") topicAggregates[topicKey].wrong += 1;
@@ -155,6 +156,16 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
       if (outcome.isCorrect) difficultyAggregates[diff].correct += 1;
     }
 
+    const isHintUsed = hintsUsed.includes(q.id);
+    const qHintPenalty = isHintUsed ? (maxMarks >= 3 ? 1.5 : 0.5) : 0;
+    const effectiveQuestionMarks = outcome.isCorrect
+      ? Math.max(0, Math.round((maxMarks - qHintPenalty) * 10) / 10)
+      : 0;
+
+    // Section Aggregates marks
+    sectionAggregates[sectionTitle].marksAwarded += effectiveQuestionMarks;
+    topicAggregates[topicKey].marksAwarded += effectiveQuestionMarks;
+
     const studentAnswerFormatted = formatStudentAnswerSummary(q, payload?.answer);
     const correctAnswerFormatted = outcome.correctAnswerSummary || getCorrectAnswerSummary(q);
 
@@ -164,13 +175,15 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
       questionType: q.questionType,
       sectionTitle: q.section,
       maxMarks,
-      marksAwarded: outcome.marksAwarded,
+      marksAwarded: effectiveQuestionMarks,
       isCorrect: outcome.isCorrect,
       isPartial: outcome.isPartial,
       studentAnswer: payload?.answer ?? null,
       correctAnswerSummary: correctAnswerFormatted,
       explanation: q.explanation,
       timeSpentSeconds: timeSpent,
+      hintUsed: isHintUsed,
+      hintPenalty: qHintPenalty,
     });
 
     questionReports.push({
@@ -184,16 +197,34 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
       topic: q.topic || "General Topic",
       difficulty: q.difficulty || "MEDIUM",
       maxMarks,
-      marksAwarded: outcome.marksAwarded,
+      marksAwarded: effectiveQuestionMarks,
       status,
       studentAnswerFormatted,
       correctAnswerFormatted,
       explanation: q.explanation,
       timeSpentSeconds: timeSpent,
+      hintUsed: isHintUsed,
+      hintPenalty: qHintPenalty,
     });
   });
 
-  const finalTotalMarks = Math.max(0, totalMarksAwarded);
+  const hintsCount = hintsUsed.length;
+
+  // Question-specific hint penalties:
+  // For each question which is of 1 mark: on hint will only get 1/2 (0.5 marks deduction)
+  // For each question which is of 3 marks: cut 1 & half mark in it for taking hint (1.5 marks deduction)
+  let hintPenaltyRaw = 0;
+  hintsUsed.forEach((qId) => {
+    const q = questions.find((item) => item.id === qId);
+    const qMarks = q?.marks || 1;
+    if (qMarks >= 3) {
+      hintPenaltyRaw += 1.5;
+    } else {
+      hintPenaltyRaw += 0.5;
+    }
+  });
+  const hintPenalty = Math.round(hintPenaltyRaw * 10) / 10;
+  const finalTotalMarks = Math.max(0, Math.round((totalMarksAwarded - hintPenalty) * 10) / 10);
   const percentage = maximumPossibleMarks > 0 ? Math.round((finalTotalMarks / maximumPossibleMarks) * 100) : 0;
   const attemptedCount = questions.length - unansweredCount;
   const accuracy = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
@@ -260,6 +291,9 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
     startedAt,
     submittedAt,
     submissionType,
+    hintsUsed,
+    hintsCount,
+    hintPenalty,
   };
 
   const report: ExamReport = {
@@ -283,6 +317,9 @@ export function evaluateAndGenerateFullResult(input: ScoreEngineInput): ScoreEng
     correctAnswers: correctCount,
     wrongAnswers: wrongCount,
     unansweredQuestions: unansweredCount,
+    hintsUsed,
+    hintsCount,
+    hintPenalty,
     totalMarks: maximumPossibleMarks,
     obtainedMarks: finalTotalMarks,
     percentage,

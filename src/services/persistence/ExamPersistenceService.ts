@@ -109,6 +109,8 @@ export interface ExamSessionState {
   integrity?: IntegrityLog;
   /** Question ids in the order this candidate sees them (shuffled per sitting). */
   questionOrder?: string[];
+  /** Question IDs where the candidate unlocked hints (max 4 per sitting). */
+  hintsUsed?: string[];
 }
 
 /** Cloud mirror cadence while a candidate is working. */
@@ -214,6 +216,7 @@ class ExamPersistenceServiceClass {
       timeRemainingSeconds: durationSec,
       totalTimeSeconds: durationSec,
       status: "in_progress",
+      hintsUsed: [],
       version: 1,
     };
     await this.saveLocal(session);

@@ -14,6 +14,8 @@ export interface QuestionEvaluationResult {
   correctAnswerSummary: string;
   explanation?: string;
   timeSpentSeconds: number;
+  hintUsed?: boolean;
+  hintPenalty?: number;
 }
 
 export interface SectionScore {
@@ -60,4 +62,10 @@ export interface ExamAttempt {
   attemptNumber?: number;
   /** Tab switches and full-screen exits during the sitting. */
   integrity?: IntegrityLog;
+  /** List of question IDs where hints were unlocked during the exam. */
+  hintsUsed?: string[];
+  /** Total count of hints unlocked (capped at 4). */
+  hintsCount?: number;
+  /** Marks deducted for hint usage (-1 per hint). */
+  hintPenalty?: number;
 }

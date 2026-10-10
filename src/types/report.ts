@@ -17,6 +17,8 @@ export interface QuestionReportItem {
   correctAnswerFormatted: string;
   explanation?: string;
   timeSpentSeconds: number;
+  hintUsed?: boolean;
+  hintPenalty?: number;
 }
 
 export interface TopicReportItem {
@@ -77,6 +79,11 @@ export interface ExamReport {
   topicResults: TopicReportItem[];
   difficultyResults: DifficultyReportItem[];
   questionResults: QuestionReportItem[];
+
+  // Hints usage and marking penalty
+  hintsUsed?: string[];
+  hintsCount?: number;
+  hintPenalty?: number;
 
   // Security / Telemetry metadata
   lastKnownIp?: string;
